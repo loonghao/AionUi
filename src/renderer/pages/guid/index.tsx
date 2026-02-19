@@ -40,6 +40,7 @@ import { allSupportedExts, getCleanFileNames, type FileMetadata } from '@/render
 import { iconColors } from '@/renderer/theme/colors';
 import { emitter } from '@/renderer/utils/emitter';
 import { buildDisplayMessage } from '@/renderer/utils/messageFiles';
+import { resolveExtensionAssetUrl } from '@/renderer/utils/platform';
 import { hasSpecificModelCapability } from '@/renderer/utils/modelCapabilities';
 import { updateWorkspaceTime } from '@/renderer/utils/workspaceHistory';
 import { isAcpRoutedPresetType, type AcpBackend, type AcpBackendConfig, type PresetAgentType } from '@/types/acpTypes';
@@ -279,7 +280,7 @@ const Guid: React.FC = () => {
   }, []);
   const [availableAgents, setAvailableAgents] = useState<
     Array<{
-      backend: AcpBackend;
+      backend: AcpBackend | string;
       name: string;
       cliPath?: string;
       customAgentId?: string;
@@ -469,8 +470,13 @@ const Guid: React.FC = () => {
         label,
         tokens,
         avatar,
-        avatarImage: avatar ? CUSTOM_AVATAR_IMAGE_MAP[avatar] : undefined,
-        logo: AGENT_LOGO_MAP[agent.backend],
+        avatarImage: avatar
+          ? CUSTOM_AVATAR_IMAGE_MAP[avatar] ||
+            resolveExtensionAssetUrl(
+              avatar.startsWith('aion-asset://') || avatar.startsWith('http') ? avatar : undefined
+            )
+          : undefined,
+        logo: AGENT_LOGO_MAP[agent.backend] || agent.avatar,
       };
     });
   }, [availableAgents, customAgentAvatarMap]);
@@ -1193,11 +1199,11 @@ const Guid: React.FC = () => {
       // For preset with ACP-routed agent type (claude/opencode), use corresponding backend
       // Check if agent type changed from user selection (due to availability fallback or compatibility switch)
       const agentTypeChanged = selectedAgent !== finalEffectiveAgentType;
-      const acpBackend: PresetAgentType | undefined = agentTypeChanged
+      const acpBackend = (agentTypeChanged
         ? finalEffectiveAgentType // Agent type changed from selection, use the final effective type
         : isPreset && isAcpRoutedPresetType(finalEffectiveAgentType)
           ? finalEffectiveAgentType
-          : selectedAgent;
+          : selectedAgent) as PresetAgentType | undefined;
 
       // Get the agent info for the actual backend being used (might be different from selection after type change)
       const acpAgentInfo = agentTypeChanged ? findAgentByKey(acpBackend as string) : agentInfo || findAgentByKey(selectedAgentKey);
@@ -1480,7 +1486,7 @@ const Guid: React.FC = () => {
                   .filter((agent) => agent.backend !== 'custom')
                   .map((agent, index) => {
                     const isSelected = selectedAgentKey === getAgentKey(agent);
-                    const logoSrc = AGENT_LOGO_MAP[agent.backend];
+                    const logoSrc = AGENT_LOGO_MAP[agent.backend] || agent.avatar;
 
                     return (
                       <React.Fragment key={getAgentKey(agent)}>
@@ -1763,7 +1769,14 @@ const Guid: React.FC = () => {
                   >
                     {(() => {
                       const avatarValue = selectedAgentInfo.avatar?.trim();
-                      const avatarImage = avatarValue ? CUSTOM_AVATAR_IMAGE_MAP[avatarValue] : undefined;
+                      const avatarImage = avatarValue
+                        ? CUSTOM_AVATAR_IMAGE_MAP[avatarValue] ||
+                          resolveExtensionAssetUrl(
+                            avatarValue.startsWith('aion-asset://') || avatarValue.startsWith('http')
+                              ? avatarValue
+                              : undefined
+                          )
+                        : undefined;
                       return avatarImage ? <img src={avatarImage} alt='' width={16} height={16} style={{ objectFit: 'contain', flexShrink: 0 }} /> : avatarValue ? <span style={{ fontSize: 14, lineHeight: '16px', flexShrink: 0 }}>{avatarValue}</span> : <Robot theme='outline' size={16} style={{ flexShrink: 0 }} />;
                     })()}
                     {(() => {
@@ -1900,7 +1913,16 @@ const Guid: React.FC = () => {
                     })
                     .map((assistant) => {
                       const avatarValue = assistant.avatar?.trim();
-                      const avatarImage = avatarValue ? CUSTOM_AVATAR_IMAGE_MAP[avatarValue] : undefined;
+                      const avatarImage = avatarValue
+                        ? CUSTOM_AVATAR_IMAGE_MAP[avatarValue] ||
+                          resolveExtensionAssetUrl(
+                            avatarValue.startsWith('aion-asset://') ||
+                            avatarValue.startsWith('file://') ||
+                            avatarValue.startsWith('http')
+                              ? avatarValue
+                              : undefined
+                          )
+                        : undefined;
                       return (
                         <div
                           key={assistant.id}

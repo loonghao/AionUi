@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { ipcBridge } from '@/common';
+import { update } from '@/common/ipcBridge';
 import type { MenuItemConstructorOptions } from 'electron';
 import { Menu, app } from 'electron';
 
@@ -36,7 +36,7 @@ export function setupApplicationMenu(): void {
       {
         label: 'Check for Updates...',
         click: () => {
-          ipcBridge.update.open.emit({ source: 'menu' });
+          update.open.emit({ source: 'menu' });
         },
       },
     ],

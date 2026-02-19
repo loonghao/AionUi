@@ -379,7 +379,7 @@ export function initFsBridge(): void {
 
           ipcBridge.fileStream.contentUpdate.emit(eventData);
         } catch (emitError) {
-          console.error('[fsBridge] ❌ Failed to emit file stream update:', emitError);
+          console.error('[fsBridge] Failed to emit file stream update:', emitError);
         }
 
         return true;

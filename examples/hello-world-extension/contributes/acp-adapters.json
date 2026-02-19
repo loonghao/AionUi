@@ -1,0 +1,43 @@
+[
+  {
+    "id": "hello-opencode",
+    "name": "Hello OpenCode",
+    "nameI18n": {
+      "zh-CN": "Hello OpenCode"
+    },
+    "description": "An extension-contributed ACP adapter that connects to OpenCode CLI via stdio JSON-RPC. Demonstrates how to wrap an existing ACP-compatible CLI as an extension adapter.",
+    "descriptionI18n": {
+      "zh-CN": "通过扩展贡献的 ACP adapter，使用 stdio JSON-RPC 连接 OpenCode CLI。展示如何将现有的 ACP 兼容 CLI 包装为扩展 adapter。"
+    },
+    "cliCommand": "vx opencode",
+    "acpArgs": ["acp"],
+    "icon": "assets/opencode.svg",
+    "authRequired": false,
+    "supportsStreaming": false,
+    "healthCheck": {
+      "versionCommand": "opencode version",
+      "timeout": 5000
+    }
+  },
+  {
+    "id": "hello-codebuddy",
+    "name": "Hello CodeBuddy",
+    "nameI18n": {
+      "zh-CN": "Hello CodeBuddy"
+    },
+    "description": "An extension-contributed ACP adapter that loads CodeBuddy Code CLI via 'vx npx'. Demonstrates how to use npx-based CLI packages as extension adapters with vx environment management.",
+    "descriptionI18n": {
+      "zh-CN": "通过 'vx npx' 加载 CodeBuddy Code CLI 的扩展 ACP adapter。展示如何使用 vx 环境管理加载基于 npx 的 CLI 包。"
+    },
+    "cliCommand": "vx",
+    "defaultCliPath": "vx npx --yes @tencent-ai/codebuddy-code",
+    "acpArgs": ["--acp"],
+    "icon": "assets/codebuddy.svg",
+    "authRequired": true,
+    "supportsStreaming": false,
+    "healthCheck": {
+      "versionCommand": "vx npx --yes @tencent-ai/codebuddy-code --version",
+      "timeout": 10000
+    }
+  }
+]

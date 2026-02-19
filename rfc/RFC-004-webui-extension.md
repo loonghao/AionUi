@@ -1,6 +1,6 @@
 # RFC-004: WebUI 扩展化设计
 
-- **Status**: Draft
+- **Status**: Implemented
 - **Date**: 2026-02-13
 - **Parent**: [RFC-001: 统一扩展系统](./RFC-001-unified-extension-system.md)
 - **Phase**: Phase 3

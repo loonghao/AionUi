@@ -8,14 +8,15 @@ import { AcpAdapter } from '@/agent/acp/AcpAdapter';
 import { extractAtPaths, parseAllAtCommands, reconstructQuery } from '@/common/atCommandParser';
 import type { TMessage } from '@/common/chatLib';
 import type { IResponseMessage } from '@/common/ipcBridge';
+import type { IMcpServer } from '@/common/storage';
 import { NavigationInterceptor } from '@/common/navigation';
 import { uuid } from '@/common/utils';
-import type { AcpBackend, AcpPermissionRequest, AcpResult, AcpSessionUpdate, ToolCallUpdate } from '@/types/acpTypes';
+import type { AcpBackend, AcpBackendAll, AcpPermissionRequest, AcpResult, AcpSessionUpdate, ToolCallUpdate } from '@/types/acpTypes';
 import { AcpErrorType, createAcpError } from '@/types/acpTypes';
 import { spawn } from 'child_process';
 import { promises as fs } from 'fs';
 import * as path from 'path';
-import { AcpConnection } from './AcpConnection';
+import { AcpConnection, convertMcpServersToAcpFormat } from './AcpConnection';
 import { getEnhancedEnv, resolveNpxPath } from '@process/utils/shellEnv';
 import { AcpApprovalStore, createAcpApprovalKey } from './ApprovalStore';
 import { CLAUDE_YOLO_SESSION_MODE, CODEBUDDY_YOLO_SESSION_MODE, IFLOW_YOLO_SESSION_MODE, QWEN_YOLO_SESSION_MODE } from './constants';
@@ -56,14 +57,14 @@ function normalizeToolCallStatus(status: string | undefined): 'pending' | 'in_pr
 
 export interface AcpAgentConfig {
   id: string;
-  backend: AcpBackend;
+  backend: AcpBackend | string;
   cliPath?: string;
   workingDir: string;
   customArgs?: string[]; // Custom CLI arguments (for custom backend)
   customEnv?: Record<string, string>; // Custom environment variables (for custom backend)
   extra?: {
     workspace?: string;
-    backend: AcpBackend;
+    backend: AcpBackend | string;
     cliPath?: string;
     customWorkspace?: boolean;
     customArgs?: string[];
@@ -73,6 +74,8 @@ export interface AcpAgentConfig {
     acpSessionId?: string;
     /** Last update time of ACP session / ACP session 最后更新时间 */
     acpSessionUpdatedAt?: number;
+    /** MCP servers to pass via ACP protocol / 通过 ACP 协议传递的 MCP 服务器配置 */
+    mcpServers?: IMcpServer[];
   };
   onStreamEvent: (data: IResponseMessage) => void;
   onSignalEvent?: (data: IResponseMessage) => void; // 新增：仅发送信号，不更新UI
@@ -85,7 +88,7 @@ export class AcpAgent {
   private readonly id: string;
   private extra: {
     workspace?: string;
-    backend: AcpBackend;
+    backend: AcpBackend | string;
     cliPath?: string;
     customWorkspace?: boolean;
     customArgs?: string[];
@@ -95,6 +98,8 @@ export class AcpAgent {
     acpSessionId?: string;
     /** Last update time of ACP session / ACP session 最后更新时间 */
     acpSessionUpdatedAt?: number;
+    /** MCP servers to pass via ACP protocol / 通过 ACP 协议传递的 MCP 服务器配置 */
+    mcpServers?: IMcpServer[];
   };
   private connection: AcpConnection;
   private adapter: AcpAdapter;
@@ -227,7 +232,7 @@ export class AcpAgent {
           qwen: QWEN_YOLO_SESSION_MODE,
           iflow: IFLOW_YOLO_SESSION_MODE,
         };
-        const sessionMode = yoloModeMap[this.extra.backend];
+        const sessionMode = yoloModeMap[this.extra.backend as AcpBackend];
         if (sessionMode) {
           try {
             const modeStart = Date.now();
@@ -278,7 +283,7 @@ export class AcpAgent {
         claude: CLAUDE_YOLO_SESSION_MODE,
         qwen: QWEN_YOLO_SESSION_MODE,
       };
-      const sessionMode = yoloModeMap[this.extra.backend];
+      const sessionMode = yoloModeMap[this.extra.backend as AcpBackend];
       if (sessionMode) {
         await this.connection.setSessionMode(sessionMode);
       }
@@ -830,7 +835,7 @@ export class AcpAgent {
       position: 'center',
       createdAt: Date.now(),
       content: {
-        backend: this.extra.backend,
+        backend: this.extra.backend as AcpBackendAll,
         status,
       },
     };
@@ -1012,14 +1017,43 @@ export class AcpAgent {
   }
 
   /**
+   * Backends that have their own native MCP config file management.
+   * These backends read MCP config from their own files, so we skip ACP protocol passthrough
+   * to avoid duplicate/conflicting MCP server registration.
+   *
+   * 拥有原生 MCP 配置文件管理的 backend。
+   * 这些 backend 自己从配置文件读取 MCP，跳过 ACP 协议传递以避免重复注册。
+   */
+  private static readonly NATIVE_MCP_BACKENDS = new Set<string>([
+    'claude',     // reads ~/.claude/settings.json
+    'codebuddy',  // reads ~/.codebuddy/mcp.json (also passed via --mcp-config)
+    'qwen',       // reads its own MCP config
+    'iflow',      // reads its own MCP config
+    'gemini',     // reads its own MCP config (native Gemini CLI)
+    'codex',      // reads its own MCP config
+  ]);
+
+  /**
    * Create a new session or resume an existing one, and notify upper layer if session ID changed.
    * 创建新会话或恢复现有会话，如果 session ID 变化则通知上层。
+   *
+   * For backends without native MCP config management, MCP servers are passed via ACP protocol.
+   * 对于没有原生 MCP 配置管理的 backend，MCP 服务器通过 ACP 协议传递。
    */
   private async createOrResumeSession(): Promise<void> {
     const resumeSessionId = this.extra.acpSessionId;
+
+    // Pass MCP servers via ACP protocol for backends that don't have native config management
+    // 对没有原生 MCP 配置管理的 backend，通过 ACP 协议传递 MCP 服务器
+    let acpMcpServers: ReturnType<typeof convertMcpServersToAcpFormat> | undefined;
+    if (!AcpAgent.NATIVE_MCP_BACKENDS.has(this.extra.backend) && this.extra.mcpServers?.length) {
+      acpMcpServers = convertMcpServersToAcpFormat(this.extra.mcpServers);
+    }
+
     const response = await this.connection.newSession(this.extra.workspace, {
       resumeSessionId,
       forkSession: false,
+      mcpServers: acpMcpServers,
     });
     // Notify upper layer if session ID changed (new session or resume failed)
     if (response.sessionId && response.sessionId !== resumeSessionId) {

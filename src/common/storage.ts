@@ -70,8 +70,8 @@ export interface IConfigStorageRefer {
   'migration.coworkDefaultSkillsAdded'?: boolean;
   // 迁移标记：为所有内置助手添加默认启用的 skills / Migration flag: add default enabled skills for all builtin assistants
   'migration.builtinDefaultSkillsAdded_v2'?: boolean;
-  // 迁移标记：为所有内置助手添加 promptsI18n / Migration flag: add promptsI18n for all builtin assistants
-  'migration.promptsI18nAdded'?: boolean;
+  // 迁移标记：已同步过 enabledByDefault 状态的助手 ID 列表 / Migration flag: IDs of assistants that have been synced for enabledByDefault
+  'migration.enabledByDefaultSyncedIds'?: string[];
   // Telegram assistant default model / Telegram 助手默认模型
   'assistant.telegram.defaultModel'?: {
     id: string;
@@ -362,6 +362,10 @@ export interface IMcpServer {
   createdAt: number;
   updatedAt: number;
   originalJson: string; // 存储原始JSON配置，用于编辑时的准确显示
+  /** 配置来源标记 / Source of this configuration */
+  _source?: 'builtin' | 'extension' | 'user';
+  /** 来源扩展名 / Source extension name */
+  _extensionName?: string;
 }
 
 export interface IMcpTool {

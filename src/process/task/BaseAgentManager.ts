@@ -12,6 +12,22 @@ import type { IConfirmation } from '../../common/chatLib';
 type AgentType = 'gemini' | 'acp' | 'codex' | 'openclaw-gateway' | 'nanobot';
 
 /**
+ * Resolve the directory containing worker entry files (acp.js, gemini.js, etc.).
+ *
+ * Worker entries are output to the main output directory (e.g. out/main/).
+ * When Vite code-splits this module into a chunks/ subdirectory
+ * (e.g. out/main/chunks/BaseAgentManager-xxx.js), __dirname points to
+ * the chunks/ dir instead of the main output dir. Detect this case and
+ * resolve to the parent directory where worker entries actually live.
+ */
+function resolveWorkerDir(): string {
+  if (path.basename(__dirname) === 'chunks') {
+    return path.resolve(__dirname, '..');
+  }
+  return __dirname;
+}
+
+/**
  * @description agent任务基础类
  * */
 class BaseAgentManager<Data, ConfirmationOption extends any = any> extends ForkTask<{
@@ -29,7 +45,7 @@ class BaseAgentManager<Data, ConfirmationOption extends any = any> extends ForkT
   protected yoloMode: boolean = false;
 
   constructor(type: AgentType, data: Data) {
-    super(path.resolve(__dirname, type + '.js'), {
+    super(path.resolve(resolveWorkerDir(), type + '.js'), {
       type: type,
       data: data,
     });

@@ -5,6 +5,7 @@
  */
 
 import { acpDetector } from '@/agent/acp/AcpDetector';
+import { ExtensionRegistry } from '@/extensions';
 import { initAcpConversationBridge } from './acpConversationBridge';
 import { initApplicationBridge } from './applicationBridge';
 import { initAuthBridge } from './authBridge';
@@ -22,6 +23,7 @@ import { initGeminiBridge } from './geminiBridge';
 import { initGeminiConversationBridge } from './geminiConversationBridge';
 import { initMcpBridge } from './mcpBridge';
 import { initModelBridge } from './modelBridge';
+import { initPerformanceBridge } from './performanceBridge';
 import { initPreviewHistoryBridge } from './previewHistoryBridge';
 import { initShellBridge } from './shellBridge';
 import { initUpdateBridge } from './updateBridge';
@@ -55,6 +57,18 @@ export function initAllBridges(): void {
   initWebuiBridge();
   initChannelBridge();
   initCronBridge();
+  initPerformanceBridge();
+}
+
+/**
+ * 初始化扩展系统（在 ACP 检测之前）
+ */
+export async function initializeExtensions(): Promise<void> {
+  try {
+    await ExtensionRegistry.getInstance().initialize();
+  } catch (error) {
+    console.error('[Extensions] Failed to initialize extension registry:', error);
+  }
 }
 
 /**
@@ -70,7 +84,7 @@ export async function initializeAcpDetector(): Promise<void> {
 
 // 导出初始化函数供单独使用
 
-export { initAcpConversationBridge, initApplicationBridge, initAuthBridge, initBedrockBridge, initChannelBridge, initCodexConversationBridge, initConversationBridge, initCronBridge, initDatabaseBridge, initDialogBridge, initDocumentBridge, initFsBridge, initGeminiBridge, initGeminiConversationBridge, initMcpBridge, initModelBridge, initPreviewHistoryBridge, initShellBridge, initUpdateBridge, initWebuiBridge, initWindowControlsBridge };
+export { initAcpConversationBridge, initApplicationBridge, initAuthBridge, initBedrockBridge, initChannelBridge, initCodexConversationBridge, initConversationBridge, initCronBridge, initDatabaseBridge, initDialogBridge, initDocumentBridge, initFsBridge, initGeminiBridge, initGeminiConversationBridge, initMcpBridge, initModelBridge, initPerformanceBridge, initPreviewHistoryBridge, initShellBridge, initUpdateBridge, initWebuiBridge, initWindowControlsBridge };
 
 // 导出窗口控制相关工具函数
 export { registerWindowMaximizeListeners } from './windowControlsBridge';

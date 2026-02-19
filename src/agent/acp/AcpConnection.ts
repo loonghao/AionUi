@@ -6,12 +6,85 @@
 
 import type { AcpBackend, AcpIncomingMessage, AcpMessage, AcpNotification, AcpPermissionRequest, AcpRequest, AcpResponse, AcpSessionUpdate } from '@/types/acpTypes';
 import { ACP_METHODS, JSONRPC_VERSION } from '@/types/acpTypes';
+import type { IMcpServer } from '@/common/storage';
 import type { ChildProcess, SpawnOptions } from 'child_process';
 import { execFileSync, spawn } from 'child_process';
 import { promises as fs } from 'fs';
 import os from 'os';
 import path from 'path';
 import { findSuitableNodeBin, getEnhancedEnv, resolveNpxPath } from '@process/utils/shellEnv';
+
+/**
+ * ACP protocol mcpServers entry types (per ACP spec: https://agentclientprotocol.com/protocol/session-setup)
+ *
+ * Stdio transport: { name, command, args, env?: [{ name, value }] }
+ * HTTP  transport: { type: "http", name, url, headers: [{ name, value }] }
+ * SSE   transport: { type: "sse", name, url, headers: [{ name, value }] }
+ */
+interface AcpMcpServerStdio {
+  name: string;
+  command: string;
+  args: string[];
+  env?: Array<{ name: string; value: string }>;
+}
+
+interface AcpMcpServerHttp {
+  type: 'http';
+  name: string;
+  url: string;
+  headers: Array<{ name: string; value: string }>;
+}
+
+interface AcpMcpServerSse {
+  type: 'sse';
+  name: string;
+  url: string;
+  headers: Array<{ name: string; value: string }>;
+}
+
+type AcpMcpServer = AcpMcpServerStdio | AcpMcpServerHttp | AcpMcpServerSse;
+
+/**
+ * Convert IMcpServer[] to ACP protocol mcpServers format.
+ * Only includes enabled servers. Converts env/headers from Record to array format.
+ */
+export function convertMcpServersToAcpFormat(servers: IMcpServer[]): AcpMcpServer[] {
+  const result: AcpMcpServer[] = [];
+  for (const server of servers) {
+    if (!server.enabled) continue;
+
+    if (server.transport.type === 'stdio') {
+      const entry: AcpMcpServerStdio = {
+        name: server.name,
+        command: server.transport.command,
+        args: server.transport.args || [],
+      };
+      if (server.transport.env && Object.keys(server.transport.env).length > 0) {
+        entry.env = Object.entries(server.transport.env).map(([k, v]) => ({ name: k, value: v }));
+      }
+      result.push(entry);
+    } else if (server.transport.type === 'http' || server.transport.type === 'streamable_http') {
+      result.push({
+        type: 'http',
+        name: server.name,
+        url: server.transport.url,
+        headers: server.transport.headers
+          ? Object.entries(server.transport.headers).map(([k, v]) => ({ name: k, value: v }))
+          : [],
+      });
+    } else if (server.transport.type === 'sse') {
+      result.push({
+        type: 'sse',
+        name: server.name,
+        url: server.transport.url,
+        headers: server.transport.headers
+          ? Object.entries(server.transport.headers).map(([k, v]) => ({ name: k, value: v }))
+          : [],
+      });
+    }
+  }
+  return result;
+}
 
 /** Enable ACP performance diagnostics via ACP_PERF=1 */
 const ACP_PERF_LOG = process.env.ACP_PERF === '1';
@@ -52,6 +125,11 @@ export function createGenericSpawnConfig(cliPath: string, workingDir: string, ac
     const parts = cliPath.split(' ');
     spawnCommand = resolveNpxPath(env);
     spawnArgs = [...parts.slice(1), ...effectiveAcpArgs];
+  } else if (cliPath.includes(' ')) {
+    // For multi-part commands like "vx npx --yes @pkg/name", split first token as command
+    const parts = cliPath.split(' ');
+    spawnCommand = parts[0];
+    spawnArgs = [...parts.slice(1), ...effectiveAcpArgs];
   } else {
     // For regular paths like '/usr/local/bin/cli' or simple commands like 'goose'
     spawnCommand = cliPath;
@@ -78,7 +156,7 @@ export class AcpConnection {
   private nextRequestId = 0;
   private sessionId: string | null = null;
   private isInitialized = false;
-  private backend: AcpBackend | null = null;
+  private backend: AcpBackend | string | null = null;
   private initializeResponse: AcpResponse | null = null;
   private workingDir: string = process.cwd();
 
@@ -168,8 +246,8 @@ export class AcpConnection {
     }
   }
 
-  // 通用的后端连接方法
-  private async connectGenericBackend(backend: Exclude<AcpBackend, 'claude' | 'codebuddy' | 'codex'>, cliPath: string, workingDir: string, acpArgs?: string[], customEnv?: Record<string, string>): Promise<void> {
+  // 通用的后端连接方法（支持内置和扩展 backend ID）
+  private async connectGenericBackend(backend: string, cliPath: string, workingDir: string, acpArgs?: string[], customEnv?: Record<string, string>): Promise<void> {
     const spawnStart = Date.now();
     const config = createGenericSpawnConfig(cliPath, workingDir, acpArgs, customEnv);
     this.child = spawn(config.command, config.args, config.options);
@@ -177,7 +255,7 @@ export class AcpConnection {
     await this.setupChildProcessHandlers(backend);
   }
 
-  async connect(backend: AcpBackend, cliPath?: string, workingDir: string = process.cwd(), acpArgs?: string[], customEnv?: Record<string, string>): Promise<void> {
+  async connect(backend: AcpBackend | string, cliPath?: string, workingDir: string = process.cwd(), acpArgs?: string[], customEnv?: Record<string, string>): Promise<void> {
     const connectStart = Date.now();
     if (ACP_PERF_LOG) console.log(`[ACP-PERF] connect: start backend=${backend}`);
 
@@ -224,7 +302,13 @@ export class AcpConnection {
         break;
 
       default:
-        throw new Error(`Unsupported backend: ${backend}`);
+        // Extension-contributed adapters use generic backend connection
+        // 扩展贡献的 adapter 使用通用后端连接
+        if (cliPath) {
+          await this.connectGenericBackend(backend as Exclude<AcpBackend, 'claude' | 'codebuddy' | 'codex'>, cliPath, workingDir, acpArgs, customEnv);
+        } else {
+          throw new Error(`Unsupported backend: ${backend}`);
+        }
     }
 
     if (ACP_PERF_LOG) console.log(`[ACP-PERF] connect: total ${Date.now() - connectStart}ms`);
@@ -751,7 +835,7 @@ export class AcpConnection {
         };
         ipcBridge.fileStream.contentUpdate.emit(eventData);
       } catch (emitError) {
-        console.error('[AcpConnection] ❌ Failed to emit file stream update:', emitError);
+        console.error('[AcpConnection] Failed to emit file stream update:', emitError);
       }
 
       return null;
@@ -802,8 +886,10 @@ export class AcpConnection {
    * @param options.forkSession - When true, creates a new session ID while preserving conversation context.
    *                              When false (default), reuses the original session ID.
    *                              为 true 时创建新 session ID 但保留对话上下文；为 false（默认）时复用原 session ID。
+   * @param options.mcpServers - MCP servers to pass via ACP protocol (for backends without native MCP config)
+   *                             通过 ACP 协议传递 MCP 服务器配置（适用于没有原生 MCP 配置管理的 backend）
    */
-  async newSession(cwd: string = process.cwd(), options?: { resumeSessionId?: string; forkSession?: boolean }): Promise<AcpResponse & { sessionId?: string }> {
+  async newSession(cwd: string = process.cwd(), options?: { resumeSessionId?: string; forkSession?: boolean; mcpServers?: AcpMcpServer[] }): Promise<AcpResponse & { sessionId?: string }> {
     // Normalize workspace-relative paths:
     // Agents such as qwen already run with `workingDir` as their process cwd.
     // Sending the absolute path again makes some CLIs treat it as a nested relative path.
@@ -822,9 +908,16 @@ export class AcpConnection {
         }
       : undefined;
 
+    // Pass MCP servers via ACP protocol if provided; otherwise send empty array
+    // 如果提供了 MCP 服务器配置，则通过 ACP 协议传递；否则发送空数组
+    const mcpServers = options?.mcpServers ?? [];
+    if (mcpServers.length > 0) {
+      console.log(`[ACP] Passing ${mcpServers.length} MCP server(s) via ACP protocol to ${this.backend}: ${mcpServers.map((s) => s.name).join(', ')}`);
+    }
+
     const response = await this.sendRequest<AcpResponse & { sessionId?: string }>('session/new', {
       cwd: normalizedCwd,
-      mcpServers: [] as unknown[],
+      mcpServers,
       // Claude/CodeBuddy ACP uses _meta for resume
       ...(meta && { _meta: meta }),
       // Generic resume parameters for other ACP backends
@@ -951,7 +1044,7 @@ export class AcpConnection {
     return this.sessionId;
   }
 
-  get currentBackend(): AcpBackend | null {
+  get currentBackend(): AcpBackend | string | null {
     return this.backend;
   }
 

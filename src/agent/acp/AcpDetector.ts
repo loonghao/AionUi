@@ -8,9 +8,10 @@ import { execSync } from 'child_process';
 import type { AcpBackendAll, PresetAgentType } from '@/types/acpTypes';
 import { POTENTIAL_ACP_CLIS } from '@/types/acpTypes';
 import { ProcessConfig } from '@/process/initStorage';
+import { ExtensionRegistry } from '@/extensions';
 
 interface DetectedAgent {
-  backend: AcpBackendAll;
+  backend: AcpBackendAll | string;
   name: string;
   cliPath?: string;
   acpArgs?: string[];
@@ -19,6 +20,12 @@ interface DetectedAgent {
   context?: string;
   avatar?: string;
   presetAgentType?: PresetAgentType; // Primary agent type for presets
+  /** Connection type for non-CLI agents */
+  connectionType?: 'cli' | 'websocket' | 'http';
+  /** Endpoint URL for websocket/http agents */
+  endpoint?: string;
+  /** Available models for this agent */
+  models?: string[];
 }
 
 /**
@@ -145,6 +152,27 @@ class AcpDetector {
       cliPath: undefined,
       acpArgs: undefined,
     });
+
+    // Add extension-contributed adapters (skip duplicates with built-in IDs)
+    const builtinIds = new Set(detected.map((d) => d.backend));
+    const extensionAdapters = ExtensionRegistry.getInstance().getAcpAdapters();
+    for (const adapter of extensionAdapters) {
+      if (builtinIds.has(adapter.id as AcpBackendAll)) {
+        console.warn(`[ACP] Skipping extension adapter "${adapter.id}" (conflicts with built-in)`);
+        continue;
+      }
+      detected.push({
+        backend: adapter.id as AcpBackendAll,
+        name: adapter.name,
+        cliPath: adapter.defaultCliPath,
+        acpArgs: adapter.acpArgs,
+        isPreset: adapter.isPreset,
+        avatar: adapter.avatar,
+        connectionType: adapter.connectionType || 'cli',
+        endpoint: adapter.endpoint,
+        models: adapter.models,
+      });
+    }
 
     // Check for custom agents configuration - insert after claude if found
     await this.addCustomAgentsToList(detected);

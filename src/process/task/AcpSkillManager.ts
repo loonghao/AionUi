@@ -16,6 +16,7 @@ import fs from 'fs/promises';
 import path from 'path';
 import { existsSync } from 'fs';
 import { getSkillsDir, getBuiltinSkillsDir } from '../initStorage';
+import { ExtensionRegistry } from '@/extensions';
 
 /**
  * Skill 定义（与 aioncli-core 兼容）
@@ -240,6 +241,19 @@ export class AcpSkillManager {
       console.log(`[AcpSkillManager] Discovered ${this.skills.size} optional skills`);
     } catch (error) {
       console.error(`[AcpSkillManager] Failed to discover skills:`, error);
+    }
+
+    // Merge extension-contributed skills (skip duplicates)
+    const extensionSkills = ExtensionRegistry.getInstance().getSkills();
+    for (const extSkill of extensionSkills) {
+      if (this.builtinSkills.has(extSkill.name) || this.skills.has(extSkill.name)) {
+        console.warn(`[AcpSkillManager] Skipping extension skill "${extSkill.name}" (conflicts with existing)`);
+        continue;
+      }
+      this.skills.set(extSkill.name, extSkill);
+    }
+    if (extensionSkills.length > 0) {
+      console.log(`[AcpSkillManager] Loaded ${extensionSkills.length} extension skill(s)`);
     }
 
     this.initialized = true;

@@ -553,6 +553,39 @@ brew install aionui
 
 ### Contributing
 
+#### 🛠️ Development Setup
+
+We recommend using [**vx**](https://github.com/loonghao/vx) to manage all development environments and toolchains.
+
+**Install vx:**
+
+Linux/macOS:
+```bash
+curl -fsSL https://raw.githubusercontent.com/loonghao/vx/main/install.sh | bash
+```
+
+Windows (PowerShell):
+```powershell
+powershell -c "irm https://raw.githubusercontent.com/loonghao/vx/main/install.ps1 | iex"
+```
+
+**Quick Start:**
+
+```bash
+# Initialize environment (install Node.js, npm, etc.)
+vx setup
+
+# Install dependencies + rebuild native modules
+vx just setup
+
+# Start development server with extension system
+vx just dev-ext
+```
+
+> 💡 Run `vx just` to see all available development commands.
+
+#### 📝 Contribution Workflow
+
 1. Fork this project
 2. Create a feature branch (`git checkout -b feature/AmazingFeature`)
 3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)

@@ -18,6 +18,13 @@ import { registerAuthRoutes } from './routes/authRoutes';
 import { registerApiRoutes } from './routes/apiRoutes';
 import { registerStaticRoutes } from './routes/staticRoutes';
 import { generateQRLoginUrlDirect } from '@/process/bridge/webuiBridge';
+import { ExtensionRegistry } from '@/extensions';
+import {
+  resolveApiRoutes,
+  resolveWsHandlers,
+  resolveMiddleware,
+  resolveStaticAssets,
+} from '@/extensions/resolvers/WebuiResolver';
 
 // Express Request 类型扩展定义在 src/webserver/types/express.d.ts
 // Express Request type extension is defined in src/webserver/types/express.d.ts
@@ -178,8 +185,8 @@ async function initializeDefaultAdmin(): Promise<{ username: string; password: s
     initialAdminPassword = password; // 存储初始密码 / Store initial password
     return { username, password };
   } catch (error) {
-    console.error('❌ Failed to initialize default admin account:', error);
-    console.error('❌ 初始化默认管理员账户失败:', error);
+    console.error('[WebUI] Failed to initialize default admin account:', error);
+    console.error('[WebUI] 初始化默认管理员账户失败:', error);
     return null;
   }
 }
@@ -193,16 +200,16 @@ function displayInitialCredentials(credentials: { username: string; password: st
   const { qrUrl } = generateQRLoginUrlDirect(port, allowRemote);
 
   console.log('\n' + '='.repeat(70));
-  console.log('🎉 AionUI Web Server Started Successfully! / AionUI Web 服务器启动成功！');
+  console.log('[WebUI] AionUI Web Server Started Successfully! / AionUI Web 服务器启动成功!');
   console.log('='.repeat(70));
-  console.log(`\n📍 Local URL / 本地地址:    ${localUrl}`);
+  console.log(`\n   Local URL / 本地地址:    ${localUrl}`);
 
   if (allowRemote && networkUrl && networkUrl !== localUrl) {
-    console.log(`📍 Network URL / 网络地址:  ${networkUrl}`);
+    console.log(`   Network URL / 网络地址:  ${networkUrl}`);
   }
 
   // 显示二维码 / Display QR Code
-  console.log('\n📱 Scan QR Code to Login (expires in 5 mins) / 扫描二维码登录 (5分钟内有效)');
+  console.log('\n   Scan QR Code to Login (expires in 5 mins) / 扫描二维码登录 (5分钟内有效)');
   const qrcode = loadQRCodeTerminal();
   if (qrcode) {
     qrcode.generate(qrUrl, { small: true }, (qr: string) => {
@@ -214,11 +221,11 @@ function displayInitialCredentials(credentials: { username: string; password: st
   console.log(`   QR URL: ${qrUrl}`);
 
   // 显示传统凭证作为备用 / Display traditional credentials as fallback
-  console.log('\n🔐 Or Use Initial Admin Credentials / 或使用初始管理员凭证:');
+  console.log('\n   Or Use Initial Admin Credentials / 或使用初始管理员凭证:');
   console.log(`   Username / 用户名: ${credentials.username}`);
   console.log(`   Password / 密码:   ${credentials.password}`);
-  console.log('\n⚠️  Please change the password after first login!');
-  console.log('⚠️  请在首次登录后修改密码！');
+  console.log('\n   [!] Please change the password after first login!');
+  console.log('   [!] 请在首次登录后修改密码!');
 
   console.log('='.repeat(70) + '\n');
 }
@@ -258,10 +265,39 @@ export async function startWebServerWithInstance(port: number, allowRemote = fal
   setupBasicMiddleware(app);
   setupCors(app, port, allowRemote);
 
+  // --- Extension middleware (order: "before") — RFC-004 §5.1 ---
+  const webuiContributions = ExtensionRegistry.getInstance().getWebuiContributions();
+  for (const { config, directory } of webuiContributions) {
+    const { before } = resolveMiddleware(config, directory);
+    for (const { middleware, applyTo } of before) {
+      app.use(applyTo, middleware);
+    }
+  }
+
   // 注册路由 / Register routes
   registerAuthRoutes(app);
   registerApiRoutes(app);
+
+  // --- Extension API routes (/api/ext/*) — RFC-004 §5.1 ---
+  for (const { config, directory } of webuiContributions) {
+    resolveApiRoutes(config, directory, app);
+  }
+
+  // --- Extension static assets (/ext/*) — RFC-004 §5.1 ---
+  for (const { config, directory } of webuiContributions) {
+    resolveStaticAssets(config, directory, app);
+  }
+
+  // 内置静态资源 + SPA fallback（必须最后）/ Built-in static + SPA fallback (must be last)
   registerStaticRoutes(app);
+
+  // --- Extension middleware (order: "after") — RFC-004 §5.1 ---
+  for (const { config, directory } of webuiContributions) {
+    const { after } = resolveMiddleware(config, directory);
+    for (const { middleware, applyTo } of after) {
+      app.use(applyTo, middleware);
+    }
+  }
 
   // 配置错误处理（必须最后）/ Setup error handler (must be last)
   setupErrorHandler(app);
@@ -281,15 +317,20 @@ export async function startWebServerWithInstance(port: number, allowRemote = fal
         displayInitialCredentials(initialCredentials, localUrl, allowRemote, displayUrl);
       } else {
         if (allowRemote && serverIP && serverIP !== 'localhost') {
-          console.log(`\n   🚀 Local access / 本地访问: ${localUrl}`);
-          console.log(`   🚀 Network access / 网络访问: ${displayUrl}\n`);
+          console.log(`\n   Local access / 本地访问: ${localUrl}`);
+          console.log(`   Network access / 网络访问: ${displayUrl}\n`);
         } else {
-          console.log(`\n   🚀 WebUI started / WebUI 已启动: ${localUrl}\n`);
+          console.log(`\n   WebUI started / WebUI 已启动: ${localUrl}\n`);
         }
       }
 
       // 初始化 WebSocket 适配器 / Initialize WebSocket adapter
-      initWebAdapter(wss);
+      const wsManager = initWebAdapter(wss);
+
+      // --- Extension WS handlers (ext:*) — RFC-004 §5.1 ---
+      for (const { config, directory } of webuiContributions) {
+        resolveWsHandlers(config, directory, wsManager);
+      }
 
       resolve({
         server,
@@ -301,9 +342,9 @@ export async function startWebServerWithInstance(port: number, allowRemote = fal
 
     server.on('error', (err: NodeJS.ErrnoException) => {
       if (err.code === 'EADDRINUSE') {
-        console.error(`❌ Port ${port} is already in use / 端口 ${port} 已被占用`);
+        console.error(`[WebUI] Port ${port} is already in use / 端口 ${port} 已被占用`);
       } else {
-        console.error('❌ Server error / 服务器错误:', err);
+        console.error('[WebUI] Server error / 服务器错误:', err);
       }
       reject(err);
     });

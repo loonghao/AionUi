@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hello World Extension</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f5f5f5; color: #333; padding: 24px;
+    }
+    .container { max-width: 800px; margin: 0 auto; }
+    h1 { font-size: 24px; margin-bottom: 8px; }
+    .subtitle { color: #666; margin-bottom: 24px; }
+    .card {
+      background: #fff; border-radius: 12px; padding: 20px;
+      margin-bottom: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    .card h2 { font-size: 16px; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+    .badge {
+      display: inline-block; font-size: 10px; padding: 2px 6px;
+      border-radius: 4px; font-weight: bold; text-transform: uppercase;
+    }
+    .badge-api { background: #e3f2fd; color: #1565c0; }
+    .badge-ext { background: #f3e5f5; color: #7b1fa2; }
+    .badge-ok { background: #e8f5e9; color: #2e7d32; }
+    .badge-err { background: #ffebee; color: #c62828; }
+    pre {
+      background: #1e1e2e; color: #cdd6f4; padding: 16px;
+      border-radius: 8px; overflow-x: auto; font-size: 13px; line-height: 1.5;
+    }
+    code { font-family: 'Fira Code', 'Cascadia Code', monospace; }
+    button {
+      background: #7c3aed; color: #fff; border: none; padding: 8px 16px;
+      border-radius: 8px; cursor: pointer; font-size: 14px; margin-top: 8px;
+    }
+    button:hover { background: #6d28d9; }
+    #api-result {
+      margin-top: 12px; padding: 12px; border-radius: 8px;
+      background: #f8f9fa; font-family: monospace; font-size: 13px;
+      white-space: pre-wrap; display: none;
+    }
+    .info-row { display: flex; gap: 8px; margin-bottom: 8px; align-items: center; }
+    .info-label { font-weight: 600; min-width: 120px; color: #555; }
+    .info-value { color: #333; }
+    .section-list { list-style: none; padding: 0; }
+    .section-list li {
+      padding: 8px 12px; border-bottom: 1px solid #f0f0f0;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .section-list li:last-child { border-bottom: none; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>👋 Hello World Extension</h1>
+    <p class="subtitle">A comprehensive example demonstrating all AionUI extension contribution types</p>
+
+    <!-- Extension Info -->
+    <div class="card">
+      <h2>📦 Extension Info</h2>
+      <div class="info-row"><span class="info-label">Name:</span><span class="info-value">hello-world</span></div>
+      <div class="info-row"><span class="info-label">Version:</span><span class="info-value">1.0.0</span></div>
+      <div class="info-row"><span class="info-label">Author:</span><span class="info-value">AionUI Team</span></div>
+    </div>
+
+    <!-- WebUI API Demo -->
+    <div class="card">
+      <h2>🔌 WebUI API <span class="badge badge-api">Live Demo</span></h2>
+      <p style="margin-bottom: 8px; color: #666;">
+        Extension API routes are mounted at <code>/api/ext/{extension-name}/{path}</code>.
+        Click below to call the hello API:
+      </p>
+      <pre><code>GET /api/ext/hello-world/hello
+GET /api/ext/hello-world/hello/greet/:name</code></pre>
+      <div style="display: flex; gap: 8px; margin-top: 12px;">
+        <button onclick="callApi('/api/ext/hello-world/hello')">Call /hello</button>
+        <button onclick="callApi('/api/ext/hello-world/hello/greet/AionUI')">Call /hello/greet/AionUI</button>
+      </div>
+      <div id="api-result"></div>
+    </div>
+
+    <!-- Contributions Overview -->
+    <div class="card">
+      <h2>🧩 Contributions Overview</h2>
+      <ul class="section-list">
+        <li>
+          <span>🤖 <strong>ACP Adapter</strong> — Hello OpenCode</span>
+          <span class="badge badge-ext">CLI</span>
+        </li>
+        <li>
+          <span>🔧 <strong>MCP Server</strong> — hello-fetch (claude-code-mcp-server)</span>
+          <span class="badge badge-ext">stdio</span>
+        </li>
+        <li>
+          <span>👋 <strong>Assistant</strong> — Friendly Greeter</span>
+          <span class="badge badge-ext">claude</span>
+        </li>
+        <li>
+          <span>📝 <strong>Skill</strong> — code-review</span>
+          <span class="badge badge-ext">markdown</span>
+        </li>
+        <li>
+          <span>🎨 <strong>Theme</strong> — Hello Light</span>
+          <span class="badge badge-ext">css</span>
+        </li>
+        <li>
+          <span>🌐 <strong>WebUI</strong> — This page + API routes</span>
+          <span class="badge badge-ext">static + api</span>
+        </li>
+      </ul>
+    </div>
+
+    <!-- Static Assets Info -->
+    <div class="card">
+      <h2>📁 Static Assets</h2>
+      <p style="color: #666;">
+        Extension static files are served at <code>/ext/{extension-name}/{urlPrefix}/</code>.
+        This page is served from:
+      </p>
+      <pre><code>/ext/hello-world/hello-world/index.html</code></pre>
+    </div>
+
+    <!-- How to Use WebUI -->
+    <div class="card">
+      <h2>📖 How to Use WebUI Extensions</h2>
+      <p style="color: #666; margin-bottom: 12px;">
+        To add WebUI capabilities to your extension, define <code>webui</code> in <code>aion-extension.json</code>:
+      </p>
+      <pre><code>{
+  "contributes": {
+    "webui": {
+      "apiRoutes": [{
+        "path": "/hello",
+        "entryPoint": "webui/api/hello.js",
+        "auth": false
+      }],
+      "staticAssets": [{
+        "urlPrefix": "/hello-world",
+        "directory": "webui/static"
+      }]
+    }
+  }
+}</code></pre>
+      <p style="color: #666; margin-top: 12px;">
+        API entry points export an Express router. Static assets are served directly.
+        All routes are sandboxed under <code>/api/ext/</code> and <code>/ext/</code> prefixes.
+      </p>
+    </div>
+  </div>
+
+  <script>
+    async function callApi(url) {
+      const resultEl = document.getElementById('api-result');
+      resultEl.style.display = 'block';
+      resultEl.textContent = 'Loading...';
+      try {
+        const resp = await fetch(url);
+        const data = await resp.json();
+        resultEl.innerHTML = `<span class="badge badge-ok">200 OK</span>\n${JSON.stringify(data, null, 2)}`;
+      } catch (err) {
+        resultEl.innerHTML = `<span class="badge badge-err">Error</span>\n${err.message}`;
+      }
+    }
+  </script>
+</body>
+</html>

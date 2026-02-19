@@ -1,0 +1,18 @@
+[
+  {
+    "id": "hello-light",
+    "name": "Hello Light",
+    "nameI18n": {
+      "zh-CN": "Hello 浅色主题"
+    },
+    "file": "themes/hello-light.css"
+  },
+  {
+    "id": "hello-dark",
+    "name": "Hello Dark (CodeBuddy Style)",
+    "nameI18n": {
+      "zh-CN": "Hello 暗色主题 (CodeBuddy 风格)"
+    },
+    "file": "themes/hello-dark.css"
+  }
+]

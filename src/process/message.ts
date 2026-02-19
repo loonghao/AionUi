@@ -7,7 +7,7 @@
 import type { TMessage } from '@/common/chatLib';
 import { composeMessage } from '@/common/chatLib';
 import type { AcpBackend } from '@/types/acpTypes';
-import { getDatabase } from './database/export';
+import { getDatabase } from './database/index';
 import { ProcessChat } from './initStorage';
 
 const Cache = new Map<string, ConversationManageWithDB>();
@@ -115,7 +115,7 @@ async function ensureConversationExists(db: ReturnType<typeof getDatabase>, conv
  * Add or update a single message
  * If message exists (by id), update it; otherwise insert it
  */
-export const addOrUpdateMessage = (conversation_id: string, message: TMessage, backend?: AcpBackend): void => {
+export const addOrUpdateMessage = (conversation_id: string, message: TMessage, backend?: AcpBackend | string): void => {
   // Validate message
   if (!message) {
     console.error('[Message] Cannot add or update undefined message');

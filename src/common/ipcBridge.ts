@@ -171,7 +171,7 @@ export const acpConversation = {
   getAvailableAgents: bridge.buildProvider<
     IBridgeResponse<
       Array<{
-        backend: AcpBackend;
+        backend: AcpBackend | string;
         name: string;
         cliPath?: string;
         customAgentId?: string;
@@ -179,6 +179,9 @@ export const acpConversation = {
         context?: string;
         avatar?: string;
         presetAgentType?: PresetAgentType;
+        connectionType?: 'cli' | 'websocket' | 'http';
+        endpoint?: string;
+        models?: string[];
       }>
     >,
     void
@@ -196,10 +199,10 @@ export const acpConversation = {
 
 // MCP 服务相关接口
 export const mcpService = {
-  getAgentMcpConfigs: bridge.buildProvider<IBridgeResponse<Array<{ source: McpSource; servers: IMcpServer[] }>>, Array<{ backend: AcpBackend; name: string; cliPath?: string }>>('mcp.get-agent-configs'),
+  getAgentMcpConfigs: bridge.buildProvider<IBridgeResponse<Array<{ source: McpSource; servers: IMcpServer[] }>>, Array<{ backend: AcpBackend | string; name: string; cliPath?: string }>>('mcp.get-agent-configs'),
   testMcpConnection: bridge.buildProvider<IBridgeResponse<{ success: boolean; tools?: Array<{ name: string; description?: string }>; error?: string; needsAuth?: boolean; authMethod?: 'oauth' | 'basic'; wwwAuthenticate?: string }>, IMcpServer>('mcp.test-connection'),
-  syncMcpToAgents: bridge.buildProvider<IBridgeResponse<{ success: boolean; results: Array<{ agent: string; success: boolean; error?: string }> }>, { mcpServers: IMcpServer[]; agents: Array<{ backend: AcpBackend; name: string; cliPath?: string }> }>('mcp.sync-to-agents'),
-  removeMcpFromAgents: bridge.buildProvider<IBridgeResponse<{ success: boolean; results: Array<{ agent: string; success: boolean; error?: string }> }>, { mcpServerName: string; agents: Array<{ backend: AcpBackend; name: string; cliPath?: string }> }>('mcp.remove-from-agents'),
+  syncMcpToAgents: bridge.buildProvider<IBridgeResponse<{ success: boolean; results: Array<{ agent: string; success: boolean; error?: string }> }>, { mcpServers: IMcpServer[]; agents: Array<{ backend: AcpBackend | string; name: string; cliPath?: string }> }>('mcp.sync-to-agents'),
+  removeMcpFromAgents: bridge.buildProvider<IBridgeResponse<{ success: boolean; results: Array<{ agent: string; success: boolean; error?: string }> }>, { mcpServerName: string; agents: Array<{ backend: AcpBackend | string; name: string; cliPath?: string }> }>('mcp.remove-from-agents'),
   // OAuth 相关接口
   checkOAuthStatus: bridge.buildProvider<IBridgeResponse<{ isAuthenticated: boolean; needsLogin: boolean; error?: string }>, IMcpServer>('mcp.check-oauth-status'),
   loginMcpOAuth: bridge.buildProvider<IBridgeResponse<{ success: boolean; error?: string }>, { server: IMcpServer; config?: any }>('mcp.login-oauth'),
@@ -501,4 +504,57 @@ export const channel = {
   pairingRequested: bridge.buildEmitter<IChannelPairingRequest>('channel.pairing-requested'),
   pluginStatusChanged: bridge.buildEmitter<{ pluginId: string; status: IChannelPluginStatus }>('channel.plugin-status-changed'),
   userAuthorized: bridge.buildEmitter<IChannelUser>('channel.user-authorized'),
+};
+
+// Performance monitoring
+export const performance = {
+  getStats: bridge.buildProvider<
+    {
+      success: boolean;
+      stats?: Record<string, { count: number; totalDuration: number; avgDuration: number; maxDuration: number }>;
+      memory?: {
+        current: {
+          timestamp: number;
+          heapUsed: number;
+          heapTotal: number;
+          external: number;
+          rss: number;
+        };
+        growth: {
+          heapUsed: number;
+          heapTotal: number;
+          rss: number;
+        };
+        snapshots: number;
+      } | null;
+    },
+    void
+  >('performance.get-stats'),
+
+  clear: bridge.buildProvider<{ success: boolean }, void>('performance.clear'),
+
+  generateReport: bridge.buildProvider<
+    {
+      success: boolean;
+      report?: {
+        summary: {
+          totalOperations: number;
+          slowOperations: number;
+          avgDuration: number;
+        };
+        topSlowOperations: Array<{
+          operation: string;
+          count: number;
+          avgDuration: number;
+          maxDuration: number;
+        }>;
+        memoryUsage?: {
+          current: number;
+          growth: number;
+        };
+        recommendations: string[];
+      };
+    },
+    void
+  >('performance.generate-report'),
 };

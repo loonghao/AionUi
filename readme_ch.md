@@ -553,6 +553,39 @@ brew install aionui
 
 ### 贡献
 
+#### 🛠️ 开发环境搭建
+
+我们推荐使用 [**vx**](https://github.com/loonghao/vx) 来管理所有开发环境和工具链。
+
+**安装 vx：**
+
+Linux/macOS：
+```bash
+curl -fsSL https://raw.githubusercontent.com/loonghao/vx/main/install.sh | bash
+```
+
+Windows (PowerShell)：
+```powershell
+powershell -c "irm https://raw.githubusercontent.com/loonghao/vx/main/install.ps1 | iex"
+```
+
+**快速开始：**
+
+```bash
+# 初始化环境（安装 Node.js、npm 等）
+vx setup
+
+# 安装依赖 + 重建原生模块
+vx just setup
+
+# 启动开发服务器（带扩展系统）
+vx just dev-ext
+```
+
+> 💡 运行 `vx just` 查看所有可用的开发命令。
+
+#### 📝 贡献流程
+
 1. Fork 本项目
 2. 创建功能分支 (`git checkout -b feature/AmazingFeature`)
 3. 提交更改 (`git commit -m 'Add some AmazingFeature'`)

@@ -1,6 +1,6 @@
 # RFC-002: Phase 1 实施任务清单
 
-- **Status**: Draft
+- **Status**: Implemented
 - **Date**: 2026-02-13
 - **Parent**: [RFC-001: 统一扩展系统](./RFC-001-unified-extension-system.md)
 - **Scope**: `acpAdapters`, `mcpServers`, `assistants`, `skills` — 纯数据驱动的 4 种能力
@@ -49,8 +49,8 @@ export const PATH_SEPARATOR = process.platform === 'win32' ? ';' : ':';
 ```
 
 **验收标准**：
-- [ ] 所有 Zod schema 能正确验证有效/无效的 `aion-extension.json`
-- [ ] 路径常量在 Windows/macOS/Linux 上正确工作
+- [x] 所有 Zod schema 能正确验证有效/无效的 `aion-extension.json`
+- [x] 路径常量在 Windows/macOS/Linux 上正确工作
 
 ---
 
@@ -66,10 +66,10 @@ export const PATH_SEPARATOR = process.platform === 'win32' ? ';' : ':';
 - 未定义的环境变量替换为空字符串，输出 warning 日志
 
 **验收标准**：
-- [ ] `${env:HOME}` 被替换为实际值
-- [ ] `${env:UNDEFINED_VAR}` 被替换为空字符串，有 warning 日志
-- [ ] 嵌套对象/数组中的模板全部被处理
-- [ ] 非字符串值（number, boolean, null）不受影响
+- [x] `${env:HOME}` 被替换为实际值
+- [x] `${env:UNDEFINED_VAR}` 被替换为空字符串，有 warning 日志
+- [x] 嵌套对象/数组中的模板全部被处理
+- [x] 非字符串值（number, boolean, null）不受影响
 
 ---
 
@@ -97,13 +97,13 @@ loadAll()
 - **去重**：同 `name` 的扩展只保留优先级最高的
 
 **验收标准**：
-- [ ] 能扫描 `~/.aionui/extensions/` 目录
-- [ ] 能扫描 `<appData>/AionUI/extensions/` 目录
-- [ ] 能扫描 `AIONUI_EXTENSIONS_PATH` 环境变量指定的路径
-- [ ] JSONC 注释被正确处理
-- [ ] 无效 JSON 文件被跳过并记录 warning
-- [ ] schema 验证失败被跳过并记录 warning
-- [ ] 同名扩展按优先级去重
+- [x] 能扫描 `~/.aionui/extensions/` 目录
+- [x] 能扫描 `<appData>/AionUI/extensions/` 目录
+- [x] 能扫描 `AIONUI_EXTENSIONS_PATH` 环境变量指定的路径
+- [x] JSONC 注释被正确处理
+- [x] 无效 JSON 文件被跳过并记录 warning
+- [x] schema 验证失败被跳过并记录 warning
+- [x] 同名扩展按优先级去重
 
 ---
 
@@ -137,9 +137,9 @@ class ExtensionRegistry {
 ```
 
 **验收标准**：
-- [ ] 单例模式正确工作
-- [ ] `initialize()` 调用 ExtensionLoader 并存储结果
-- [ ] 各 getter 方法返回正确的转换结果
+- [x] 单例模式正确工作
+- [x] `initialize()` 调用 ExtensionLoader 并存储结果
+- [x] 各 getter 方法返回正确的转换结果
 
 ---
 
@@ -169,9 +169,9 @@ class ExtensionRegistry {
 | — | `_source` | 固定 `'extension'` |
 
 **验收标准**：
-- [ ] 转换后的 `AcpBackendConfig` 能被 `AcpDetector` 正确识别
-- [ ] `env` 中的 `${env:}` 模板被正确解析
-- [ ] `icon` 相对路径转为绝对路径
+- [x] 转换后的 `AcpBackendConfig` 能被 `AcpDetector` 正确识别
+- [x] `env` 中的 `${env:}` 模板被正确解析
+- [x] `icon` 相对路径转为绝对路径
 
 ---
 
@@ -204,9 +204,9 @@ Transport 映射：
 | `streamable_http` | `IMcpServerTransportStreamableHTTP` |
 
 **验收标准**：
-- [ ] 4 种 transport 类型全部正确映射
-- [ ] `transport.env` 和 `transport.headers` 中的 `${env:}` 模板被解析
-- [ ] 生成的 `IMcpServer` 能被 `McpService` 正确管理
+- [x] 4 种 transport 类型全部正确映射
+- [x] `transport.env` 和 `transport.headers` 中的 `${env:}` 模板被解析
+- [x] 生成的 `IMcpServer` 能被 `McpService` 正确管理
 
 ---
 
@@ -242,9 +242,9 @@ Transport 映射：
 - 支持 i18n：根据当前语言选择对应的 `contextFileI18n[locale]`，fallback 到 `contextFile`
 
 **验收标准**：
-- [ ] `contextFile` 的 Markdown 内容被正确读取并填充到 `context`
-- [ ] `contextFileI18n` 按语言正确读取
-- [ ] 文件不存在时 graceful fallback，输出 warning
+- [x] `contextFile` 的 Markdown 内容被正确读取并填充到 `context`
+- [x] `contextFileI18n` 按语言正确读取
+- [x] 文件不存在时 graceful fallback，输出 warning
 
 ---
 
@@ -265,9 +265,9 @@ Transport 映射：
 需要与 `AcpSkillManager` 的 `loadSkillFromDirectory()` 兼容。
 
 **验收标准**：
-- [ ] 扩展 skill 的 SKILL.md 被正确定位
-- [ ] 与内置 `skills/` 目录下的 skill 合并时不冲突
-- [ ] 无效路径被跳过并记录 warning
+- [x] 扩展 skill 的 SKILL.md 被正确定位
+- [x] 与内置 `skills/` 目录下的 skill 合并时不冲突
+- [x] 无效路径被跳过并记录 warning
 
 ---
 
@@ -287,9 +287,9 @@ allBackends = [...builtinBackends, ...extensionAdapters];
 - 重复时跳过扩展版本，输出 warning
 
 **验收标准**：
-- [ ] 扩展的 CLI adapter 出现在 Agent 选择列表中
-- [ ] 扩展 adapter 的健康检查（`healthCheck.versionCommand`）正常工作
-- [ ] 与内置 backend ID 冲突时，内置优先
+- [x] 扩展的 CLI adapter 出现在 Agent 选择列表中
+- [x] 扩展 adapter 的健康检查（`healthCheck.versionCommand`）正常工作
+- [x] 与内置 backend ID 冲突时，内置优先
 
 ---
 
@@ -307,9 +307,9 @@ const extensionMcpServers = ExtensionRegistry.getInstance().getMcpServers();
 ```
 
 **验收标准**：
-- [ ] 扩展的 MCP server 出现在 MCP 管理页面
-- [ ] 来自扩展的 MCP server 标记为 "extension" 来源
-- [ ] 可正常连接和测试扩展的 MCP server
+- [x] 扩展的 MCP server 出现在 MCP 管理页面
+- [x] 来自扩展的 MCP server 标记为 "extension" 来源
+- [x] 可正常连接和测试扩展的 MCP server
 
 ---
 
@@ -322,9 +322,9 @@ const extensionMcpServers = ExtensionRegistry.getInstance().getMcpServers();
 - UI 中标记为 "Extension: {extensionName}"
 
 **验收标准**：
-- [ ] 扩展助手出现在助手管理页面的 "预设助手" 区域
-- [ ] 扩展助手的 context（从 Markdown 文件加载）正常工作
-- [ ] 扩展助手的 i18n 显示正确
+- [x] 扩展助手出现在助手管理页面的 "预设助手" 区域
+- [x] 扩展助手的 context（从 Markdown 文件加载）正常工作
+- [x] 扩展助手的 i18n 显示正确
 
 ---
 
@@ -345,9 +345,9 @@ await ExtensionRegistry.getInstance().initialize();
 ```
 
 **验收标准**：
-- [ ] 应用启动时正确扫描和加载扩展
-- [ ] 扩展加载失败不阻止应用启动
-- [ ] 启动日志中输出加载的扩展列表
+- [x] 应用启动时正确扫描和加载扩展
+- [x] 扩展加载失败不阻止应用启动
+- [x] 启动日志中输出加载的扩展列表
 
 ---
 
@@ -370,8 +370,8 @@ export type { ExtensionManifest, LoadedExtension, /* ... */ } from './types';
 - 发布后可通过 `$schema` 字段在 VS Code 中获得自动补全
 
 **验收标准**：
-- [ ] 在 VS Code 中编写 `aion-extension.json` 时有自动补全
-- [ ] JSON Schema 验证与 Zod schema 一致
+- [x] 在 VS Code 中编写 `aion-extension.json` 时有自动补全
+- [x] JSON Schema 验证与 Zod schema 一致
 
 ---
 

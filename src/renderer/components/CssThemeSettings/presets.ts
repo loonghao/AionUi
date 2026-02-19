@@ -7,7 +7,7 @@
 import type { ICssTheme } from '@/common/storage';
 
 // 导入预设主题封面图片 base64 数据 / Import preset theme cover images as base64 data
-// 注意: webpack 存在 UTF-8 编码问题会损坏二进制文件，因此使用预生成的 base64 数据
+// 注意: 使用预生成的 base64 数据以避免编码问题
 import { defaultThemeCover, misakaMikotoCover, helloKittyCover, retroWindowsCover } from './themeCovers';
 
 /**

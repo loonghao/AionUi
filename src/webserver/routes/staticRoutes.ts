@@ -6,6 +6,8 @@
 
 import type { Express, Request, Response } from 'express';
 import express from 'express';
+import http from 'http';
+import type { Writable } from 'stream';
 import path from 'path';
 import fs from 'fs';
 import { app } from 'electron';
@@ -14,25 +16,100 @@ import { AUTH_CONFIG } from '../config/constants';
 import { createRateLimiter } from '../middleware/security';
 
 /**
- * 注册静态资源和页面路由
- * Register static assets and page routes
+ * Resolve renderer build output path.
+ * Returns the paths if built assets exist on disk, or null if unavailable
+ * (e.g. during development when Vite dev server serves assets in-memory).
  */
-const resolveRendererPath = () => {
-  // Webpack assets are always inside app.asar in production or project directory in development
-  // app.getAppPath() returns the correct path for both cases
+const resolveRendererPath = (): { indexHtml: string; staticRoot: string } | null => {
+  // In dev mode, skip any stale out/renderer/ build when Vite dev server is running.
+  // electron-vite sets ELECTRON_RENDERER_URL to the Vite dev server URL in dev mode.
+  if (!app.isPackaged && process.env['ELECTRON_RENDERER_URL']) {
+    return null;
+  }
+
   const appPath = app.getAppPath();
-  const baseRoot = path.join(appPath, '.webpack', 'renderer');
-  const indexHtml = path.join(baseRoot, 'main_window', 'index.html');
+  const baseRoot = path.join(appPath, 'out', 'renderer');
+  const indexHtml = path.join(baseRoot, 'index.html');
 
   if (fs.existsSync(indexHtml)) {
     return { indexHtml, staticRoot: baseRoot } as const;
   }
 
+  // In development mode, Vite dev server serves renderer assets in-memory —
+  // the files do not exist on disk. Return null so the caller can degrade gracefully.
+  if (!app.isPackaged) {
+    return null;
+  }
+
   throw new Error(`Renderer assets not found at ${indexHtml}`);
 };
 
-export function registerStaticRoutes(app: Express): void {
-  const { staticRoot, indexHtml } = resolveRendererPath();
+/**
+ * Set up a reverse proxy to the Vite dev server for all SPA routes.
+ * This allows the Express-hosted WebUI to serve the live React app with
+ * correct UnoCSS classes and HMR assets during development.
+ *
+ * 在开发模式下将 SPA 路由代理到 Vite 开发服务器
+ */
+function setupViteDevProxy(expressApp: Express, viteUrl: string): void {
+  const target = new URL(viteUrl);
+  const hostname = target.hostname;
+  const port = parseInt(target.port, 10) || 80;
+
+  // Forward all non-API, non-auth requests to the Vite dev server
+  expressApp.use(/^\/(?!api\b|auth\b)/, (req: Request, res: Response) => {
+    const options: http.RequestOptions = {
+      hostname,
+      port,
+      path: req.url,
+      method: req.method,
+      headers: { ...req.headers, host: `${hostname}:${port}` },
+    };
+
+    const proxyReq = http.request(options, (proxyRes) => {
+      res.writeHead(proxyRes.statusCode ?? 200, proxyRes.headers);
+      proxyRes.pipe(res as unknown as Writable, { end: true });
+    });
+
+    proxyReq.on('error', () => {
+      if (!res.headersSent) {
+        res.status(502).send('<h1>502 Dev Server Unavailable</h1><p>Make sure the Vite dev server is running.</p>');
+      }
+    });
+
+    if (req.method !== 'GET' && req.method !== 'HEAD') {
+      req.pipe(proxyReq, { end: true });
+    } else {
+      proxyReq.end();
+    }
+  });
+}
+
+export function registerStaticRoutes(expressApp: Express): void {
+  const resolved = resolveRendererPath();
+
+  // Always register favicon handler
+  expressApp.get('/favicon.ico', (_req: Request, res: Response) => {
+    res.status(204).end(); // No Content
+  });
+
+  if (!resolved) {
+    const viteUrl = !app.isPackaged ? process.env['ELECTRON_RENDERER_URL'] : undefined;
+    if (viteUrl) {
+      console.log(`[WebUI] Dev mode: proxying SPA requests to Vite dev server at ${viteUrl}`);
+      setupViteDevProxy(expressApp, viteUrl);
+    } else {
+      // Development mode: renderer assets are served by Vite dev server (e.g. http://localhost:5173).
+      // The embedded WebUI server only needs to provide API routes and WebSocket —
+      // skip static file serving and SPA fallback.
+      console.log(
+        '[WebUI] Development mode: renderer assets served by Vite dev server, static routes skipped'
+      );
+    }
+    return;
+  }
+
+  const { staticRoot, indexHtml } = resolved;
   const indexHtmlPath = indexHtml;
 
   // Create a lenient rate limiter for static page requests to prevent DDoS
@@ -68,58 +145,33 @@ export function registerStaticRoutes(app: Express): void {
    * Homepage
    * GET /
    */
-  app.get('/', pageRateLimiter, serveApplication);
-
-  /**
-   * 处理 favicon 请求
-   * Handle favicon requests
-   * GET /favicon.ico
-   */
-  app.get('/favicon.ico', (_req: Request, res: Response) => {
-    res.status(204).end(); // No Content
-  });
+  expressApp.get('/', pageRateLimiter, serveApplication);
 
   /**
    * 处理子路径路由 (React Router)
    * Handle SPA sub-routes (React Router)
-   * Exclude: api, static, main_window, and webpack chunk directories (react, arco, vendors, etc.)
+   * Exclude: api, static, main_window, and asset directories
    * Also exclude files with extensions (.js, .css, .map, etc.)
    */
-  app.get(/^\/(?!api|static|main_window|react|arco|vendors|markdown|codemirror)(?!.*\.[a-zA-Z0-9]+$).*/, pageRateLimiter, serveApplication);
+  expressApp.get(/^\/(?!api|static|main_window|assets)(?!.*\.[a-zA-Z0-9]+$).*/, pageRateLimiter, serveApplication);
 
   /**
    * 静态资源
    * Static assets
    */
-  // 直接挂载编译输出目录，让 webpack 在写出文件后即可被访问
-  app.use(express.static(staticRoot));
+  // 直接挂载编译输出目录，让 vite 在写出文件后即可被访问
+  expressApp.use(express.static(staticRoot));
 
   const mainWindowDir = path.join(staticRoot, 'main_window');
   if (fs.existsSync(mainWindowDir) && fs.statSync(mainWindowDir).isDirectory()) {
-    app.use('/main_window', express.static(mainWindowDir));
+    expressApp.use('/main_window', express.static(mainWindowDir));
   }
 
   const staticDir = path.join(staticRoot, 'static');
   if (fs.existsSync(staticDir) && fs.statSync(staticDir).isDirectory()) {
-    app.use('/static', express.static(staticDir));
+    expressApp.use('/static', express.static(staticDir));
   }
 
-  /**
-   * React Syntax Highlighter 语言包
-   * React Syntax Highlighter language packs
-   */
-  if (fs.existsSync(staticRoot)) {
-    app.use(
-      '/react-syntax-highlighter_languages_highlight_',
-      express.static(staticRoot, {
-        setHeaders: (res, filePath) => {
-          if (filePath.includes('react-syntax-highlighter_languages_highlight_')) {
-            res.setHeader('Content-Type', 'application/javascript');
-          }
-        },
-      })
-    );
-  }
 }
 
 export default registerStaticRoutes;

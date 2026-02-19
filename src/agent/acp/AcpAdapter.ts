@@ -13,11 +13,11 @@ import type { AcpBackend, AcpSessionUpdate, AgentMessageChunkUpdate, AgentThough
  */
 export class AcpAdapter {
   private conversationId: string;
-  private backend: AcpBackend;
+  private backend: AcpBackend | string;
   private activeToolCalls: Map<string, IMessageAcpToolCall> = new Map();
   private currentMessageId: string | null = uuid(); // Track current message for streaming chunks
 
-  constructor(conversationId: string, backend: AcpBackend) {
+  constructor(conversationId: string, backend: AcpBackend | string) {
     this.conversationId = conversationId;
     this.backend = backend;
   }

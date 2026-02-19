@@ -5,15 +5,18 @@ import type { TMessage } from '@/common/chatLib';
 import { transformMessage } from '@/common/chatLib';
 import { AIONUI_FILES_MARKER } from '@/common/constants';
 import type { IResponseMessage } from '@/common/ipcBridge';
+import type { IMcpServer } from '@/common/storage';
 import { parseError, uuid } from '@/common/utils';
 import type { AcpBackend, AcpPermissionOption, AcpPermissionRequest } from '@/types/acpTypes';
 import { ACP_BACKENDS_ALL } from '@/types/acpTypes';
+import { ExtensionRegistry } from '@/extensions';
 import { getDatabase } from '@process/database';
 import { ProcessConfig } from '../initStorage';
 import { addMessage, addOrUpdateMessage, nextTickToLocalFinish } from '../message';
 import { handlePreviewOpenEvent } from '../utils/previewUtils';
 import { cronBusyGuard } from '@process/services/cron/CronBusyGuard';
 import { prepareFirstMessageWithSkillsIndex } from './agentUtils';
+import { performanceMonitor } from '@process/utils/PerformanceMonitor';
 /** Enable ACP performance diagnostics via ACP_PERF=1 */
 const ACP_PERF_LOG = process.env.ACP_PERF === '1';
 
@@ -24,7 +27,7 @@ import { stripThinkTags } from './ThinkTagDetector';
 
 interface AcpAgentManagerData {
   workspace?: string;
-  backend: AcpBackend;
+  backend: AcpBackend | string;
   cliPath?: string;
   customWorkspace?: boolean;
   conversation_id: string;
@@ -91,47 +94,70 @@ class AcpAgentManager extends BaseAgentManager<AcpAgentManagerData, AcpPermissio
           customEnv = customAgentConfig.env;
         }
       } else if (data.backend !== 'custom') {
-        // Handle built-in backends: read from acp.config
-        const config = await ProcessConfig.get('acp.config');
-        if (!cliPath && config?.[data.backend]?.cliPath) {
-          cliPath = config[data.backend].cliPath;
-        }
-        // yoloMode priority: data.yoloMode (from CronService) > config setting
-        // yoloMode 优先级：data.yoloMode（来自 CronService）> 配置设置
-        const legacyYoloMode = data.yoloMode ?? (config?.[data.backend] as any)?.yoloMode;
+        // Check if this is a built-in backend
+        const isBuiltinBackend = data.backend in ACP_BACKENDS_ALL;
 
-        // Migrate legacy yoloMode config (from SecurityModalContent) to currentMode.
-        // Maps to each backend's native yolo mode value for correct protocol behavior.
-        // Skip when sessionMode was explicitly provided (user made a choice on Guid page).
-        if (legacyYoloMode && this.currentMode === 'default' && !data.sessionMode) {
-          const yoloModeValues: Record<string, string> = {
-            claude: 'bypassPermissions',
-            qwen: 'yolo',
-            iflow: 'yolo',
-          };
-          this.currentMode = yoloModeValues[data.backend] || 'yolo';
-        }
+        if (isBuiltinBackend) {
+          // Handle built-in backends: read from acp.config
+          const config = await ProcessConfig.get('acp.config');
+          const backendKey = data.backend as AcpBackend;
+          if (!cliPath && config?.[backendKey]?.cliPath) {
+            cliPath = config[backendKey].cliPath;
+          }
+          // yoloMode priority: data.yoloMode (from CronService) > config setting
+          // yoloMode 优先级：data.yoloMode（来自 CronService）> 配置设置
+          const legacyYoloMode = data.yoloMode ?? (config?.[backendKey] as any)?.yoloMode;
 
-        // When legacy config has yoloMode=true but user explicitly chose a non-yolo mode
-        // on the Guid page, clear the legacy config so it won't re-activate next time.
-        if (legacyYoloMode && data.sessionMode && !this.isYoloMode(data.sessionMode)) {
-          void this.clearLegacyYoloConfig();
-        }
+          // Migrate legacy yoloMode config (from SecurityModalContent) to currentMode.
+          // Maps to each backend's native yolo mode value for correct protocol behavior.
+          // Skip when sessionMode was explicitly provided (user made a choice on Guid page).
+          if (legacyYoloMode && this.currentMode === 'default' && !data.sessionMode) {
+            const yoloModeValues: Record<string, string> = {
+              claude: 'bypassPermissions',
+              qwen: 'yolo',
+              iflow: 'yolo',
+            };
+            this.currentMode = yoloModeValues[data.backend] || 'yolo';
+          }
 
-        // Derive effective yoloMode from currentMode so that the agent respects
-        // the user's explicit mode choice. data.yoloMode (cron jobs) always takes priority.
-        yoloMode = data.yoloMode ?? this.isYoloMode(this.currentMode);
+          // When legacy config has yoloMode=true but user explicitly chose a non-yolo mode
+          // on the Guid page, clear the legacy config so it won't re-activate next time.
+          if (legacyYoloMode && data.sessionMode && !this.isYoloMode(data.sessionMode)) {
+            void this.clearLegacyYoloConfig();
+          }
 
-        // Get acpArgs from backend config (for goose, auggie, opencode, etc.)
-        const backendConfig = ACP_BACKENDS_ALL[data.backend];
-        if (backendConfig?.acpArgs) {
-          customArgs = backendConfig.acpArgs;
-        }
+          // Derive effective yoloMode from currentMode so that the agent respects
+          // the user's explicit mode choice. data.yoloMode (cron jobs) always takes priority.
+          yoloMode = data.yoloMode ?? this.isYoloMode(this.currentMode);
 
-        // 如果没有配置 cliPath，使用 ACP_BACKENDS_ALL 中的默认 cliCommand
-        // If cliPath is not configured, fallback to default cliCommand from ACP_BACKENDS_ALL
-        if (!cliPath && backendConfig?.cliCommand) {
-          cliPath = backendConfig.cliCommand;
+          // Get acpArgs from backend config (for goose, auggie, opencode, etc.)
+          const backendConfig = ACP_BACKENDS_ALL[data.backend as AcpBackend];
+          if (backendConfig?.acpArgs) {
+            customArgs = backendConfig.acpArgs;
+          }
+
+          // 如果没有配置 cliPath，使用 ACP_BACKENDS_ALL 中的默认 cliCommand
+          // If cliPath is not configured, fallback to default cliCommand from ACP_BACKENDS_ALL
+          if (!cliPath && backendConfig?.cliCommand) {
+            cliPath = backendConfig.cliCommand;
+          }
+        } else {
+          // Handle extension-contributed adapters: lookup from ExtensionRegistry
+          // 处理扩展贡献的 adapter：从 ExtensionRegistry 获取配置
+          const extAdapter = ExtensionRegistry.getInstance().getAcpAdapters().find((a) => a.id === data.backend);
+          if (extAdapter) {
+            if (!cliPath && extAdapter.defaultCliPath) {
+              cliPath = extAdapter.defaultCliPath;
+            }
+            if (extAdapter.acpArgs) {
+              customArgs = extAdapter.acpArgs;
+            }
+            if (extAdapter.env) {
+              customEnv = extAdapter.env;
+            }
+          } else {
+            console.warn(`[AcpAgentManager] Unknown backend "${data.backend}" - not built-in and not from extensions`);
+          }
         }
       } else {
         // backend === 'custom' but no customAgentId - this is an invalid state
@@ -156,6 +182,7 @@ class AcpAgentManager extends BaseAgentManager<AcpAgentManagerData, AcpPermissio
           yoloMode: yoloMode,
           acpSessionId: data.acpSessionId,
           acpSessionUpdatedAt: data.acpSessionUpdatedAt,
+          mcpServers: await this.loadMcpServers(),
         },
         onSessionIdUpdate: (sessionId: string) => {
           // Save ACP session ID to database for resume support
@@ -329,6 +356,7 @@ class AcpAgentManager extends BaseAgentManager<AcpAgentManagerData, AcpPermissio
     msg?: string;
     message?: string;
   }> {
+    const perfId = performanceMonitor.start('AcpAgentManager', 'sendMessage', { msg_id: data.msg_id });
     const managerSendStart = Date.now();
     // Mark conversation as busy to prevent cron jobs from running
     cronBusyGuard.setProcessing(this.conversation_id, true);
@@ -384,13 +412,16 @@ class AcpAgentManager extends BaseAgentManager<AcpAgentManagerData, AcpPermissio
         // Note: cronBusyGuard.setProcessing(false) is not called here
         // because the response streaming is still in progress.
         // It will be cleared when the conversation ends or on error.
+        performanceMonitor.end(perfId, { success: true });
         return result;
       }
       const agentSendStart = Date.now();
       const result = await this.agent.sendMessage(data);
       console.log(`[ACP-PERF] manager: agent.sendMessage completed ${Date.now() - agentSendStart}ms (total manager.sendMessage: ${Date.now() - managerSendStart}ms)`);
+      performanceMonitor.end(perfId, { success: true });
       return result;
     } catch (e) {
+      performanceMonitor.end(perfId, { success: false, error: parseError(e) });
       cronBusyGuard.setProcessing(this.conversation_id, false);
       this.status = 'finished';
       const message: IResponseMessage = {
@@ -565,7 +596,7 @@ class AcpAgentManager extends BaseAgentManager<AcpAgentManagerData, AcpPermissio
   private async clearLegacyYoloConfig(): Promise<void> {
     try {
       const config = await ProcessConfig.get('acp.config');
-      const backendConfig = config?.[this.options.backend];
+      const backendConfig = config?.[this.options.backend as AcpBackend];
       if ((backendConfig as any)?.yoloMode) {
         await ProcessConfig.set('acp.config', {
           ...config,
@@ -574,6 +605,37 @@ class AcpAgentManager extends BaseAgentManager<AcpAgentManagerData, AcpPermissio
       }
     } catch (error) {
       console.error('[AcpAgentManager] Failed to clear legacy yoloMode config:', error);
+    }
+  }
+
+  /**
+   * Load MCP servers from config (user + extension-contributed).
+   * These will be passed via ACP protocol session/new for backends that don't have
+   * native MCP config file management.
+   *
+   * 从配置加载 MCP 服务器（用户配置 + 扩展贡献）。
+   * 对于没有原生 MCP 配置文件管理的 backend，这些会通过 ACP 协议 session/new 传递。
+   */
+  private async loadMcpServers(): Promise<IMcpServer[]> {
+    try {
+      const userServers: IMcpServer[] = (await ProcessConfig.get('mcp.config')) || [];
+      const extensionServers = ExtensionRegistry.getInstance().getMcpServers();
+
+      // Merge extension servers (skip duplicates by name)
+      if (extensionServers.length > 0) {
+        const existingNames = new Set(userServers.map((s) => s.name));
+        const merged = [...userServers];
+        for (const extServer of extensionServers) {
+          if (!existingNames.has(extServer.name)) {
+            merged.push(extServer);
+          }
+        }
+        return merged;
+      }
+      return userServers;
+    } catch (error) {
+      console.warn('[AcpAgentManager] Failed to load MCP servers:', error);
+      return [];
     }
   }
 

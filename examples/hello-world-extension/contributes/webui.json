@@ -1,0 +1,17 @@
+{
+  "apiRoutes": [
+    {
+      "path": "/hello",
+      "entryPoint": "webui/api/hello.js",
+      "description": "Returns a greeting message",
+      "auth": false
+    }
+  ],
+  "staticAssets": [
+    {
+      "urlPrefix": "/hello-world",
+      "directory": "webui/static",
+      "description": "Hello World dashboard page"
+    }
+  ]
+}

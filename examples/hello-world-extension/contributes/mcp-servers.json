@@ -1,0 +1,13 @@
+[
+  {
+    "name": "hello-fetch",
+    "description": "A demo MCP server using @anthropic-ai/sdk fetch tool",
+    "transport": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@anthropic-ai/claude-code-mcp-server"],
+      "env": {}
+    },
+    "enabled": true
+  }
+]

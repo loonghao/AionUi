@@ -11,11 +11,12 @@ import { app } from 'electron';
 import { application } from '../common/ipcBridge';
 import type { TMessage } from '@/common/chatLib';
 import { ASSISTANT_PRESETS } from '@/common/presets/assistantPresets';
-import type { IChatConversationRefer, IConfigStorageRefer, IEnvStorageRefer, IMcpServer, TChatConversation, TProviderWithModel } from '../common/storage';
+import type { IChatConversationRefer, ICssTheme, IConfigStorageRefer, IEnvStorageRefer, IMcpServer, TChatConversation, TProviderWithModel } from '../common/storage';
 import { ChatMessageStorage, ChatStorage, ConfigStorage, EnvStorage } from '../common/storage';
 import { copyDirectoryRecursively, ensureDirectory, getConfigPath, getDataPath, getTempPath, verifyDirectoryFiles } from './utils';
-import { getDatabase } from './database/export';
+import { getDatabase } from './database/index';
 import type { AcpBackendConfig } from '@/types/acpTypes';
+import { ExtensionRegistry } from '@/extensions';
 // Platform and architecture types (moved from deleted updateConfig)
 type PlatformType = 'win32' | 'darwin' | 'linux';
 type ArchitectureType = 'x64' | 'arm64' | 'ia32' | 'arm';
@@ -31,7 +32,10 @@ const STORAGE_PATH = {
   skills: 'skills',
 };
 
-const getHomePage = getConfigPath;
+// Lazy wrapper: defer resolution of getConfigPath to call time so that esbuild
+// bundle initialization order doesn't matter (getConfigPath may be defined after
+// this module in the compiled _dyn_*.js output).
+const getHomePage = () => getConfigPath();
 
 const mkdirSync = (path: string) => {
   return _mkdirSync(path, { recursive: true });
@@ -245,52 +249,84 @@ const JsonFileBuilder = <S extends object = Record<string, unknown>>(path: strin
   };
 };
 
-const envFile = JsonFileBuilder<IEnvStorageRefer>(path.join(getHomePage(), STORAGE_PATH.env));
-
-const dirConfig = envFile.getSync('aionui.dir');
-
-const cacheDir = dirConfig?.cacheDir || getHomePage();
-
-const configFile = JsonFileBuilder<IConfigStorageRefer>(path.join(cacheDir, STORAGE_PATH.config));
+// ---------------------------------------------------------------------------
+// Lazy-initialized storage paths.
+// initStorage.ts ↔ utils.ts have a circular import (utils.ts imports
+// getSystemDir from here). In esbuild _dyn_*.js bundles the initialization
+// order may be reversed, so module-level calls to getHomePage()/getConfigPath()
+// would crash. Deferring to first access solves this.
+// ---------------------------------------------------------------------------
 type ConversationHistoryData = Record<string, TMessage[]>;
 
-const _chatMessageFile = JsonFileBuilder<ConversationHistoryData>(path.join(cacheDir, STORAGE_PATH.chatMessage));
-const _chatFile = JsonFileBuilder<IChatConversationRefer>(path.join(cacheDir, STORAGE_PATH.chat));
+type JsonFile<S extends object> = ReturnType<typeof JsonFileBuilder<S>>;
+
+// Storage singletons – populated on first access via ensureStorageInit().
+let envFile: JsonFile<IEnvStorageRefer>;
+let dirConfig: IEnvStorageRefer['aionui.dir'] | undefined;
+let cacheDir: string;
+let configFile: JsonFile<IConfigStorageRefer>;
+let _chatMessageFile: JsonFile<ConversationHistoryData>;
+let _chatFile: JsonFile<IChatConversationRefer>;
+let _storageInitDone = false;
+
+function ensureStorageInit(): void {
+  if (_storageInitDone) return;
+  _storageInitDone = true;
+  envFile = JsonFileBuilder<IEnvStorageRefer>(path.join(getHomePage(), STORAGE_PATH.env));
+  dirConfig = envFile.getSync('aionui.dir');
+  cacheDir = dirConfig?.cacheDir || getHomePage();
+  configFile = JsonFileBuilder<IConfigStorageRefer>(path.join(cacheDir, STORAGE_PATH.config));
+  _chatMessageFile = JsonFileBuilder<ConversationHistoryData>(path.join(cacheDir, STORAGE_PATH.chatMessage));
+  _chatFile = JsonFileBuilder<IChatConversationRefer>(path.join(cacheDir, STORAGE_PATH.chat));
+}
 
 // 创建带字段迁移的聊天历史代理
 const isGeminiConversation = (conversation: TChatConversation): conversation is Extract<TChatConversation, { type: 'gemini' }> => {
   return conversation.type === 'gemini';
 };
 
-const chatFile = {
-  ..._chatFile,
-  async get<K extends keyof IChatConversationRefer>(key: K): Promise<IChatConversationRefer[K]> {
-    const data = await _chatFile.get(key);
+/** Chat file proxy with field migration support (lazy – calls ensureStorageInit). */
+const getChatFile = () => {
+  ensureStorageInit();
+  return {
+    ..._chatFile,
+    async get<K extends keyof IChatConversationRefer>(key: K): Promise<IChatConversationRefer[K]> {
+      const data = await _chatFile.get(key);
 
-    // 特别处理 chat.history 的字段迁移
-    if (key === 'chat.history' && Array.isArray(data)) {
-      const history = data as IChatConversationRefer['chat.history'];
-      return history.map((conversation: TChatConversation) => {
-        // 只有 Gemini 会话带有 model 字段，需要将旧格式 selectedModel 迁移为 useModel
-        if (isGeminiConversation(conversation) && conversation.model) {
-          // 使用 Record 类型处理旧格式迁移
-          const modelRecord = conversation.model as unknown as Record<string, unknown>;
-          if ('selectedModel' in modelRecord && !('useModel' in modelRecord)) {
-            modelRecord['useModel'] = modelRecord['selectedModel'];
-            delete modelRecord['selectedModel'];
-            conversation.model = modelRecord as TProviderWithModel;
+      // 特别处理 chat.history 的字段迁移
+      if (key === 'chat.history' && Array.isArray(data)) {
+        const history = data as IChatConversationRefer['chat.history'];
+        return history.map((conversation: TChatConversation) => {
+          // 只有 Gemini 会话带有 model 字段，需要将旧格式 selectedModel 迁移为 useModel
+          if (isGeminiConversation(conversation) && conversation.model) {
+            // 使用 Record 类型处理旧格式迁移
+            const modelRecord = conversation.model as unknown as Record<string, unknown>;
+            if ('selectedModel' in modelRecord && !('useModel' in modelRecord)) {
+              modelRecord['useModel'] = modelRecord['selectedModel'];
+              delete modelRecord['selectedModel'];
+              conversation.model = modelRecord as TProviderWithModel;
+            }
           }
-        }
-        return conversation;
-      }) as IChatConversationRefer[K];
-    }
+          return conversation;
+        }) as IChatConversationRefer[K];
+      }
 
-    return data;
-  },
-  async set<K extends keyof IChatConversationRefer>(key: K, value: IChatConversationRefer[K]): Promise<IChatConversationRefer[K]> {
-    return await _chatFile.set(key, value);
-  },
+      return data;
+    },
+    async set<K extends keyof IChatConversationRefer>(key: K, value: IChatConversationRefer[K]): Promise<IChatConversationRefer[K]> {
+      return await _chatFile.set(key, value);
+    },
+  };
 };
+
+// Cache the chatFile proxy after first creation so the same object is reused.
+let _chatFileProxy: ReturnType<typeof getChatFile> | null = null;
+const chatFile = new Proxy({} as ReturnType<typeof getChatFile>, {
+  get(_target, prop, receiver) {
+    if (!_chatFileProxy) _chatFileProxy = getChatFile();
+    return Reflect.get(_chatFileProxy, prop, receiver);
+  },
+});
 
 const buildMessageListStorage = (conversation_id: string, dir: string) => {
   const fullName = path.join(dir, 'aionui-chat-history', conversation_id + '.txt');
@@ -300,35 +336,40 @@ const buildMessageListStorage = (conversation_id: string, dir: string) => {
   return JsonFileBuilder<TMessage[]>(path.join(dir, 'aionui-chat-history', conversation_id + '.txt'));
 };
 
-const conversationHistoryProxy = (options: typeof _chatMessageFile, dir: string) => {
+const conversationHistoryProxy = (getRawFile: () => JsonFile<ConversationHistoryData>, getDir: () => string) => {
   return {
-    ...options,
+    // Spread cannot be lazy, but we forward the essential methods manually.
     async set(key: string, data: TMessage[]) {
       const conversation_id = key;
-      const storage = buildMessageListStorage(conversation_id, dir);
+      const storage = buildMessageListStorage(conversation_id, getDir());
       return await storage.setJson(data);
     },
     async get(key: string): Promise<TMessage[]> {
       const conversation_id = key;
-      const storage = buildMessageListStorage(conversation_id, dir);
+      const storage = buildMessageListStorage(conversation_id, getDir());
       const data = await storage.toJson();
       if (Array.isArray(data)) return data;
       return [];
     },
     backup(conversation_id: string) {
+      const dir = getDir();
       const storage = buildMessageListStorage(conversation_id, dir);
       return storage.backup(path.join(dir, 'aionui-chat-history', 'backup', conversation_id + '_' + Date.now() + '.txt'));
     },
   };
 };
 
-const chatMessageFile = conversationHistoryProxy(_chatMessageFile, cacheDir);
+const chatMessageFile = conversationHistoryProxy(
+  () => { ensureStorageInit(); return _chatMessageFile; },
+  () => { ensureStorageInit(); return cacheDir; },
+);
 
 /**
  * 获取助手规则目录路径
  * Get assistant rules directory path
  */
 const getAssistantsDir = () => {
+  ensureStorageInit();
   return path.join(cacheDir, STORAGE_PATH.assistants);
 };
 
@@ -337,6 +378,7 @@ const getAssistantsDir = () => {
  * Get skills scripts directory path
  */
 const getSkillsDir = () => {
+  ensureStorageInit();
   return path.join(cacheDir, STORAGE_PATH.skills);
 };
 
@@ -541,8 +583,6 @@ const getBuiltinAssistants = (): AcpBackendConfig[] => {
       presetAgentType: preset.presetAgentType || 'gemini',
       // Cowork 默认启用所有内置技能 / Cowork enables all builtin skills by default
       enabledSkills: defaultEnabledSkills,
-      // 复制快捷提示词 / Copy quick prompts
-      promptsI18n: preset.promptsI18n,
     });
   }
 
@@ -582,6 +622,9 @@ const getDefaultMcpServers = (): IMcpServer[] => {
 const initStorage = async () => {
   console.log('[AionUi] Starting storage initialization...');
 
+  // Ensure lazy storage singletons are ready before anything else
+  ensureStorageInit();
+
   // 1. 先执行数据迁移（在任何目录创建之前）
   await migrateLegacyData();
 
@@ -609,6 +652,33 @@ const initStorage = async () => {
   } catch (error) {
     console.error('[AionUi] Failed to initialize default MCP servers:', error);
   }
+
+  // 4.1 合并扩展贡献的 MCP servers 到 mcp.config（跳过已存在的同名 server）
+  // Merge extension-contributed MCP servers into mcp.config (skip duplicates by name)
+  try {
+    const { ExtensionRegistry } = await import('@/extensions');
+    const extensionMcpServers = ExtensionRegistry.getInstance().getMcpServers();
+    if (extensionMcpServers.length > 0) {
+      const currentConfig: IMcpServer[] = (await configFile.get('mcp.config').catch((): IMcpServer[] => [])) || [];
+      const existingNames = new Set(currentConfig.map((s: IMcpServer) => s.name));
+      let added = 0;
+
+      for (const extServer of extensionMcpServers) {
+        if (!existingNames.has(extServer.name)) {
+          currentConfig.push(extServer);
+          existingNames.add(extServer.name);
+          added++;
+        }
+      }
+
+      if (added > 0) {
+        await configFile.set('mcp.config', currentConfig);
+        console.log(`[AionUi] Merged ${added} extension MCP servers into config`);
+      }
+    }
+  } catch (error) {
+    console.error('[AionUi] Failed to merge extension MCP servers:', error);
+  }
   // 5. 初始化内置助手（Assistants）
   try {
     // 5.1 初始化内置助手的规则文件到用户目录
@@ -619,6 +689,11 @@ const initStorage = async () => {
     // Initialize assistant config (metadata only, no context)
     const existingAgents = (await configFile.get('acp.customAgents').catch((): undefined => undefined)) || [];
     const builtinAssistants = getBuiltinAssistants();
+
+    // 5.2.0 合并扩展贡献的助手（Extension-contributed assistants）
+    // Merge extension-contributed assistants into builtin list
+    const extensionAssistants = ExtensionRegistry.getInstance().getAssistants();
+    const allPresetAssistants = [...builtinAssistants, ...extensionAssistants];
 
     // 5.2.1 检查是否需要迁移：修复老版本中所有助手都默认启用的问题
     // Check if migration needed: fix old version where all assistants were enabled by default
@@ -632,18 +707,20 @@ const initStorage = async () => {
     const builtinSkillsMigrationDone = await configFile.get(BUILTIN_SKILLS_MIGRATION_KEY).catch(() => false);
     const needsBuiltinSkillsMigration = !builtinSkillsMigrationDone;
 
-    // 5.2.3 检查是否需要迁移：为内置助手添加 promptsI18n
-    // Check if migration needed: add promptsI18n for builtin assistants
-    const PROMPTS_I18N_MIGRATION_KEY = 'migration.promptsI18nAdded';
-    const promptsI18nMigrationDone = await configFile.get(PROMPTS_I18N_MIGRATION_KEY).catch(() => false);
-    const needsPromptsI18nMigration = !promptsI18nMigrationDone;
+    // 5.2.3 检查是否需要迁移：当 enabledByDefault 列表扩展后，同步启用新增的默认助手
+    // Check if migration needed: sync newly added enabledByDefault assistants
+    // Use a versioned key that tracks which IDs have been processed as enabledByDefault
+    const ENABLED_BY_DEFAULT_SYNC_KEY = 'migration.enabledByDefaultSyncedIds';
+    const previouslySyncedIds: string[] = (await configFile.get(ENABLED_BY_DEFAULT_SYNC_KEY).catch((): string[] => [])) || [];
+    const currentEnabledByDefaultIds = builtinAssistants.filter((a) => a.enabled).map((a) => a.id);
+    const newEnabledByDefaultIds = new Set(currentEnabledByDefaultIds.filter((id) => !previouslySyncedIds.includes(id)));
 
-    // 更新或添加内置助手配置
-    // Update or add built-in assistant configurations
+    // 更新或添加内置/扩展助手配置
+    // Update or add built-in and extension assistant configurations
     const updatedAgents = [...existingAgents];
     let hasChanges = false;
 
-    for (const builtin of builtinAssistants) {
+    for (const builtin of allPresetAssistants) {
       const index = updatedAgents.findIndex((a: AcpBackendConfig) => a.id === builtin.id);
       if (index >= 0) {
         // 更新现有内置助手配置
@@ -653,18 +730,16 @@ const initStorage = async () => {
         // Update only if key fields are different to avoid unnecessary writes
         // 注意：enabled 和 presetAgentType 字段由用户控制，不参与 shouldUpdate 判断
         // Note: enabled and presetAgentType are user-controlled, not included in shouldUpdate check
-        // 检查 promptsI18n 是否需要更新（如果不存在或已更改，或需要迁移）
-        // Check if promptsI18n needs update (if missing, changed, or migration needed)
-        const promptsI18nMissing = !existing.promptsI18n && builtin.promptsI18n;
-        const promptsI18nChanged = existing.promptsI18n && builtin.promptsI18n && JSON.stringify(existing.promptsI18n) !== JSON.stringify(builtin.promptsI18n);
-        const needsPromptsI18nUpdate = needsPromptsI18nMigration || promptsI18nMissing || promptsI18nChanged;
-        const shouldUpdate = existing.name !== builtin.name || existing.description !== builtin.description || existing.avatar !== builtin.avatar || existing.isPreset !== builtin.isPreset || existing.isBuiltin !== builtin.isBuiltin || needsPromptsI18nUpdate;
+        const shouldUpdate = existing.name !== builtin.name || existing.description !== builtin.description || existing.avatar !== builtin.avatar || existing.isPreset !== builtin.isPreset || existing.isBuiltin !== builtin.isBuiltin;
         // 当 enabled 是 undefined 或需要迁移时，设置默认值（Cowork 启用，其他禁用）
         // When enabled is undefined or migration needed, set default value (Cowork enabled, others disabled)
         const needsEnabledFix = existing.enabled === undefined || needsMigration;
+        // 新增默认启用助手同步：如果此助手是新加入 enabledByDefault 列表的，强制启用
+        // Sync newly added enabledByDefault: force enable if this assistant was newly added to enabledByDefault list
+        const isNewlyEnabledByDefault = newEnabledByDefaultIds.has(builtin.id) && existing.enabled === false;
         // 迁移时强制使用默认值，否则保留用户设置
         // Force default value during migration, otherwise preserve user setting
-        const resolvedEnabled = needsEnabledFix ? builtin.enabled : existing.enabled;
+        const resolvedEnabled = needsEnabledFix || isNewlyEnabledByDefault ? builtin.enabled : existing.enabled;
         // presetAgentType 由用户控制，未设置时使用内置默认值
         // presetAgentType is user-controlled, use builtin default if not set
         const resolvedPresetAgentType = existing.presetAgentType ?? builtin.presetAgentType;
@@ -677,7 +752,7 @@ const initStorage = async () => {
           resolvedEnabledSkills = builtin.enabledSkills;
         }
 
-        if (shouldUpdate || needsEnabledFix || (needsSkillsMigration && resolvedEnabledSkills !== existing.enabledSkills) || needsPromptsI18nUpdate) {
+        if (shouldUpdate || needsEnabledFix || isNewlyEnabledByDefault || (needsSkillsMigration && resolvedEnabledSkills !== existing.enabledSkills)) {
           // 保留用户已设置的 enabled 和 presetAgentType / Preserve user-set enabled and presetAgentType
           updatedAgents[index] = {
             ...existing,
@@ -685,8 +760,6 @@ const initStorage = async () => {
             enabled: resolvedEnabled,
             presetAgentType: resolvedPresetAgentType,
             enabledSkills: resolvedEnabledSkills,
-            // 确保 promptsI18n 被更新 / Ensure promptsI18n is updated
-            promptsI18n: builtin.promptsI18n,
           };
           hasChanges = true;
         }
@@ -709,8 +782,9 @@ const initStorage = async () => {
     if (needsBuiltinSkillsMigration) {
       await configFile.set(BUILTIN_SKILLS_MIGRATION_KEY, true);
     }
-    if (needsPromptsI18nMigration) {
-      await configFile.set(PROMPTS_I18N_MIGRATION_KEY, true);
+    // 保存已同步的 enabledByDefault ID 列表 / Save synced enabledByDefault IDs
+    if (newEnabledByDefaultIds.size > 0 || previouslySyncedIds.length === 0) {
+      await configFile.set(ENABLED_BY_DEFAULT_SYNC_KEY, currentEnabledByDefaultIds);
     }
   } catch (error) {
     console.error('[AionUi] Failed to initialize builtin assistants:', error);
@@ -723,20 +797,43 @@ const initStorage = async () => {
     console.error('[InitStorage] Database initialization failed, falling back to file-based storage:', error);
   }
 
+  // 7. 合并扩展贡献的主题到 CSS 主题列表
+  // Merge extension-contributed themes into CSS themes list
+  try {
+    const extensionThemes = ExtensionRegistry.getInstance().getThemes();
+    if (extensionThemes.length > 0) {
+      const existingThemes: ICssTheme[] = await configFile.get('css.themes').catch((): ICssTheme[] => []) || [];
+      // Remove old extension themes (id starts with 'ext-') and re-add current ones
+      const userThemes = existingThemes.filter((t: ICssTheme) => !t.id.startsWith('ext-'));
+      const mergedThemes = [...userThemes, ...extensionThemes];
+      await configFile.set('css.themes', mergedThemes);
+      console.log(`[AionUi] Merged ${extensionThemes.length} extension theme(s)`);
+    }
+  } catch (error) {
+    console.error('[AionUi] Failed to merge extension themes:', error);
+  }
+
   application.systemInfo.provider(() => {
     return Promise.resolve(getSystemDir());
   });
 };
 
-export const ProcessConfig = configFile;
+// Exported storage accessors – trigger lazy init so they work correctly even
+// when this module is loaded inside an esbuild bundle with reversed init order.
+export const ProcessConfig = new Proxy({} as JsonFile<IConfigStorageRefer>, {
+  get(_t, prop, receiver) { ensureStorageInit(); return Reflect.get(configFile, prop, receiver); },
+});
 
-export const ProcessChat = chatFile;
+export const ProcessChat = chatFile; // chatFile is already lazy via Proxy
 
-export const ProcessChatMessage = chatMessageFile;
+export const ProcessChatMessage = chatMessageFile; // chatMessageFile already calls ensureStorageInit
 
-export const ProcessEnv = envFile;
+export const ProcessEnv = new Proxy({} as JsonFile<IEnvStorageRefer>, {
+  get(_t, prop, receiver) { ensureStorageInit(); return Reflect.get(envFile, prop, receiver); },
+});
 
 export const getSystemDir = () => {
+  ensureStorageInit();
   return {
     cacheDir: cacheDir,
     // getDataPath() returns CLI-safe path (symlink on macOS) to avoid spaces

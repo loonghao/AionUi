@@ -102,7 +102,7 @@ export class McpService {
    */
   async getAgentMcpConfigs(
     agents: Array<{
-      backend: AcpBackend;
+      backend: AcpBackend | string;
       name: string;
       cliPath?: string;
     }>
@@ -185,7 +185,7 @@ export class McpService {
   async syncMcpToAgents(
     mcpServers: IMcpServer[],
     agents: Array<{
-      backend: AcpBackend;
+      backend: AcpBackend | string;
       name: string;
       cliPath?: string;
     }>
@@ -239,7 +239,7 @@ export class McpService {
   async removeMcpFromAgents(
     mcpServerName: string,
     agents: Array<{
-      backend: AcpBackend;
+      backend: AcpBackend | string;
       name: string;
       cliPath?: string;
     }>

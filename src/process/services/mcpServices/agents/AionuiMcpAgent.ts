@@ -8,6 +8,7 @@ import type { McpOperationResult } from '../McpProtocol';
 import { AbstractMcpAgent } from '../McpProtocol';
 import type { IMcpServer } from '../../../../common/storage';
 import { ProcessConfig } from '../../../initStorage';
+import { ExtensionRegistry } from '@/extensions';
 
 /**
  * AionUi 本地 MCP 代理实现
@@ -47,12 +48,29 @@ export class AionuiMcpAgent extends AbstractMcpAgent {
         return [];
       }
 
-      // 返回所有配置的 MCP servers
-      // 过滤出 @office-ai/aioncli-core 支持的传输类型
-      return mcpConfig.filter((server: IMcpServer) => {
-        const supportedTypes = this.getSupportedTransports();
+      const supportedTypes = this.getSupportedTransports();
+
+      // 返回所有配置的 MCP servers，过滤出支持的传输类型
+      const userServers = mcpConfig.filter((server: IMcpServer) => {
         return supportedTypes.includes(server.transport.type);
       });
+
+      // Merge extension-contributed MCP servers (skip duplicates by name)
+      const extensionServers = ExtensionRegistry.getInstance().getMcpServers();
+      if (extensionServers.length > 0) {
+        const existingNames = new Set(userServers.map((s: IMcpServer) => s.name));
+        for (const extServer of extensionServers) {
+          if (existingNames.has(extServer.name)) {
+            console.warn(`[AionuiMcpAgent] Skipping extension MCP server "${extServer.name}" (conflicts with user config)`);
+            continue;
+          }
+          if (supportedTypes.includes(extServer.transport.type)) {
+            userServers.push(extServer);
+          }
+        }
+      }
+
+      return userServers;
     } catch (error) {
       console.warn('[AionuiMcpAgent] Failed to detect MCP servers:', error);
       return [];

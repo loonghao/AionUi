@@ -1,6 +1,6 @@
 # RFC-001: AionUI 统一扩展系统（Unified Extension System）
 
-- **Status**: Draft
+- **Status**: Phase 1–3 Implemented
 - **Date**: 2026-02-13
 - **Author**: AionUI Team
 
@@ -884,3 +884,157 @@ https://aionui.dev/extensions/awesome-pack
 | **v2.1** | 热加载（watch 模式，无需重启） |
 | **v2.2** | Extension API（扩展可调用 AionUI 内部 API） |
 | **v3.0** | 沙箱隔离（VM2/Worker Thread） |
+
+---
+
+## 14. 设计改进记录（2026-02-17）
+
+### 14.1 P0 级别改进
+
+#### 14.1.1 环境变量严格模式
+
+**问题**：`${env:VAR_NAME}` 未定义时静默替换为空字符串，导致配置错误难以调试。
+
+**解决方案**：
+- 新增 `AIONUI_STRICT_ENV` 环境变量
+- 严格模式下未定义变量抛出 `UndefinedEnvVariableError`
+- 增加汇总日志提示未定义变量
+
+```typescript
+// 启用严格模式
+AIONUI_STRICT_ENV=1
+
+// 代码中使用
+const resolved = resolveEnvInObject(data, { strictMode: true });
+```
+
+#### 14.1.2 动态代码加载安全警告
+
+**问题**：扩展代码在主进程中执行，无沙箱隔离，存在安全风险。
+
+**解决方案**：
+- 在 `ChannelPluginResolver` 和 `WebuiResolver` 添加安全警告文档
+- 新增 `AIONUI_EXTENSION_DEBUG` 环境变量启用安全日志
+- 加载外部代码时输出风险警告
+
+```typescript
+// 启用安全调试日志
+AIONUI_EXTENSION_DEBUG=1
+```
+
+### 14.2 P1 级别改进
+
+#### 14.2.1 presetAgentType 枚举化
+
+**问题**：`presetAgentType` 使用任意字符串，缺乏类型安全。
+
+**解决方案**：
+- 改为枚举类型：`['gemini', 'claude', 'codex', 'codebuddy', 'opencode']`
+- 导出 `PRESET_AGENT_TYPES` 常量供外部使用
+
+#### 14.2.2 条件验证
+
+**问题**：`connectionType=cli` 时无需 `endpoint`，`connectionType=websocket` 时需要 `endpoint`，但无验证。
+
+**解决方案**：
+- 添加 `refine` 验证逻辑
+- CLI 适配器需要 `cliCommand` 或 `defaultCliPath`
+- WebSocket/HTTP 适配器需要 `endpoint`
+
+#### 14.2.3 ID 唯一性验证
+
+**问题**：同一扩展内可能有重复的 ID，导致运行时冲突。
+
+**解决方案**：
+- 添加 `validateContributeIds` 函数验证所有贡献项 ID 唯一性
+- 覆盖：ACP adapter ID、Assistant ID、MCP server name、Skill name、Channel plugin type、Theme ID、WebUI 路由路径、WS 命名空间
+
+### 14.3 P2 级别改进
+
+#### 14.3.1 生命周期管理
+
+**问题**：无法在运行时禁用/启用扩展。
+
+**解决方案**：
+- `ExtensionRegistry` 新增 `disableExtension(name)` 和 `enableExtension(name)` 方法
+- 维护 `extensionStates: Map<string, ExtensionState>` 跟踪状态
+- 禁用后自动重新解析贡献项
+
+```typescript
+const registry = ExtensionRegistry.getInstance();
+
+// 禁用扩展
+registry.disableExtension('my-extension', 'Security concern');
+
+// 启用扩展
+registry.enableExtension('my-extension');
+
+// 查询状态
+const state = registry.getExtensionState('my-extension');
+```
+
+#### 14.3.2 依赖管理
+
+**问题**：无扩展间依赖声明和版本兼容性检查。
+
+**解决方案**：
+- 新增 `dependencies` 字段：`{ extensionName: "^1.0.0" }`
+- 新增 `engine` 字段声明 AionUI 版本兼容性
+- 新增 `dependencyResolver.ts` 模块：
+  - 版本范围检查（支持 `^` 和 `~`）
+  - 循环依赖检测
+  - 拓扑排序确定加载顺序
+
+```jsonc
+{
+  "name": "my-extension",
+  "dependencies": {
+    "base-utils": "^1.0.0",
+    "shared-skills": "~2.1.0"
+  },
+  "engine": {
+    "aionui": "^1.2.0"
+  }
+}
+```
+
+#### 14.3.3 热重载
+
+**问题**：开发扩展时需要重启应用才能看到更改。
+
+**解决方案**：
+- 新增 `ExtensionWatcher` 类实现文件监听
+- 监听扩展目录的增删和 `aion-extension.json` 变更
+- 使用防抖机制避免频繁重载
+- 默认仅在开发环境启用
+
+```typescript
+import { ExtensionWatcher } from './extensions';
+
+const watcher = new ExtensionWatcher({ enableInProduction: true });
+watcher.onReload((extensions) => {
+  console.log('Extensions reloaded:', extensions.length);
+});
+watcher.start();
+```
+
+### 14.4 新增文件清单
+
+| 文件 | 说明 |
+|------|------|
+| `src/extensions/dependencyResolver.ts` | 依赖验证和拓扑排序 |
+| `src/extensions/hotReload.ts` | 文件监听和热重载 |
+
+### 14.5 变更汇总
+
+| 类型 | 文件 | 变更内容 |
+|------|------|---------|
+| 修改 | `src/extensions/types.ts` | 枚举类型、条件验证、ID 唯一性、依赖字段 |
+| 修改 | `src/extensions/envResolver.ts` | 严格模式、错误类型 |
+| 修改 | `src/extensions/constants.ts` | 新增环境变量常量 |
+| 修改 | `src/extensions/ExtensionLoader.ts` | 选项配置、错误处理 |
+| 修改 | `src/extensions/ExtensionRegistry.ts` | 生命周期管理 |
+| 修改 | `src/extensions/resolvers/ChannelPluginResolver.ts` | 安全警告 |
+| 修改 | `src/extensions/resolvers/WebuiResolver.ts` | 安全警告 |
+| 修改 | `src/extensions/index.ts` | 导出新模块 |
+| 修改 | `schemas/aion-extension-v1.json` | 新增依赖字段、改进约束 |

@@ -20,8 +20,10 @@ let unregisterBroadcaster: (() => void) | null = null;
  * Note: No longer calling bridge.adapter(), instead registering with main adapter
  * 这样可以避免覆盖 Electron IPC 适配器
  * This avoids overwriting the Electron IPC adapter
+ *
+ * @returns The WebSocketManager instance (for extension WS handler registration)
  */
-export function initWebAdapter(wss: WebSocketServer): void {
+export function initWebAdapter(wss: WebSocketServer): WebSocketManager {
   const wsManager = new WebSocketManager(wss);
   wsManager.initialize();
 
@@ -39,6 +41,8 @@ export function initWebAdapter(wss: WebSocketServer): void {
       emitter.emit(name, data);
     }
   });
+
+  return wsManager;
 }
 
 /**

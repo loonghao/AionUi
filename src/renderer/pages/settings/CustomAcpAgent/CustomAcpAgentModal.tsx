@@ -4,7 +4,7 @@
  *
  * Redesigned modal with CLI card selection, logo display, and collapsible advanced JSON config.
  */
-import type { AcpBackendConfig, AcpBackend } from '@/types/acpTypes';
+import type { AcpBackendConfig, AcpBackend, AcpBackendAll } from '@/types/acpTypes';
 import { ACP_BACKENDS_ALL } from '@/types/acpTypes';
 import { Alert, Input, Spin, Collapse } from '@arco-design/web-react';
 import React, { useState, useCallback, useEffect } from 'react';
@@ -51,7 +51,7 @@ interface ValidationResult {
 }
 
 interface DetectedAgent {
-  backend: AcpBackend;
+  backend: AcpBackend | string;
   name: string;
   cliPath?: string;
   acpArgs?: string[];
@@ -86,10 +86,10 @@ const CustomAcpAgentModal: React.FC<CustomAcpAgentModalProps> = ({ visible, agen
         // Only show third-party standalone CLIs (goose, auggie, kimi, opencode)
         const filteredAgents = response.data.filter((a) => {
           if (['gemini', 'custom', 'codex'].includes(a.backend)) return false;
-          const backendConfig = ACP_BACKENDS_ALL[a.backend];
+          const backendConfig = ACP_BACKENDS_ALL[a.backend as AcpBackendAll];
           return backendConfig && !backendConfig.authRequired;
         });
-        setDetectedAgents(filteredAgents);
+        setDetectedAgents(filteredAgents as DetectedAgent[]);
       }
     } catch (error) {
       console.error('Failed to load detected agents:', error);
