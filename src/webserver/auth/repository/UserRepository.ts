@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { getDatabase } from '@process/database/export';
+import { getDatabase } from '@process/database/index';
 import type { IUser, IQueryResult } from '@process/database/types';
 
 /**

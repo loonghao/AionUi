@@ -5,15 +5,9 @@
  */
 
 import type { TChatConversation } from '@/common/storage';
-import AcpAgentManager from './task/AcpAgentManager';
-import { CodexAgentManager } from '@/agent/codex';
-import NanoBotAgentManager from './task/NanoBotAgentManager';
-import OpenClawAgentManager from './task/OpenClawAgentManager';
-// import type { AcpAgentTask } from './task/AcpAgentTask';
 import { ProcessChat } from './initStorage';
 import type AgentBaseTask from './task/BaseAgentManager';
-import { GeminiAgentManager } from './task/GeminiAgentManager';
-import { getDatabase } from './database/export';
+import { getDatabase } from './database/index';
 
 const taskList: {
   id: string;
@@ -35,7 +29,7 @@ const getTaskById = (id: string) => {
   return taskList.find((item) => item.id === id)?.task;
 };
 
-const buildConversation = (conversation: TChatConversation, options?: BuildConversationOptions) => {
+const buildConversation = async (conversation: TChatConversation, options?: BuildConversationOptions): Promise<AgentBaseTask<unknown> | null> => {
   // If not skipping cache, check for existing task
   if (!options?.skipCache) {
     const task = getTaskById(conversation.id);
@@ -44,85 +38,72 @@ const buildConversation = (conversation: TChatConversation, options?: BuildConve
     }
   }
 
+  let task: AgentBaseTask<unknown> | null = null;
+
   switch (conversation.type) {
     case 'gemini': {
-      const task = new GeminiAgentManager(
+      const { GeminiAgentManager } = await import('./task/GeminiAgentManager');
+      task = new GeminiAgentManager(
         {
           workspace: conversation.extra.workspace,
           conversation_id: conversation.id,
           webSearchEngine: conversation.extra.webSearchEngine,
-          // 系统规则 / System rules
           presetRules: conversation.extra.presetRules,
-          // 向后兼容 / Backward compatible
           contextContent: conversation.extra.contextContent,
-          // 启用的 skills 列表（通过 SkillManager 加载）/ Enabled skills list (loaded via SkillManager)
           enabledSkills: conversation.extra.enabledSkills,
-          // Runtime options / 运行时选项
           yoloMode: options?.yoloMode,
-          // Persisted session mode for resume / 持久化的会话模式用于恢复
           sessionMode: conversation.extra.sessionMode,
         },
         conversation.model
       );
-      // Only cache if not skipping cache
-      if (!options?.skipCache) {
-        taskList.push({ id: conversation.id, task });
-      }
-      return task;
+      break;
     }
     case 'acp': {
-      const task = new AcpAgentManager({
+      const { default: AcpAgentManager } = await import('./task/AcpAgentManager');
+      task = new AcpAgentManager({
         ...conversation.extra,
         conversation_id: conversation.id,
-        // Runtime options / 运行时选项
         yoloMode: options?.yoloMode,
       });
-      if (!options?.skipCache) {
-        taskList.push({ id: conversation.id, task });
-      }
-      return task;
+      break;
     }
     case 'codex': {
-      const task = new CodexAgentManager({
+      const { CodexAgentManager } = await import('@/agent/codex');
+      task = new CodexAgentManager({
         ...conversation.extra,
         conversation_id: conversation.id,
-        // Runtime options / 运行时选项
         yoloMode: options?.yoloMode,
-        // Persisted session mode for resume / 持久化的会话模式用于恢复
         sessionMode: conversation.extra.sessionMode,
       });
-      if (!options?.skipCache) {
-        taskList.push({ id: conversation.id, task });
-      }
-      return task;
+      break;
     }
     case 'openclaw-gateway': {
-      const task = new OpenClawAgentManager({
+      const { default: OpenClawAgentManager } = await import('./task/OpenClawAgentManager');
+      task = new OpenClawAgentManager({
         ...conversation.extra,
         conversation_id: conversation.id,
-        // Runtime options / 运行时选项
         yoloMode: options?.yoloMode,
       });
-      if (!options?.skipCache) {
-        taskList.push({ id: conversation.id, task });
-      }
-      return task;
+      break;
     }
     case 'nanobot': {
-      const task = new NanoBotAgentManager({
+      const { default: NanoBotAgentManager } = await import('./task/NanoBotAgentManager');
+      task = new NanoBotAgentManager({
         ...conversation.extra,
         conversation_id: conversation.id,
         yoloMode: options?.yoloMode,
       });
-      if (!options?.skipCache) {
-        taskList.push({ id: conversation.id, task });
-      }
-      return task;
+      break;
     }
     default: {
       return null;
     }
   }
+
+  if (task && !options?.skipCache) {
+    taskList.push({ id: conversation.id, task });
+  }
+  return task;
 };
 
 const getTaskByIdRollbackBuild = async (id: string, options?: BuildConversationOptions): Promise<AgentBaseTask<unknown>> => {
@@ -144,7 +125,8 @@ const getTaskByIdRollbackBuild = async (id: string, options?: BuildConversationO
 
   if (dbResult.success && dbResult.data) {
     console.log(`[WorkerManage] Building conversation from database: ${id}`);
-    return buildConversation(dbResult.data, options);
+    const task = await buildConversation(dbResult.data, options);
+    if (task) return task;
   }
 
   // Fallback to file storage
@@ -152,7 +134,8 @@ const getTaskByIdRollbackBuild = async (id: string, options?: BuildConversationO
   const conversation = list?.find((item) => item.id === id);
   if (conversation) {
     console.log(`[WorkerManage] Building conversation from file storage: ${id}`);
-    return buildConversation(conversation, options);
+    const task = await buildConversation(conversation, options);
+    if (task) return task;
   }
 
   console.error('[WorkerManage] Conversation not found in database or file storage:', id);

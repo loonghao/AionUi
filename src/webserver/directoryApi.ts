@@ -25,22 +25,6 @@ const DEFAULT_ALLOWED_DIRECTORIES = [process.cwd(), os.homedir()]
 const router = Router();
 
 /**
- * Check if a path falls within the allowed directory trees
- */
-function isPathAllowed(targetPath: string, allowedBasePaths = DEFAULT_ALLOWED_DIRECTORIES): boolean {
-  let resolved = path.resolve(targetPath);
-  try {
-    resolved = fs.realpathSync(resolved);
-  } catch {
-    // keep resolved if realpath fails (e.g. path doesn't exist yet)
-  }
-  return allowedBasePaths.some((basePath) => {
-    const relative = path.relative(basePath, resolved);
-    return relative === '' || (!relative.startsWith('..') && !path.isAbsolute(relative));
-  });
-}
-
-/**
  * Validate and sanitize user-provided file paths to prevent directory traversal attacks
  * This function serves as a path sanitizer for CodeQL security analysis
  * 验证和清理用户提供的文件路径，防止目录遍历攻击
@@ -197,7 +181,7 @@ router.get('/browse', fileOperationLimiter, (req, res) => {
       currentPath: safeDir,
       parentPath: path.dirname(safeDir),
       items,
-      canGoUp: path.dirname(safeDir) !== safeDir && isPathAllowed(path.dirname(safeDir)),
+      canGoUp: safeDir !== path.parse(safeDir).root,
     });
   } catch (error) {
     console.error('Directory browse error:', error);

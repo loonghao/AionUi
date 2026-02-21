@@ -43,10 +43,10 @@
 
 <p align="center">
 
-[✨ Cowork 演示](#-cowork-演示) ·
-[🤔 為什麼選擇 AionUi？](#-為什麼選擇-aionui-而非-claude-cowork) ·
-[🚀 快速開始](#-快速開始) ·
-[💬 社群](#-社群與支援)
+[✨ Cowork 演示](#cowork--ai-agent與您並肩工作) ·
+[🤔 為什麼選擇 AionUi？](#為什麼選擇-aionui-而非-claude-cowork) ·
+[🚀 快速開始](#快速開始) ·
+[💬 社群](#社群--支援)
 
 </p>
 
@@ -194,7 +194,7 @@ _您的 24/7 AI 助手 — 手機、平板、電腦，隨時隨地都能用。_
 > **設定：** AionUi 設定 → WebUI 設定 → Channel，配置 Bot Token。
 
 <p align="center">
-  <img src="./resources/remote-telegram copy.png" alt="Cowork from Anywhere" width="800">
+  <img src="./resources/remote-telegram.png" alt="Cowork from Anywhere" width="800">
 </p>
 
 > [遠端網際網路存取教學](https://github.com/iOfficeAI/AionUi/wiki/Remote-Internet-Access-Guide-Chinese)

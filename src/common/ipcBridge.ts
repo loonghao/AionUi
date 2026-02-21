@@ -8,7 +8,7 @@ import type { IConfirmation } from '@/common/chatLib';
 import { bridge } from '@office-ai/platform';
 import type { OpenDialogOptions } from 'electron';
 import type { McpSource } from '../process/services/mcpServices/McpProtocol';
-import type { AcpBackend, AcpBackendAll, AcpModelInfo, PresetAgentType } from '../types/acpTypes';
+import type { AcpBackend, AcpBackendAll, PresetAgentType } from '../types/acpTypes';
 import type { IMcpServer, IProvider, TChatConversation, TProviderWithModel } from './storage';
 import type { PreviewHistoryTarget, PreviewSnapshotInfo } from './types/preview';
 import type { UpdateCheckRequest, UpdateCheckResult, UpdateDownloadProgressEvent, UpdateDownloadRequest, UpdateDownloadResult } from './updateTypes';
@@ -63,7 +63,6 @@ export const application = {
   restart: bridge.buildProvider<void, void>('restart-app'), // 重启应用
   openDevTools: bridge.buildProvider<void, void>('open-dev-tools'), // 打开开发者工具
   systemInfo: bridge.buildProvider<{ cacheDir: string; workDir: string; platform: string; arch: string }, void>('system.info'), // 获取系统信息
-  getPath: bridge.buildProvider<string, { name: 'desktop' | 'home' | 'downloads' }>('app.get-path'), // 获取系统路径
   updateSystemInfo: bridge.buildProvider<IBridgeResponse, { cacheDir: string; workDir: string }>('system.update-info'), // 更新系统信息
   getZoomFactor: bridge.buildProvider<number, void>('app.get-zoom-factor'),
   setZoomFactor: bridge.buildProvider<number, { factor: number }>('app.set-zoom-factor'),
@@ -92,22 +91,6 @@ export const fs = {
   readFileBuffer: bridge.buildProvider<ArrayBuffer, { path: string }>('read-file-buffer'), // 读取二进制文件为 ArrayBuffer
   createTempFile: bridge.buildProvider<string, { fileName: string }>('create-temp-file'), // 创建临时文件
   writeFile: bridge.buildProvider<boolean, { path: string; data: Uint8Array | string }>('write-file'), // 写入文件
-  createZip: bridge.buildProvider<
-    boolean,
-    {
-      path: string;
-      requestId?: string;
-      files: Array<{
-        /** Path inside zip (supports nested paths like "topic-1/workspace/a.txt") */
-        name: string;
-        /** Text or binary content to write into zip */
-        content?: string | Uint8Array;
-        /** Absolute file path on disk, zip bridge will read and pack it */
-        sourcePath?: string;
-      }>;
-    }
-  >('create-zip-file'), // 创建 zip 文件
-  cancelZip: bridge.buildProvider<boolean, { requestId: string }>('cancel-zip-file'), // 取消 zip 创建任务
   getFileMetadata: bridge.buildProvider<IFileMetadata, { path: string }>('get-file-metadata'), // 获取文件元数据
   copyFilesToWorkspace: bridge.buildProvider<
     // 返回成功与部分失败的详细状态，便于前端提示用户 / Return details for successful and failed copies for better UI feedback
@@ -188,7 +171,7 @@ export const acpConversation = {
   getAvailableAgents: bridge.buildProvider<
     IBridgeResponse<
       Array<{
-        backend: AcpBackend;
+        backend: AcpBackend | string;
         name: string;
         cliPath?: string;
         customAgentId?: string;
@@ -196,7 +179,9 @@ export const acpConversation = {
         context?: string;
         avatar?: string;
         presetAgentType?: PresetAgentType;
-        supportedTransports?: string[];
+        connectionType?: 'cli' | 'websocket' | 'http';
+        endpoint?: string;
+        models?: string[];
       }>
     >,
     void
@@ -210,20 +195,14 @@ export const acpConversation = {
   // Get current session mode for ACP agents
   // 获取 ACP 代理的当前会话模式
   getMode: bridge.buildProvider<IBridgeResponse<{ mode: string; initialized: boolean }>, { conversationId: string }>('acp.get-mode'),
-  // Get model info for ACP agents (model name and available models)
-  // 获取 ACP 代理的模型信息（模型名称和可用模型）
-  getModelInfo: bridge.buildProvider<IBridgeResponse<{ modelInfo: AcpModelInfo | null }>, { conversationId: string }>('acp.get-model-info'),
-  // Set model for ACP agents
-  // 设置 ACP 代理的模型
-  setModel: bridge.buildProvider<IBridgeResponse<{ modelInfo: AcpModelInfo | null }>, { conversationId: string; modelId: string }>('acp.set-model'),
 };
 
 // MCP 服务相关接口
 export const mcpService = {
-  getAgentMcpConfigs: bridge.buildProvider<IBridgeResponse<Array<{ source: McpSource; servers: IMcpServer[] }>>, Array<{ backend: AcpBackend; name: string; cliPath?: string }>>('mcp.get-agent-configs'),
+  getAgentMcpConfigs: bridge.buildProvider<IBridgeResponse<Array<{ source: McpSource; servers: IMcpServer[] }>>, Array<{ backend: AcpBackend | string; name: string; cliPath?: string }>>('mcp.get-agent-configs'),
   testMcpConnection: bridge.buildProvider<IBridgeResponse<{ success: boolean; tools?: Array<{ name: string; description?: string }>; error?: string; needsAuth?: boolean; authMethod?: 'oauth' | 'basic'; wwwAuthenticate?: string }>, IMcpServer>('mcp.test-connection'),
-  syncMcpToAgents: bridge.buildProvider<IBridgeResponse<{ success: boolean; results: Array<{ agent: string; success: boolean; error?: string }> }>, { mcpServers: IMcpServer[]; agents: Array<{ backend: AcpBackend; name: string; cliPath?: string }> }>('mcp.sync-to-agents'),
-  removeMcpFromAgents: bridge.buildProvider<IBridgeResponse<{ success: boolean; results: Array<{ agent: string; success: boolean; error?: string }> }>, { mcpServerName: string; agents: Array<{ backend: AcpBackend; name: string; cliPath?: string }> }>('mcp.remove-from-agents'),
+  syncMcpToAgents: bridge.buildProvider<IBridgeResponse<{ success: boolean; results: Array<{ agent: string; success: boolean; error?: string }> }>, { mcpServers: IMcpServer[]; agents: Array<{ backend: AcpBackend | string; name: string; cliPath?: string }> }>('mcp.sync-to-agents'),
+  removeMcpFromAgents: bridge.buildProvider<IBridgeResponse<{ success: boolean; results: Array<{ agent: string; success: boolean; error?: string }> }>, { mcpServerName: string; agents: Array<{ backend: AcpBackend | string; name: string; cliPath?: string }> }>('mcp.remove-from-agents'),
   // OAuth 相关接口
   checkOAuthStatus: bridge.buildProvider<IBridgeResponse<{ isAuthenticated: boolean; needsLogin: boolean; error?: string }>, IMcpServer>('mcp.check-oauth-status'),
   loginMcpOAuth: bridge.buildProvider<IBridgeResponse<{ success: boolean; error?: string }>, { server: IMcpServer; config?: any }>('mcp.login-oauth'),
@@ -443,8 +422,6 @@ export interface ICreateConversationParams {
     presetAssistantId?: string;
     /** Initial session mode selected on Guid page (from AgentModeSelector) */
     sessionMode?: string;
-    /** User-selected Codex model from Guid page */
-    codexModel?: string;
     /** Runtime validation snapshot used for post-switch strong checks (OpenClaw) */
     runtimeValidation?: {
       expectedWorkspace?: string;
@@ -527,4 +504,57 @@ export const channel = {
   pairingRequested: bridge.buildEmitter<IChannelPairingRequest>('channel.pairing-requested'),
   pluginStatusChanged: bridge.buildEmitter<{ pluginId: string; status: IChannelPluginStatus }>('channel.plugin-status-changed'),
   userAuthorized: bridge.buildEmitter<IChannelUser>('channel.user-authorized'),
+};
+
+// Performance monitoring
+export const performance = {
+  getStats: bridge.buildProvider<
+    {
+      success: boolean;
+      stats?: Record<string, { count: number; totalDuration: number; avgDuration: number; maxDuration: number }>;
+      memory?: {
+        current: {
+          timestamp: number;
+          heapUsed: number;
+          heapTotal: number;
+          external: number;
+          rss: number;
+        };
+        growth: {
+          heapUsed: number;
+          heapTotal: number;
+          rss: number;
+        };
+        snapshots: number;
+      } | null;
+    },
+    void
+  >('performance.get-stats'),
+
+  clear: bridge.buildProvider<{ success: boolean }, void>('performance.clear'),
+
+  generateReport: bridge.buildProvider<
+    {
+      success: boolean;
+      report?: {
+        summary: {
+          totalOperations: number;
+          slowOperations: number;
+          avgDuration: number;
+        };
+        topSlowOperations: Array<{
+          operation: string;
+          count: number;
+          avgDuration: number;
+          maxDuration: number;
+        }>;
+        memoryUsage?: {
+          current: number;
+          growth: number;
+        };
+        recommendations: string[];
+      };
+    },
+    void
+  >('performance.generate-report'),
 };

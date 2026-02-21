@@ -7,9 +7,20 @@
 // ==================== Plugin Types ====================
 
 /**
- * Supported platform types for plugins
+ * Supported platform types for plugins.
+ * Open string type to allow extension plugins to register custom platform types.
+ * @see RFC-003 §3.1
  */
-export type PluginType = 'telegram' | 'slack' | 'discord' | 'lark' | 'dingtalk';
+export type PluginType = string;
+
+/** Built-in plugin types (compile-time constants for internal type checks) */
+export const BUILTIN_PLUGIN_TYPES = ['telegram', 'slack', 'discord', 'lark', 'dingtalk'] as const;
+export type BuiltinPluginType = (typeof BUILTIN_PLUGIN_TYPES)[number];
+
+/** Type guard: check if a type string is a built-in plugin type */
+export function isBuiltinPluginType(type: string): type is BuiltinPluginType {
+  return (BUILTIN_PLUGIN_TYPES as readonly string[]).includes(type);
+}
 
 /**
  * Plugin connection status
@@ -17,7 +28,10 @@ export type PluginType = 'telegram' | 'slack' | 'discord' | 'lark' | 'dingtalk';
 export type PluginStatus = 'created' | 'initializing' | 'ready' | 'starting' | 'running' | 'stopping' | 'stopped' | 'error';
 
 /**
- * Plugin credentials (stored encrypted in database)
+ * Plugin credentials (stored encrypted in database).
+ * Retains built-in fields for backward compatibility while supporting
+ * arbitrary extension fields via index signature.
+ * @see RFC-003 §3.2
  */
 export interface IPluginCredentials {
   // Telegram
@@ -30,6 +44,8 @@ export interface IPluginCredentials {
   // DingTalk
   clientId?: string;
   clientSecret?: string;
+  // Extension fields (dynamic key-value pairs)
+  [key: string]: string | undefined;
 }
 
 /**

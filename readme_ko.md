@@ -43,10 +43,10 @@
 
 <p align="center">
 
-[✨ Cowork 실연](#-cowork-실연) ·
-[🤔 왜 AionUi를 선택해야 하나요?](#-왜-aionui를-claude-cowork보다-선택해야-하나요) ·
-[🚀 빠른 시작](#-빠른-시작) ·
-[💬 커뮤니티](#-커뮤니티-및-지원)
+[✨ Cowork 실연](#cowork--ai-agents가-함께-작업합니다) ·
+[🤔 왜 AionUi를 선택해야 하나요?](#왜-aionui를-claude-cowork보다-선택해야-하나요) ·
+[🚀 빠른 시작](#빠른-시작) ·
+[💬 커뮤니티](#커뮤니티--지원)
 
 </p>
 
@@ -194,7 +194,7 @@ _여러분의 24/7 AI 어시스턴트 — 어떤 기기, 어디서나 AionUi에 
 > **설정:** AionUi 설정 → WebUI 설정 → Channel, Bot Token을 구성하세요.
 
 <p align="center">
-  <img src="./resources/remote-telegram copy.png" alt="Cowork from Anywhere" width="800">
+  <img src="./resources/remote-telegram.png" alt="Cowork from Anywhere" width="800">
 </p>
 
 > [원격 인터넷 접근 튜토리얼](https://github.com/iOfficeAI/AionUi/wiki/Remote-Internet-Access-Guide-Chinese)

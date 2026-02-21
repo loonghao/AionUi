@@ -7,21 +7,24 @@
 import crypto from 'crypto';
 import { ipcMain } from 'electron';
 import { webui } from '@/common/ipcBridge';
+import { startWebServerWithInstance } from '@/webserver/index';
+import { cleanupWebAdapter } from '@/webserver/adapter';
 import { AuthService } from '@/webserver/auth/service/AuthService';
 import { UserRepository } from '@/webserver/auth/repository/UserRepository';
 import { AUTH_CONFIG, SERVER_CONFIG } from '@/webserver/config/constants';
 import { WebuiService } from './services/WebuiService';
-// 预加载 webserver 模块避免启动时延迟 / Preload webserver module to avoid startup delay
-import { startWebServerWithInstance } from '@/webserver/index';
-import { cleanupWebAdapter } from '@/webserver/adapter';
 
-// WebUI 服务器实例引用 / WebUI server instance reference
-let webServerInstance: {
+// WebUI 服务器实例类型 / WebUI server instance type
+type WebServerInstance = {
   server: import('http').Server;
   wss: import('ws').WebSocketServer;
   port: number;
   allowRemote: boolean;
-} | null = null;
+};
+
+// Module-level singleton — safe now that electron-vite uses a single Rollup bundle
+// (no more esbuild bundle isolation from pluginExternalizeDynamicImports).
+let webServerInstance: WebServerInstance | null = null;
 
 // QR Token 存储 (内存中，有效期短) / QR Token store (in-memory, short-lived)
 // 增加 allowLocalOnly 标志，限制本地模式下只能从本地网络使用
@@ -178,18 +181,16 @@ function cleanupExpiredTokens(): void {
 }
 
 /**
- * 设置 WebUI 服务器实例
- * Set WebUI server instance (called from webserver/index.ts)
+ * Set WebUI server instance (module-level singleton).
  */
-export function setWebServerInstance(instance: typeof webServerInstance): void {
+export function setWebServerInstance(instance: WebServerInstance | null): void {
   webServerInstance = instance;
 }
 
 /**
- * 获取 WebUI 服务器实例
- * Get WebUI server instance
+ * Get WebUI server instance (module-level singleton).
  */
-export function getWebServerInstance(): typeof webServerInstance {
+export function getWebServerInstance(): WebServerInstance | null {
   return webServerInstance;
 }
 
@@ -219,7 +220,6 @@ export function initWebuiBridge(): void {
       const port = requestedPort ?? SERVER_CONFIG.DEFAULT_PORT;
       const remote = allowRemote ?? false;
 
-      // 使用预加载的模块 / Use preloaded module
       const instance = await startWebServerWithInstance(port, remote);
       webServerInstance = instance;
 
@@ -260,14 +260,15 @@ export function initWebuiBridge(): void {
   // 停止 WebUI / Stop WebUI
   webui.stop.provider(async () => {
     try {
-      if (!webServerInstance) {
+      const currentInstance = webServerInstance;
+      if (!currentInstance) {
         return {
           success: false,
           msg: 'WebUI is not running',
         };
       }
 
-      const { server, wss } = webServerInstance;
+      const { server, wss } = currentInstance;
 
       // 关闭所有 WebSocket 连接 / Close all WebSocket connections
       wss.clients.forEach((client) => {
@@ -333,8 +334,8 @@ export function initWebuiBridge(): void {
 
   // 生成二维码登录 token / Generate QR login token
   webui.generateQRToken.provider(async () => {
-    // 检查 webServerInstance 状态
-    if (!webServerInstance) {
+    const wsInstance = webServerInstance;
+    if (!wsInstance) {
       return {
         success: false,
         msg: 'WebUI is not running. Please start WebUI first.',
@@ -346,7 +347,7 @@ export function initWebuiBridge(): void {
       cleanupExpiredTokens();
 
       // 获取服务器配置 / Get server configuration
-      const { port, allowRemote } = webServerInstance;
+      const { port, allowRemote } = wsInstance;
 
       // 生成随机 token / Generate random token
       const token = crypto.randomBytes(32).toString('hex');
@@ -477,8 +478,8 @@ export function initWebuiBridge(): void {
 
   // 直接 IPC: 生成二维码 token / Direct IPC: Generate QR token
   ipcMain.handle('webui-direct-generate-qr-token', async () => {
-    // 检查 webServerInstance 状态
-    if (!webServerInstance) {
+    const wsInstance = webServerInstance;
+    if (!wsInstance) {
       return {
         success: false,
         msg: 'WebUI is not running. Please start WebUI first.',
@@ -490,7 +491,7 @@ export function initWebuiBridge(): void {
       cleanupExpiredTokens();
 
       // 获取服务器配置 / Get server configuration
-      const { port, allowRemote } = webServerInstance;
+      const { port, allowRemote } = wsInstance;
 
       // 生成随机 token / Generate random token
       const token = crypto.randomBytes(32).toString('hex');

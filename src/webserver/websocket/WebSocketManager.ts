@@ -17,12 +17,25 @@ interface ClientInfo {
 }
 
 /**
+ * WebSocket namespace handler interface for extension-contributed WS handlers.
+ * @see RFC-004 §4.2
+ */
+export interface WsNamespaceHandler {
+  onMessage?(data: any, ws: WebSocket): Promise<void> | void;
+  onConnect?(ws: WebSocket): void;
+  onDisconnect?(ws: WebSocket): void;
+}
+
+/**
  * WebSocket 管理器 - 管理客户端连接、心跳检测和消息处理
  * WebSocket Manager - Manages client connections, heartbeat detection, and message handling
  */
 export class WebSocketManager {
   private clients: Map<WebSocket, ClientInfo> = new Map();
   private heartbeatTimer: NodeJS.Timeout | null = null;
+
+  /** Extension namespace handlers (RFC-004 §4.2) */
+  private namespaceHandlers: Map<string, WsNamespaceHandler> = new Map();
 
   constructor(private wss: WebSocketServer) {}
 
@@ -52,8 +65,43 @@ export class WebSocketManager {
       this.setupCloseHandler(ws);
       this.setupErrorHandler(ws);
 
+      // Notify extension namespace handlers of new connection
+      for (const handler of this.namespaceHandlers.values()) {
+        handler.onConnect?.(ws);
+      }
+
       console.log('[WebSocketManager] Client connected');
     });
+  }
+
+  /**
+   * Register a namespace handler for extension WebSocket messages.
+   * Messages whose name starts with "namespace:" will be routed to the handler.
+   * @see RFC-004 §4.2.1
+   */
+  registerNamespace(namespace: string, handler: WsNamespaceHandler): boolean {
+    if (this.namespaceHandlers.has(namespace)) {
+      console.warn(`[WS] Namespace already registered: ${namespace}`);
+      return false;
+    }
+
+    this.namespaceHandlers.set(namespace, handler);
+    console.log(`[WS] Registered namespace: ${namespace}`);
+    return true;
+  }
+
+  /**
+   * Route a message to the appropriate namespace handler.
+   * Returns true if a matching handler was found and invoked.
+   */
+  private routeToNamespace(name: string, data: any, ws: WebSocket): boolean {
+    for (const [ns, handler] of this.namespaceHandlers) {
+      if (name.startsWith(ns + ':') || name === ns) {
+        handler.onMessage?.(data, ws);
+        return true;
+      }
+    }
+    return false;
   }
 
   /**
@@ -107,6 +155,11 @@ export class WebSocketManager {
           return;
         }
 
+        // Try namespace routing for extension WS handlers (RFC-004 §4.2)
+        if (this.routeToNamespace(name, data, ws)) {
+          return;
+        }
+
         // Forward other messages to bridge system
         onMessage(name, data, ws);
       } catch (error) {
@@ -143,6 +196,10 @@ export class WebSocketManager {
   private setupCloseHandler(ws: WebSocket): void {
     ws.on('close', () => {
       this.clients.delete(ws);
+      // Notify extension namespace handlers of disconnection
+      for (const handler of this.namespaceHandlers.values()) {
+        handler.onDisconnect?.(ws);
+      }
       console.log('[WebSocketManager] Client disconnected');
     });
   }

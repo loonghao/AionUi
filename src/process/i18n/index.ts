@@ -5,32 +5,36 @@
  */
 
 import i18n from 'i18next';
+import * as fs from 'fs';
+import * as path from 'path';
 import { ConfigStorage } from '@/common/storage';
 
-// Import language resources
-import zhCN from '@/renderer/i18n/locales/zh-CN.json';
-import enUS from '@/renderer/i18n/locales/en-US.json';
-import jaJP from '@/renderer/i18n/locales/ja-JP.json';
-import zhTW from '@/renderer/i18n/locales/zh-TW.json';
-import koKR from '@/renderer/i18n/locales/ko-KR.json';
+// Load language JSON files at runtime instead of static import.
+// This avoids bundling ~350KB of JSON into the main process build.
+function loadLocaleResources(): Record<string, { translation: Record<string, unknown> }> {
+  const localesDir = path.resolve(__dirname, '../renderer/main_window/src/renderer/i18n/locales');
+  // In development, files are in the source tree
+  const devLocalesDir = path.resolve(__dirname, '../../src/renderer/i18n/locales');
 
-const resources = {
-  'zh-CN': {
-    translation: zhCN,
-  },
-  'en-US': {
-    translation: enUS,
-  },
-  'ja-JP': {
-    translation: jaJP,
-  },
-  'zh-TW': {
-    translation: zhTW,
-  },
-  'ko-KR': {
-    translation: koKR,
-  },
-};
+  const dir = fs.existsSync(localesDir) ? localesDir : devLocalesDir;
+  const locales = ['zh-CN', 'en-US', 'ja-JP', 'zh-TW', 'ko-KR'];
+  const resources: Record<string, { translation: Record<string, unknown> }> = {};
+
+  for (const locale of locales) {
+    try {
+      const filePath = path.join(dir, `${locale}.json`);
+      if (fs.existsSync(filePath)) {
+        resources[locale] = { translation: JSON.parse(fs.readFileSync(filePath, 'utf-8')) };
+      }
+    } catch {
+      // Skip locale if file cannot be read
+    }
+  }
+
+  return resources;
+}
+
+const resources = loadLocaleResources();
 
 // Initialize i18next for main process
 i18n

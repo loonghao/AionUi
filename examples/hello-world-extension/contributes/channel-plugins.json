@@ -1,0 +1,39 @@
+[
+  {
+    "type": "telegram",
+    "name": "Telegram Bot",
+    "nameI18n": {
+      "zh-CN": "Telegram 机器人"
+    },
+    "description": "Example Telegram Bot integration via Bot API",
+    "entryPoint": "plugins/telegram/index.js",
+    "credentialFields": [
+      {
+        "key": "token",
+        "label": "Bot Token",
+        "type": "password",
+        "required": true
+      }
+    ],
+    "configFields": [
+      {
+        "key": "allowedChatIds",
+        "label": "Allowed Chat IDs (comma-separated)",
+        "type": "text"
+      },
+      {
+        "key": "parseMode",
+        "label": "Parse Mode",
+        "type": "select",
+        "options": ["Markdown", "MarkdownV2", "HTML"],
+        "default": "MarkdownV2"
+      },
+      {
+        "key": "enableWebhook",
+        "label": "Use Webhook (instead of polling)",
+        "type": "boolean",
+        "default": false
+      }
+    ]
+  }
+]

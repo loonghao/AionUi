@@ -3,6 +3,7 @@ import { ASSISTANT_PRESETS } from '@/common/presets/assistantPresets';
 import { ConfigStorage } from '@/common/storage';
 import { resolveLocaleKey } from '@/common/utils';
 import coworkSvg from '@/renderer/assets/cowork.svg';
+import { resolveExtensionAssetUrl } from '@/renderer/utils/platform';
 import EmojiPicker from '@/renderer/components/EmojiPicker';
 import MarkdownView from '@/renderer/components/Markdown';
 import type { AcpBackendConfig, PresetAgentType } from '@/types/acpTypes';
@@ -75,6 +76,22 @@ const AssistantManagement: React.FC<AssistantManagementProps> = ({ message }) =>
   const avatarImageMap: Record<string, string> = {
     'cowork.svg': coworkSvg,
     '🛠️': coworkSvg,
+  };
+
+  /**
+   * Resolve avatar value to a displayable image URL.
+   * Checks the hardcoded map first, then resolves aion-asset:// / http URLs.
+   * Returns undefined for plain text / emoji values so they render as text.
+   */
+  const getAvatarImageSrc = (avatar: string | undefined): string | undefined => {
+    if (!avatar?.trim()) return undefined;
+    const trimmed = avatar.trim();
+    return (
+      avatarImageMap[trimmed] ||
+      resolveExtensionAssetUrl(
+        trimmed.startsWith('aion-asset://') || trimmed.startsWith('http') ? trimmed : undefined
+      )
+    );
   };
 
   // Auto focus textarea when drawer opens
@@ -204,7 +221,7 @@ const AssistantManagement: React.FC<AssistantManagementProps> = ({ message }) =>
     (assistant: AcpBackendConfig, size = 32) => {
       const resolvedAvatar = assistant.avatar?.trim();
       const hasEmojiAvatar = resolvedAvatar && isEmoji(resolvedAvatar);
-      const avatarImage = resolvedAvatar ? avatarImageMap[resolvedAvatar] : undefined;
+      const avatarImage = getAvatarImageSrc(resolvedAvatar);
       const iconSize = Math.floor(size * 0.5);
       const emojiSize = Math.floor(size * 0.6);
 
@@ -216,7 +233,7 @@ const AssistantManagement: React.FC<AssistantManagementProps> = ({ message }) =>
         </Avatar.Group>
       );
     },
-    [avatarImageMap, isEmoji]
+    [getAvatarImageSrc, isEmoji]
   );
 
   const handleEdit = async (assistant: AcpBackendConfig) => {
@@ -419,8 +436,8 @@ const AssistantManagement: React.FC<AssistantManagementProps> = ({ message }) =>
 
   const handleDeleteClick = () => {
     if (!activeAssistant) return;
-    // 不能删除内置助手 / Cannot delete builtin assistants
-    if (activeAssistant.isBuiltin) {
+    // 不能删除内置助手和扩展助手 / Cannot delete builtin or extension assistants
+    if (activeAssistant.isBuiltin || (activeAssistant as AcpBackendConfig & { _source?: string })._source === 'extension') {
       message.warning(t('settings.cannotDeleteBuiltin', { defaultValue: 'Cannot delete builtin assistants' }));
       return;
     }
@@ -509,7 +526,14 @@ const AssistantManagement: React.FC<AssistantManagementProps> = ({ message }) =>
                     <div className='flex items-center gap-12px min-w-0'>
                       {renderAvatarGroup(assistant, 28)}
                       <div className='min-w-0'>
-                        <div className='font-medium text-t-primary truncate'>{assistant.nameI18n?.[localeKey] || assistant.name}</div>
+                        <div className='flex items-center gap-4px font-medium text-t-primary truncate'>
+                          <span className='truncate'>{assistant.nameI18n?.[localeKey] || assistant.name}</span>
+                          {(assistant as AcpBackendConfig & { _source?: string })._source === 'extension' && (
+                            <span className='flex-shrink-0 text-9px px-4px py-1px bg-purple-100 text-purple-600 rounded border border-purple-200 font-bold uppercase' style={{ lineHeight: '14px' }}>
+                              Ext
+                            </span>
+                          )}
+                        </div>
                         <div className='text-12px text-t-secondary truncate'>{assistant.descriptionI18n?.[localeKey] || assistant.description || ''}</div>
                       </div>
                     </div>
@@ -610,13 +634,13 @@ const AssistantManagement: React.FC<AssistantManagementProps> = ({ message }) =>
               <div className='mt-10px flex items-center gap-12px'>
                 {activeAssistant?.isBuiltin ? (
                   <Avatar shape='square' size={40} className='bg-bg-1 rounded-4px'>
-                    {editAvatar && avatarImageMap[editAvatar.trim()] ? <img src={avatarImageMap[editAvatar.trim()]} alt='' width={24} height={24} style={{ objectFit: 'contain' }} /> : editAvatar ? <span className='text-24px'>{editAvatar}</span> : <Robot theme='outline' size={20} />}
+                    {editAvatar && getAvatarImageSrc(editAvatar) ? <img src={getAvatarImageSrc(editAvatar)} alt='' width={24} height={24} style={{ objectFit: 'contain' }} /> : editAvatar && !editAvatar.trim().startsWith('aion-asset://') ? <span className='text-24px'>{editAvatar}</span> : <Robot theme='outline' size={20} />}
                   </Avatar>
                 ) : (
                   <EmojiPicker value={editAvatar} onChange={(emoji) => setEditAvatar(emoji)} placement='br'>
                     <div className='cursor-pointer'>
                       <Avatar shape='square' size={40} className='bg-bg-1 rounded-4px hover:bg-fill-2 transition-colors'>
-                        {editAvatar && avatarImageMap[editAvatar.trim()] ? <img src={avatarImageMap[editAvatar.trim()]} alt='' width={24} height={24} style={{ objectFit: 'contain' }} /> : editAvatar ? <span className='text-24px'>{editAvatar}</span> : <Robot theme='outline' size={20} />}
+                        {editAvatar && getAvatarImageSrc(editAvatar) ? <img src={getAvatarImageSrc(editAvatar)} alt='' width={24} height={24} style={{ objectFit: 'contain' }} /> : editAvatar && !editAvatar.trim().startsWith('aion-asset://') ? <span className='text-24px'>{editAvatar}</span> : <Robot theme='outline' size={20} />}
                       </Avatar>
                     </div>
                   </EmojiPicker>

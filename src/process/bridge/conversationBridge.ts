@@ -144,11 +144,11 @@ export function initConversationBridge(): void {
     }
   });
 
-  ipcBridge.conversation.createWithConversation.provider(({ conversation, sourceConversationId }) => {
+  ipcBridge.conversation.createWithConversation.provider(async ({ conversation, sourceConversationId }) => {
     try {
       conversation.createTime = Date.now();
       conversation.modifyTime = Date.now();
-      WorkerManage.buildConversation(conversation);
+      await WorkerManage.buildConversation(conversation);
 
       // Save to database only
       const db = getDatabase();

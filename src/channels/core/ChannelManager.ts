@@ -5,6 +5,7 @@
  */
 
 import { getDatabase } from '@/process/database';
+import { ExtensionRegistry } from '@/extensions';
 import { getChannelMessageService } from '../agent/ChannelMessageService';
 import { getChannelDefaultModel } from '../actions/SystemActions';
 import { ActionExecutor } from '../gateway/ActionExecutor';
@@ -15,6 +16,7 @@ import { LarkPlugin } from '../plugins/lark/LarkPlugin';
 import { TelegramPlugin } from '../plugins/telegram/TelegramPlugin';
 import { resolveChannelConvType } from '../types';
 import type { IChannelPluginConfig, PluginType } from '../types';
+import { isBuiltinPluginType } from '../types';
 import { SessionManager } from './SessionManager';
 
 /**
@@ -45,10 +47,13 @@ export class ChannelManager {
 
   private constructor() {
     // Private constructor for singleton pattern
-    // Register available plugins
+    // Register built-in plugins
     registerPlugin('telegram', TelegramPlugin);
     registerPlugin('lark', LarkPlugin);
     registerPlugin('dingtalk', DingTalkPlugin);
+
+    // Register extension-contributed plugins (RFC-003 §3.5)
+    this.loadExtensionPlugins();
   }
 
   /**
@@ -161,6 +166,30 @@ export class ChannelManager {
    */
   isInitialized(): boolean {
     return this.initialized;
+  }
+
+  /**
+   * Load and register extension-contributed channel plugins.
+   * Skips any extension plugin whose type conflicts with a built-in type.
+   * @see RFC-003 §3.5
+   */
+  private loadExtensionPlugins(): void {
+    const registry = ExtensionRegistry.getInstance();
+    const extPlugins = registry.getChannelPlugins();
+
+    for (const [type, { constructor, meta }] of extPlugins) {
+      if (isBuiltinPluginType(type)) {
+        console.warn(
+          `[ChannelManager] Extension plugin type "${type}" conflicts with built-in, skipped`
+        );
+        continue;
+      }
+
+      registerPlugin(type, constructor);
+      console.log(
+        `[ChannelManager] Registered extension plugin: ${type} (${meta.name})`
+      );
+    }
   }
 
   /**

@@ -92,7 +92,7 @@ export class CodexFileOperationHandler {
 
       ipcBridge.fileStream.contentUpdate.emit(eventData);
     } catch (error) {
-      console.error('[CodexFileOperationHandler] ❌ Failed to emit file stream update:', error);
+      console.error('[CodexFileOperationHandler] Failed to emit file stream update:', error);
     }
 
     // 发送操作反馈消息

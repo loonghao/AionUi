@@ -1,0 +1,32 @@
+{
+  "$schema": "https://aionui.dev/schemas/aion-extension-v1.json",
+  "name": "hello-world",
+  "displayName": "Hello World Extension",
+  "displayNameI18n": {
+    "zh-CN": "Hello World 示例扩展"
+  },
+  "version": "1.0.0",
+  "description": "A comprehensive example extension demonstrating all contribution types",
+  "descriptionI18n": {
+    "zh-CN": "展示所有扩展贡献类型的综合示例"
+  },
+  "author": "AionUI Team",
+  "icon": "assets/icon.svg",
+  "contributes": {
+    // Use $file: references to keep each contribution type in its own file
+    // 使用 $file: 引用将每个贡献类型拆分到独立文件中，方便维护
+    "acpAdapters": "$file:contributes/acp-adapters.json",
+    "mcpServers": "$file:contributes/mcp-servers.json",
+    "assistants": "$file:contributes/assistants.json",
+    "skills": [
+      {
+        "name": "code-review",
+        "description": "A skill that helps review code with best practices",
+        "file": "skills/code-review/SKILL.md"
+      }
+    ],
+    "channelPlugins": "$file:contributes/channel-plugins.json",
+    "webui": "$file:contributes/webui.json",
+    "themes": "$file:contributes/themes.json"
+  }
+}

@@ -8,6 +8,7 @@ import { WORKSPACE_STATE_EVENT, dispatchWorkspaceToggleEvent } from '@renderer/u
 import type { WorkspaceStateDetail } from '@renderer/utils/workspaceEvents';
 import { useLayoutContext } from '@/renderer/context/LayoutContext';
 import { isElectronDesktop, isMacOS } from '@/renderer/utils/platform';
+import LogoSvg from '@/renderer/assets/logo.svg';
 
 interface TitlebarProps {
   workspaceAvailable: boolean;
@@ -84,7 +85,10 @@ const Titlebar: React.FC<TitlebarProps> = ({ workspaceAvailable }) => {
           </button>
         )}
       </div>
-      <div className='app-titlebar__brand'>{appTitle}</div>
+      <div className='app-titlebar__brand flex items-center gap-8px'>
+        <img src={LogoSvg} alt='AionUi Logo' className='w-18px h-18px' />
+        <span>{appTitle}</span>
+      </div>
       <div className='app-titlebar__toolbar'>
         {showWorkspaceButton && (
           <button type='button' className='app-titlebar__button' onClick={handleWorkspaceToggle} aria-label={workspaceTooltip}>

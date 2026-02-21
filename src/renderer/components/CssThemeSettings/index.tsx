@@ -57,18 +57,22 @@ const CssThemeSettings: React.FC = () => {
         const { normalized, updated } = normalizeUserThemes(savedThemes);
         const activeId = await ConfigStorage.get('css.activeThemeId');
 
+        // 分离扩展主题和用户主题 / Separate extension themes and user themes
+        const extensionThemes = normalized.filter((t) => t.id.startsWith('ext-'));
+        const userThemes = normalized.filter((t) => !t.isPreset && !t.id.startsWith('ext-'));
+
         if (updated) {
           await ConfigStorage.set(
             'css.themes',
-            normalized.filter((t) => !t.isPreset)
+            normalized.filter((t) => !t.isPreset || t.id.startsWith('ext-'))
           );
         }
 
         // 对预设主题也应用背景图 CSS 处理 / Apply background CSS processing to preset themes as well
         const normalizedPresets = PRESET_THEMES.map((theme) => ensureBackgroundCss(theme));
 
-        // 合并预设主题和用户主题 / Merge preset themes with user themes
-        const allThemes = [...normalizedPresets, ...normalized.filter((t) => !t.isPreset)];
+        // 合并预设主题、扩展主题和用户主题 / Merge preset, extension and user themes
+        const allThemes = [...normalizedPresets, ...extensionThemes, ...userThemes];
 
         setThemes(allThemes);
         // 如果没有保存的主题 ID，默认选择 default-theme / Default to default-theme if no saved theme ID
@@ -155,9 +159,9 @@ const CssThemeSettings: React.FC = () => {
           updatedThemes = [...themes, newTheme];
         }
 
-        // 只保存用户主题 / Only save user themes
-        const userThemes = updatedThemes.filter((t) => !t.isPreset);
-        await ConfigStorage.set('css.themes', userThemes);
+        // 保存用户主题和扩展主题（不保存内置预设）/ Save user themes and extension themes (not builtin presets)
+        const persistThemes = updatedThemes.filter((t) => !t.isPreset || t.id.startsWith('ext-'));
+        await ConfigStorage.set('css.themes', persistThemes);
 
         setThemes(updatedThemes);
         setModalVisible(false);
@@ -183,8 +187,8 @@ const CssThemeSettings: React.FC = () => {
         onOk: async () => {
           try {
             const updatedThemes = themes.filter((t) => t.id !== themeId);
-            const userThemes = updatedThemes.filter((t) => !t.isPreset);
-            await ConfigStorage.set('css.themes', userThemes);
+            const persistThemes = updatedThemes.filter((t) => !t.isPreset || t.id.startsWith('ext-'));
+            await ConfigStorage.set('css.themes', persistThemes);
 
             // 如果删除的是当前激活主题，清除激活状态 / If deleting active theme, clear active state
             if (activeThemeId === themeId) {
@@ -243,6 +247,15 @@ const CssThemeSettings: React.FC = () => {
             {activeThemeId === theme.id && (
               <div className='absolute top-8px right-8px'>
                 <CheckOne theme='filled' size='20' fill='var(--color-primary)' />
+              </div>
+            )}
+
+            {/* 扩展标记 / Extension badge */}
+            {theme.id.startsWith('ext-') && (
+              <div className='absolute top-8px left-8px'>
+                <span className='text-9px px-4px py-1px bg-purple-100/90 text-purple-600 rounded border border-purple-200 font-bold uppercase backdrop-blur-sm' style={{ lineHeight: '14px' }}>
+                  Ext
+                </span>
               </div>
             )}
           </div>

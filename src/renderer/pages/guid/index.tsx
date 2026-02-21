@@ -10,7 +10,22 @@ import type { IProvider, TProviderWithModel } from '@/common/storage';
 import { ConfigStorage } from '@/common/storage';
 import { resolveLocaleKey, uuid } from '@/common/utils';
 import coworkSvg from '@/renderer/assets/cowork.svg';
-import { getAgentLogo } from '@/renderer/utils/agentLogo';
+import AuggieLogo from '@/renderer/assets/logos/auggie.svg';
+import ClaudeLogo from '@/renderer/assets/logos/claude.svg';
+import CodeBuddyLogo from '@/renderer/assets/logos/codebuddy.svg';
+import CodexLogo from '@/renderer/assets/logos/codex.svg';
+import DroidLogo from '@/renderer/assets/logos/droid.svg';
+import GeminiLogo from '@/renderer/assets/logos/gemini.svg';
+import GitHubLogo from '@/renderer/assets/logos/github.svg';
+import GooseLogo from '@/renderer/assets/logos/goose.svg';
+import IflowLogo from '@/renderer/assets/logos/iflow.svg';
+import KimiLogo from '@/renderer/assets/logos/kimi.svg';
+import MistralLogo from '@/renderer/assets/logos/mistral.svg';
+import NanobotLogo from '@/renderer/assets/logos/nanobot.svg';
+import OpenClawLogo from '@/renderer/assets/logos/openclaw.svg';
+import OpenCodeLogo from '@/renderer/assets/logos/opencode.svg';
+import QoderLogo from '@/renderer/assets/logos/qoder.png';
+import QwenLogo from '@/renderer/assets/logos/qwen.svg';
 import AgentModeSelector from '@/renderer/components/AgentModeSelector';
 import { supportsModeSwitch } from '@/renderer/constants/agentModes';
 import FilePreview from '@/renderer/components/FilePreview';
@@ -25,9 +40,9 @@ import { allSupportedExts, getCleanFileNames, type FileMetadata } from '@/render
 import { iconColors } from '@/renderer/theme/colors';
 import { emitter } from '@/renderer/utils/emitter';
 import { buildDisplayMessage } from '@/renderer/utils/messageFiles';
+import { resolveExtensionAssetUrl } from '@/renderer/utils/platform';
 import { hasSpecificModelCapability } from '@/renderer/utils/modelCapabilities';
 import { updateWorkspaceTime } from '@/renderer/utils/workspaceHistory';
-import { DEFAULT_CODEX_MODELS, DEFAULT_CODEX_MODEL_ID } from '@/common/codex/codexModels';
 import { isAcpRoutedPresetType, type AcpBackend, type AcpBackendConfig, type PresetAgentType } from '@/types/acpTypes';
 import { Button, ConfigProvider, Dropdown, Input, Menu, Message, Tooltip } from '@arco-design/web-react';
 import { IconClose } from '@arco-design/web-react/icon';
@@ -160,8 +175,25 @@ const useModelList = () => {
   return { modelList, isGoogleAuth, geminiModeOptions };
 };
 
-// Agent Logo 现在统一从 @/renderer/utils/agentLogo 获取
-// Agent Logo is now unified from @/renderer/utils/agentLogo
+// Agent Logo 映射 (custom uses Robot icon from @icon-park/react)
+const AGENT_LOGO_MAP: Partial<Record<AcpBackend, string>> = {
+  claude: ClaudeLogo,
+  gemini: GeminiLogo,
+  qwen: QwenLogo,
+  codex: CodexLogo,
+  codebuddy: CodeBuddyLogo,
+  droid: DroidLogo,
+  iflow: IflowLogo,
+  goose: GooseLogo,
+  auggie: AuggieLogo,
+  kimi: KimiLogo,
+  opencode: OpenCodeLogo,
+  copilot: GitHubLogo,
+  qoder: QoderLogo,
+  vibe: MistralLogo,
+  'openclaw-gateway': OpenClawLogo,
+  nanobot: NanobotLogo,
+};
 const CUSTOM_AVATAR_IMAGE_MAP: Record<string, string> = {
   'cowork.svg': coworkSvg,
   '🛠️': coworkSvg,
@@ -248,7 +280,7 @@ const Guid: React.FC = () => {
   }, []);
   const [availableAgents, setAvailableAgents] = useState<
     Array<{
-      backend: AcpBackend;
+      backend: AcpBackend | string;
       name: string;
       cliPath?: string;
       customAgentId?: string;
@@ -313,7 +345,6 @@ const Guid: React.FC = () => {
   const selectedAgentInfo = useMemo(() => findAgentByKey(selectedAgentKey), [selectedAgentKey, availableAgents, customAgents]);
   const isPresetAgent = Boolean(selectedAgentInfo?.isPreset);
   const [selectedMode, setSelectedMode] = useState<string>('default');
-  const [selectedCodexModel, setSelectedCodexModel] = useState<string>(DEFAULT_CODEX_MODEL_ID);
   const [isPlusDropdownOpen, setIsPlusDropdownOpen] = useState(false);
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(true);
   const [typewriterPlaceholder, setTypewriterPlaceholder] = useState('');
@@ -439,8 +470,13 @@ const Guid: React.FC = () => {
         label,
         tokens,
         avatar,
-        avatarImage: avatar ? CUSTOM_AVATAR_IMAGE_MAP[avatar] : undefined,
-        logo: getAgentLogo(agent.backend) || undefined,
+        avatarImage: avatar
+          ? CUSTOM_AVATAR_IMAGE_MAP[avatar] ||
+            resolveExtensionAssetUrl(
+              avatar.startsWith('aion-asset://') || avatar.startsWith('http') ? avatar : undefined
+            )
+          : undefined,
+        logo: AGENT_LOGO_MAP[agent.backend] || agent.avatar,
       };
     });
   }, [availableAgents, customAgentAvatarMap]);
@@ -1014,8 +1050,6 @@ const Guid: React.FC = () => {
             presetAssistantId: isPreset ? codexAgentInfo?.customAgentId : undefined,
             // Initial session mode from Guid page mode selector
             sessionMode: selectedMode,
-            // User-selected Codex model from Guid page
-            codexModel: selectedCodexModel,
           },
         });
 
@@ -1165,11 +1199,11 @@ const Guid: React.FC = () => {
       // For preset with ACP-routed agent type (claude/opencode), use corresponding backend
       // Check if agent type changed from user selection (due to availability fallback or compatibility switch)
       const agentTypeChanged = selectedAgent !== finalEffectiveAgentType;
-      const acpBackend: PresetAgentType | undefined = agentTypeChanged
+      const acpBackend = (agentTypeChanged
         ? finalEffectiveAgentType // Agent type changed from selection, use the final effective type
         : isPreset && isAcpRoutedPresetType(finalEffectiveAgentType)
           ? finalEffectiveAgentType
-          : selectedAgent;
+          : selectedAgent) as PresetAgentType | undefined;
 
       // Get the agent info for the actual backend being used (might be different from selection after type change)
       const acpAgentInfo = agentTypeChanged ? findAgentByKey(acpBackend as string) : agentInfo || findAgentByKey(selectedAgentKey);
@@ -1452,7 +1486,7 @@ const Guid: React.FC = () => {
                   .filter((agent) => agent.backend !== 'custom')
                   .map((agent, index) => {
                     const isSelected = selectedAgentKey === getAgentKey(agent);
-                    const logoSrc = getAgentLogo(agent.backend);
+                    const logoSrc = AGENT_LOGO_MAP[agent.backend] || agent.avatar;
 
                     return (
                       <React.Fragment key={getAgentKey(agent)}>
@@ -1716,25 +1750,6 @@ const Guid: React.FC = () => {
                       {currentModel ? formatGeminiModelLabel(currentModel, currentModel.useModel) : t('conversation.welcome.selectModel')}
                     </Button>
                   </Dropdown>
-                ) : (selectedAgent === 'codex' && !isPresetAgent) || (isPresetAgent && currentEffectiveAgentInfo.agentType === 'codex') ? (
-                  <Dropdown
-                    trigger='click'
-                    droplist={
-                      <Menu selectedKeys={[selectedCodexModel]}>
-                        {DEFAULT_CODEX_MODELS.map((model) => (
-                          <Menu.Item key={model.id} className={model.id === selectedCodexModel ? '!bg-2' : ''} onClick={() => setSelectedCodexModel(model.id)}>
-                            <Tooltip position='right' trigger='hover' content={<div className='max-w-240px text-12px text-t-secondary leading-5'>{model.description}</div>}>
-                              <span>{model.label}</span>
-                            </Tooltip>
-                          </Menu.Item>
-                        ))}
-                      </Menu>
-                    }
-                  >
-                    <Button className={'sendbox-model-btn'} shape='round'>
-                      {DEFAULT_CODEX_MODELS.find((m) => m.id === selectedCodexModel)?.label || selectedCodexModel}
-                    </Button>
-                  </Dropdown>
                 ) : (
                   <Tooltip content={t('conversation.welcome.modelSwitchNotSupported')} position='top'>
                     <Button className={'sendbox-model-btn'} shape='round' style={{ cursor: 'default' }}>
@@ -1754,7 +1769,14 @@ const Guid: React.FC = () => {
                   >
                     {(() => {
                       const avatarValue = selectedAgentInfo.avatar?.trim();
-                      const avatarImage = avatarValue ? CUSTOM_AVATAR_IMAGE_MAP[avatarValue] : undefined;
+                      const avatarImage = avatarValue
+                        ? CUSTOM_AVATAR_IMAGE_MAP[avatarValue] ||
+                          resolveExtensionAssetUrl(
+                            avatarValue.startsWith('aion-asset://') || avatarValue.startsWith('http')
+                              ? avatarValue
+                              : undefined
+                          )
+                        : undefined;
                       return avatarImage ? <img src={avatarImage} alt='' width={16} height={16} style={{ objectFit: 'contain', flexShrink: 0 }} /> : avatarValue ? <span style={{ fontSize: 14, lineHeight: '16px', flexShrink: 0 }}>{avatarValue}</span> : <Robot theme='outline' size={16} style={{ flexShrink: 0 }} />;
                     })()}
                     {(() => {
@@ -1891,7 +1913,16 @@ const Guid: React.FC = () => {
                     })
                     .map((assistant) => {
                       const avatarValue = assistant.avatar?.trim();
-                      const avatarImage = avatarValue ? CUSTOM_AVATAR_IMAGE_MAP[avatarValue] : undefined;
+                      const avatarImage = avatarValue
+                        ? CUSTOM_AVATAR_IMAGE_MAP[avatarValue] ||
+                          resolveExtensionAssetUrl(
+                            avatarValue.startsWith('aion-asset://') ||
+                            avatarValue.startsWith('file://') ||
+                            avatarValue.startsWith('http')
+                              ? avatarValue
+                              : undefined
+                          )
+                        : undefined;
                       return (
                         <div
                           key={assistant.id}

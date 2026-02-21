@@ -70,8 +70,8 @@ export interface IConfigStorageRefer {
   'migration.coworkDefaultSkillsAdded'?: boolean;
   // 迁移标记：为所有内置助手添加默认启用的 skills / Migration flag: add default enabled skills for all builtin assistants
   'migration.builtinDefaultSkillsAdded_v2'?: boolean;
-  // 迁移标记：为所有内置助手添加 promptsI18n / Migration flag: add promptsI18n for all builtin assistants
-  'migration.promptsI18nAdded'?: boolean;
+  // 迁移标记：已同步过 enabledByDefault 状态的助手 ID 列表 / Migration flag: IDs of assistants that have been synced for enabledByDefault
+  'migration.enabledByDefaultSyncedIds'?: string[];
   // Telegram assistant default model / Telegram 助手默认模型
   'assistant.telegram.defaultModel'?: {
     id: string;
@@ -157,10 +157,6 @@ export type TChatConversation =
         enabledSkills?: string[];
         /** 预设助手 ID，用于在会话面板显示助手名称和头像 / Preset assistant ID for displaying name and avatar in conversation panel */
         presetAssistantId?: string;
-        /** 是否置顶会话 / Whether this conversation is pinned */
-        pinned?: boolean;
-        /** 置顶时间戳（毫秒）/ Pin timestamp in milliseconds */
-        pinnedAt?: number;
         /** Persisted session mode for resume support / 持久化的会话模式，用于恢复 */
         sessionMode?: string;
       }
@@ -180,18 +176,12 @@ export type TChatConversation =
           enabledSkills?: string[];
           /** 预设助手 ID，用于在会话面板显示助手名称和头像 / Preset assistant ID for displaying name and avatar in conversation panel */
           presetAssistantId?: string;
-          /** 是否置顶会话 / Whether this conversation is pinned */
-          pinned?: boolean;
-          /** 置顶时间戳（毫秒）/ Pin timestamp in milliseconds */
-          pinnedAt?: number;
           /** ACP 后端的 session UUID，用于会话恢复 / ACP backend session UUID for session resume */
           acpSessionId?: string;
           /** ACP session 最后更新时间 / Last update time of ACP session */
           acpSessionUpdatedAt?: number;
           /** Persisted session mode for resume support / 持久化的会话模式，用于恢复 */
           sessionMode?: string;
-          /** Persisted model ID for resume support / 持久化的模型 ID，用于恢复 */
-          currentModelId?: string;
         }
       >,
       'model'
@@ -209,14 +199,8 @@ export type TChatConversation =
           enabledSkills?: string[];
           /** 预设助手 ID，用于在会话面板显示助手名称和头像 / Preset assistant ID for displaying name and avatar in conversation panel */
           presetAssistantId?: string;
-          /** 是否置顶会话 / Whether this conversation is pinned */
-          pinned?: boolean;
-          /** 置顶时间戳（毫秒）/ Pin timestamp in milliseconds */
-          pinnedAt?: number;
           /** Persisted session mode for resume support / 持久化的会话模式，用于恢复 */
           sessionMode?: string;
-          /** User-selected Codex model from Guid page / 用户在引导页选择的 Codex 模型 */
-          codexModel?: string;
         }
       >,
       'model'
@@ -254,10 +238,6 @@ export type TChatConversation =
           enabledSkills?: string[];
           /** 预设助手 ID / Preset assistant ID */
           presetAssistantId?: string;
-          /** 是否置顶会话 / Whether this conversation is pinned */
-          pinned?: boolean;
-          /** 置顶时间戳（毫秒）/ Pin timestamp in milliseconds */
-          pinnedAt?: number;
         }
       >,
       'model'
@@ -272,10 +252,6 @@ export type TChatConversation =
           enabledSkills?: string[];
           /** 预设助手 ID / Preset assistant ID */
           presetAssistantId?: string;
-          /** 是否置顶会话 / Whether this conversation is pinned */
-          pinned?: boolean;
-          /** 置顶时间戳（毫秒）/ Pin timestamp in milliseconds */
-          pinnedAt?: number;
         }
       >,
       'model'
@@ -386,6 +362,10 @@ export interface IMcpServer {
   createdAt: number;
   updatedAt: number;
   originalJson: string; // 存储原始JSON配置，用于编辑时的准确显示
+  /** 配置来源标记 / Source of this configuration */
+  _source?: 'builtin' | 'extension' | 'user';
+  /** 来源扩展名 / Source extension name */
+  _extensionName?: string;
 }
 
 export interface IMcpTool {

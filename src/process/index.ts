@@ -12,16 +12,22 @@ import { app } from 'electron';
 if (app.isPackaged) {
   process.env.PREBUILDS_ONLY = '1';
 }
-import initStorage from './initStorage';
-import './initBridge';
-import './i18n'; // Initialize i18n for main process
-import { getChannelManager } from '@/channels';
 
 export const initializeProcess = async () => {
+  // Lazy-import heavy modules to keep main process build graph small.
+  // These are loaded at runtime only when initializeProcess is called.
+  const { default: initStorage } = await import('./initStorage');
   await initStorage();
+
+  // Initialize IPC bridges (pulls in all 24 bridge modules)
+  await import('./initBridge');
+
+  // Initialize i18n for main process
+  await import('./i18n');
 
   // Initialize Channel subsystem
   try {
+    const { getChannelManager } = await import('@/channels');
     await getChannelManager().initialize();
   } catch (error) {
     console.error('[Process] Failed to initialize ChannelManager:', error);

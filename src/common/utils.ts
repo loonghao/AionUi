@@ -20,10 +20,10 @@ export const uuid = (length = 8) => {
         .slice(0, length);
     }
 
-    // Node.js environment - use dynamic import to avoid webpack bundling
+    // Node.js environment - use dynamic import to avoid bundler issues
     if (typeof process !== 'undefined' && process.versions && process.versions.node) {
       try {
-        // Dynamic require to avoid webpack bundling issues
+        // Dynamic require to avoid bundler issues
         const cryptoModule = eval('require')('crypto');
         if (typeof cryptoModule.randomUUID === 'function' && length >= 36) {
           return cryptoModule.randomUUID();

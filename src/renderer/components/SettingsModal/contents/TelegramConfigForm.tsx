@@ -65,8 +65,8 @@ const TelegramConfigForm: React.FC<TelegramConfigFormProps> = ({ pluginStatus, m
   const [authorizedUsers, setAuthorizedUsers] = useState<IChannelUser[]>([]);
 
   // Agent selection (used for Telegram conversations)
-  const [availableAgents, setAvailableAgents] = useState<Array<{ backend: AcpBackendAll; name: string; customAgentId?: string; isPreset?: boolean }>>([]);
-  const [selectedAgent, setSelectedAgent] = useState<{ backend: AcpBackendAll; name?: string; customAgentId?: string }>({ backend: 'gemini' });
+  const [availableAgents, setAvailableAgents] = useState<Array<{ backend: AcpBackendAll | string; name: string; customAgentId?: string; isPreset?: boolean }>>([]);
+  const [selectedAgent, setSelectedAgent] = useState<{ backend: AcpBackendAll | string; name?: string; customAgentId?: string }>({ backend: 'gemini' });
 
   // Load pending pairings
   const loadPendingPairings = useCallback(async () => {
@@ -132,7 +132,7 @@ const TelegramConfigForm: React.FC<TelegramConfigFormProps> = ({ pluginStatus, m
     void loadAgentsAndSelection();
   }, []);
 
-  const persistSelectedAgent = async (agent: { backend: AcpBackendAll; customAgentId?: string; name?: string }) => {
+  const persistSelectedAgent = async (agent: { backend: AcpBackendAll | string; customAgentId?: string; name?: string }) => {
     try {
       await ConfigStorage.set('assistant.telegram.agent', agent);
       await channel.syncChannelSettings.invoke({ platform: 'telegram', agent }).catch(() => {});
@@ -295,7 +295,7 @@ const TelegramConfigForm: React.FC<TelegramConfigFormProps> = ({ pluginStatus, m
   };
 
   const isGeminiAgent = selectedAgent.backend === 'gemini';
-  const agentOptions: Array<{ backend: AcpBackendAll; name: string; customAgentId?: string }> = availableAgents.length > 0 ? availableAgents : [{ backend: 'gemini', name: 'Gemini CLI' }];
+  const agentOptions: Array<{ backend: AcpBackendAll | string; name: string; customAgentId?: string }> = availableAgents.length > 0 ? availableAgents : [{ backend: 'gemini', name: 'Gemini CLI' }];
 
   return (
     <div className='flex flex-col gap-24px'>

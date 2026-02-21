@@ -20,7 +20,7 @@ const getExecEnv = () => ({ env: { ...getEnhancedEnv(), NODE_OPTIONS: '' } });
 
 /**
  * Qwen Code MCP代理实现
- * Qwen CLI 支持 stdio, sse, http 传输类型
+ * 注意：Qwen CLI 目前只支持 stdio 传输类型，不支持 SSE/HTTP/streamable_http
  */
 export class QwenMcpAgent extends AbstractMcpAgent {
   constructor() {
@@ -28,7 +28,7 @@ export class QwenMcpAgent extends AbstractMcpAgent {
   }
 
   getSupportedTransports(): string[] {
-    return ['stdio', 'sse', 'http'];
+    return ['stdio'];
   }
 
   /**
@@ -152,16 +152,16 @@ export class QwenMcpAgent extends AbstractMcpAgent {
           if (server.transport.type === 'stdio') {
             // 使用Qwen CLI添加MCP服务器
             // 格式: qwen mcp add <name> <command> [args...]
+            const args = server.transport.args?.join(' ') || '';
+            const envArgs = Object.entries(server.transport.env || {})
+              .map(([key, value]) => `--env ${key}=${value}`)
+              .join(' ');
+
             let command = `qwen mcp add "${server.name}" "${server.transport.command}"`;
-            if (server.transport.args?.length) {
-              // Quote each arg to protect URLs and special characters from shell interpretation
-              const quotedArgs = server.transport.args.map((arg: string) => `"${arg}"`).join(' ');
-              command += ` ${quotedArgs}`;
+            if (args) {
+              command += ` ${args}`;
             }
-            const envEntries = Object.entries(server.transport.env || {});
-            if (envEntries.length) {
-              // Quote env values to protect special characters
-              const envArgs = envEntries.map(([key, value]) => `--env "${key}=${value}"`).join(' ');
+            if (envArgs) {
               command += ` ${envArgs}`;
             }
 
@@ -173,27 +173,8 @@ export class QwenMcpAgent extends AbstractMcpAgent {
             } catch (error) {
               console.warn(`Failed to add MCP ${server.name} to Qwen Code:`, error);
             }
-          } else if (server.transport.type === 'sse' || server.transport.type === 'http' || server.transport.type === 'streamable_http') {
-            // 处理 SSE/HTTP/Streamable HTTP 传输类型
-            // Qwen CLI 使用 --transport http 处理 HTTP 和 Streamable HTTP
-            const transportFlag = server.transport.type === 'streamable_http' ? 'http' : server.transport.type;
-            let command = `qwen mcp add "${server.name}" "${server.transport.url}"`;
-            command += ` --transport ${transportFlag}`;
-
-            // 添加 headers
-            if (server.transport.headers) {
-              for (const [key, value] of Object.entries(server.transport.headers)) {
-                command += ` --header "${key}: ${value}"`;
-              }
-            }
-
-            command += ' -s user';
-
-            try {
-              await execAsync(command, { timeout: 5000, ...getExecEnv() });
-            } catch (error) {
-              console.warn(`Failed to add MCP ${server.name} to Qwen Code:`, error);
-            }
+          } else {
+            console.warn(`Skipping ${server.name}: Qwen CLI only supports stdio transport type`);
           }
         }
         return { success: true };

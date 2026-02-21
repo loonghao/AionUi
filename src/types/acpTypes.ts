@@ -17,8 +17,9 @@
 /**
  * 预设助手的主 Agent 类型，用于决定创建哪种类型的对话
  * The primary agent type for preset assistants, used to determine which conversation type to create.
+ * Built-in types have autocomplete; extension-contributed adapter IDs are also accepted via (string & {}).
  */
-export type PresetAgentType = 'gemini' | 'claude' | 'codex' | 'codebuddy' | 'opencode';
+export type PresetAgentType = 'gemini' | 'claude' | 'codex' | 'codebuddy' | 'opencode' | (string & {});
 
 /**
  * 使用 ACP 协议的预设 Agent 类型（需要通过 ACP 后端路由）
@@ -27,17 +28,28 @@ export type PresetAgentType = 'gemini' | 'claude' | 'codex' | 'codebuddy' | 'ope
  * 这些类型会在创建对话时使用对应的 ACP 后端，而不是 Gemini 原生对话
  * These types will use corresponding ACP backend when creating conversation, instead of native Gemini
  */
-export const ACP_ROUTED_PRESET_TYPES: readonly PresetAgentType[] = ['claude', 'codebuddy', 'opencode'] as const;
+export const ACP_ROUTED_PRESET_TYPES: readonly string[] = ['claude', 'codebuddy', 'opencode'] as const;
+
+/** Non-ACP preset types that use their own protocol (not routed through ACP) */
+const NON_ACP_PRESET_TYPES: readonly string[] = ['gemini', 'codex'] as const;
 
 /**
  * 检查预设 Agent 类型是否需要通过 ACP 后端路由
  * Check if preset agent type should be routed through ACP backend
+ * Built-in ACP types are in ACP_ROUTED_PRESET_TYPES; extension-contributed adapter IDs
+ * are also ACP-routed (any type not in NON_ACP_PRESET_TYPES).
  */
 export function isAcpRoutedPresetType(type: PresetAgentType | undefined): boolean {
-  return type !== undefined && ACP_ROUTED_PRESET_TYPES.includes(type);
+  if (type === undefined) return false;
+  // Built-in ACP types
+  if (ACP_ROUTED_PRESET_TYPES.includes(type)) return true;
+  // Extension-contributed adapter IDs: anything not gemini/codex is ACP-routed
+  if (!NON_ACP_PRESET_TYPES.includes(type)) return true;
+  return false;
 }
 
 // 全部后端类型定义 - 包括暂时不支持的 / All backend types - including temporarily unsupported ones
+// Uses `(string & {})` pattern to allow extension-contributed backend IDs while preserving autocomplete for built-in ones
 export type AcpBackendAll =
   | 'claude' // Claude ACP
   | 'gemini' // Google Gemini ACP
@@ -55,7 +67,8 @@ export type AcpBackendAll =
   | 'openclaw-gateway' // OpenClaw Gateway WebSocket
   | 'vibe' // Mistral Vibe CLI
   | 'nanobot' // nanobot CLI
-  | 'custom'; // User-configured custom ACP agent
+  | 'custom' // User-configured custom ACP agent
+  | (string & {}); // Extension-contributed agents (any ACP-compatible backend ID)
 
 /**
  * 潜在的 ACP CLI 工具列表
@@ -194,6 +207,20 @@ export interface AcpBackendConfig {
   supportsStreaming?: boolean;
 
   /**
+   * 连接类型 / Connection type
+   * - 'cli': 通过启动子进程连接（默认）/ Connect by spawning a child process (default)
+   * - 'websocket': 通过 WebSocket 连接 / Connect via WebSocket
+   * - 'http': 通过 HTTP 连接 / Connect via HTTP
+   */
+  connectionType?: 'cli' | 'websocket' | 'http';
+
+  /**
+   * WebSocket/HTTP 端点 URL（仅 connectionType 为 websocket/http 时使用）
+   * Endpoint URL (only used when connectionType is websocket/http)
+   */
+  endpoint?: string;
+
+  /**
    * 传递给子进程的自定义环境变量
    * 启动时与 process.env 合并
    *
@@ -280,6 +307,17 @@ export interface AcpBackendConfig {
    * These skills will be displayed in the Custom Skills section even after being imported.
    */
   customSkillNames?: string[];
+
+  /**
+   * 配置来源标记 / Source of this configuration
+   * - 'builtin': 内置硬编码 / Built-in hardcoded
+   * - 'extension': 来自扩展系统 / From extension system
+   * - 'user': 用户手动配置 / User configured
+   */
+  _source?: 'builtin' | 'extension' | 'user';
+
+  /** 来源扩展名（仅 _source='extension' 时有值）/ Source extension name (only when _source='extension') */
+  _extensionName?: string;
 }
 
 // 所有后端配置 - 包括暂时禁用的 / All backend configurations - including temporarily disabled ones
@@ -649,71 +687,8 @@ export interface UserMessageChunkUpdate extends BaseSessionUpdate {
   };
 }
 
-// ===== ACP ConfigOption types (stable API) =====
-
-/** A single select option within a config option */
-export interface AcpConfigSelectOption {
-  value: string;
-  name?: string;
-  label?: string; // Some agents may use label instead of name
-}
-
-/** A configuration option returned by session/new */
-export interface AcpSessionConfigOption {
-  id: string;
-  name?: string;
-  label?: string; // Some agents may use label instead of name
-  description?: string;
-  category?: string;
-  type: 'select' | 'boolean' | 'string';
-  currentValue?: string;
-  selectedValue?: string; // Some agents may use selectedValue instead of currentValue
-  options?: AcpConfigSelectOption[];
-}
-
-/** Config options update notification (within session/update) */
-export interface ConfigOptionsUpdatePayload extends BaseSessionUpdate {
-  update: {
-    sessionUpdate: 'config_options_update';
-    configOptions: AcpSessionConfigOption[];
-  };
-}
-
-// ===== ACP Models types (unstable API) =====
-
-/** An available model returned by session/new (unstable API) */
-export interface AcpAvailableModel {
-  id?: string;
-  modelId?: string; // OpenCode uses modelId instead of id
-  name?: string;
-}
-
-/** Models info returned by session/new (unstable API) */
-export interface AcpSessionModels {
-  currentModelId?: string;
-  availableModels?: AcpAvailableModel[];
-}
-
-// ===== Unified model info for UI =====
-
-/** Unified model info that abstracts over both stable and unstable APIs */
-export interface AcpModelInfo {
-  /** Currently active model ID */
-  currentModelId: string | null;
-  /** Display label for the current model */
-  currentModelLabel: string | null;
-  /** Available models for switching */
-  availableModels: Array<{ id: string; label: string }>;
-  /** Whether the user can switch models */
-  canSwitch: boolean;
-  /** Source of the model info: 'configOption' (stable) or 'models' (unstable) */
-  source: 'configOption' | 'models';
-  /** Config option ID (only when source is 'configOption') */
-  configOptionId?: string;
-}
-
 // 所有会话更新的联合类型 / Union type for all session updates
-export type AcpSessionUpdate = AgentMessageChunkUpdate | AgentThoughtChunkUpdate | ToolCallUpdate | ToolCallUpdateStatus | PlanUpdate | AvailableCommandsUpdate | UserMessageChunkUpdate | ConfigOptionsUpdatePayload;
+export type AcpSessionUpdate = AgentMessageChunkUpdate | AgentThoughtChunkUpdate | ToolCallUpdate | ToolCallUpdateStatus | PlanUpdate | AvailableCommandsUpdate | UserMessageChunkUpdate;
 
 // 当前的 ACP 权限请求接口 / Current ACP permission request interface
 export interface AcpPermissionOption {
@@ -793,7 +768,6 @@ export const ACP_METHODS = {
   REQUEST_PERMISSION: 'session/request_permission',
   READ_TEXT_FILE: 'fs/read_text_file',
   WRITE_TEXT_FILE: 'fs/write_text_file',
-  SET_CONFIG_OPTION: 'session/set_config_option',
 } as const;
 
 export type AcpMethod = (typeof ACP_METHODS)[keyof typeof ACP_METHODS];

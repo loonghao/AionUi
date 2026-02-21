@@ -1,0 +1,32 @@
+[
+  {
+    "id": "friendly-greeter",
+    "name": "Friendly Greeter",
+    "nameI18n": {
+      "zh-CN": "友好的问候者"
+    },
+    "description": "A cheerful assistant that always greets users warmly",
+    "descriptionI18n": {
+      "zh-CN": "一个总是热情问候用户的助手"
+    },
+    "avatar": "👋",
+    "presetAgentType": "opencode",
+    "contextFile": "assistants/greeter-context.md",
+    "contextFileI18n": {
+      "zh-CN": "assistants/greeter-context-zh.md"
+    },
+    "enabledSkills": ["code-review"],
+    "prompts": [
+      "Introduce yourself",
+      "Tell me a fun fact",
+      "Help me write a greeting card"
+    ],
+    "promptsI18n": {
+      "zh-CN": [
+        "介绍一下你自己",
+        "给我讲一个有趣的事实",
+        "帮我写一张贺卡"
+      ]
+    }
+  }
+]

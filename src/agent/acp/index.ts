@@ -8,14 +8,15 @@ import { AcpAdapter } from '@/agent/acp/AcpAdapter';
 import { extractAtPaths, parseAllAtCommands, reconstructQuery } from '@/common/atCommandParser';
 import type { TMessage } from '@/common/chatLib';
 import type { IResponseMessage } from '@/common/ipcBridge';
+import type { IMcpServer } from '@/common/storage';
 import { NavigationInterceptor } from '@/common/navigation';
 import { uuid } from '@/common/utils';
-import type { AcpBackend, AcpModelInfo, AcpPermissionRequest, AcpResult, AcpSessionUpdate, ToolCallUpdate } from '@/types/acpTypes';
+import type { AcpBackend, AcpBackendAll, AcpPermissionRequest, AcpResult, AcpSessionUpdate, ToolCallUpdate } from '@/types/acpTypes';
 import { AcpErrorType, createAcpError } from '@/types/acpTypes';
 import { spawn } from 'child_process';
 import { promises as fs } from 'fs';
 import * as path from 'path';
-import { AcpConnection } from './AcpConnection';
+import { AcpConnection, convertMcpServersToAcpFormat } from './AcpConnection';
 import { getEnhancedEnv, resolveNpxPath } from '@process/utils/shellEnv';
 import { AcpApprovalStore, createAcpApprovalKey } from './ApprovalStore';
 import { CLAUDE_YOLO_SESSION_MODE, CODEBUDDY_YOLO_SESSION_MODE, IFLOW_YOLO_SESSION_MODE, QWEN_YOLO_SESSION_MODE } from './constants';
@@ -56,14 +57,14 @@ function normalizeToolCallStatus(status: string | undefined): 'pending' | 'in_pr
 
 export interface AcpAgentConfig {
   id: string;
-  backend: AcpBackend;
+  backend: AcpBackend | string;
   cliPath?: string;
   workingDir: string;
   customArgs?: string[]; // Custom CLI arguments (for custom backend)
   customEnv?: Record<string, string>; // Custom environment variables (for custom backend)
   extra?: {
     workspace?: string;
-    backend: AcpBackend;
+    backend: AcpBackend | string;
     cliPath?: string;
     customWorkspace?: boolean;
     customArgs?: string[];
@@ -73,6 +74,8 @@ export interface AcpAgentConfig {
     acpSessionId?: string;
     /** Last update time of ACP session / ACP session 最后更新时间 */
     acpSessionUpdatedAt?: number;
+    /** MCP servers to pass via ACP protocol / 通过 ACP 协议传递的 MCP 服务器配置 */
+    mcpServers?: IMcpServer[];
   };
   onStreamEvent: (data: IResponseMessage) => void;
   onSignalEvent?: (data: IResponseMessage) => void; // 新增：仅发送信号，不更新UI
@@ -85,7 +88,7 @@ export class AcpAgent {
   private readonly id: string;
   private extra: {
     workspace?: string;
-    backend: AcpBackend;
+    backend: AcpBackend | string;
     cliPath?: string;
     customWorkspace?: boolean;
     customArgs?: string[];
@@ -95,6 +98,8 @@ export class AcpAgent {
     acpSessionId?: string;
     /** Last update time of ACP session / ACP session 最后更新时间 */
     acpSessionUpdatedAt?: number;
+    /** MCP servers to pass via ACP protocol / 通过 ACP 协议传递的 MCP 服务器配置 */
+    mcpServers?: IMcpServer[];
   };
   private connection: AcpConnection;
   private adapter: AcpAdapter;
@@ -109,7 +114,7 @@ export class AcpAgent {
   private pendingNavigationTools = new Set<string>();
 
   // ApprovalStore for session-level "always allow" caching
-  // Workaround for claude-agent-acp bug: it doesn't check suggestions to auto-approve
+  // Workaround for claude-code-acp bug: it doesn't check suggestions to auto-approve
   private approvalStore = new AcpApprovalStore();
 
   // Store permission request metadata for later use in confirmMessage
@@ -227,7 +232,7 @@ export class AcpAgent {
           qwen: QWEN_YOLO_SESSION_MODE,
           iflow: IFLOW_YOLO_SESSION_MODE,
         };
-        const sessionMode = yoloModeMap[this.extra.backend];
+        const sessionMode = yoloModeMap[this.extra.backend as AcpBackend];
         if (sessionMode) {
           try {
             const modeStart = Date.now();
@@ -255,9 +260,6 @@ export class AcpAgent {
         }
       }
 
-      // Emit initial model info after session setup completes
-      this.emitModelInfo();
-
       this.emitStatusMessage('session_active');
       if (ACP_PERF_LOG) console.log(`[ACP-PERF] start: total ${Date.now() - startTotal}ms`);
     } catch (error) {
@@ -281,90 +283,15 @@ export class AcpAgent {
         claude: CLAUDE_YOLO_SESSION_MODE,
         qwen: QWEN_YOLO_SESSION_MODE,
       };
-      const sessionMode = yoloModeMap[this.extra.backend];
+      const sessionMode = yoloModeMap[this.extra.backend as AcpBackend];
       if (sessionMode) {
         await this.connection.setSessionMode(sessionMode);
       }
     }
   }
 
-  /**
-   * Get unified model info from ACP connection.
-   * Prefers stable configOptions API, falls back to unstable models API.
-   */
-  getModelInfo(): AcpModelInfo | null {
-    // Try stable API first: configOptions with category 'model'
-    const configOptions = this.connection.getConfigOptions();
-    if (configOptions) {
-      const modelOption = configOptions.find((opt) => opt.category === 'model');
-      if (modelOption && modelOption.type === 'select' && modelOption.options) {
-        // Support both currentValue (ACP spec) and selectedValue (some agents)
-        const activeValue = modelOption.currentValue || modelOption.selectedValue || null;
-        return {
-          currentModelId: activeValue,
-          currentModelLabel: modelOption.options.find((o) => o.value === activeValue)?.name || modelOption.options.find((o) => o.value === activeValue)?.label || activeValue,
-          availableModels: modelOption.options.map((o) => ({ id: o.value, label: o.name || o.label || o.value })),
-          canSwitch: modelOption.options.length > 1,
-          source: 'configOption',
-          configOptionId: modelOption.id,
-        };
-      }
-    }
-
-    // Fallback to unstable models API
-    const models = this.connection.getModels();
-    if (models) {
-      const available = models.availableModels || [];
-      // Support both 'id' (spec) and 'modelId' (OpenCode) field names
-      const getModelId = (m: (typeof available)[0]) => m.id || m.modelId || '';
-      return {
-        currentModelId: models.currentModelId || null,
-        currentModelLabel: available.find((m) => getModelId(m) === models.currentModelId)?.name || models.currentModelId || null,
-        availableModels: available.map((m) => ({ id: getModelId(m), label: m.name || getModelId(m) })),
-        canSwitch: available.length > 1,
-        source: 'models',
-      };
-    }
-
-    return null;
-  }
-
-  /**
-   * Switch model using the appropriate API based on model info source.
-   */
-  async setModelByConfigOption(modelId: string): Promise<AcpModelInfo | null> {
-    const modelInfo = this.getModelInfo();
-    if (!modelInfo) {
-      throw new Error('No model info available');
-    }
-
-    if (modelInfo.source === 'configOption' && modelInfo.configOptionId) {
-      await this.connection.setConfigOption(modelInfo.configOptionId, modelId);
-    } else {
-      await this.connection.setModel(modelId);
-    }
-
-    // Return updated model info after switch
-    return this.getModelInfo();
-  }
-
-  /**
-   * Emit current model info to the stream event handler.
-   */
-  private emitModelInfo(): void {
-    const modelInfo = this.getModelInfo();
-    if (modelInfo) {
-      this.onStreamEvent({
-        type: 'acp_model_info',
-        conversation_id: this.id,
-        msg_id: uuid(),
-        data: modelInfo,
-      });
-    }
-  }
-
-  async stop(): Promise<void> {
-    await this.connection.disconnect();
+  stop(): Promise<void> {
+    this.connection.disconnect();
     this.emitStatusMessage('disconnected');
     // Clear session-scoped caches when session ends
     this.approvalStore.clear();
@@ -376,6 +303,7 @@ export class AcpAgent {
       msg_id: uuid(),
       data: null,
     });
+    return Promise.resolve();
   }
 
   // 发送消息到ACP服务器
@@ -651,7 +579,7 @@ export class AcpAgent {
         this.pendingPermissions.delete(data.callId);
 
         // Store "allow_always" decision to ApprovalStore for future auto-approval
-        // Workaround for claude-agent-acp bug: it returns updatedPermissions but doesn't check suggestions
+        // Workaround for claude-code-acp bug: it returns updatedPermissions but doesn't check suggestions
         if (data.confirmKey === 'allow_always') {
           const meta = this.permissionRequestMeta.get(data.callId);
           if (meta) {
@@ -732,11 +660,6 @@ export class AcpAgent {
         }
       }
 
-      // Emit updated model info when config_options_update arrives
-      if (data.update?.sessionUpdate === 'config_options_update') {
-        this.emitModelInfo();
-      }
-
       const messages = this.adapter.convertSessionUpdate(data);
 
       for (let i = 0; i < messages.length; i++) {
@@ -759,7 +682,7 @@ export class AcpAgent {
       const requestId = data.toolCall.toolCallId; // 使用 toolCallId 作为 requestId
 
       // Check ApprovalStore for cached "always allow" decision
-      // Workaround for claude-agent-acp bug: it returns updatedPermissions but doesn't check suggestions
+      // Workaround for claude-code-acp bug: it returns updatedPermissions but doesn't check suggestions
       const approvalKey = createAcpApprovalKey(data.toolCall);
       if (this.approvalStore.isApprovedForSession(approvalKey)) {
         // Auto-approve without showing dialog - no metadata storage needed
@@ -912,7 +835,7 @@ export class AcpAgent {
       position: 'center',
       createdAt: Date.now(),
       content: {
-        backend: this.extra.backend,
+        backend: this.extra.backend as AcpBackendAll,
         status,
       },
     };
@@ -1094,14 +1017,43 @@ export class AcpAgent {
   }
 
   /**
+   * Backends that have their own native MCP config file management.
+   * These backends read MCP config from their own files, so we skip ACP protocol passthrough
+   * to avoid duplicate/conflicting MCP server registration.
+   *
+   * 拥有原生 MCP 配置文件管理的 backend。
+   * 这些 backend 自己从配置文件读取 MCP，跳过 ACP 协议传递以避免重复注册。
+   */
+  private static readonly NATIVE_MCP_BACKENDS = new Set<string>([
+    'claude',     // reads ~/.claude/settings.json
+    'codebuddy',  // reads ~/.codebuddy/mcp.json (also passed via --mcp-config)
+    'qwen',       // reads its own MCP config
+    'iflow',      // reads its own MCP config
+    'gemini',     // reads its own MCP config (native Gemini CLI)
+    'codex',      // reads its own MCP config
+  ]);
+
+  /**
    * Create a new session or resume an existing one, and notify upper layer if session ID changed.
    * 创建新会话或恢复现有会话，如果 session ID 变化则通知上层。
+   *
+   * For backends without native MCP config management, MCP servers are passed via ACP protocol.
+   * 对于没有原生 MCP 配置管理的 backend，MCP 服务器通过 ACP 协议传递。
    */
   private async createOrResumeSession(): Promise<void> {
     const resumeSessionId = this.extra.acpSessionId;
+
+    // Pass MCP servers via ACP protocol for backends that don't have native config management
+    // 对没有原生 MCP 配置管理的 backend，通过 ACP 协议传递 MCP 服务器
+    let acpMcpServers: ReturnType<typeof convertMcpServersToAcpFormat> | undefined;
+    if (!AcpAgent.NATIVE_MCP_BACKENDS.has(this.extra.backend) && this.extra.mcpServers?.length) {
+      acpMcpServers = convertMcpServersToAcpFormat(this.extra.mcpServers);
+    }
+
     const response = await this.connection.newSession(this.extra.workspace, {
       resumeSessionId,
       forkSession: false,
+      mcpServers: acpMcpServers,
     });
     // Notify upper layer if session ID changed (new session or resume failed)
     if (response.sessionId && response.sessionId !== resumeSessionId) {
@@ -1124,11 +1076,16 @@ export class AcpAgent {
    * @returns Promise that resolves when mode is set
    */
   async setMode(mode: string): Promise<{ success: boolean; error?: string }> {
+    console.log(`[AcpAgent] setMode called: mode=${mode}, isConnected=${this.connection.isConnected}, hasActiveSession=${this.connection.hasActiveSession}`);
+
     if (!this.connection.isConnected || !this.connection.hasActiveSession) {
+      console.log('[AcpAgent] No active session, cannot switch mode');
       return { success: false, error: 'No active session. Please send a message first to establish a session.' };
     }
     try {
-      await this.connection.setSessionMode(mode);
+      console.log(`[AcpAgent] Calling connection.setSessionMode(${mode})`);
+      const response = await this.connection.setSessionMode(mode);
+      console.log('[AcpAgent] setSessionMode response:', JSON.stringify(response));
       return { success: true };
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error);

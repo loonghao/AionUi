@@ -114,8 +114,6 @@ export const createCodexAgent = async (options: ICreateConversationParams): Prom
       presetAssistantId: extra.presetAssistantId,
       // Initial session mode selected on Guid page (from AgentModeSelector)
       sessionMode: extra.sessionMode,
-      // User-selected Codex model from Guid page
-      codexModel: extra.codexModel,
     },
     createTime: Date.now(),
     modifyTime: Date.now(),

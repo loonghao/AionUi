@@ -1,0 +1,371 @@
+/**
+ * Hello Light Theme - 清新紫蓝渐变浅色主题
+ * A fresh purple-blue gradient light theme for AionUI
+ *
+ * 此主题展示了扩展如何正确覆盖 AionUI 的系统 CSS 变量。
+ * 关键：必须覆盖 --color-primary, --bg-1, --color-text-1 等系统变量，
+ * 而不是定义私有变量（如 --hello-primary），否则主题不会生效。
+ */
+
+/* ==================== 明色模式 (Light Mode) ==================== */
+:root {
+  /* Primary Colors - 紫蓝主色 */
+  --color-primary: #667eea;
+  --primary: #667eea;
+  --color-primary-light-1: #7c93ee;
+  --color-primary-light-2: #99aaf3;
+  --color-primary-light-3: #b5c1f7;
+  --color-primary-dark-1: #5a6fd4;
+  --primary-rgb: 102, 126, 234;
+
+  /* Brand Colors */
+  --brand: #667eea;
+  --brand-light: #eef0fd;
+  --brand-hover: #7c93ee;
+  --color-brand-fill: #667eea;
+  --color-brand-bg: #eef0fd;
+
+  /* AOU Brand Colors - 紫蓝色板 */
+  --aou-1: #eef0fd;
+  --aou-2: #dde1fb;
+  --aou-3: #ccd3f9;
+  --aou-4: #b5c1f7;
+  --aou-5: #99aaf3;
+  --aou-6: #667eea;
+  --aou-7: #5a6fd4;
+  --aou-8: #4e60be;
+  --aou-9: #3d4d9a;
+  --aou-10: #2d3976;
+
+  /* Background Colors */
+  --color-bg-1: #f8f9fe;
+  --bg-1: #f8f9fe;
+  --color-bg-2: #ffffff;
+  --bg-2: #ffffff;
+  --color-bg-3: #eef0fd;
+  --bg-3: #eef0fd;
+  --color-bg-4: #dde1fb;
+  --bg-4: #dde1fb;
+  --bg-base: #ffffff;
+  --bg-hover: #eef0fd;
+  --bg-active: #dde1fb;
+  --fill: #f8f9fe;
+  --color-fill: #f8f9fe;
+  --fill-0: #ffffff;
+  --fill-white-to-black: #ffffff;
+
+  /* Text Colors */
+  --color-text-1: #1a1a2e;
+  --text-primary: #1a1a2e;
+  --color-text-2: #4a4a6a;
+  --text-secondary: #6b7280;
+  --color-text-3: #9ca3af;
+  --text-disabled: #c9cdd4;
+  --text-0: #000000;
+  --text-white: #ffffff;
+
+  /* Border Colors */
+  --color-border: #dde1fb;
+  --color-border-1: #dde1fb;
+  --color-border-2: #eef0fd;
+  --border-base: #dde1fb;
+  --border-light: #eef0fd;
+
+  /* Semantic Colors */
+  --success: #10b981;
+  --warning: #f59e0b;
+  --danger: #ef4444;
+  --info: #667eea;
+
+  /* Message & UI Component Colors */
+  --message-user-bg: #e0e5fb;
+  --message-tips-bg: #eef0fd;
+  --workspace-btn-bg: #eef0fd;
+  --dialog-fill-0: rgba(255, 255, 255, 0.95);
+}
+
+/* Global Styles */
+body {
+  font-family: "Inter", "SF Pro Display", "Segoe UI", "Microsoft YaHei", sans-serif;
+  background-color: var(--bg-1);
+}
+
+html {
+  background-color: var(--bg-1);
+}
+
+.arco-layout,
+[class*="layout"] {
+  background-color: var(--bg-1);
+}
+
+/* Sidebar */
+.layout-sider {
+  background-color: #eef0fd;
+  border-right: 1px solid var(--border-base);
+}
+
+.layout-sider-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+/* Input Boxes */
+.guidInputCard {
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid var(--border-base);
+  border-radius: 16px;
+  box-shadow: 0 2px 16px rgba(102, 126, 234, 0.1);
+}
+
+.sendbox-container:not([class*="model"]):not([class*="Model"]),
+[class*="sendbox"]:not([class*="input"]):not([class*="textarea"]):not([class*="model"]):not([class*="Model"]):not([class*="tools"]) {
+  border-radius: 16px;
+  border: 1px solid var(--border-base);
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 4px 20px rgba(102, 126, 234, 0.12);
+}
+
+.sendbox-container:focus-within,
+[class*="sendbox"]:focus-within {
+  border-color: var(--color-primary);
+  box-shadow: 0 4px 24px rgba(102, 126, 234, 0.25);
+}
+
+/* Message Bubbles */
+.message-item.user .message-bubble,
+[class*="message"][class*="user"] .message-content {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 16px 16px 4px 16px;
+  border: none;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.message-item.ai .message-bubble,
+[class*="message"][class*="ai"] .message-content,
+[class*="message"][class*="assistant"] .message-content {
+  background: rgba(255, 255, 255, 0.98);
+  border: 1px solid #dde1fb;
+  border-radius: 16px 16px 16px 4px;
+  box-shadow: 0 2px 12px rgba(102, 126, 234, 0.08);
+}
+
+/* Buttons */
+.arco-btn-primary:not([class*="icon"]):not([class*="circle"]):not([class*="model"]),
+button[type="primary"]:not([class*="icon"]):not([class*="circle"]):not([class*="model"]) {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-color: #667eea;
+  border-radius: 12px;
+  color: white;
+}
+
+.arco-btn-primary:hover:not([class*="icon"]):not([class*="circle"]):not([class*="model"]),
+button[type="primary"]:hover:not([class*="icon"]):not([class*="circle"]):not([class*="model"]) {
+  background: linear-gradient(135deg, #7c93ee 0%, #8a5cb0 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.35);
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: transparent;
+  border-radius: 4px;
+}
+
+*:hover::-webkit-scrollbar-thumb {
+  background: rgba(102, 126, 234, 0.3);
+}
+
+*:hover::-webkit-scrollbar-thumb:hover {
+  background: rgba(102, 126, 234, 0.5);
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* Selection */
+::selection {
+  background-color: #667eea;
+  color: white;
+}
+
+/* Links */
+a:not([class*="button"]):not([class*="btn"]) {
+  color: #667eea;
+}
+
+a:hover:not([class*="button"]):not([class*="btn"]) {
+  color: #764ba2;
+}
+
+/* Background overlay */
+.layout-content.bg-1 {
+  position: relative;
+}
+
+.layout-content.bg-1::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(248, 249, 254, 0.8) 0%, rgba(238, 240, 253, 0.85) 100%);
+  z-index: 0;
+  pointer-events: none;
+}
+
+.layout-content.bg-1 > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* ==================== 深色模式 (Dark Mode) ==================== */
+[data-theme='dark'] {
+  --color-primary: #8b9cf7;
+  --primary: #8b9cf7;
+  --color-primary-light-1: #99aaf3;
+  --color-primary-light-2: #b5c1f7;
+  --color-primary-light-3: #ccd3f9;
+  --color-primary-dark-1: #667eea;
+  --primary-rgb: 139, 156, 247;
+
+  --brand: #8b9cf7;
+  --brand-light: #2d2f45;
+  --brand-hover: #99aaf3;
+  --color-brand-fill: #8b9cf7;
+  --color-brand-bg: #2d2f45;
+
+  --aou-1: #1a1b2e;
+  --aou-2: #2d2f45;
+  --aou-3: #3d4060;
+  --aou-4: #4e527a;
+  --aou-5: #667eea;
+  --aou-6: #8b9cf7;
+  --aou-7: #99aaf3;
+  --aou-8: #b5c1f7;
+  --aou-9: #ccd3f9;
+  --aou-10: #eef0fd;
+
+  --color-bg-1: #1a1b2e;
+  --bg-1: #1a1b2e;
+  --color-bg-2: #242540;
+  --bg-2: #242540;
+  --color-bg-3: #2d2f45;
+  --bg-3: #2d2f45;
+  --color-bg-4: #3d4060;
+  --bg-4: #3d4060;
+  --bg-base: #12132a;
+  --bg-hover: #2d2f45;
+  --bg-active: #3d4060;
+  --fill: #1a1b2e;
+  --color-fill: #1a1b2e;
+  --fill-0: rgba(255, 255, 255, 0.06);
+  --fill-white-to-black: #000000;
+
+  --color-text-1: #e5e5f0;
+  --text-primary: #e5e5f0;
+  --color-text-2: #a8a8c0;
+  --text-secondary: #a8a8c0;
+  --color-text-3: #6b6b8a;
+  --text-disabled: #6b6b8a;
+  --text-0: #ffffff;
+
+  --color-border: #3d4060;
+  --color-border-1: #3d4060;
+  --color-border-2: #2d2f45;
+  --border-base: #3d4060;
+  --border-light: #2d2f45;
+
+  --success: #34d399;
+  --warning: #fbbf24;
+  --danger: #f87171;
+  --info: #8b9cf7;
+
+  --message-user-bg: #2d3560;
+  --message-tips-bg: #242540;
+  --workspace-btn-bg: #2d2f45;
+  --dialog-fill-0: rgba(26, 27, 46, 0.95);
+}
+
+[data-theme='dark'] .layout-sider {
+  background: linear-gradient(180deg, #2d2f45 0%, #242540 100%);
+  border-right: 1px solid #3d4060;
+}
+
+[data-theme='dark'] .layout-sider-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+[data-theme='dark'] .layout-content.bg-1::before {
+  background: linear-gradient(135deg, rgba(26, 27, 46, 0.85) 0%, rgba(36, 37, 64, 0.9) 100%);
+}
+
+[data-theme='dark'] .guidInputCard {
+  background: rgba(36, 37, 64, 0.95);
+  border: 1px solid #3d4060;
+  box-shadow: 0 4px 20px rgba(102, 126, 234, 0.15);
+}
+
+[data-theme='dark'] .sendbox-container:not([class*="model"]),
+[data-theme='dark'] [class*="sendbox"]:not([class*="input"]):not([class*="textarea"]):not([class*="model"]):not([class*="tools"]) {
+  background: rgba(36, 37, 64, 0.95);
+  border: 1px solid #3d4060;
+  box-shadow: 0 4px 20px rgba(102, 126, 234, 0.15);
+}
+
+[data-theme='dark'] .sendbox-container:focus-within,
+[data-theme='dark'] [class*="sendbox"]:focus-within {
+  border-color: #8b9cf7;
+  box-shadow: 0 4px 24px rgba(139, 156, 247, 0.3);
+}
+
+[data-theme='dark'] .message-item.user .message-bubble,
+[data-theme='dark'] [class*="message"][class*="user"] .message-content {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  box-shadow: 0 4px 16px rgba(102, 126, 234, 0.4);
+}
+
+[data-theme='dark'] .message-item.ai .message-bubble,
+[data-theme='dark'] [class*="message"][class*="ai"] .message-content,
+[data-theme='dark'] [class*="message"][class*="assistant"] .message-content {
+  background: rgba(36, 37, 64, 0.95);
+  border: 1px solid #3d4060;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme='dark'] .arco-btn-primary:not([class*="icon"]):not([class*="circle"]):not([class*="model"]),
+[data-theme='dark'] button[type="primary"]:not([class*="icon"]):not([class*="circle"]):not([class*="model"]) {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  box-shadow: 0 4px 16px rgba(102, 126, 234, 0.35);
+}
+
+[data-theme='dark'] .arco-btn-primary:hover:not([class*="icon"]):not([class*="circle"]):not([class*="model"]),
+[data-theme='dark'] button[type="primary"]:hover:not([class*="icon"]):not([class*="circle"]):not([class*="model"]) {
+  background: linear-gradient(135deg, #7c93ee 0%, #8a5cb0 100%);
+  box-shadow: 0 6px 24px rgba(139, 156, 247, 0.5);
+}
+
+[data-theme='dark'] *:hover::-webkit-scrollbar-thumb {
+  background: rgba(139, 156, 247, 0.4);
+}
+
+[data-theme='dark'] *:hover::-webkit-scrollbar-thumb:hover {
+  background: rgba(139, 156, 247, 0.6);
+}
+
+[data-theme='dark'] ::selection {
+  background-color: #667eea;
+}
+
+[data-theme='dark'] a:not([class*="button"]):not([class*="btn"]) {
+  color: #8b9cf7;
+}
+
+[data-theme='dark'] a:hover:not([class*="button"]):not([class*="btn"]) {
+  color: #99aaf3;
+}

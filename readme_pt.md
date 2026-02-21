@@ -43,10 +43,10 @@
 
 <p align="center">
 
-[✨ Cowork em ação](#-cowork-em-ação) ·
-[🤔 Por que escolher AionUi?](#-por-que-escolher-aionui-sobre-claude-cowork) ·
-[🚀 Início rápido](#-início-rápido) ·
-[💬 Comunidade](#-comunidade-e-suporte)
+[✨ Cowork em ação](#cowork--ai-agents-que-trabalham-com-você) ·
+[🤔 Por que escolher AionUi?](#por-que-escolher-aionui-sobre-claude-cowork) ·
+[🚀 Início rápido](#início-rápido) ·
+[💬 Comunidade](#comunidade--suporte)
 
 </p>
 
@@ -194,7 +194,7 @@ _Seu assistente AI 24/7 — acesse AionUi de qualquer dispositivo, em qualquer l
 > **Configuração:** AionUi Settings → WebUI Settings → Channel, configure o Bot Token.
 
 <p align="center">
-  <img src="./resources/remote-telegram copy.png" alt="Cowork from Anywhere" width="800">
+  <img src="./resources/remote-telegram.png" alt="Cowork from Anywhere" width="800">
 </p>
 
 > [Tutorial de acesso remoto à Internet](https://github.com/iOfficeAI/AionUi/wiki/Remote-Internet-Access-Guide-Chinese)

@@ -1,10 +1,10 @@
-#!/usr/bin/env npx tsx
+#!/usr/bin/env bunx tsx
 // @ts-nocheck
 /**
  * Mermaid diagram renderer using beautiful-mermaid
  * Usage:
- *   npx tsx render.ts <mermaid-file> [--ascii] [--theme <theme>] [--output <file>]
- *   echo "graph TD; A-->B" | npx tsx render.ts --stdin [--ascii]
+ *   bunx tsx render.ts <mermaid-file> [--ascii] [--theme <theme>] [--output <file>]
+ *   echo "graph TD; A-->B" | bunx tsx render.ts --stdin [--ascii]
  */
 
 import { readFileSync, writeFileSync, existsSync } from 'fs';
@@ -17,7 +17,7 @@ async function ensureDependency(): Promise<void> {
     await import('beautiful-mermaid');
   } catch {
     console.error('Installing beautiful-mermaid...');
-    execSync('npm install beautiful-mermaid', { stdio: 'inherit' });
+    execSync('bun add beautiful-mermaid', { stdio: 'inherit' });
   }
 }
 
@@ -79,8 +79,8 @@ async function main() {
 Mermaid Diagram Renderer (beautiful-mermaid)
 
 Usage:
-  npx tsx render.ts <file.mmd> [options]
-  echo "graph TD; A-->B" | npx tsx render.ts --stdin [options]
+  bunx tsx render.ts <file.mmd> [options]
+  echo "graph TD; A-->B" | bunx tsx render.ts --stdin [options]
 
 Options:
   --ascii          Output ASCII art instead of SVG
@@ -97,9 +97,9 @@ Supported diagram types:
   - ER diagrams
 
 Examples:
-  npx tsx render.ts diagram.mmd --output diagram.svg
-  npx tsx render.ts diagram.mmd --ascii
-  echo "graph LR; A-->B-->C" | npx tsx render.ts --stdin --ascii
+  bunx tsx render.ts diagram.mmd --output diagram.svg
+  bunx tsx render.ts diagram.mmd --ascii
+  echo "graph LR; A-->B-->C" | bunx tsx render.ts --stdin --ascii
 `);
     process.exit(0);
   }

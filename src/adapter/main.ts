@@ -68,32 +68,39 @@ export function getBridgeEmitter(): typeof bridgeEmitter {
 /**
  * @description 建立与每一个browserWindow的通信桥梁
  * */
-bridge.adapter({
-  emit(name, data) {
-    // 1. 发送到所有 Electron BrowserWindow / Send to all Electron BrowserWindows
-    for (let i = 0, len = adapterWindowList.length; i < len; i++) {
-      const win = adapterWindowList[i];
-      win.webContents.send(ADAPTER_BRIDGE_EVENT_KEY, JSON.stringify({ name, data }));
-    }
-    // 2. 同时广播到所有 WebSocket 客户端 / Also broadcast to all WebSocket clients
-    for (const broadcast of webSocketBroadcasters) {
-      try {
-        broadcast(name, data);
-      } catch (error) {
-        console.error('[MainAdapter] WebSocket broadcast error:', error);
-      }
-    }
-  },
-  on(emitter) {
-    // 保存 emitter 引用供 WebSocket 处理使用 / Save emitter reference for WebSocket handling
-    bridgeEmitter = emitter;
+// Guard against duplicate adapter registration (can happen when both index.js and _dyn_*.js load this module)
+// Use globalThis to share state across different bundle chunks
+const ADAPTER_REGISTERED_KEY = Symbol.for('aionui.adapter.registered');
 
-    ipcMain.handle(ADAPTER_BRIDGE_EVENT_KEY, (_event, info) => {
-      const { name, data } = JSON.parse(info) as BridgeEventData;
-      return Promise.resolve(emitter.emit(name, data));
-    });
-  },
-});
+if (!(globalThis as Record<symbol, boolean>)[ADAPTER_REGISTERED_KEY]) {
+  (globalThis as Record<symbol, boolean>)[ADAPTER_REGISTERED_KEY] = true;
+  bridge.adapter({
+    emit(name, data) {
+      // 1. 发送到所有 Electron BrowserWindow / Send to all Electron BrowserWindows
+      for (let i = 0, len = adapterWindowList.length; i < len; i++) {
+        const win = adapterWindowList[i];
+        win.webContents.send(ADAPTER_BRIDGE_EVENT_KEY, JSON.stringify({ name, data }));
+      }
+      // 2. 同时广播到所有 WebSocket 客户端 / Also broadcast to all WebSocket clients
+      for (const broadcast of webSocketBroadcasters) {
+        try {
+          broadcast(name, data);
+        } catch (error) {
+          console.error('[MainAdapter] WebSocket broadcast error:', error);
+        }
+      }
+    },
+    on(emitter) {
+      // 保存 emitter 引用供 WebSocket 处理使用 / Save emitter reference for WebSocket handling
+      bridgeEmitter = emitter;
+
+      ipcMain.handle(ADAPTER_BRIDGE_EVENT_KEY, (_event, info) => {
+        const { name, data } = JSON.parse(info) as BridgeEventData;
+        return Promise.resolve(emitter.emit(name, data));
+      });
+    },
+  });
+}
 
 export const initMainAdapterWithWindow = (win: BrowserWindow) => {
   adapterWindowList.push(win);

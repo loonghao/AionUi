@@ -1,11 +1,3 @@
-.guidLayout {
-  width: clamp(var(--app-min-width, 360px), calc(100% - 32px), 800px);
-  max-width: 100%;
-  padding: 0 16px;
-  box-sizing: border-box;
-  margin: 0 auto;
-}
-
 .guidInputCard {
   width: 100%;
   box-sizing: border-box;
@@ -55,11 +47,18 @@
 
 /* 移动端优化 */
 @media (max-width: 768px) {
+  .guidContainer {
+    overflow-x: hidden;
+    padding-top: 20px;
+    -webkit-overflow-scrolling: touch;
+  }
+
   .guidLayout {
     width: clamp(var(--app-min-width, 360px), calc(100% - 32px), 100%);
     padding: 0 16px;
     padding-bottom: 100px; /* 为底部快捷按钮留出空间 */
     box-sizing: border-box;
+    margin-top: 0;
   }
 
   .guidInputCard {
@@ -83,25 +82,26 @@
   }
 }
 
-/* 移动端容器滚动支持 */
+/* 容器 — 可滚动，内容通过 margin:auto 垂直居中 */
 .guidContainer {
   height: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
   padding: 10px;
+  padding-bottom: 80px; /* 为 absolute 定位的底部快捷按钮留空间 */
   position: relative;
+  overflow-y: auto;
 }
 
-@media (max-width: 768px) {
-  .guidContainer {
-    justify-content: flex-start;
-    overflow-y: auto;
-    overflow-x: hidden;
-    padding-top: 20px;
-    -webkit-overflow-scrolling: touch;
-  }
+/* 主布局包裹 — margin:auto 居中，溢出时 margin 归零自然滚动 */
+.guidLayout {
+  width: clamp(var(--app-min-width, 360px), calc(100% - 32px), 800px);
+  max-width: 100%;
+  padding: 0 16px;
+  box-sizing: border-box;
+  margin: auto 0;
+  flex-shrink: 0;
 }
 
 /* 浅色占位符 */

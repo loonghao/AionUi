@@ -65,8 +65,8 @@ export class AuthMiddleware {
     // Referrer policy
     res.header('Referrer-Policy', SECURITY_CONFIG.HEADERS.REFERRER_POLICY);
 
-    // 内容安全策略（开发环境放宽限制以支持 webpack-dev-server）
-    // Content Security Policy (relaxed in development for webpack-dev-server)
+    // 内容安全策略（开发环境放宽限制以支持 vite dev server）
+    // Content Security Policy (relaxed in development for vite dev server)
     const isDevelopment = process.env.NODE_ENV === 'development';
     const cspPolicy = isDevelopment ? SECURITY_CONFIG.HEADERS.CSP_DEV : SECURITY_CONFIG.HEADERS.CSP_PROD;
 

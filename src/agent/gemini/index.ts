@@ -326,7 +326,31 @@ export class GeminiAgent {
       skillsDir: this.skillsDir,
       enabledSkills: this.enabledSkills,
     });
-    await this.config.initialize();
+
+    // Suppress noisy "Failed to load credentials" errors from Google Auth Library
+    // during config.initialize() when OAuth creds file doesn't exist (ENOENT).
+    // These are non-critical warnings from the underlying library.
+    // Intercept both console.error and process.stderr.write since the error may
+    // originate from gRPC / google-auth-library writing directly to stderr.
+    const origConsoleError = console.error;
+    const origStderrWrite = process.stderr.write.bind(process.stderr);
+    const credentialPattern = /Failed to load credentials.*ENOENT/;
+    console.error = (...args: unknown[]) => {
+      const msg = String(args[0] ?? '');
+      if (credentialPattern.test(msg)) return;
+      origConsoleError.apply(console, args);
+    };
+    process.stderr.write = (chunk: any, ...rest: any[]) => {
+      if (typeof chunk === 'string' && credentialPattern.test(chunk)) return true;
+      if (Buffer.isBuffer(chunk) && credentialPattern.test(chunk.toString())) return true;
+      return (origStderrWrite as any)(chunk, ...rest);
+    };
+    try {
+      await this.config.initialize();
+    } finally {
+      console.error = origConsoleError;
+      process.stderr.write = origStderrWrite;
+    }
 
     // aioncli-core 的 SkillManager.discoverSkills() 会重新从用户 skills 目录加载所有 skills
     // 覆盖了 loadCliConfig 中的过滤，需要在这里重新应用 enabledSkills 过滤

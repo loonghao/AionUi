@@ -89,7 +89,7 @@ export abstract class BasePlugin {
     const oldStatus = this._status;
     this._status = status;
     this.errorMessage = error ?? null;
-    console.log(`[${this.type}Plugin] Status: ${oldStatus} → ${status}${error ? ` (${error})` : ''}`);
+    console.log(`[${this.type}Plugin] Status: ${oldStatus} -> ${status}${error ? ` (${error})` : ''}`);
   }
 
   /**

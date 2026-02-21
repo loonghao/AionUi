@@ -43,10 +43,10 @@
 
 <p align="center">
 
-[✨ Cowork 演示](#-cowork-演示) ·
-[🤔 为什么选择 AionUi？](#-为什么选择-aionui-而非-claude-cowork) ·
-[🚀 快速开始](#-快速开始) ·
-[💬 社区](#-社区与支持)
+[✨ Cowork 演示](#cowork--ai-agent与您并肩工作) ·
+[🤔 为什么选择 AionUi？](#为什么选择-aionui-而非-claude-cowork) ·
+[🚀 快速开始](#快速开始) ·
+[💬 社区](#社区--支持)
 
 </p>
 
@@ -194,7 +194,7 @@ _你的 24/7 AI 助手 — 手机、平板、电脑，随时随地都能用。_
 > **设置：** AionUi 设置 → WebUI 设置 → Channel，配置 Bot Token。
 
 <p align="center">
-  <img src="./resources/remote-telegram copy.png" alt="Cowork from Anywhere" width="800">
+  <img src="./resources/remote-telegram.png" alt="Cowork from Anywhere" width="800">
 </p>
 
 > [远程互联网访问教程](https://github.com/iOfficeAI/AionUi/wiki/Remote-Internet-Access-Guide-Chinese)
@@ -552,6 +552,39 @@ brew install aionui
 - [微信群](./resources/wechat_group.png) — 中文社区
 
 ### 贡献
+
+#### 🛠️ 开发环境搭建
+
+我们推荐使用 [**vx**](https://github.com/loonghao/vx) 来管理所有开发环境和工具链。
+
+**安装 vx：**
+
+Linux/macOS：
+```bash
+curl -fsSL https://raw.githubusercontent.com/loonghao/vx/main/install.sh | bash
+```
+
+Windows (PowerShell)：
+```powershell
+powershell -c "irm https://raw.githubusercontent.com/loonghao/vx/main/install.ps1 | iex"
+```
+
+**快速开始：**
+
+```bash
+# 初始化环境（安装 Node.js、npm 等）
+vx setup
+
+# 安装依赖 + 重建原生模块
+vx just setup
+
+# 启动开发服务器（带扩展系统）
+vx just dev-ext
+```
+
+> 💡 运行 `vx just` 查看所有可用的开发命令。
+
+#### 📝 贡献流程
 
 1. Fork 本项目
 2. 创建功能分支 (`git checkout -b feature/AmazingFeature`)

@@ -102,7 +102,7 @@ export class McpService {
    */
   async getAgentMcpConfigs(
     agents: Array<{
-      backend: AcpBackend;
+      backend: AcpBackend | string;
       name: string;
       cliPath?: string;
     }>
@@ -168,15 +168,6 @@ export class McpService {
   }
 
   /**
-   * Get supported transport types for a given agent config.
-   * Fork Gemini (backend='gemini', no cliPath) uses AionuiMcpAgent.
-   */
-  getSupportedTransportsForAgent(agent: { backend: string; cliPath?: string }): string[] {
-    const agentInstance = this.getAgentForConfig(agent as { backend: AcpBackend; cliPath?: string });
-    return agentInstance ? agentInstance.getSupportedTransports() : [];
-  }
-
-  /**
    * 测试MCP服务器连接
    */
   async testMcpConnection(server: IMcpServer): Promise<McpConnectionTestResult> {
@@ -194,7 +185,7 @@ export class McpService {
   async syncMcpToAgents(
     mcpServers: IMcpServer[],
     agents: Array<{
-      backend: AcpBackend;
+      backend: AcpBackend | string;
       name: string;
       cliPath?: string;
     }>
@@ -248,7 +239,7 @@ export class McpService {
   async removeMcpFromAgents(
     mcpServerName: string,
     agents: Array<{
-      backend: AcpBackend;
+      backend: AcpBackend | string;
       name: string;
       cliPath?: string;
     }>

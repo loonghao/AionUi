@@ -1,0 +1,449 @@
+/**
+ * Hello Dark Theme - CodeBuddy Style
+ * 深邃科技感暗色主题，灵感来自 CodeBuddy/IDE 的现代暗色设计
+ *
+ * 特色：
+ * - 纯正黑色系背景 (#0d1117)，类似 GitHub Dark/CodeBuddy
+ * - 青蓝色高亮强调色 (#58a6ff)
+ * - 微妙的发光效果和渐变
+ * - 高对比度文字，护眼适合长时间编码
+ */
+
+/* ==================== 明色模式 (Light Mode) ==================== */
+/* 即使是 Dark 主题，也需要定义 :root 基础值（用于非 dark 模式回退） */
+:root {
+  /* Primary Colors - 科技蓝 */
+  --color-primary: #2f81f7;
+  --primary: #2f81f7;
+  --color-primary-light-1: #58a6ff;
+  --color-primary-light-2: #79c0ff;
+  --color-primary-light-3: #a5d6ff;
+  --color-primary-dark-1: #1f6feb;
+  --primary-rgb: 47, 129, 247;
+
+  /* Brand Colors */
+  --brand: #2f81f7;
+  --brand-light: #ddf4ff;
+  --brand-hover: #58a6ff;
+  --color-brand-fill: #2f81f7;
+  --color-brand-bg: #ddf4ff;
+
+  /* Background Colors - 浅色模式下使用淡灰 */
+  --color-bg-1: #f6f8fa;
+  --bg-1: #f6f8fa;
+  --color-bg-2: #ffffff;
+  --bg-2: #ffffff;
+  --color-bg-3: #d0d7de;
+  --bg-3: #d0d7de;
+  --color-bg-4: #afb8c1;
+  --bg-4: #afb8c1;
+  --bg-base: #ffffff;
+  --bg-hover: #f3f4f6;
+  --bg-active: #d0d7de;
+  --fill: #f6f8fa;
+  --color-fill: #f6f8fa;
+  --fill-0: #ffffff;
+  --fill-white-to-black: #ffffff;
+
+  /* Text Colors */
+  --color-text-1: #24292f;
+  --text-primary: #24292f;
+  --color-text-2: #57606a;
+  --text-secondary: #6e7781;
+  --color-text-3: #8c959f;
+  --text-disabled: #8c959f;
+  --text-0: #000000;
+  --text-white: #ffffff;
+
+  /* Border Colors */
+  --color-border: #d0d7de;
+  --color-border-1: #d0d7de;
+  --color-border-2: #d8dee4;
+  --border-base: #d0d7de;
+  --border-light: #d8dee4;
+
+  /* Semantic Colors */
+  --success: #1a7f37;
+  --warning: #9a6700;
+  --danger: #cf222e;
+  --info: #0969da;
+
+  /* Message Colors */
+  --message-user-bg: #ddf4ff;
+  --message-tips-bg: #f6f8fa;
+  --workspace-btn-bg: #f3f4f6;
+  --dialog-fill-0: rgba(255, 255, 255, 0.95);
+}
+
+body {
+  font-family: "SF Mono", "Fira Code", "Cascadia Code", "JetBrains Mono", "Consolas", "Microsoft YaHei", monospace;
+  background-color: var(--bg-1);
+}
+
+html {
+  background-color: var(--bg-1);
+}
+
+/* ==================== 深色模式 (Dark Mode) - 核心 ==================== */
+[data-theme='dark'] {
+  /* Primary Colors - 科技青蓝 */
+  --color-primary: #58a6ff;
+  --primary: #58a6ff;
+  --color-primary-light-1: #79c0ff;
+  --color-primary-light-2: #a5d6ff;
+  --color-primary-light-3: #cae8ff;
+  --color-primary-dark-1: #388bfd;
+  --primary-rgb: 88, 166, 255;
+
+  /* Brand Colors */
+  --brand: #58a6ff;
+  --brand-light: #161b22;
+  --brand-hover: #79c0ff;
+  --color-brand-fill: #58a6ff;
+  --color-brand-bg: #161b22;
+
+  /* AOU Brand Colors - 暗蓝色板 */
+  --aou-1: #0d1117;
+  --aou-2: #161b22;
+  --aou-3: #21262d;
+  --aou-4: #30363d;
+  --aou-5: #388bfd;
+  --aou-6: #58a6ff;
+  --aou-7: #79c0ff;
+  --aou-8: #a5d6ff;
+  --aou-9: #cae8ff;
+  --aou-10: #ddf4ff;
+
+  /* Background Colors - 纯正深黑 */
+  --color-bg-1: #0d1117;
+  --bg-1: #0d1117;
+  --color-bg-2: #161b22;
+  --bg-2: #161b22;
+  --color-bg-3: #21262d;
+  --bg-3: #21262d;
+  --color-bg-4: #30363d;
+  --bg-4: #30363d;
+  --bg-base: #010409;
+  --bg-5: #484f58;
+  --bg-6: #6e7681;
+  --bg-8: #8b949e;
+  --bg-9: #b1bac4;
+  --bg-10: #c9d1d9;
+  --bg-hover: #161b22;
+  --bg-active: #21262d;
+  --fill: #0d1117;
+  --color-fill: #0d1117;
+  --fill-0: rgba(255, 255, 255, 0.04);
+  --fill-white-to-black: #010409;
+  --dialog-fill-0: #21262d;
+  --inverse: #ffffff;
+
+  /* Text Colors - 高对比度 */
+  --color-text-1: #e6edf3;
+  --text-primary: #e6edf3;
+  --color-text-2: #8b949e;
+  --text-secondary: #8b949e;
+  --color-text-3: #6e7681;
+  --text-disabled: #484f58;
+  --text-0: #ffffff;
+  --text-white: #ffffff;
+
+  /* Border Colors - 微弱但清晰 */
+  --color-border: #30363d;
+  --color-border-1: #30363d;
+  --color-border-2: #21262d;
+  --border-base: #30363d;
+  --border-light: #21262d;
+  --border-special: #484f58;
+
+  /* Semantic Colors */
+  --success: #3fb950;
+  --warning: #d29922;
+  --danger: #f85149;
+  --info: #58a6ff;
+
+  /* Message & UI Component Colors */
+  --message-user-bg: #0d2d6b;
+  --message-tips-bg: #161b22;
+  --workspace-btn-bg: #161b22;
+}
+
+/* ==================== 深色全局 ==================== */
+[data-theme='dark'] body,
+[data-theme='dark'] html {
+  background-color: #0d1117;
+  color: #e6edf3;
+}
+
+[data-theme='dark'] .arco-layout,
+[data-theme='dark'] [class*="layout"] {
+  background-color: #0d1117;
+}
+
+[data-theme='dark'] .arco-layout-content {
+  background-color: #0d1117;
+}
+
+/* ==================== 侧边栏 ==================== */
+[data-theme='dark'] .layout-sider {
+  background-color: #010409;
+  border-right: 1px solid #21262d;
+}
+
+[data-theme='dark'] .layout-sider-header {
+  background: linear-gradient(180deg, #161b22 0%, #0d1117 100%);
+  color: #e6edf3;
+  border-bottom: 1px solid #21262d;
+}
+
+[data-theme='dark'] .layout-sider-header svg {
+  color: #8b949e;
+}
+
+[data-theme='dark'] .layout-sider-header svg:hover {
+  color: #58a6ff;
+}
+
+/* ==================== 背景遮罩 ==================== */
+[data-theme='dark'] .layout-content.bg-1 {
+  position: relative;
+  background-color: #0d1117;
+}
+
+[data-theme='dark'] .layout-content.bg-1::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at top, rgba(88, 166, 255, 0.03) 0%, transparent 60%);
+  z-index: 0;
+  pointer-events: none;
+}
+
+[data-theme='dark'] .layout-content.bg-1 > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* ==================== 输入框 ==================== */
+[data-theme='dark'] .guidInputCard {
+  background: #161b22;
+  backdrop-filter: blur(12px);
+  border: 1px solid #30363d;
+  border-radius: 12px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(88, 166, 255, 0.05);
+}
+
+[data-theme='dark'] .guidInputCard:hover {
+  border-color: #58a6ff;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.5), 0 0 20px rgba(88, 166, 255, 0.08);
+}
+
+[data-theme='dark'] .guidInputCard textarea {
+  background: transparent;
+  color: #e6edf3;
+}
+
+/* 发送框 */
+[data-theme='dark'] .sendbox-container:not([class*="model"]):not([class*="Model"]),
+[data-theme='dark'] [class*="sendbox"]:not([class*="input"]):not([class*="textarea"]):not([class*="model"]):not([class*="Model"]):not([class*="tools"]) {
+  border-radius: 12px;
+  border: 1px solid #30363d;
+  background: #161b22;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+}
+
+[data-theme='dark'] .sendbox-container textarea,
+[data-theme='dark'] [class*="sendbox"] textarea {
+  background: transparent;
+  border: none;
+  color: #e6edf3;
+}
+
+[data-theme='dark'] .sendbox-container:focus-within,
+[data-theme='dark'] [class*="sendbox"]:focus-within {
+  border-color: #58a6ff;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(88, 166, 255, 0.3), 0 0 30px rgba(88, 166, 255, 0.06);
+}
+
+[data-theme='dark'] .sendbox-container svg:not([class*="model"] svg),
+[data-theme='dark'] [class*="sendbox"]:not([class*="model"]) svg {
+  color: #8b949e;
+}
+
+[data-theme='dark'] .sendbox-container svg:not([class*="model"] svg):hover,
+[data-theme='dark'] [class*="sendbox"]:not([class*="model"]) svg:hover {
+  color: #58a6ff;
+}
+
+/* ==================== 消息气泡 ==================== */
+/* 用户消息 */
+[data-theme='dark'] .message-item.user .message-bubble,
+[data-theme='dark'] [class*="message"][class*="user"] .message-content {
+  background: linear-gradient(135deg, #1f6feb 0%, #388bfd 100%);
+  color: #ffffff;
+  border-radius: 12px 12px 4px 12px;
+  border: none;
+  box-shadow: 0 4px 16px rgba(31, 111, 235, 0.3);
+}
+
+/* AI 消息 */
+[data-theme='dark'] .message-item.ai .message-bubble,
+[data-theme='dark'] [class*="message"][class*="ai"] .message-content,
+[data-theme='dark'] [class*="message"][class*="assistant"] .message-content {
+  background: #161b22;
+  border: 1px solid #21262d;
+  border-radius: 12px 12px 12px 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  color: #e6edf3;
+}
+
+/* 工具调用 */
+[data-theme='dark'] .message-item.ai .arco-alert,
+[data-theme='dark'] [class*="message"][class*="ai"] .arco-alert,
+[data-theme='dark'] [class*="message"][class*="assistant"] .arco-alert {
+  background: rgba(22, 27, 34, 0.8);
+  border: 1px solid #21262d;
+  border-radius: 8px;
+}
+
+[data-theme='dark'] .message-item.ai .arco-card,
+[data-theme='dark'] [class*="message"][class*="ai"] .arco-card,
+[data-theme='dark'] [class*="message"][class*="assistant"] .arco-card {
+  background: rgba(22, 27, 34, 0.8);
+  border: 1px solid #21262d;
+  border-radius: 8px;
+}
+
+/* ==================== 按钮 ==================== */
+[data-theme='dark'] .arco-btn-primary:not([class*="icon"]):not([class*="circle"]):not([class*="model"]),
+[data-theme='dark'] button[type="primary"]:not([class*="icon"]):not([class*="circle"]):not([class*="model"]) {
+  background: #238636;
+  border: 1px solid rgba(240, 246, 252, 0.1);
+  border-radius: 8px;
+  color: #ffffff;
+  font-weight: 600;
+  box-shadow: 0 0 0 0 transparent;
+}
+
+[data-theme='dark'] .arco-btn-primary:hover:not([class*="icon"]):not([class*="circle"]):not([class*="model"]),
+[data-theme='dark'] button[type="primary"]:hover:not([class*="icon"]):not([class*="circle"]):not([class*="model"]) {
+  background: #2ea043;
+  border-color: rgba(240, 246, 252, 0.1);
+  box-shadow: 0 3px 12px rgba(35, 134, 54, 0.3);
+}
+
+/* ==================== 滚动条 ==================== */
+[data-theme='dark'] ::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+[data-theme='dark'] ::-webkit-scrollbar-thumb {
+  background: transparent;
+  border-radius: 4px;
+}
+
+[data-theme='dark'] *:hover::-webkit-scrollbar-thumb {
+  background: rgba(139, 148, 158, 0.25);
+}
+
+[data-theme='dark'] *:hover::-webkit-scrollbar-thumb:hover {
+  background: rgba(139, 148, 158, 0.4);
+}
+
+[data-theme='dark'] ::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* ==================== 其他元素 ==================== */
+[data-theme='dark'] ::selection {
+  background-color: #264f78;
+  color: #ffffff;
+}
+
+[data-theme='dark'] a:not([class*="button"]):not([class*="btn"]) {
+  color: #58a6ff;
+}
+
+[data-theme='dark'] a:hover:not([class*="button"]):not([class*="btn"]) {
+  color: #79c0ff;
+  text-decoration: underline;
+}
+
+/* Tooltip */
+[data-theme='dark'] .arco-tooltip-inner,
+[data-theme='dark'] .arco-popover-inner,
+[data-theme='dark'] .arco-popover-content {
+  background: #21262d;
+  color: #e6edf3;
+  border: 1px solid #30363d;
+  border-radius: 6px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+}
+
+[data-theme='dark'] .arco-tooltip-inner *,
+[data-theme='dark'] .arco-popover-inner *,
+[data-theme='dark'] .arco-popover-content * {
+  color: #e6edf3;
+}
+
+/* Modal */
+[data-theme='dark'] .arco-modal-header {
+  background: #161b22;
+  color: #e6edf3;
+  border-bottom: 1px solid #21262d;
+}
+
+[data-theme='dark'] .arco-modal-body {
+  background: #0d1117;
+  color: #e6edf3;
+}
+
+[data-theme='dark'] .arco-modal-footer {
+  background: #161b22;
+  border-top: 1px solid #21262d;
+}
+
+/* 表单输入 */
+[data-theme='dark'] .arco-input,
+[data-theme='dark'] .arco-textarea,
+[data-theme='dark'] .arco-select-view,
+[data-theme='dark'] input:not([type="checkbox"]):not([type="radio"]):not([type="button"]),
+[data-theme='dark'] textarea {
+  background-color: #0d1117;
+  border: 1px solid #30363d;
+  color: #e6edf3;
+  border-radius: 6px;
+}
+
+[data-theme='dark'] .arco-input:focus,
+[data-theme='dark'] .arco-textarea:focus,
+[data-theme='dark'] input:focus,
+[data-theme='dark'] textarea:focus {
+  border-color: #58a6ff;
+  box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.15);
+}
+
+[data-theme='dark'] .arco-input::placeholder,
+[data-theme='dark'] .arco-textarea::placeholder,
+[data-theme='dark'] input::placeholder,
+[data-theme='dark'] textarea::placeholder {
+  color: #484f58;
+}
+
+/* 分割线 */
+[data-theme='dark'] .arco-divider {
+  border-color: #21262d;
+}
+
+/* 代码块高亮 - 代码就该有 IDE 的感觉 */
+[data-theme='dark'] pre,
+[data-theme='dark'] code {
+  background-color: #161b22;
+  border: 1px solid #21262d;
+  border-radius: 6px;
+}
+
+[data-theme='dark'] pre code {
+  border: none;
+}
