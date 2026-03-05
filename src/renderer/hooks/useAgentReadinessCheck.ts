@@ -4,9 +4,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useCallback, useEffect, useState } from "react";
-import { ipcBridge } from "@/common";
-import type { AcpBackendAll } from "@/types/acpTypes";
+import { useCallback, useEffect, useState } from 'react';
+import { ipcBridge } from '@/common';
+import type { AcpBackendAll } from '@/types/acpTypes';
 
 export type AgentCheckResult = {
   backend: AcpBackendAll;
@@ -39,7 +39,7 @@ type UseAgentReadinessCheckOptions = {
   // The backend type to check (for ACP conversations)
   backend?: AcpBackendAll;
   // Conversation type ('gemini' or 'acp')
-  conversationType: "gemini" | "acp" | "codex";
+  conversationType: 'gemini' | 'acp' | 'codex';
   // Whether to auto-check on mount
   autoCheck?: boolean;
   // Callback when a ready agent is found
@@ -47,17 +47,17 @@ type UseAgentReadinessCheckOptions = {
 };
 
 const AGENT_NAMES: Partial<Record<AcpBackendAll, string>> = {
-  claude: "Claude",
-  codex: "Codex",
-  codebuddy: "CodeBuddy",
-  opencode: "OpenCode",
-  gemini: "Gemini",
-  qwen: "Qwen Code",
-  iflow: "iFlow",
-  droid: "Droid",
-  goose: "Goose",
-  auggie: "Auggie",
-  kimi: "Kimi",
+  claude: 'Claude',
+  codex: 'Codex',
+  codebuddy: 'CodeBuddy',
+  opencode: 'OpenCode',
+  gemini: 'Gemini',
+  qwen: 'Qwen Code',
+  iflow: 'iFlow',
+  droid: 'Droid',
+  goose: 'Goose',
+  auggie: 'Auggie',
+  kimi: 'Kimi',
 };
 
 /**
@@ -74,12 +74,12 @@ export function useAgentReadinessCheck(options: UseAgentReadinessCheckOptions) {
     availableAgents: [],
     bestAgent: null,
     progress: 0,
-    currentAgent: conversationType === "gemini" ? "gemini" : (backend as AcpBackendAll) || null,
+    currentAgent: conversationType === 'gemini' ? 'gemini' : (backend as AcpBackendAll) || null,
   });
 
   // Check the current agent's readiness
   const checkCurrentAgent = useCallback(async (): Promise<boolean> => {
-    const agentToCheck = conversationType === "gemini" ? "gemini" : backend;
+    const agentToCheck = conversationType === 'gemini' ? 'gemini' : backend;
     if (!agentToCheck) return true;
 
     setState((prev) => ({
@@ -106,7 +106,7 @@ export function useAgentReadinessCheck(options: UseAgentReadinessCheckOptions) {
           ...prev,
           isReady: false,
           isChecking: false,
-          error: result.msg || result.data?.error || "Agent not available",
+          error: result.msg || result.data?.error || 'Agent not available',
         }));
         return false;
       }
@@ -115,7 +115,7 @@ export function useAgentReadinessCheck(options: UseAgentReadinessCheckOptions) {
         ...prev,
         isReady: false,
         isChecking: false,
-        error: error instanceof Error ? error.message : "Check failed",
+        error: error instanceof Error ? error.message : 'Check failed',
       }));
       return false;
     }
@@ -123,7 +123,7 @@ export function useAgentReadinessCheck(options: UseAgentReadinessCheckOptions) {
 
   // Find available alternative agents
   const findAlternatives = useCallback(async () => {
-    const currentAgentBackend = conversationType === "gemini" ? "gemini" : backend;
+    const currentAgentBackend = conversationType === 'gemini' ? 'gemini' : backend;
 
     setState((prev) => ({
       ...prev,
@@ -145,7 +145,7 @@ export function useAgentReadinessCheck(options: UseAgentReadinessCheckOptions) {
 
       // Filter out current agent and custom agents
       const agentsToCheck = result.data
-        .filter((agent) => agent.backend !== "custom" && agent.backend !== currentAgentBackend)
+        .filter((agent) => agent.backend !== 'custom' && agent.backend !== currentAgentBackend)
         .map((agent) => ({
           backend: agent.backend as AcpBackendAll,
           name: AGENT_NAMES[agent.backend as AcpBackendAll] || agent.name,
@@ -203,10 +203,7 @@ export function useAgentReadinessCheck(options: UseAgentReadinessCheckOptions) {
               ...prev,
               isChecking: false, // Stop checking indicator
               bestAgent: firstAvailableAgent,
-              availableAgents: [
-                ...results,
-                ...agentsToCheck.slice(completed + 1).map((a) => ({ ...a, checking: false })),
-              ],
+              availableAgents: [...results, ...agentsToCheck.slice(completed + 1).map((a) => ({ ...a, checking: false }))],
             }));
 
             // Trigger callback immediately
@@ -221,7 +218,7 @@ export function useAgentReadinessCheck(options: UseAgentReadinessCheckOptions) {
           results.push({
             ...agent,
             available: false,
-            error: error instanceof Error ? error.message : "Unknown error",
+            error: error instanceof Error ? error.message : 'Unknown error',
             checking: false,
           });
         }
@@ -232,10 +229,7 @@ export function useAgentReadinessCheck(options: UseAgentReadinessCheckOptions) {
         setState((prev) => ({
           ...prev,
           progress,
-          availableAgents: [
-            ...results,
-            ...agentsToCheck.slice(completed).map((a) => ({ ...a, checking: true })),
-          ],
+          availableAgents: [...results, ...agentsToCheck.slice(completed).map((a) => ({ ...a, checking: true }))],
         }));
       }
 
@@ -247,7 +241,7 @@ export function useAgentReadinessCheck(options: UseAgentReadinessCheckOptions) {
         bestAgent: null,
       }));
     } catch (error) {
-      console.error("Failed to find alternatives:", error);
+      console.error('Failed to find alternatives:', error);
       setState((prev) => ({
         ...prev,
         isChecking: false,
@@ -271,7 +265,7 @@ export function useAgentReadinessCheck(options: UseAgentReadinessCheckOptions) {
       availableAgents: [],
       bestAgent: null,
       progress: 0,
-      currentAgent: conversationType === "gemini" ? "gemini" : (backend as AcpBackendAll) || null,
+      currentAgent: conversationType === 'gemini' ? 'gemini' : (backend as AcpBackendAll) || null,
     });
   }, [backend, conversationType]);
 

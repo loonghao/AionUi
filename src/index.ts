@@ -4,30 +4,30 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import "./utils/configureChromium";
-import { app, BrowserWindow, Menu, nativeImage, powerMonitor, screen, Tray } from "electron";
-import fixPath from "fix-path";
-import * as fs from "fs";
-import * as path from "path";
-import { initMainAdapterWithWindow } from "./adapter/main";
-import { ipcBridge } from "./common";
-import { initializeProcess } from "./process";
-import { ProcessConfig } from "./process/initStorage";
-import { loadShellEnvironmentAsync, mergePaths } from "./process/utils/shellEnv";
-import { initializeAcpDetector } from "./process/bridge";
-import { registerWindowMaximizeListeners } from "./process/bridge/windowControlsBridge";
-import { onCloseToTrayChanged } from "./process/bridge/systemSettingsBridge";
-import WorkerManage from "./process/WorkerManage";
-import { setupApplicationMenu } from "./utils/appMenu";
-import { startWebServer } from "./webserver";
-import { SERVER_CONFIG } from "./webserver/config/constants";
-import { applyZoomToWindow } from "./process/utils/zoom";
+import './utils/configureChromium';
+import { app, BrowserWindow, Menu, nativeImage, powerMonitor, screen, Tray } from 'electron';
+import fixPath from 'fix-path';
+import * as fs from 'fs';
+import * as path from 'path';
+import { initMainAdapterWithWindow } from './adapter/main';
+import { ipcBridge } from './common';
+import { initializeProcess } from './process';
+import { ProcessConfig } from './process/initStorage';
+import { loadShellEnvironmentAsync, mergePaths } from './process/utils/shellEnv';
+import { initializeAcpDetector } from './process/bridge';
+import { registerWindowMaximizeListeners } from './process/bridge/windowControlsBridge';
+import { onCloseToTrayChanged } from './process/bridge/systemSettingsBridge';
+import WorkerManage from './process/WorkerManage';
+import { setupApplicationMenu } from './utils/appMenu';
+import { startWebServer } from './webserver';
+import { SERVER_CONFIG } from './webserver/config/constants';
+import { applyZoomToWindow } from './process/utils/zoom';
 // @ts-expect-error - electron-squirrel-startup doesn't have types
-import electronSquirrelStartup from "electron-squirrel-startup";
+import electronSquirrelStartup from 'electron-squirrel-startup';
 
 // ============ Deep Link Protocol ============
 // Register aionui:// protocol scheme for external app integration (e.g., New API token quick-add)
-const PROTOCOL_SCHEME = "aionui";
+const PROTOCOL_SCHEME = 'aionui';
 
 /**
  * Parse an aionui:// URL into action and params.
@@ -35,16 +35,14 @@ const PROTOCOL_SCHEME = "aionui";
  *   1. aionui://add-provider?baseUrl=xxx&apiKey=xxx
  *   2. aionui://provider/add?v=1&data=<base64 JSON>  (one-api / new-api style)
  */
-const parseDeepLinkUrl = (
-  url: string,
-): { action: string; params: Record<string, string> } | null => {
+const parseDeepLinkUrl = (url: string): { action: string; params: Record<string, string> } | null => {
   try {
     const parsed = new URL(url);
     if (parsed.protocol !== `${PROTOCOL_SCHEME}:`) return null;
 
     // Build action from hostname + pathname, e.g. "provider/add" or "add-provider"
-    const hostname = parsed.hostname || "";
-    const pathname = parsed.pathname.replace(/^\/+/, "");
+    const hostname = parsed.hostname || '';
+    const pathname = parsed.pathname.replace(/^\/+/, '');
     const action = pathname ? `${hostname}/${pathname}` : hostname;
 
     const params: Record<string, string> = {};
@@ -55,8 +53,8 @@ const parseDeepLinkUrl = (
     // If data param exists, decode base64 JSON and merge into params
     if (params.data) {
       try {
-        const json = JSON.parse(Buffer.from(params.data, "base64").toString("utf-8"));
-        if (json && typeof json === "object") {
+        const json = JSON.parse(Buffer.from(params.data, 'base64').toString('utf-8'));
+        if (json && typeof json === 'object') {
           Object.assign(params, json);
         }
       } catch {
@@ -73,8 +71,7 @@ const parseDeepLinkUrl = (
 };
 
 /** Pending deep-link URL received before the window was ready */
-let pendingDeepLinkUrl: string | null =
-  process.argv.find((arg) => arg.startsWith(`${PROTOCOL_SCHEME}://`)) || null;
+let pendingDeepLinkUrl: string | null = process.argv.find((arg) => arg.startsWith(`${PROTOCOL_SCHEME}://`)) || null;
 
 /**
  * Send the deep-link payload to the renderer via IPC bridge.
@@ -98,19 +95,15 @@ const handleDeepLinkUrl = (url: string) => {
 // Acquire lock early so the second instance quits before doing unnecessary work.
 // When a second instance starts (e.g. from protocol URL), it sends its data
 // to the first instance via second-instance event, then quits.
-const isE2ETestMode = process.env.AIONUI_E2E_TEST === "1";
+const isE2ETestMode = process.env.AIONUI_E2E_TEST === '1';
 const deepLinkFromArgv = process.argv.find((arg) => arg.startsWith(`${PROTOCOL_SCHEME}://`));
-const gotTheLock = isE2ETestMode
-  ? true
-  : app.requestSingleInstanceLock({ deepLinkUrl: deepLinkFromArgv });
+const gotTheLock = isE2ETestMode ? true : app.requestSingleInstanceLock({ deepLinkUrl: deepLinkFromArgv });
 if (!gotTheLock) {
   app.quit();
 } else {
-  app.on("second-instance", (_event, argv, _workingDirectory, additionalData) => {
+  app.on('second-instance', (_event, argv, _workingDirectory, additionalData) => {
     // Prefer additionalData (reliable on all platforms), fallback to argv scan
-    const deepLinkUrl =
-      (additionalData as { deepLinkUrl?: string })?.deepLinkUrl ||
-      argv.find((arg) => arg.startsWith(`${PROTOCOL_SCHEME}://`));
+    const deepLinkUrl = (additionalData as { deepLinkUrl?: string })?.deepLinkUrl || argv.find((arg) => arg.startsWith(`${PROTOCOL_SCHEME}://`));
     if (deepLinkUrl) {
       handleDeepLinkUrl(deepLinkUrl);
     }
@@ -124,20 +117,18 @@ if (!gotTheLock) {
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 // 修复 macOS 和 Linux 下 GUI 应用的 PATH 环境变量,使其与命令行一致
-if (process.platform === "darwin" || process.platform === "linux") {
+if (process.platform === 'darwin' || process.platform === 'linux') {
   fixPath();
 
   // Supplement nvm paths that fix-path might miss (nvm is often only in .zshrc, not .zshenv)
-  const nvmDir = process.env.NVM_DIR || path.join(process.env.HOME || "", ".nvm");
-  const nvmVersionsDir = path.join(nvmDir, "versions", "node");
+  const nvmDir = process.env.NVM_DIR || path.join(process.env.HOME || '', '.nvm');
+  const nvmVersionsDir = path.join(nvmDir, 'versions', 'node');
   if (fs.existsSync(nvmVersionsDir)) {
     try {
       const versions = fs.readdirSync(nvmVersionsDir);
-      const nvmPaths = versions
-        .map((v) => path.join(nvmVersionsDir, v, "bin"))
-        .filter((p) => fs.existsSync(p));
+      const nvmPaths = versions.map((v) => path.join(nvmVersionsDir, v, 'bin')).filter((p) => fs.existsSync(p));
       if (nvmPaths.length > 0) {
-        const currentPath = process.env.PATH || "";
+        const currentPath = process.env.PATH || '';
         const missingPaths = nvmPaths.filter((p) => !currentPath.includes(p));
         if (missingPaths.length > 0) {
           process.env.PATH = [...missingPaths, currentPath].join(path.delimiter);
@@ -158,23 +149,22 @@ if (electronSquirrelStartup) {
 // Global error handlers for main process
 // 捕获未处理的同步异常，防止显示 Electron 默认错误对话框
 // Catch uncaught synchronous exceptions to prevent Electron's default error dialog
-process.on("uncaughtException", (_error) => {
+process.on('uncaughtException', (_error) => {
   // 在生产环境中，可以将错误记录到文件或上报到错误追踪服务
   // In production, errors can be logged to file or sent to error tracking service
-  if (process.env.NODE_ENV !== "development") {
+  if (process.env.NODE_ENV !== 'development') {
     // TODO: Add error logging or reporting
   }
 });
 
 // 捕获未处理的 Promise 拒绝，避免应用崩溃
 // Catch unhandled Promise rejections to prevent app crashes
-process.on("unhandledRejection", (_reason, _promise) => {
+process.on('unhandledRejection', (_reason, _promise) => {
   // 可以在这里添加错误上报逻辑
   // Error reporting logic can be added here
 });
 
-const hasSwitch = (flag: string) =>
-  process.argv.includes(`--${flag}`) || app.commandLine.hasSwitch(flag);
+const hasSwitch = (flag: string) => process.argv.includes(`--${flag}`) || app.commandLine.hasSwitch(flag);
 const getSwitchValue = (flag: string): string | undefined => {
   const withEqualsPrefix = `--${flag}=`;
   const equalsArg = process.argv.find((arg) => arg.startsWith(withEqualsPrefix));
@@ -185,7 +175,7 @@ const getSwitchValue = (flag: string): string | undefined => {
   const argIndex = process.argv.indexOf(`--${flag}`);
   if (argIndex !== -1) {
     const nextArg = process.argv[argIndex + 1];
-    if (nextArg && !nextArg.startsWith("--")) {
+    if (nextArg && !nextArg.startsWith('--')) {
       return nextArg;
     }
   }
@@ -195,7 +185,7 @@ const getSwitchValue = (flag: string): string | undefined => {
 };
 const hasCommand = (cmd: string) => process.argv.includes(cmd);
 
-const WEBUI_CONFIG_FILE = "webui.config.json";
+const WEBUI_CONFIG_FILE = 'webui.config.json';
 
 type WebUIUserConfig = {
   port?: number | string;
@@ -203,32 +193,28 @@ type WebUIUserConfig = {
 };
 
 const parsePortValue = (value: unknown, _sourceLabel: string): number | null => {
-  if (value === undefined || value === null || value === "") {
+  if (value === undefined || value === null || value === '') {
     return null;
   }
 
-  const portNumber = typeof value === "number" ? value : parseInt(String(value), 10);
+  const portNumber = typeof value === 'number' ? value : parseInt(String(value), 10);
   if (!Number.isFinite(portNumber) || portNumber < 1 || portNumber > 65535) {
     return null;
   }
   return portNumber;
 };
 
-const loadUserWebUIConfig = (): {
-  config: WebUIUserConfig;
-  path: string | null;
-  exists: boolean;
-} => {
+const loadUserWebUIConfig = (): { config: WebUIUserConfig; path: string | null; exists: boolean } => {
   try {
-    const userDataPath = app.getPath("userData");
+    const userDataPath = app.getPath('userData');
     const configPath = path.join(userDataPath, WEBUI_CONFIG_FILE);
     if (!fs.existsSync(configPath)) {
       return { config: {}, path: configPath, exists: false };
     }
 
-    const raw = fs.readFileSync(configPath, "utf-8");
+    const raw = fs.readFileSync(configPath, 'utf-8');
     const parsed = JSON.parse(raw);
-    if (!parsed || typeof parsed !== "object") {
+    if (!parsed || typeof parsed !== 'object') {
       return { config: {}, path: configPath, exists: false };
     }
     return { config: parsed as WebUIUserConfig, path: configPath, exists: true };
@@ -238,19 +224,13 @@ const loadUserWebUIConfig = (): {
 };
 
 const resolveWebUIPort = (config: WebUIUserConfig): number => {
-  const cliPort = parsePortValue(
-    getSwitchValue("port") ?? getSwitchValue("webui-port"),
-    "CLI (--port)",
-  );
+  const cliPort = parsePortValue(getSwitchValue('port') ?? getSwitchValue('webui-port'), 'CLI (--port)');
   if (cliPort) return cliPort;
 
-  const envPort = parsePortValue(
-    process.env.AIONUI_PORT ?? process.env.PORT,
-    "environment variable (AIONUI_PORT/PORT)",
-  );
+  const envPort = parsePortValue(process.env.AIONUI_PORT ?? process.env.PORT, 'environment variable (AIONUI_PORT/PORT)');
   if (envPort) return envPort;
 
-  const configPort = parsePortValue(config.port, "webui.config.json");
+  const configPort = parsePortValue(config.port, 'webui.config.json');
   if (configPort) return configPort;
 
   return SERVER_CONFIG.DEFAULT_PORT;
@@ -259,23 +239,23 @@ const resolveWebUIPort = (config: WebUIUserConfig): number => {
 const parseBooleanEnv = (value?: string): boolean | null => {
   if (!value) return null;
   const normalized = value.trim().toLowerCase();
-  if (["1", "true", "yes", "on"].includes(normalized)) return true;
-  if (["0", "false", "no", "off"].includes(normalized)) return false;
+  if (['1', 'true', 'yes', 'on'].includes(normalized)) return true;
+  if (['0', 'false', 'no', 'off'].includes(normalized)) return false;
   return null;
 };
 
 const resolveRemoteAccess = (config: WebUIUserConfig): boolean => {
   const envRemote = parseBooleanEnv(process.env.AIONUI_ALLOW_REMOTE || process.env.AIONUI_REMOTE);
   const hostHint = process.env.AIONUI_HOST?.trim();
-  const hostRequestsRemote = hostHint ? ["0.0.0.0", "::", "::0"].includes(hostHint) : false;
+  const hostRequestsRemote = hostHint ? ['0.0.0.0', '::', '::0'].includes(hostHint) : false;
   const configRemote = config.allowRemote === true;
 
   return isRemoteMode || hostRequestsRemote || envRemote === true || configRemote;
 };
 
-const isWebUIMode = hasSwitch("webui");
-const isRemoteMode = hasSwitch("remote");
-const isResetPasswordMode = hasCommand("--resetpass");
+const isWebUIMode = hasSwitch('webui');
+const isRemoteMode = hasSwitch('remote');
+const isResetPasswordMode = hasCommand('--resetpass');
 
 // Flag to distinguish intentional quit from unexpected exit in WebUI mode
 let isExplicitQuit = false;
@@ -291,16 +271,14 @@ let closeToTrayEnabled = false;
  * macOS uses Template image to adapt to dark/light menu bar
  */
 const getTrayIcon = (): Electron.NativeImage => {
-  const resourcesPath = app.isPackaged
-    ? process.resourcesPath
-    : path.join(process.cwd(), "resources");
-  if (process.platform === "darwin") {
+  const resourcesPath = app.isPackaged ? process.resourcesPath : path.join(process.cwd(), 'resources');
+  if (process.platform === 'darwin') {
     // macOS: 使用 16x16 的彩色应用图标 / Use 16x16 colored app icon
-    const icon = nativeImage.createFromPath(path.join(resourcesPath, "app.png"));
+    const icon = nativeImage.createFromPath(path.join(resourcesPath, 'app.png'));
     return icon.resize({ width: 16, height: 16 });
   }
   // Windows/Linux: 使用标准图标 / Use standard icon
-  const iconFile = process.platform === "win32" ? "app.ico" : "app.png";
+  const iconFile = process.platform === 'win32' ? 'app.ico' : 'app.png';
   return nativeImage.createFromPath(path.join(resourcesPath, iconFile));
 };
 
@@ -314,11 +292,11 @@ const createOrUpdateTray = (): void => {
   try {
     const icon = getTrayIcon();
     tray = new Tray(icon);
-    tray.setToolTip("AionUi");
+    tray.setToolTip('AionUi');
 
     const contextMenu = Menu.buildFromTemplate([
       {
-        label: "Show AionUi",
+        label: 'Show AionUi',
         click: () => {
           if (mainWindow) {
             mainWindow.show();
@@ -326,9 +304,9 @@ const createOrUpdateTray = (): void => {
           }
         },
       },
-      { type: "separator" },
+      { type: 'separator' },
       {
-        label: "Quit",
+        label: 'Quit',
         click: () => {
           isQuitting = true;
           app.quit();
@@ -339,14 +317,14 @@ const createOrUpdateTray = (): void => {
     tray.setContextMenu(contextMenu);
 
     // 双击托盘图标显示窗口（Windows/Linux）/ Double-click tray icon to show window (Windows/Linux)
-    tray.on("double-click", () => {
+    tray.on('double-click', () => {
       if (mainWindow) {
         mainWindow.show();
         mainWindow.focus();
       }
     });
   } catch (err) {
-    console.error("[Tray] Failed to create tray:", err);
+    console.error('[Tray] Failed to create tray:', err);
   }
 };
 
@@ -375,8 +353,8 @@ const createWindow = (): void => {
   if (!app.isPackaged) {
     try {
       // Windows: app.ico (no dev version), Linux: app_dev.png (with padding)
-      const iconFile = process.platform === "win32" ? "app.ico" : "app_dev.png";
-      const iconPath = path.join(process.cwd(), "resources", iconFile);
+      const iconFile = process.platform === 'win32' ? 'app.ico' : 'app_dev.png';
+      const iconPath = path.join(process.cwd(), 'resources', iconFile);
       if (fs.existsSync(iconPath)) {
         devIcon = nativeImage.createFromPath(iconPath);
         if (devIcon.isEmpty()) devIcon = undefined;
@@ -391,19 +369,19 @@ const createWindow = (): void => {
     width: windowWidth,
     height: windowHeight,
     show: false, // Hide until CSS is loaded to prevent FOUC
-    backgroundColor: "#ffffff",
+    backgroundColor: '#ffffff',
     autoHideMenuBar: true,
     // Set icon for Windows/Linux in development mode
-    ...(devIcon && process.platform !== "darwin" ? { icon: devIcon } : {}),
+    ...(devIcon && process.platform !== 'darwin' ? { icon: devIcon } : {}),
     // Custom titlebar configuration / 自定义标题栏配置
-    ...(process.platform === "darwin"
+    ...(process.platform === 'darwin'
       ? {
-          titleBarStyle: "hidden",
+          titleBarStyle: 'hidden',
           trafficLightPosition: { x: 10, y: 10 },
         }
       : { frame: false }),
     webPreferences: {
-      preload: path.join(__dirname, "../preload/index.js"),
+      preload: path.join(__dirname, '../preload/index.js'),
       webviewTag: true, // 启用 webview 标签用于 HTML 预览 / Enable webview tag for HTML preview
     },
   });
@@ -417,11 +395,11 @@ const createWindow = (): void => {
       mainWindow.focus();
     }
   };
-  mainWindow.once("ready-to-show", () => {
+  mainWindow.once('ready-to-show', () => {
     showWindow();
   });
   // Belt-and-suspenders: also show on did-finish-load in case ready-to-show already fired
-  mainWindow.webContents.once("did-finish-load", () => {
+  mainWindow.webContents.once('did-finish-load', () => {
     showWindow();
   });
   // Fallback: show window after 5s even if events don't fire (e.g. loadURL failure)
@@ -434,10 +412,7 @@ const createWindow = (): void => {
 
   // Initialize auto-updater service
   // 初始化自动更新服务
-  Promise.all([
-    import("./process/services/autoUpdaterService"),
-    import("./process/bridge/updateBridge"),
-  ])
+  Promise.all([import('./process/services/autoUpdaterService'), import('./process/bridge/updateBridge')])
     .then(([{ autoUpdaterService }, { createAutoUpdateStatusBroadcast }]) => {
       // Create status broadcast callback that emits via ipcBridge (pure emitter, no window binding)
       const statusBroadcast = createAutoUpdateStatusBroadcast();
@@ -449,49 +424,48 @@ const createWindow = (): void => {
       }, 3000);
     })
     .catch((error) => {
-      console.error("[App] Failed to initialize autoUpdaterService:", error);
+      console.error('[App] Failed to initialize autoUpdaterService:', error);
     });
 
   // Load the renderer: dev server URL in development, built HTML file in production
-  const rendererUrl = process.env["ELECTRON_RENDERER_URL"];
-  const fallbackFile = path.join(__dirname, "../renderer/index.html");
+  const rendererUrl = process.env['ELECTRON_RENDERER_URL'];
+  const fallbackFile = path.join(__dirname, '../renderer/index.html');
 
   if (!app.isPackaged && rendererUrl) {
     console.log(`[AionUi] Loading renderer URL: ${rendererUrl}`);
     mainWindow.loadURL(rendererUrl).catch((error) => {
-      console.error("[AionUi] loadURL failed, falling back to file:", error.message || error);
+      console.error('[AionUi] loadURL failed, falling back to file:', error.message || error);
       mainWindow.loadFile(fallbackFile).catch((e2) => {
-        console.error("[AionUi] loadFile fallback also failed:", e2.message || e2);
+        console.error('[AionUi] loadFile fallback also failed:', e2.message || e2);
       });
     });
   } else {
     console.log(`[AionUi] Loading renderer file: ${fallbackFile}`);
     mainWindow.loadFile(fallbackFile).catch((error) => {
-      console.error("[AionUi] loadFile failed:", error.message || error);
+      console.error('[AionUi] loadFile failed:', error.message || error);
     });
   }
 
   // 只在开发环境自动打开 DevTools / Only auto-open DevTools in development
   // 使用 app.isPackaged 判断更可靠，打包后的应用不会自动打开 DevTools
   // Using app.isPackaged is more reliable, packaged apps won't auto-open DevTools
-  const disableDevToolsByEnv =
-    process.env.AIONUI_DISABLE_DEVTOOLS === "1" || process.env.AIONUI_E2E_TEST === "1";
+  const disableDevToolsByEnv = process.env.AIONUI_DISABLE_DEVTOOLS === '1' || process.env.AIONUI_E2E_TEST === '1';
   if (!app.isPackaged && !disableDevToolsByEnv) {
     mainWindow.webContents.openDevTools();
   }
 
   // Listen to DevTools state changes and notify Renderer
-  mainWindow.webContents.on("devtools-opened", () => {
+  mainWindow.webContents.on('devtools-opened', () => {
     ipcBridge.application.devToolsStateChanged.emit({ isOpen: true });
   });
 
-  mainWindow.webContents.on("devtools-closed", () => {
+  mainWindow.webContents.on('devtools-closed', () => {
     ipcBridge.application.devToolsStateChanged.emit({ isOpen: false });
   });
 
   // 关闭拦截：当启用"关闭到托盘"时，隐藏窗口而非关闭
   // Close interception: hide window instead of closing when "close to tray" is enabled
-  mainWindow.on("close", (event) => {
+  mainWindow.on('close', (event) => {
     if (closeToTrayEnabled && !isQuitting) {
       event.preventDefault();
       mainWindow.hide();
@@ -520,16 +494,16 @@ ipcBridge.application.openDevTools.provider(() => {
       // Open is async, wait for the event
       return new Promise((resolve) => {
         const onOpened = () => {
-          mainWindow.webContents.off("devtools-opened", onOpened);
+          mainWindow.webContents.off('devtools-opened', onOpened);
           resolve(true);
         };
 
-        mainWindow.webContents.once("devtools-opened", onOpened);
+        mainWindow.webContents.once('devtools-opened', onOpened);
         mainWindow.webContents.openDevTools();
 
         // Fallback timeout in case event doesn't fire
         setTimeout(() => {
-          mainWindow.webContents.off("devtools-opened", onOpened);
+          mainWindow.webContents.off('devtools-opened', onOpened);
           const isNowOpen = mainWindow.webContents.isDevToolsOpened();
           resolve(isNowOpen);
         }, 500);
@@ -542,9 +516,9 @@ ipcBridge.application.openDevTools.provider(() => {
 const handleAppReady = async (): Promise<void> => {
   // Set dock icon in development mode on macOS
   // In production, the icon is set via forge.config.ts packagerConfig.icon
-  if (process.platform === "darwin" && !app.isPackaged && app.dock) {
+  if (process.platform === 'darwin' && !app.isPackaged && app.dock) {
     try {
-      const iconPath = path.join(process.cwd(), "resources", "app_dev.png");
+      const iconPath = path.join(process.cwd(), 'resources', 'app_dev.png');
       if (fs.existsSync(iconPath)) {
         const icon = nativeImage.createFromPath(iconPath);
         if (!icon.isEmpty()) {
@@ -559,7 +533,7 @@ const handleAppReady = async (): Promise<void> => {
   try {
     await initializeProcess();
   } catch (error) {
-    console.error("Failed to initialize process:", error);
+    console.error('Failed to initialize process:', error);
     app.exit(1);
     return;
   }
@@ -569,12 +543,12 @@ const handleAppReady = async (): Promise<void> => {
     try {
       // Get username argument, filtering out flags (--xxx)
       // 获取用户名参数，过滤掉标志（--xxx）
-      const resetPasswordIndex = process.argv.indexOf("--resetpass");
+      const resetPasswordIndex = process.argv.indexOf('--resetpass');
       const argsAfterCommand = process.argv.slice(resetPasswordIndex + 1);
-      const username = argsAfterCommand.find((arg) => !arg.startsWith("--")) || "admin";
+      const username = argsAfterCommand.find((arg) => !arg.startsWith('--')) || 'admin';
 
       // Import resetpass logic
-      const { resetPasswordCLI } = await import("./utils/resetPasswordCLI");
+      const { resetPasswordCLI } = await import('./utils/resetPasswordCLI');
       await resetPasswordCLI(username);
 
       app.quit();
@@ -592,12 +566,12 @@ const handleAppReady = async (): Promise<void> => {
 
     // Keep the process alive in WebUI mode by preventing default quit behavior.
     // On Linux headless (systemd), Electron may attempt to quit when no windows exist.
-    app.on("will-quit", (event) => {
+    app.on('will-quit', (event) => {
       // Only prevent quit if this is an unexpected exit (server still running).
       // Explicit app.exit() calls bypass will-quit, so they are unaffected.
       if (!isExplicitQuit) {
         event.preventDefault();
-        console.warn("[WebUI] Prevented unexpected quit — server is still running");
+        console.warn('[WebUI] Prevented unexpected quit — server is still running');
       }
     });
   } else {
@@ -614,7 +588,7 @@ const handleAppReady = async (): Promise<void> => {
       destroyTray();
     } else {
       try {
-        const savedCloseToTray = await ProcessConfig.get("system.closeToTray");
+        const savedCloseToTray = await ProcessConfig.get('system.closeToTray');
         closeToTrayEnabled = savedCloseToTray ?? false;
         if (closeToTrayEnabled) {
           createOrUpdateTray();
@@ -639,7 +613,7 @@ const handleAppReady = async (): Promise<void> => {
       const url = pendingDeepLinkUrl;
       pendingDeepLinkUrl = null;
       // Wait for renderer to be ready before sending
-      mainWindow.webContents.once("did-finish-load", () => {
+      mainWindow.webContents.once('did-finish-load', () => {
         handleDeepLinkUrl(url);
       });
     }
@@ -660,7 +634,7 @@ const handleAppReady = async (): Promise<void> => {
       }
       // Apply other shell env vars (SSL certs, auth tokens) that may be missing
       for (const [key, value] of Object.entries(shellEnv)) {
-        if (key !== "PATH" && !process.env[key]) {
+        if (key !== 'PATH' && !process.env[key]) {
           process.env[key] = value;
         }
       }
@@ -668,28 +642,26 @@ const handleAppReady = async (): Promise<void> => {
   }
 
   // Verify CDP is ready and log status
-  const { cdpPort, verifyCdpReady } = await import("./utils/configureChromium");
+  const { cdpPort, verifyCdpReady } = await import('./utils/configureChromium');
   if (cdpPort) {
     const cdpReady = await verifyCdpReady(cdpPort);
     if (cdpReady) {
       console.log(`[CDP] Remote debugging server ready at http://127.0.0.1:${cdpPort}`);
-      console.log(
-        `[CDP] MCP chrome-devtools: npx chrome-devtools-mcp@latest --browser-url=http://127.0.0.1:${cdpPort}`,
-      );
+      console.log(`[CDP] MCP chrome-devtools: npx chrome-devtools-mcp@latest --browser-url=http://127.0.0.1:${cdpPort}`);
     } else {
       console.warn(`[CDP] Warning: Remote debugging port ${cdpPort} not responding`);
     }
   }
 
   // Listen for system resume (wake from sleep/hibernate) to recover missed cron jobs
-  powerMonitor.on("resume", () => {
-    console.log("[App] System resumed from sleep, triggering cron recovery");
-    import("@process/services/cron/CronService")
+  powerMonitor.on('resume', () => {
+    console.log('[App] System resumed from sleep, triggering cron recovery');
+    import('@process/services/cron/CronService')
       .then(({ cronService }) => {
         void cronService.handleSystemResume();
       })
       .catch((error) => {
-        console.error("[App] Failed to handle system resume for cron:", error);
+        console.error('[App] Failed to handle system resume for cron:', error);
       });
   });
 };
@@ -698,15 +670,13 @@ const handleAppReady = async (): Promise<void> => {
 // Register aionui:// as the default protocol client
 if (process.defaultApp) {
   // Dev mode: need to pass execPath explicitly
-  app.setAsDefaultProtocolClient(PROTOCOL_SCHEME, process.execPath, [
-    path.resolve(process.argv[1]),
-  ]);
+  app.setAsDefaultProtocolClient(PROTOCOL_SCHEME, process.execPath, [path.resolve(process.argv[1])]);
 } else {
   app.setAsDefaultProtocolClient(PROTOCOL_SCHEME);
 }
 
 // macOS: handle aionui:// URLs via the open-url event
-app.on("open-url", (event, url) => {
+app.on('open-url', (event, url) => {
   event.preventDefault();
   handleDeepLinkUrl(url);
   // Focus existing window so user sees the result
@@ -729,18 +699,18 @@ void app
 // Quit when all windows are closed, except on macOS. There, it's common
 // for applications and their menu bar to stay active until the user quits
 // explicitly with Cmd + Q.
-app.on("window-all-closed", () => {
+app.on('window-all-closed', () => {
   // 当关闭到托盘启用时，不退出应用 / Don't quit when close-to-tray is enabled
   if (closeToTrayEnabled) {
     return;
   }
   // In WebUI mode, don't quit when windows are closed since we're running a web server
-  if (!isWebUIMode && process.platform !== "darwin") {
+  if (!isWebUIMode && process.platform !== 'darwin') {
     app.quit();
   }
 });
 
-app.on("activate", () => {
+app.on('activate', () => {
   // On OS X it's common to re-create a window in the app when the
   // dock icon is clicked and there are no other windows open.
   if (!isWebUIMode && app.isReady()) {
@@ -748,7 +718,7 @@ app.on("activate", () => {
       // 从托盘恢复隐藏的窗口 / Restore hidden window from tray
       mainWindow.show();
       mainWindow.focus();
-      if (process.platform === "darwin" && app.dock) {
+      if (process.platform === 'darwin' && app.dock) {
         void app.dock.show();
       }
     } else if (BrowserWindow.getAllWindows().length === 0) {
@@ -757,7 +727,7 @@ app.on("activate", () => {
   }
 });
 
-app.on("before-quit", async () => {
+app.on('before-quit', async () => {
   isQuitting = true;
   isExplicitQuit = true;
   destroyTray();
@@ -766,10 +736,10 @@ app.on("before-quit", async () => {
 
   // Shutdown Channel subsystem
   try {
-    const { getChannelManager } = await import("@/channels");
+    const { getChannelManager } = await import('@/channels');
     await getChannelManager().shutdown();
   } catch (error) {
-    console.error("[App] Failed to shutdown ChannelManager:", error);
+    console.error('[App] Failed to shutdown ChannelManager:', error);
   }
 });
 

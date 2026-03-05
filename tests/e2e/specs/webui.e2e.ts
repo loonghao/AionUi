@@ -8,25 +8,36 @@
  *  - Allow-remote toggle
  *  - Start / stop lifecycle (via the Switch toggle)
  */
-import { test, expect } from "../fixtures";
-import { goToSettings, expectBodyContainsAny, ARCO_SWITCH, takeScreenshot } from "../helpers";
+import { test, expect } from '../fixtures';
+import {
+  goToSettings,
+  expectBodyContainsAny,
+  ARCO_SWITCH,
+  takeScreenshot,
+} from '../helpers';
 
-test.describe("WebUI Service", () => {
+test.describe('WebUI Service', () => {
   /** Navigate to the WebUI settings tab. */
-  async function goToWebui(page: import("@playwright/test").Page): Promise<void> {
-    await goToSettings(page, "webui");
+  async function goToWebui(page: import('@playwright/test').Page): Promise<void> {
+    await goToSettings(page, 'webui');
   }
 
   // ── Page loads ───────────────────────────────────────────────────────────
 
-  test("webui settings page renders", async ({ page }) => {
+  test('webui settings page renders', async ({ page }) => {
     await goToWebui(page);
-    await expectBodyContainsAny(page, ["WebUI", "Web UI", "Enable", "启用", "webui"]);
+    await expectBodyContainsAny(page, [
+      'WebUI',
+      'Web UI',
+      'Enable',
+      '启用',
+      'webui',
+    ]);
   });
 
   // ── Enable toggle ──────────────────────────────────────────────────────
 
-  test("enable toggle is visible", async ({ page }) => {
+  test('enable toggle is visible', async ({ page }) => {
     await goToWebui(page);
 
     const switches = page.locator(ARCO_SWITCH);
@@ -35,33 +46,35 @@ test.describe("WebUI Service", () => {
 
   // ── Port & URL ─────────────────────────────────────────────────────────
 
-  test("displays default port 25808", async ({ page }) => {
+  test('displays default port 25808', async ({ page }) => {
     await goToWebui(page);
 
-    const body = await page.locator("body").textContent();
+    const body = await page.locator('body').textContent();
     // Port may appear in UI text or may only appear when service is running.
     // Verify the WebUI panel itself is rendered (desktop mode).
-    const hasPort = body?.includes("25808");
-    const hasWebUIPanel = body?.includes("WebUI") || body?.includes("Enable");
+    const hasPort = body?.includes('25808');
+    const hasWebUIPanel = body?.includes('WebUI') || body?.includes('Enable');
     expect(hasPort || hasWebUIPanel).toBeTruthy();
   });
 
-  test("displays localhost access URL", async ({ page }) => {
+  test('displays localhost access URL', async ({ page }) => {
     await goToWebui(page);
 
-    const body = await page.locator("body").textContent();
+    const body = await page.locator('body').textContent();
     // The URL (http://localhost:25808) is only shown when the service is running.
     // In test environment, the service may not be started, so just verify
     // the WebUI page renders properly with relevant content.
-    const hasUrl = body?.includes("localhost");
+    const hasUrl = body?.includes('localhost');
     const hasWebUIContent =
-      body?.includes("WebUI") || body?.includes("Enable") || body?.includes("启用");
+      body?.includes('WebUI') ||
+      body?.includes('Enable') ||
+      body?.includes('启用');
     expect(hasUrl || hasWebUIContent).toBeTruthy();
   });
 
   // ── Allow remote toggle ────────────────────────────────────────────────
 
-  test("allow-remote switch is present", async ({ page }) => {
+  test('allow-remote switch is present', async ({ page }) => {
     await goToWebui(page);
 
     // There should be at least 2 switches: enable WebUI + allow remote
@@ -72,15 +85,15 @@ test.describe("WebUI Service", () => {
 
   // ── Start / Stop lifecycle ─────────────────────────────────────────────
 
-  test("can toggle WebUI service on and off", async ({ page }) => {
+  test('can toggle WebUI service on and off', async ({ page }) => {
     await goToWebui(page);
 
     const switches = page.locator(ARCO_SWITCH);
     await expect(switches.first()).toBeVisible({ timeout: 5000 });
 
     const enableSwitch = switches.first();
-    const classBefore = await enableSwitch.getAttribute("class");
-    const wasRunning = classBefore?.includes("arco-switch-checked");
+    const classBefore = await enableSwitch.getAttribute('class');
+    const wasRunning = classBefore?.includes('arco-switch-checked');
 
     // Toggle on
     if (!wasRunning) {
@@ -89,13 +102,8 @@ test.describe("WebUI Service", () => {
       try {
         await page.waitForFunction(
           () => {
-            const text = document.body.textContent || "";
-            return (
-              text.includes("✓") ||
-              text.includes("Running") ||
-              text.includes("运行中") ||
-              text.includes("running")
-            );
+            const text = document.body.textContent || '';
+            return text.includes('✓') || text.includes('Running') || text.includes('运行中') || text.includes('running');
           },
           { timeout: 5000 },
         );
@@ -103,73 +111,52 @@ test.describe("WebUI Service", () => {
         // Server may not start in test env – continue
       }
 
-      const body = await page.locator("body").textContent();
+      const body = await page.locator('body').textContent();
       const isRunning =
-        body?.includes("✓") ||
-        body?.includes("Running") ||
-        body?.includes("运行中") ||
-        body?.includes("running");
+        body?.includes('✓') ||
+        body?.includes('Running') ||
+        body?.includes('运行中') ||
+        body?.includes('running');
 
       // If it started, toggle off to clean up
       if (isRunning) {
         await enableSwitch.click();
-        await enableSwitch.evaluate(
-          (el) =>
-            new Promise<void>((resolve) => {
-              const observer = new MutationObserver(() => {
-                observer.disconnect();
-                resolve();
-              });
-              observer.observe(el, { attributes: true, attributeFilter: ["class"] });
-              setTimeout(() => {
-                observer.disconnect();
-                resolve();
-              }, 2000);
-            }),
+        await enableSwitch.evaluate((el) =>
+          new Promise<void>((resolve) => {
+            const observer = new MutationObserver(() => { observer.disconnect(); resolve(); });
+            observer.observe(el, { attributes: true, attributeFilter: ['class'] });
+            setTimeout(() => { observer.disconnect(); resolve(); }, 2000);
+          }),
         );
       }
     } else {
       // Was already running – toggle off then back on
       await enableSwitch.click();
-      await enableSwitch.evaluate(
-        (el) =>
-          new Promise<void>((resolve) => {
-            const observer = new MutationObserver(() => {
-              observer.disconnect();
-              resolve();
-            });
-            observer.observe(el, { attributes: true, attributeFilter: ["class"] });
-            setTimeout(() => {
-              observer.disconnect();
-              resolve();
-            }, 2000);
-          }),
+      await enableSwitch.evaluate((el) =>
+        new Promise<void>((resolve) => {
+          const observer = new MutationObserver(() => { observer.disconnect(); resolve(); });
+          observer.observe(el, { attributes: true, attributeFilter: ['class'] });
+          setTimeout(() => { observer.disconnect(); resolve(); }, 2000);
+        }),
       );
 
       // Toggle back on to restore
       await enableSwitch.click();
-      await enableSwitch.evaluate(
-        (el) =>
-          new Promise<void>((resolve) => {
-            const observer = new MutationObserver(() => {
-              observer.disconnect();
-              resolve();
-            });
-            observer.observe(el, { attributes: true, attributeFilter: ["class"] });
-            setTimeout(() => {
-              observer.disconnect();
-              resolve();
-            }, 2000);
-          }),
+      await enableSwitch.evaluate((el) =>
+        new Promise<void>((resolve) => {
+          const observer = new MutationObserver(() => { observer.disconnect(); resolve(); });
+          observer.observe(el, { attributes: true, attributeFilter: ['class'] });
+          setTimeout(() => { observer.disconnect(); resolve(); }, 2000);
+        }),
       );
     }
   });
 
   // ── Screenshot ─────────────────────────────────────────────────────────
 
-  test("screenshot: webui settings", async ({ page }) => {
-    test.skip(!process.env.E2E_SCREENSHOTS, "screenshots disabled");
+  test('screenshot: webui settings', async ({ page }) => {
+    test.skip(!process.env.E2E_SCREENSHOTS, 'screenshots disabled');
     await goToWebui(page);
-    await takeScreenshot(page, "webui-settings");
+    await takeScreenshot(page, 'webui-settings');
   });
 });

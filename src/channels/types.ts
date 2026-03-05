@@ -9,7 +9,7 @@
 /**
  * Built-in platform types for channel plugins.
  */
-export type BuiltinPluginType = "telegram" | "slack" | "discord" | "lark" | "dingtalk";
+export type BuiltinPluginType = 'telegram' | 'slack' | 'discord' | 'lark' | 'dingtalk';
 
 /**
  * Supported platform types for plugins.
@@ -21,15 +21,7 @@ export type PluginType = BuiltinPluginType | (string & {});
 /**
  * Plugin connection status
  */
-export type PluginStatus =
-  | "created"
-  | "initializing"
-  | "ready"
-  | "starting"
-  | "running"
-  | "stopping"
-  | "stopped"
-  | "error";
+export type PluginStatus = 'created' | 'initializing' | 'ready' | 'starting' | 'running' | 'stopping' | 'stopped' | 'error';
 
 /**
  * Plugin credentials (stored encrypted in database)
@@ -57,18 +49,18 @@ export interface IPluginCredentials {
  */
 export function hasPluginCredentials(type: PluginType, credentials?: IPluginCredentials): boolean {
   if (!credentials) return false;
-  if (type === "lark") return !!(credentials.appId && credentials.appSecret);
-  if (type === "dingtalk") return !!(credentials.clientId && credentials.clientSecret);
-  if (type === "telegram") return !!credentials.token;
+  if (type === 'lark') return !!(credentials.appId && credentials.appSecret);
+  if (type === 'dingtalk') return !!(credentials.clientId && credentials.clientSecret);
+  if (type === 'telegram') return !!credentials.token;
   // Extension or unknown plugins: check if any credential value is non-empty
-  return Object.values(credentials).some((v) => v !== undefined && v !== null && v !== "");
+  return Object.values(credentials).some((v) => v !== undefined && v !== null && v !== '');
 }
 
 /**
  * Plugin configuration options
  */
 export interface IPluginConfigOptions {
-  mode?: "polling" | "webhook" | "websocket";
+  mode?: 'polling' | 'webhook' | 'websocket';
   webhookUrl?: string;
   rateLimit?: number; // Max messages per minute
   requireMention?: boolean; // Require @mention in groups
@@ -114,7 +106,7 @@ export interface IChannelPluginStatus {
     credentialFields?: Array<{
       key: string;
       label: string;
-      type: "text" | "password" | "select" | "number" | "boolean";
+      type: 'text' | 'password' | 'select' | 'number' | 'boolean';
       required?: boolean;
       options?: string[];
       default?: string | number | boolean;
@@ -123,7 +115,7 @@ export interface IChannelPluginStatus {
     configFields?: Array<{
       key: string;
       label: string;
-      type: "text" | "password" | "select" | "number" | "boolean";
+      type: 'text' | 'password' | 'select' | 'number' | 'boolean';
       required?: boolean;
       options?: string[];
       default?: string | number | boolean;
@@ -168,7 +160,7 @@ export interface IChannelUserRow {
 /**
  * Agent types supported in assistant sessions
  */
-export type ChannelAgentType = "gemini" | "acp" | "codex" | "openclaw-gateway";
+export type ChannelAgentType = 'gemini' | 'acp' | 'codex' | 'openclaw-gateway';
 
 /**
  * User session in the assistant system
@@ -203,7 +195,7 @@ export interface IChannelSessionRow {
 /**
  * Pairing request status
  */
-export type PairingStatus = "pending" | "approved" | "rejected" | "expired";
+export type PairingStatus = 'pending' | 'approved' | 'rejected' | 'expired';
 
 /**
  * Pending pairing request
@@ -236,16 +228,7 @@ export interface IChannelPairingCodeRow {
 /**
  * Content types for unified messages
  */
-export type MessageContentType =
-  | "text"
-  | "photo"
-  | "document"
-  | "voice"
-  | "audio"
-  | "video"
-  | "sticker"
-  | "action"
-  | "command";
+export type MessageContentType = 'text' | 'photo' | 'document' | 'voice' | 'audio' | 'video' | 'sticker' | 'action' | 'command';
 
 /**
  * Unified user information across platforms
@@ -260,7 +243,7 @@ export interface IUnifiedUser {
 /**
  * Attachment types for messages
  */
-export type AttachmentType = "photo" | "document" | "voice" | "audio" | "video" | "sticker";
+export type AttachmentType = 'photo' | 'document' | 'voice' | 'audio' | 'video' | 'sticker';
 
 /**
  * Unified attachment information
@@ -310,7 +293,7 @@ export interface IUnifiedIncomingMessage {
 /**
  * Parse mode for outgoing messages
  */
-export type MessageParseMode = "plain" | "markdown" | "html";
+export type MessageParseMode = 'plain' | 'markdown' | 'html';
 
 /**
  * Button for inline keyboards
@@ -325,9 +308,9 @@ export interface IActionButton {
  * Unified outgoing message format (System -> Platform)
  */
 export interface IUnifiedOutgoingMessage {
-  type: "text" | "image" | "file" | "buttons";
+  type: 'text' | 'image' | 'file' | 'buttons';
   text?: string;
-  parseMode?: "HTML" | "MarkdownV2" | "Markdown";
+  parseMode?: 'HTML' | 'MarkdownV2' | 'Markdown';
   buttons?: IActionButton[][];
   keyboard?: IActionButton[][];
   replyMarkup?: unknown;
@@ -352,7 +335,7 @@ export interface BotInfo {
 /**
  * Action categories
  */
-export type ActionCategory = "platform" | "system" | "chat";
+export type ActionCategory = 'platform' | 'system' | 'chat';
 
 /**
  * Unified action structure
@@ -373,7 +356,7 @@ export interface IUnifiedAction {
 /**
  * Response behavior for actions
  */
-export type ActionResponseBehavior = "send" | "edit" | "answer";
+export type ActionResponseBehavior = 'send' | 'edit' | 'answer';
 
 /**
  * Unified action response
@@ -393,7 +376,7 @@ export interface IActionResponse {
 /**
  * Agent response types for streaming
  */
-export type AgentResponseType = "text" | "stream_start" | "stream_chunk" | "stream_end" | "error";
+export type AgentResponseType = 'text' | 'stream_start' | 'stream_chunk' | 'stream_end' | 'error';
 
 /**
  * Agent response structure
@@ -514,14 +497,14 @@ export function pairingRequestToRow(request: IChannelPairingRequest): IChannelPa
  * Channel platform type for model configuration.
  * Includes built-in platforms and extension-contributed platforms (string).
  */
-export type ChannelPlatform = "telegram" | "lark" | "dingtalk" | (string & {});
+export type ChannelPlatform = 'telegram' | 'lark' | 'dingtalk' | (string & {});
 
 /**
  * Type guard to check if a string is a known built-in ChannelPlatform.
  * Extension platform types are valid but not matched here.
  */
-export function isBuiltinChannelPlatform(value: string): value is "telegram" | "lark" | "dingtalk" {
-  return value === "telegram" || value === "lark" || value === "dingtalk";
+export function isBuiltinChannelPlatform(value: string): value is 'telegram' | 'lark' | 'dingtalk' {
+  return value === 'telegram' || value === 'lark' || value === 'dingtalk';
 }
 
 /**
@@ -536,14 +519,11 @@ export function isChannelPlatform(value: string): value is ChannelPlatform {
  * Resolve a backend string to conversation type and optional backend qualifier.
  * Centralizes the backend → convType mapping used across channels.
  */
-export function resolveChannelConvType(backend: string): {
-  convType: string;
-  convBackend?: string;
-} {
-  if (backend === "codex") return { convType: "codex" };
-  if (backend === "gemini") return { convType: "gemini" };
-  if (backend === "openclaw-gateway") return { convType: "openclaw-gateway" };
-  return { convType: "acp", convBackend: backend };
+export function resolveChannelConvType(backend: string): { convType: string; convBackend?: string } {
+  if (backend === 'codex') return { convType: 'codex' };
+  if (backend === 'gemini') return { convType: 'gemini' };
+  if (backend === 'openclaw-gateway') return { convType: 'openclaw-gateway' };
+  return { convType: 'acp', convBackend: backend };
 }
 
 /**
@@ -554,16 +534,11 @@ export function resolveChannelConvType(backend: string): {
  * - chatIdPrefix is the first 8 characters of chatId
  * - empty segments are omitted
  */
-export function getChannelConversationName(
-  platform: ChannelPlatform | PluginType,
-  type?: string,
-  backend?: string,
-  chatId?: string,
-): string {
-  const shortPlatform: Record<string, string> = { telegram: "tg", dingtalk: "ding" };
+export function getChannelConversationName(platform: ChannelPlatform | PluginType, type?: string, backend?: string, chatId?: string): string {
+  const shortPlatform: Record<string, string> = { telegram: 'tg', dingtalk: 'ding' };
   const parts: string[] = [shortPlatform[platform] ?? platform];
   if (type) parts.push(type);
-  if (type === "acp" && backend) parts.push(backend);
+  if (type === 'acp' && backend) parts.push(backend);
   if (chatId) parts.push(chatId.slice(0, 8));
-  return parts.join("-");
+  return parts.join('-');
 }

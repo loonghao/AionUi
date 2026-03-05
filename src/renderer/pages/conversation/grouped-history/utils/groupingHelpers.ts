@@ -4,17 +4,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { TChatConversation } from "@/common/storage";
-import { getActivityTime, getTimelineLabel } from "@/renderer/utils/timeline";
-import { getWorkspaceDisplayName } from "@/renderer/utils/workspace";
-import { getWorkspaceUpdateTime } from "@/renderer/utils/workspaceHistory";
+import type { TChatConversation } from '@/common/storage';
+import { getActivityTime, getTimelineLabel } from '@/renderer/utils/timeline';
+import { getWorkspaceDisplayName } from '@/renderer/utils/workspace';
+import { getWorkspaceUpdateTime } from '@/renderer/utils/workspaceHistory';
 
-import type { GroupedHistoryResult, TimelineItem, TimelineSection, WorkspaceGroup } from "../types";
+import type { GroupedHistoryResult, TimelineItem, TimelineSection, WorkspaceGroup } from '../types';
 
-export const getConversationTimelineLabel = (
-  conversation: TChatConversation,
-  t: (key: string) => string,
-): string => {
+export const getConversationTimelineLabel = (conversation: TChatConversation, t: (key: string) => string): string => {
   const time = getActivityTime(conversation);
   return getTimelineLabel(time, Date.now(), t);
 };
@@ -26,16 +23,13 @@ export const isConversationPinned = (conversation: TChatConversation): boolean =
 
 export const getConversationPinnedAt = (conversation: TChatConversation): number => {
   const extra = conversation.extra as { pinnedAt?: number } | undefined;
-  if (typeof extra?.pinnedAt === "number") {
+  if (typeof extra?.pinnedAt === 'number') {
     return extra.pinnedAt;
   }
   return getActivityTime(conversation);
 };
 
-export const groupConversationsByTimelineAndWorkspace = (
-  conversations: TChatConversation[],
-  t: (key: string) => string,
-): TimelineSection[] => {
+export const groupConversationsByTimelineAndWorkspace = (conversations: TChatConversation[], t: (key: string) => string): TimelineSection[] => {
   const allWorkspaceGroups = new Map<string, TChatConversation[]>();
   const withoutWorkspaceConvs: TChatConversation[] = [];
 
@@ -81,12 +75,7 @@ export const groupConversationsByTimelineAndWorkspace = (
     withoutWorkspaceByTimeline.get(timeline)!.push(conv);
   });
 
-  const timelineOrder = [
-    "conversation.history.today",
-    "conversation.history.yesterday",
-    "conversation.history.recent7Days",
-    "conversation.history.earlier",
-  ];
+  const timelineOrder = ['conversation.history.today', 'conversation.history.yesterday', 'conversation.history.recent7Days', 'conversation.history.earlier'];
   const sections: TimelineSection[] = [];
 
   timelineOrder.forEach((timelineKey) => {
@@ -102,7 +91,7 @@ export const groupConversationsByTimelineAndWorkspace = (
       const updateTime = getWorkspaceUpdateTime(group.workspace);
       const time = updateTime > 0 ? updateTime : getActivityTime(group.conversations[0]);
       items.push({
-        type: "workspace",
+        type: 'workspace',
         time,
         workspaceGroup: group,
       });
@@ -110,7 +99,7 @@ export const groupConversationsByTimelineAndWorkspace = (
 
     withoutWorkspace.forEach((conv) => {
       items.push({
-        type: "conversation",
+        type: 'conversation',
         time: getActivityTime(conv),
         conversation: conv,
       });
@@ -127,17 +116,10 @@ export const groupConversationsByTimelineAndWorkspace = (
   return sections;
 };
 
-export const buildGroupedHistory = (
-  conversations: TChatConversation[],
-  t: (key: string) => string,
-): GroupedHistoryResult => {
-  const pinnedConversations = conversations
-    .filter((conversation) => isConversationPinned(conversation))
-    .sort((a, b) => getConversationPinnedAt(b) - getConversationPinnedAt(a));
+export const buildGroupedHistory = (conversations: TChatConversation[], t: (key: string) => string): GroupedHistoryResult => {
+  const pinnedConversations = conversations.filter((conversation) => isConversationPinned(conversation)).sort((a, b) => getConversationPinnedAt(b) - getConversationPinnedAt(a));
 
-  const normalConversations = conversations.filter(
-    (conversation) => !isConversationPinned(conversation),
-  );
+  const normalConversations = conversations.filter((conversation) => !isConversationPinned(conversation));
 
   return {
     pinnedConversations,

@@ -4,11 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { IMessageAcpPermission } from "@/common/chatLib";
-import { conversation } from "@/common/ipcBridge";
-import { Button, Card, Radio, Typography } from "@arco-design/web-react";
-import React, { useState } from "react";
-import { useTranslation } from "react-i18next";
+import type { IMessageAcpPermission } from '@/common/chatLib';
+import { conversation } from '@/common/ipcBridge';
+import { Button, Card, Radio, Typography } from '@arco-design/web-react';
+import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 const { Text } = Typography;
 
@@ -24,27 +24,26 @@ const MessageAcpPermission: React.FC<MessageAcpPermissionProps> = React.memo(({ 
   const getToolInfo = () => {
     if (!toolCall) {
       return {
-        title: t("messages.permissionRequest"),
-        description: t("messages.agentRequestingPermission"),
-        icon: "🔐",
+        title: t('messages.permissionRequest'),
+        description: t('messages.agentRequestingPermission'),
+        icon: '🔐',
       };
     }
 
     // 直接使用 toolCall 中的实际数据
-    const displayTitle =
-      toolCall.title || toolCall.rawInput?.description || t("messages.permissionRequest");
+    const displayTitle = toolCall.title || toolCall.rawInput?.description || t('messages.permissionRequest');
 
     // 简单的图标映射
     const kindIcons: Record<string, string> = {
-      edit: "✏️",
-      read: "📖",
-      fetch: "🌐",
-      execute: "⚡",
+      edit: '✏️',
+      read: '📖',
+      fetch: '🌐',
+      execute: '⚡',
     };
 
     return {
       title: displayTitle,
-      icon: kindIcons[toolCall.kind || "execute"] || "⚡",
+      icon: kindIcons[toolCall.kind || 'execute'] || '⚡',
     };
   };
   const { title, icon } = getToolInfo();
@@ -70,11 +69,11 @@ const MessageAcpPermission: React.FC<MessageAcpPermissionProps> = React.memo(({ 
         setHasResponded(true);
       } else {
         // Handle failure case - could add error display here
-        console.error("Failed to confirm permission:", result);
+        console.error('Failed to confirm permission:', result);
       }
     } catch (error) {
       // Handle error case - could add error logging here
-      console.error("Error confirming permission:", error);
+      console.error('Error confirming permission:', error);
     } finally {
       setIsResponding(false);
     }
@@ -85,28 +84,26 @@ const MessageAcpPermission: React.FC<MessageAcpPermissionProps> = React.memo(({ 
   }
 
   return (
-    <Card className="mb-4" bordered={false} style={{ background: "var(--bg-1)" }}>
-      <div className="space-y-4">
+    <Card className='mb-4' bordered={false} style={{ background: 'var(--bg-1)' }}>
+      <div className='space-y-4'>
         {/* Header with icon and title */}
-        <div className="flex items-center space-x-2">
-          <span className="text-2xl">{icon}</span>
-          <Text className="block">{title}</Text>
+        <div className='flex items-center space-x-2'>
+          <span className='text-2xl'>{icon}</span>
+          <Text className='block'>{title}</Text>
         </div>
         {(toolCall.rawInput?.command || toolCall.title) && (
           <div>
-            <Text className="text-xs text-t-secondary mb-1">{t("messages.command")}</Text>
-            <code className="text-xs bg-1 p-2 rounded block text-t-primary break-all">
-              {toolCall.rawInput?.command || toolCall.title}
-            </code>
+            <Text className='text-xs text-t-secondary mb-1'>{t('messages.command')}</Text>
+            <code className='text-xs bg-1 p-2 rounded block text-t-primary break-all'>{toolCall.rawInput?.command || toolCall.title}</code>
           </div>
         )}
         {!hasResponded && (
           <>
-            <div className="mt-10px">{t("messages.chooseAction")}</div>
-            <Radio.Group direction="vertical" size="mini" value={selected} onChange={setSelected}>
+            <div className='mt-10px'>{t('messages.chooseAction')}</div>
+            <Radio.Group direction='vertical' size='mini' value={selected} onChange={setSelected}>
               {options && options.length > 0 ? (
                 options.map((option, index) => {
-                  const optionName = option?.name || `${t("messages.option")} ${index + 1}`;
+                  const optionName = option?.name || `${t('messages.option')} ${index + 1}`;
                   const optionId = option?.optionId || `option_${index}`;
                   return (
                     <Radio key={optionId} value={optionId}>
@@ -115,32 +112,21 @@ const MessageAcpPermission: React.FC<MessageAcpPermissionProps> = React.memo(({ 
                   );
                 })
               ) : (
-                <Text type="secondary">{t("messages.noOptionsAvailable")}</Text>
+                <Text type='secondary'>{t('messages.noOptionsAvailable')}</Text>
               )}
             </Radio.Group>
-            <div className="flex justify-start pl-20px">
-              <Button
-                type="primary"
-                size="mini"
-                disabled={!selected || isResponding}
-                onClick={handleConfirm}
-              >
-                {isResponding ? t("messages.processing") : t("messages.confirm")}
+            <div className='flex justify-start pl-20px'>
+              <Button type='primary' size='mini' disabled={!selected || isResponding} onClick={handleConfirm}>
+                {isResponding ? t('messages.processing') : t('messages.confirm')}
               </Button>
             </div>
           </>
         )}
 
         {hasResponded && (
-          <div
-            className="mt-10px p-2 rounded-md border"
-            style={{
-              backgroundColor: "var(--color-success-light-1)",
-              borderColor: "rgb(var(--success-3))",
-            }}
-          >
-            <Text className="text-sm" style={{ color: "rgb(var(--success-6))" }}>
-              ✓ {t("messages.responseSentSuccessfully")}
+          <div className='mt-10px p-2 rounded-md border' style={{ backgroundColor: 'var(--color-success-light-1)', borderColor: 'rgb(var(--success-3))' }}>
+            <Text className='text-sm' style={{ color: 'rgb(var(--success-6))' }}>
+              ✓ {t('messages.responseSentSuccessfully')}
             </Text>
           </div>
         )}

@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { TChatConversation } from "@/common/storage";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import type { TChatConversation } from '@/common/storage';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 export const useBatchSelection = (batchMode: boolean, conversations: TChatConversation[]) => {
   const [selectedConversationIds, setSelectedConversationIds] = useState<Set<string>>(new Set());
@@ -32,10 +32,7 @@ export const useBatchSelection = (batchMode: boolean, conversations: TChatConver
     });
   }, [batchMode, conversations, selectedConversationIds.size]);
 
-  const allConversationIds = useMemo(
-    () => conversations.map((conversation) => conversation.id),
-    [conversations],
-  );
+  const allConversationIds = useMemo(() => conversations.map((conversation) => conversation.id), [conversations]);
   const selectedCount = selectedConversationIds.size;
   const allSelected = allConversationIds.length > 0 && selectedCount === allConversationIds.length;
 

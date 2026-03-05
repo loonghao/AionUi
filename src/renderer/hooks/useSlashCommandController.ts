@@ -1,6 +1,6 @@
-import type { SlashCommandItem } from "@/common/slash/types";
-import { useCallback, useEffect, useMemo, useState } from "react";
-import type { KeyboardEvent as ReactKeyboardEvent } from "react";
+import type { SlashCommandItem } from '@/common/slash/types';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import type { KeyboardEvent as ReactKeyboardEvent } from 'react';
 
 // Match slash followed by command name (alphanumeric, underscore, hyphen only)
 // 匹配斜杠后跟命令名（仅允许字母数字、下划线、连字符）
@@ -78,7 +78,7 @@ export function useSlashCommandController(options: UseSlashCommandControllerOpti
       if (!command) {
         return false;
       }
-      if (command.kind === "builtin") {
+      if (command.kind === 'builtin') {
         onExecuteBuiltin?.(command.name);
       } else {
         onSelectTemplate?.(command.name);
@@ -86,7 +86,7 @@ export function useSlashCommandController(options: UseSlashCommandControllerOpti
       setDismissed(true);
       return true;
     },
-    [filteredCommands, onExecuteBuiltin, onSelectTemplate],
+    [filteredCommands, onExecuteBuiltin, onSelectTemplate]
   );
 
   const onKeyDown = useCallback(
@@ -95,32 +95,32 @@ export function useSlashCommandController(options: UseSlashCommandControllerOpti
         return false;
       }
 
-      if (event.key === "Escape") {
+      if (event.key === 'Escape') {
         event.preventDefault();
         setDismissed(true);
         return true;
       }
 
-      if (event.key === "ArrowDown") {
+      if (event.key === 'ArrowDown') {
         event.preventDefault();
         setActiveIndex((prev) => (prev + 1) % filteredCommands.length);
         return true;
       }
 
-      if (event.key === "ArrowUp") {
+      if (event.key === 'ArrowUp') {
         event.preventDefault();
         setActiveIndex((prev) => (prev - 1 + filteredCommands.length) % filteredCommands.length);
         return true;
       }
 
-      if (event.key === "Enter" && !event.shiftKey) {
+      if (event.key === 'Enter' && !event.shiftKey) {
         event.preventDefault();
         return executeCommand(activeIndex);
       }
 
       return false;
     },
-    [activeIndex, executeCommand, filteredCommands.length, isOpen],
+    [activeIndex, executeCommand, filteredCommands.length, isOpen]
   );
 
   return {

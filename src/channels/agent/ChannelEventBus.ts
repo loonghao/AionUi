@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { EventEmitter } from "events";
-import type { IResponseMessage } from "@/common/ipcBridge";
+import { EventEmitter } from 'events';
+import type { IResponseMessage } from '@/common/ipcBridge';
 
 /**
  * Channel 全局事件类型
@@ -13,7 +13,7 @@ import type { IResponseMessage } from "@/common/ipcBridge";
  */
 export const ChannelEvents = {
   /** Agent 消息事件 / Agent message event */
-  AGENT_MESSAGE: "channel.agent.message",
+  AGENT_MESSAGE: 'channel.agent.message',
 } as const;
 
 /**

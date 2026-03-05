@@ -4,13 +4,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { app } from "electron";
-import { ipcBridge } from "../../common";
-import { getSystemDir, ProcessEnv } from "../initStorage";
-import { copyDirectoryRecursively } from "../utils";
-import WorkerManage from "../WorkerManage";
-import { getZoomFactor, setZoomFactor } from "../utils/zoom";
-import { getCdpStatus, updateCdpConfig, verifyCdpReady } from "../../utils/configureChromium";
+import { app } from 'electron';
+import { ipcBridge } from '../../common';
+import { getSystemDir, ProcessEnv } from '../initStorage';
+import { copyDirectoryRecursively } from '../utils';
+import WorkerManage from '../WorkerManage';
+import { getZoomFactor, setZoomFactor } from '../utils/zoom';
+import { getCdpStatus, updateCdpConfig, verifyCdpReady } from '../../utils/configureChromium';
 
 export function initApplicationBridge(): void {
   ipcBridge.application.restart.provider(() => {
@@ -28,7 +28,7 @@ export function initApplicationBridge(): void {
       if (oldDir.cacheDir !== cacheDir) {
         await copyDirectoryRecursively(oldDir.cacheDir, cacheDir);
       }
-      await ProcessEnv.set("aionui.dir", { cacheDir, workDir });
+      await ProcessEnv.set('aionui.dir', { cacheDir, workDir });
       return { success: true };
     } catch (e) {
       return { success: false, msg: e.message || e.toString() };

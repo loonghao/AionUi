@@ -1,41 +1,41 @@
-import { ipcBridge } from "@/common";
-import type { TMessage } from "@/common/chatLib";
-import { transformMessage } from "@/common/chatLib";
-import { uuid } from "@/common/utils";
-import SendBox from "@/renderer/components/sendbox";
-import { getSendBoxDraftHook, type FileOrFolderItem } from "@/renderer/hooks/useSendBoxDraft";
-import { createSetUploadFile } from "@/renderer/hooks/useSendBoxFiles";
-import { useAddOrUpdateMessage } from "@/renderer/messages/hooks";
-import { allSupportedExts, type FileMetadata } from "@/renderer/services/FileService";
-import { emitter, useAddEventListener } from "@/renderer/utils/emitter";
-import { mergeFileSelectionItems } from "@/renderer/utils/fileSelection";
-import { Button, Tag } from "@arco-design/web-react";
-import { Plus } from "@icon-park/react";
-import { iconColors } from "@/renderer/theme/colors";
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useTranslation } from "react-i18next";
-import { buildDisplayMessage } from "@/renderer/utils/messageFiles";
-import ThoughtDisplay, { type ThoughtData } from "@/renderer/components/ThoughtDisplay";
-import FilePreview from "@/renderer/components/FilePreview";
-import HorizontalFileList from "@/renderer/components/HorizontalFileList";
-import { usePreviewContext } from "@/renderer/pages/conversation/preview";
-import { useLatestRef } from "@/renderer/hooks/useLatestRef";
-import { useOpenFileSelector } from "@/renderer/hooks/useOpenFileSelector";
-import { useAutoTitle } from "@/renderer/hooks/useAutoTitle";
-import AgentModeSelector from "@/renderer/components/AgentModeSelector";
-import { useSlashCommands } from "@/renderer/hooks/useSlashCommands";
+import { ipcBridge } from '@/common';
+import type { TMessage } from '@/common/chatLib';
+import { transformMessage } from '@/common/chatLib';
+import { uuid } from '@/common/utils';
+import SendBox from '@/renderer/components/sendbox';
+import { getSendBoxDraftHook, type FileOrFolderItem } from '@/renderer/hooks/useSendBoxDraft';
+import { createSetUploadFile } from '@/renderer/hooks/useSendBoxFiles';
+import { useAddOrUpdateMessage } from '@/renderer/messages/hooks';
+import { allSupportedExts, type FileMetadata } from '@/renderer/services/FileService';
+import { emitter, useAddEventListener } from '@/renderer/utils/emitter';
+import { mergeFileSelectionItems } from '@/renderer/utils/fileSelection';
+import { Button, Tag } from '@arco-design/web-react';
+import { Plus } from '@icon-park/react';
+import { iconColors } from '@/renderer/theme/colors';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { buildDisplayMessage } from '@/renderer/utils/messageFiles';
+import ThoughtDisplay, { type ThoughtData } from '@/renderer/components/ThoughtDisplay';
+import FilePreview from '@/renderer/components/FilePreview';
+import HorizontalFileList from '@/renderer/components/HorizontalFileList';
+import { usePreviewContext } from '@/renderer/pages/conversation/preview';
+import { useLatestRef } from '@/renderer/hooks/useLatestRef';
+import { useOpenFileSelector } from '@/renderer/hooks/useOpenFileSelector';
+import { useAutoTitle } from '@/renderer/hooks/useAutoTitle';
+import AgentModeSelector from '@/renderer/components/AgentModeSelector';
+import { useSlashCommands } from '@/renderer/hooks/useSlashCommands';
 
 interface CodexDraftData {
-  _type: "codex";
+  _type: 'codex';
   atPath: Array<string | FileOrFolderItem>;
   content: string;
   uploadFile: string[];
 }
 
-const useCodexSendBoxDraft = getSendBoxDraftHook("codex", {
-  _type: "codex",
+const useCodexSendBoxDraft = getSendBoxDraftHook('codex', {
+  _type: 'codex',
   atPath: [],
-  content: "",
+  content: '',
   uploadFile: [],
 });
 
@@ -43,7 +43,7 @@ const EMPTY_AT_PATH: Array<string | FileOrFolderItem> = [];
 const EMPTY_UPLOAD_FILES: string[] = [];
 
 const CodexSendBox: React.FC<{ conversation_id: string }> = ({ conversation_id }) => {
-  const [workspacePath, setWorkspacePath] = useState("");
+  const [workspacePath, setWorkspacePath] = useState('');
   const { t } = useTranslation();
   const { checkAndUpdateTitle } = useAutoTitle();
   const addOrUpdateMessage = useAddOrUpdateMessage();
@@ -53,12 +53,12 @@ const CodexSendBox: React.FC<{ conversation_id: string }> = ({ conversation_id }
   const [aiProcessing, setAiProcessing] = useState(false); // New loading state for AI response
   const [codexStatus, setCodexStatus] = useState<string | null>(null);
   const slashCommands = useSlashCommands(conversation_id, {
-    conversationType: "codex",
+    conversationType: 'codex',
     codexStatus,
   });
   const [thought, setThought] = useState<ThoughtData>({
-    description: "",
-    subject: "",
+    description: '',
+    subject: '',
   });
 
   // Track whether current turn has content output
@@ -98,7 +98,7 @@ const CodexSendBox: React.FC<{ conversation_id: string }> = ({ conversation_id }
                 ref.pending = null;
               }
             },
-            THROTTLE_MS - (now - ref.lastUpdate),
+            THROTTLE_MS - (now - ref.lastUpdate)
           );
         }
       }
@@ -117,13 +117,13 @@ const CodexSendBox: React.FC<{ conversation_id: string }> = ({ conversation_id }
   const { data: draftData, mutate: mutateDraft } = useCodexSendBoxDraft(conversation_id);
   const atPath = draftData?.atPath ?? EMPTY_AT_PATH;
   const uploadFile = draftData?.uploadFile ?? EMPTY_UPLOAD_FILES;
-  const content = draftData?.content ?? "";
+  const content = draftData?.content ?? '';
 
   const setAtPath = useCallback(
     (val: Array<string | FileOrFolderItem>) => {
       mutateDraft((prev) => ({ ...(prev as CodexDraftData), atPath: val }));
     },
-    [mutateDraft],
+    [mutateDraft]
   );
 
   const setUploadFile = createSetUploadFile(mutateDraft, draftData);
@@ -132,7 +132,7 @@ const CodexSendBox: React.FC<{ conversation_id: string }> = ({ conversation_id }
     (val: string) => {
       mutateDraft((prev) => ({ ...(prev as CodexDraftData), content: val }));
     },
-    [mutateDraft],
+    [mutateDraft]
   );
 
   // 使用 useLatestRef 保存最新的 setContent/atPath，避免重复注册 handler
@@ -145,13 +145,13 @@ const CodexSendBox: React.FC<{ conversation_id: string }> = ({ conversation_id }
     setRunning(false);
     setAiProcessing(false);
     setCodexStatus(null);
-    setThought({ subject: "", description: "" });
+    setThought({ subject: '', description: '' });
     hasContentInTurnRef.current = false;
 
     // Check actual conversation status from backend
     void ipcBridge.conversation.get.invoke({ id: conversation_id }).then((res) => {
       if (!res) return;
-      if (res.status === "running") {
+      if (res.status === 'running') {
         setAiProcessing(true);
       }
     });
@@ -171,11 +171,11 @@ const CodexSendBox: React.FC<{ conversation_id: string }> = ({ conversation_id }
 
   // Listen for sendbox.fill event to populate input from external sources
   useAddEventListener(
-    "sendbox.fill",
+    'sendbox.fill',
     (text: string) => {
       setContentRef.current(text);
     },
-    [],
+    []
   );
 
   useEffect(() => {
@@ -186,35 +186,35 @@ const CodexSendBox: React.FC<{ conversation_id: string }> = ({ conversation_id }
       // All messages from Backend are already persisted via emitAndPersistMessage
       // Frontend only needs to update UI
       switch (message.type) {
-        case "thought":
+        case 'thought':
           throttledSetThought(message.data as ThoughtData);
           break;
-        case "codex_model_info":
+        case 'codex_model_info':
           // Handled by AcpModelSelector, ignore here
           break;
-        case "finish":
+        case 'finish':
           // Only reset when current turn has content output
           // Tool-only turns (no content) should not reset aiProcessing
           if (hasContentInTurnRef.current) {
             setRunning(false);
             setAiProcessing(false);
-            setThought({ subject: "", description: "" });
+            setThought({ subject: '', description: '' });
           }
           // Reset flag for next turn
           hasContentInTurnRef.current = false;
           break;
-        case "content":
-        case "codex_permission": {
+        case 'content':
+        case 'codex_permission': {
           // Mark that current turn has content output
           hasContentInTurnRef.current = true;
-          setThought({ subject: "", description: "" });
+          setThought({ subject: '', description: '' });
           const transformedMessage = transformMessage(message);
           if (transformedMessage) {
             addOrUpdateMessage(transformedMessage);
           }
           break;
         }
-        case "agent_status": {
+        case 'agent_status': {
           const statusData = message.data as { status: string; message: string };
           setCodexStatus(statusData.status);
           const transformedMessage = transformMessage(message);
@@ -226,7 +226,7 @@ const CodexSendBox: React.FC<{ conversation_id: string }> = ({ conversation_id }
         default: {
           // Mark that current turn has content output (for other message types like error, user_content, etc.)
           hasContentInTurnRef.current = true;
-          setThought({ subject: "", description: "" });
+          setThought({ subject: '', description: '' });
           const transformedMessage = transformMessage(message);
           if (transformedMessage) {
             addOrUpdateMessage(transformedMessage);
@@ -249,19 +249,19 @@ const CodexSendBox: React.FC<{ conversation_id: string }> = ({ conversation_id }
       const filePaths = pastedFiles.map((file) => file.path);
       setUploadFile((prev) => [...prev, ...filePaths]);
     },
-    [setUploadFile],
+    [setUploadFile]
   );
 
   // 监听从工作空间选择的文件/文件夹（接收对象或路径数组）
   // Listen to files/folders selected from workspace (receives objects or path array)
-  useAddEventListener("codex.selected.file", (items: Array<string | FileOrFolderItem>) => {
+  useAddEventListener('codex.selected.file', (items: Array<string | FileOrFolderItem>) => {
     // Add a small delay to ensure state persistence and prevent flashing
     setTimeout(() => {
       setAtPath(items);
     }, 10);
   });
 
-  useAddEventListener("codex.selected.file.append", (items: Array<string | FileOrFolderItem>) => {
+  useAddEventListener('codex.selected.file.append', (items: Array<string | FileOrFolderItem>) => {
     setTimeout(() => {
       const merged = mergeFileSelectionItems(atPathRef.current, items);
       if (merged !== atPathRef.current) {
@@ -274,17 +274,14 @@ const CodexSendBox: React.FC<{ conversation_id: string }> = ({ conversation_id }
     const msg_id = uuid();
     // Content is already cleared by the shared SendBox component (setInput(''))
     // before calling onSend — no need to clear again here.
-    emitter.emit("codex.selected.file.clear");
+    emitter.emit('codex.selected.file.clear');
     const currentAtPath = [...atPath];
     const currentUploadFile = [...uploadFile];
     setAtPath([]);
     setUploadFile([]);
 
     // 不再自动添加 @ 前缀，避免消息显示换行和歧义
-    const filePaths = [
-      ...currentUploadFile,
-      ...currentAtPath.map((item) => (typeof item === "string" ? item : item.path)),
-    ];
+    const filePaths = [...currentUploadFile, ...currentAtPath.map((item) => (typeof item === 'string' ? item : item.path))];
     const displayMessage = buildDisplayMessage(message, filePaths, workspacePath);
 
     // 前端先写入用户消息，避免导航/事件竞争导致看不到消息
@@ -292,8 +289,8 @@ const CodexSendBox: React.FC<{ conversation_id: string }> = ({ conversation_id }
       id: msg_id,
       msg_id,
       conversation_id,
-      type: "text",
-      position: "right",
+      type: 'text',
+      position: 'right',
       content: { content: displayMessage },
       createdAt: Date.now(),
     };
@@ -301,9 +298,7 @@ const CodexSendBox: React.FC<{ conversation_id: string }> = ({ conversation_id }
     setAiProcessing(true);
     try {
       // 提取实际的文件路径发送给后端
-      const atPathStrings = currentAtPath.map((item) =>
-        typeof item === "string" ? item : item.path,
-      );
+      const atPathStrings = currentAtPath.map((item) => (typeof item === 'string' ? item : item.path));
       await ipcBridge.codexConversation.sendMessage.invoke({
         input: displayMessage,
         msg_id,
@@ -311,7 +306,7 @@ const CodexSendBox: React.FC<{ conversation_id: string }> = ({ conversation_id }
         files: [...currentUploadFile, ...atPathStrings], // 包含上传文件和选中的工作空间文件
       });
       void checkAndUpdateTitle(conversation_id, message);
-      emitter.emit("chat.history.refresh");
+      emitter.emit('chat.history.refresh');
     } catch (error) {
       // Only reset aiProcessing on error, normal flow is reset by 'finish' event
       setAiProcessing(false);
@@ -323,7 +318,7 @@ const CodexSendBox: React.FC<{ conversation_id: string }> = ({ conversation_id }
     (files: string[]) => {
       setUploadFile((prev) => [...prev, ...files]);
     },
-    [setUploadFile],
+    [setUploadFile]
   );
   const { openFileSelector, onSlashBuiltinCommand } = useOpenFileSelector({
     onFilesSelected: appendSelectedFiles,
@@ -350,7 +345,7 @@ const CodexSendBox: React.FC<{ conversation_id: string }> = ({ conversation_id }
       }
 
       // 立即标记为已处理，防止重复处理
-      sessionStorage.setItem(processedKey, "true");
+      sessionStorage.setItem(processedKey, 'true');
 
       try {
         // Set waiting state when processing initial message
@@ -368,23 +363,17 @@ const CodexSendBox: React.FC<{ conversation_id: string }> = ({ conversation_id }
           id: msg_id,
           msg_id,
           conversation_id,
-          type: "text",
-          position: "right",
+          type: 'text',
+          position: 'right',
           content: { content: initialDisplayMessage },
           createdAt: Date.now(),
         };
         addOrUpdateMessage(userMessage, true); // 立即保存到存储，避免刷新丢失
 
         // 发送消息到后端处理
-        await ipcBridge.codexConversation.sendMessage.invoke({
-          input: initialDisplayMessage,
-          msg_id,
-          conversation_id,
-          files,
-          loading_id,
-        });
+        await ipcBridge.codexConversation.sendMessage.invoke({ input: initialDisplayMessage, msg_id, conversation_id, files, loading_id });
         void checkAndUpdateTitle(conversation_id, input);
-        emitter.emit("chat.history.refresh");
+        emitter.emit('chat.history.refresh');
 
         // 成功后移除初始消息存储
         sessionStorage.removeItem(storageKey);
@@ -399,7 +388,7 @@ const CodexSendBox: React.FC<{ conversation_id: string }> = ({ conversation_id }
     // 小延迟确保状态消息已经完全处理
     const timer = setTimeout(() => {
       processInitialMessage().catch((error) => {
-        console.error("Failed to process initial message:", error);
+        console.error('Failed to process initial message:', error);
       });
     }, 200);
 
@@ -416,13 +405,13 @@ const CodexSendBox: React.FC<{ conversation_id: string }> = ({ conversation_id }
     } finally {
       setRunning(false);
       setAiProcessing(false);
-      setThought({ subject: "", description: "" });
+      setThought({ subject: '', description: '' });
       hasContentInTurnRef.current = false;
     }
   };
 
   return (
-    <div className="max-w-800px w-full mx-auto flex flex-col mt-auto mb-16px">
+    <div className='max-w-800px w-full mx-auto flex flex-col mt-auto mb-16px'>
       <ThoughtDisplay thought={thought} running={aiProcessing || running} onStop={handleStop} />
 
       <SendBox
@@ -430,12 +419,12 @@ const CodexSendBox: React.FC<{ conversation_id: string }> = ({ conversation_id }
         onChange={setContent}
         loading={running || aiProcessing}
         disabled={false}
-        className="z-10"
+        className='z-10'
         placeholder={
           aiProcessing
-            ? t("conversation.chat.processing")
-            : t("acp.sendbox.placeholder", {
-                backend: "Codex",
+            ? t('conversation.chat.processing')
+            : t('acp.sendbox.placeholder', {
+                backend: 'Codex',
                 defaultValue: `Send message to Codex...`,
               })
         }
@@ -445,42 +434,30 @@ const CodexSendBox: React.FC<{ conversation_id: string }> = ({ conversation_id }
         defaultMultiLine={true}
         lockMultiLine={true}
         tools={
-          <div className="flex items-center gap-4px">
-            <Button
-              type="secondary"
-              shape="circle"
-              icon={<Plus theme="outline" size="14" strokeWidth={2} fill={iconColors.primary} />}
-              onClick={openFileSelector}
-            />
-            <AgentModeSelector backend="codex" conversationId={conversation_id} compact />
+          <div className='flex items-center gap-4px'>
+            <Button type='secondary' shape='circle' icon={<Plus theme='outline' size='14' strokeWidth={2} fill={iconColors.primary} />} onClick={openFileSelector} />
+            <AgentModeSelector backend='codex' conversationId={conversation_id} compact />
           </div>
         }
         prefix={
           <>
             {/* Files on top */}
-            {(uploadFile.length > 0 ||
-              atPath.some((item) => (typeof item === "string" ? true : item.isFile))) && (
+            {(uploadFile.length > 0 || atPath.some((item) => (typeof item === 'string' ? true : item.isFile))) && (
               <HorizontalFileList>
                 {uploadFile.map((path) => (
-                  <FilePreview
-                    key={path}
-                    path={path}
-                    onRemove={() => setUploadFile(uploadFile.filter((v) => v !== path))}
-                  />
+                  <FilePreview key={path} path={path} onRemove={() => setUploadFile(uploadFile.filter((v) => v !== path))} />
                 ))}
                 {atPath.map((item) => {
-                  const isFile = typeof item === "string" ? true : item.isFile;
-                  const path = typeof item === "string" ? item : item.path;
+                  const isFile = typeof item === 'string' ? true : item.isFile;
+                  const path = typeof item === 'string' ? item : item.path;
                   if (isFile) {
                     return (
                       <FilePreview
                         key={path}
                         path={path}
                         onRemove={() => {
-                          const newAtPath = atPath.filter((v) =>
-                            typeof v === "string" ? v !== path : v.path !== path,
-                          );
-                          emitter.emit("codex.selected.file", newAtPath);
+                          const newAtPath = atPath.filter((v) => (typeof v === 'string' ? v !== path : v.path !== path));
+                          emitter.emit('codex.selected.file', newAtPath);
                           setAtPath(newAtPath);
                         }}
                       />
@@ -491,21 +468,19 @@ const CodexSendBox: React.FC<{ conversation_id: string }> = ({ conversation_id }
               </HorizontalFileList>
             )}
             {/* Folder tags below */}
-            {atPath.some((item) => (typeof item === "string" ? false : !item.isFile)) && (
-              <div className="flex flex-wrap items-center gap-8px mb-8px">
+            {atPath.some((item) => (typeof item === 'string' ? false : !item.isFile)) && (
+              <div className='flex flex-wrap items-center gap-8px mb-8px'>
                 {atPath.map((item) => {
-                  if (typeof item === "string") return null;
+                  if (typeof item === 'string') return null;
                   if (!item.isFile) {
                     return (
                       <Tag
                         key={item.path}
-                        color="blue"
+                        color='blue'
                         closable
                         onClose={() => {
-                          const newAtPath = atPath.filter((v) =>
-                            typeof v === "string" ? true : v.path !== item.path,
-                          );
-                          emitter.emit("codex.selected.file", newAtPath);
+                          const newAtPath = atPath.filter((v) => (typeof v === 'string' ? true : v.path !== item.path));
+                          emitter.emit('codex.selected.file', newAtPath);
                           setAtPath(newAtPath);
                         }}
                       >

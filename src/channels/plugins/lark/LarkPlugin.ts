@@ -4,21 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import * as lark from "@larksuiteoapi/node-sdk";
+import * as lark from '@larksuiteoapi/node-sdk';
 
-import type {
-  BotInfo,
-  IChannelPluginConfig,
-  IUnifiedOutgoingMessage,
-  PluginType,
-} from "../../types";
-import { BasePlugin } from "../BasePlugin";
-import {
-  extractCardAction,
-  LARK_MESSAGE_LIMIT,
-  toLarkSendParams,
-  toUnifiedIncomingMessage,
-} from "./LarkAdapter";
+import type { BotInfo, IChannelPluginConfig, IUnifiedOutgoingMessage, PluginType } from '../../types';
+import { BasePlugin } from '../BasePlugin';
+import { extractCardAction, LARK_MESSAGE_LIMIT, toLarkSendParams, toUnifiedIncomingMessage } from './LarkAdapter';
 
 /**
  * LarkPlugin - Lark/Feishu Bot integration for Personal Assistant
@@ -31,7 +21,7 @@ const EVENT_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 const EVENT_CACHE_CLEANUP_INTERVAL = 60 * 1000; // 1 minute
 
 export class LarkPlugin extends BasePlugin {
-  readonly type: PluginType = "lark";
+  readonly type: PluginType = 'lark';
 
   private client: lark.Client | null = null;
   private wsClient: lark.WSClient | null = null;
@@ -58,7 +48,7 @@ export class LarkPlugin extends BasePlugin {
     const appSecret = config.credentials?.appSecret;
 
     if (!appId || !appSecret) {
-      throw new Error("Lark App ID and App Secret are required");
+      throw new Error('Lark App ID and App Secret are required');
     }
 
     // Create Lark client
@@ -77,14 +67,14 @@ export class LarkPlugin extends BasePlugin {
    */
   protected async onStart(): Promise<void> {
     if (!this.client) {
-      throw new Error("Client not initialized");
+      throw new Error('Client not initialized');
     }
 
     const appId = this.config?.credentials?.appId;
     const appSecret = this.config?.credentials?.appSecret;
 
     if (!appId || !appSecret) {
-      throw new Error("Credentials not available");
+      throw new Error('Credentials not available');
     }
 
     try {
@@ -100,8 +90,8 @@ export class LarkPlugin extends BasePlugin {
 
       // Create EventDispatcher with security config
       this.eventDispatcher = new lark.EventDispatcher({
-        encryptKey: encryptKey || "",
-        verificationToken: verificationToken || "",
+        encryptKey: encryptKey || '',
+        verificationToken: verificationToken || '',
       });
 
       // Setup event handlers on the dispatcher
@@ -132,7 +122,7 @@ export class LarkPlugin extends BasePlugin {
 
       console.log(`[LarkPlugin] Started for app ${appId}`);
     } catch (error) {
-      console.error("[LarkPlugin] Failed to start:", error);
+      console.error('[LarkPlugin] Failed to start:', error);
       throw error;
     }
   }
@@ -158,7 +148,7 @@ export class LarkPlugin extends BasePlugin {
     this.processedEvents.clear();
     this.isConnected = false;
 
-    console.log("[LarkPlugin] Stopped and cleaned up");
+    console.log('[LarkPlugin] Stopped and cleaned up');
   }
 
   /**
@@ -175,7 +165,7 @@ export class LarkPlugin extends BasePlugin {
     if (!this.botInfo) return null;
     return {
       id: this.botInfo.appId,
-      displayName: this.botInfo.name || "Aion Assistant",
+      displayName: this.botInfo.name || 'Aion Assistant',
     };
   }
 
@@ -186,11 +176,11 @@ export class LarkPlugin extends BasePlugin {
    * - on_ -> union_id
    * - other -> user_id
    */
-  private getReceiveIdType(receiveId: string): "open_id" | "chat_id" | "union_id" | "user_id" {
-    if (receiveId.startsWith("ou_")) return "open_id";
-    if (receiveId.startsWith("oc_")) return "chat_id";
-    if (receiveId.startsWith("on_")) return "union_id";
-    return "user_id";
+  private getReceiveIdType(receiveId: string): 'open_id' | 'chat_id' | 'union_id' | 'user_id' {
+    if (receiveId.startsWith('ou_')) return 'open_id';
+    if (receiveId.startsWith('oc_')) return 'chat_id';
+    if (receiveId.startsWith('on_')) return 'union_id';
+    return 'user_id';
   }
 
   /**
@@ -199,7 +189,7 @@ export class LarkPlugin extends BasePlugin {
    */
   async sendMessage(chatId: string, message: IUnifiedOutgoingMessage): Promise<string> {
     if (!this.client) {
-      throw new Error("Client not initialized");
+      throw new Error('Client not initialized');
     }
 
     await this.ensureAccessToken();
@@ -209,7 +199,7 @@ export class LarkPlugin extends BasePlugin {
 
     // Handle text messages - send as card for streaming support
     // Lark only allows editing card messages, not text messages
-    if (contentType === "text" && rawText !== undefined) {
+    if (contentType === 'text' && rawText !== undefined) {
       // Build a simple card with text content
       const card = this.buildTextCard(rawText);
 
@@ -220,14 +210,14 @@ export class LarkPlugin extends BasePlugin {
           },
           data: {
             receive_id: chatId,
-            msg_type: "interactive",
+            msg_type: 'interactive',
             content: JSON.stringify(card),
           },
         });
 
-        return response.data?.message_id || "";
+        return response.data?.message_id || '';
       } catch (error) {
-        console.error("[LarkPlugin] Failed to send card message:", error);
+        console.error('[LarkPlugin] Failed to send card message:', error);
         throw error;
       }
     }
@@ -245,9 +235,9 @@ export class LarkPlugin extends BasePlugin {
         },
       });
 
-      return response.data?.message_id || "";
+      return response.data?.message_id || '';
     } catch (error) {
-      console.error("[LarkPlugin] Failed to send message:", error);
+      console.error('[LarkPlugin] Failed to send message:', error);
       throw error;
     }
   }
@@ -262,7 +252,7 @@ export class LarkPlugin extends BasePlugin {
       },
       elements: [
         {
-          tag: "markdown",
+          tag: 'markdown',
           content: text,
         },
       ],
@@ -274,13 +264,9 @@ export class LarkPlugin extends BasePlugin {
    * Note: Lark message.patch only supports updating CARD messages, not text messages
    * Since we send text as cards (see sendMessage), this should work for streaming updates
    */
-  async editMessage(
-    chatId: string,
-    messageId: string,
-    message: IUnifiedOutgoingMessage,
-  ): Promise<void> {
+  async editMessage(chatId: string, messageId: string, message: IUnifiedOutgoingMessage): Promise<void> {
     if (!this.client) {
-      throw new Error("Client not initialized");
+      throw new Error('Client not initialized');
     }
 
     await this.ensureAccessToken();
@@ -291,14 +277,11 @@ export class LarkPlugin extends BasePlugin {
       let cardContent: Record<string, unknown>;
 
       // For text messages, build a card (since we send text as cards)
-      if (contentType === "text" && rawText !== undefined) {
+      if (contentType === 'text' && rawText !== undefined) {
         // Truncate if too long
-        const truncatedText =
-          rawText.length > LARK_MESSAGE_LIMIT
-            ? rawText.slice(0, LARK_MESSAGE_LIMIT - 3) + "..."
-            : rawText;
+        const truncatedText = rawText.length > LARK_MESSAGE_LIMIT ? rawText.slice(0, LARK_MESSAGE_LIMIT - 3) + '...' : rawText;
         cardContent = this.buildTextCard(truncatedText);
-      } else if (contentType === "interactive") {
+      } else if (contentType === 'interactive') {
         // Already a card
         cardContent = content as Record<string, unknown>;
       } else {
@@ -317,20 +300,20 @@ export class LarkPlugin extends BasePlugin {
     } catch (error: any) {
       // Ignore common errors
       const errorCode = error?.response?.data?.code || error?.code;
-      const errorMsg = error?.response?.data?.msg || error?.message || "";
+      const errorMsg = error?.response?.data?.msg || error?.message || '';
 
       // Ignore "message not changed" or "not modified" errors
-      if (errorCode === 230002 || errorMsg.includes("not modified")) {
+      if (errorCode === 230002 || errorMsg.includes('not modified')) {
         return;
       }
 
       // Log but don't throw for "not a card" errors (shouldn't happen now but just in case)
-      if (errorMsg.includes("NOT a card")) {
+      if (errorMsg.includes('NOT a card')) {
         console.warn(`[LarkPlugin] Cannot edit non-card message: ${messageId}, skipping`);
         return;
       }
 
-      console.error("[LarkPlugin] Failed to edit message:", error);
+      console.error('[LarkPlugin] Failed to edit message:', error);
       throw error;
     }
   }
@@ -344,13 +327,13 @@ export class LarkPlugin extends BasePlugin {
     // Register event handlers on the EventDispatcher
     this.eventDispatcher.register({
       // Handle incoming messages
-      "im.message.receive_v1": async (data: Record<string, unknown>) => {
+      'im.message.receive_v1': async (data: Record<string, unknown>) => {
         await this.handleMessageEvent({ event: data });
       },
 
       // Handle card action callbacks (button clicks)
       // Event name: card.action.trigger
-      "card.action.trigger": async (data: Record<string, unknown>) => {
+      'card.action.trigger': async (data: Record<string, unknown>) => {
         // Don't await - process in background to avoid 200340 timeout
         // Lark requires immediate response within 3 seconds
         void this.handleCardAction({ event: data });
@@ -360,7 +343,7 @@ export class LarkPlugin extends BasePlugin {
 
       // Handle bot menu clicks (custom menu in chat)
       // Event name: application.bot.menu_v6
-      "application.bot.menu_v6": async (data: Record<string, unknown>) => {
+      'application.bot.menu_v6': async (data: Record<string, unknown>) => {
         await this.handleBotMenuEvent({ event: data });
       },
     });
@@ -375,7 +358,7 @@ export class LarkPlugin extends BasePlugin {
       const sender = event?.event?.sender;
 
       if (!message || !sender) {
-        console.warn("[LarkPlugin] Invalid message event:", event);
+        console.warn('[LarkPlugin] Invalid message event:', event);
         return;
       }
 
@@ -398,26 +381,24 @@ export class LarkPlugin extends BasePlugin {
       const unifiedMessage = toUnifiedIncomingMessage(event);
       if (unifiedMessage && this.messageHandler) {
         // Check for menu button commands first
-        if (unifiedMessage.content.type === "text" && unifiedMessage.content.text) {
+        if (unifiedMessage.content.type === 'text' && unifiedMessage.content.text) {
           const buttonAction = this.getMenuButtonAction(unifiedMessage.content.text);
           if (buttonAction) {
             // Transform into action message
-            unifiedMessage.content.type = "action";
+            unifiedMessage.content.type = 'action';
             unifiedMessage.content.text = buttonAction.action;
             unifiedMessage.action = {
-              type: buttonAction.type as "system" | "platform" | "chat",
+              type: buttonAction.type as 'system' | 'platform' | 'chat',
               name: buttonAction.action,
             };
           }
         }
 
         // Process in background to avoid blocking
-        void this.messageHandler(unifiedMessage).catch((error) =>
-          console.error(`[LarkPlugin] Error handling message:`, error),
-        );
+        void this.messageHandler(unifiedMessage).catch((error) => console.error(`[LarkPlugin] Error handling message:`, error));
       }
     } catch (error) {
-      console.error("[LarkPlugin] Error processing message event:", error);
+      console.error('[LarkPlugin] Error processing message event:', error);
     }
   }
 
@@ -428,11 +409,11 @@ export class LarkPlugin extends BasePlugin {
   private getMenuButtonAction(text: string): { type: string; action: string } | null {
     // Feishu custom menu sends action strings directly
     const menuActions: Record<string, { type: string; action: string }> = {
-      "session.new": { type: "system", action: "session.new" },
-      "session.status": { type: "system", action: "session.status" },
-      "help.show": { type: "system", action: "help.show" },
-      "agent.show": { type: "system", action: "agent.show" },
-      "pairing.check": { type: "platform", action: "pairing.check" },
+      'session.new': { type: 'system', action: 'session.new' },
+      'session.status': { type: 'system', action: 'session.status' },
+      'help.show': { type: 'system', action: 'help.show' },
+      'agent.show': { type: 'system', action: 'agent.show' },
+      'pairing.check': { type: 'platform', action: 'pairing.check' },
     };
     return menuActions[text] || null;
   }
@@ -448,7 +429,7 @@ export class LarkPlugin extends BasePlugin {
       const timestamp = event?.event?.timestamp;
 
       if (!operator || !eventKey) {
-        console.warn("[LarkPlugin] Invalid bot menu event:", event);
+        console.warn('[LarkPlugin] Invalid bot menu event:', event);
         return;
       }
 
@@ -461,7 +442,7 @@ export class LarkPlugin extends BasePlugin {
 
       const userId = operator.operator_id?.user_id || operator.operator_id?.open_id;
       if (!userId) {
-        console.warn("[LarkPlugin] No user ID in bot menu event");
+        console.warn('[LarkPlugin] No user ID in bot menu event');
         return;
       }
 
@@ -481,18 +462,18 @@ export class LarkPlugin extends BasePlugin {
       // Build unified message for action
       const unifiedMessage = {
         id: eventId,
-        platform: "lark" as const,
+        platform: 'lark' as const,
         chatId,
         user: {
           id: userId,
           displayName: `User ${userId.slice(-6)}`,
         },
         content: {
-          type: "action" as const,
+          type: 'action' as const,
           text: buttonAction.action,
         },
         action: {
-          type: buttonAction.type as "system" | "platform" | "chat",
+          type: buttonAction.type as 'system' | 'platform' | 'chat',
           name: buttonAction.action,
         },
         timestamp: timestamp ? parseInt(timestamp, 10) : Date.now(),
@@ -500,12 +481,10 @@ export class LarkPlugin extends BasePlugin {
       };
 
       if (this.messageHandler) {
-        void this.messageHandler(unifiedMessage).catch((error) =>
-          console.error(`[LarkPlugin] Error handling bot menu action:`, error),
-        );
+        void this.messageHandler(unifiedMessage).catch((error) => console.error(`[LarkPlugin] Error handling bot menu action:`, error));
       }
     } catch (error) {
-      console.error("[LarkPlugin] Error processing bot menu event:", error);
+      console.error('[LarkPlugin] Error processing bot menu event:', error);
     }
   }
 
@@ -519,7 +498,7 @@ export class LarkPlugin extends BasePlugin {
       const eventToken = event?.event?.token;
 
       if (!action || !operator) {
-        console.warn("[LarkPlugin] Invalid card action event:", event);
+        console.warn('[LarkPlugin] Invalid card action event:', event);
         return;
       }
 
@@ -544,12 +523,10 @@ export class LarkPlugin extends BasePlugin {
       // Convert to unified message with action
       const unifiedMessage = toUnifiedIncomingMessage(event, actionInfo);
       if (unifiedMessage && this.messageHandler) {
-        void this.messageHandler(unifiedMessage).catch((error) =>
-          console.error(`[LarkPlugin] Error handling card action:`, error),
-        );
+        void this.messageHandler(unifiedMessage).catch((error) => console.error(`[LarkPlugin] Error handling card action:`, error));
       }
     } catch (error) {
-      console.error("[LarkPlugin] Error processing card action:", error);
+      console.error('[LarkPlugin] Error processing card action:', error);
     }
   }
 
@@ -559,13 +536,13 @@ export class LarkPlugin extends BasePlugin {
    */
   private async refreshAccessToken(): Promise<void> {
     if (!this.client) {
-      throw new Error("Client not initialized");
+      throw new Error('Client not initialized');
     }
 
     try {
       // The SDK handles token refresh internally
     } catch (error) {
-      console.error("[LarkPlugin] Failed to refresh access token:", error);
+      console.error('[LarkPlugin] Failed to refresh access token:', error);
       throw error;
     }
   }
@@ -637,12 +614,9 @@ export class LarkPlugin extends BasePlugin {
    * @param appId - Lark App ID
    * @param appSecret - Lark App Secret (optional parameter for BasePlugin compatibility)
    */
-  static async testConnection(
-    appId: string,
-    appSecret?: string,
-  ): Promise<{ success: boolean; botInfo?: { name?: string }; error?: string }> {
+  static async testConnection(appId: string, appSecret?: string): Promise<{ success: boolean; botInfo?: { name?: string }; error?: string }> {
     if (!appSecret) {
-      return { success: false, error: "App Secret is required for Lark" };
+      return { success: false, error: 'App Secret is required for Lark' };
     }
 
     try {
@@ -662,11 +636,11 @@ export class LarkPlugin extends BasePlugin {
         },
       });
 
-      return { success: true, botInfo: { name: "Lark Bot" } };
+      return { success: true, botInfo: { name: 'Lark Bot' } };
     } catch (error: any) {
       return {
         success: false,
-        error: error.message || "Failed to connect to Lark API",
+        error: error.message || 'Failed to connect to Lark API',
       };
     }
   }

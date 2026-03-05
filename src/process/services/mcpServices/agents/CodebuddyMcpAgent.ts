@@ -4,13 +4,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import * as fs from "fs";
-import * as os from "os";
-import * as path from "path";
-import type { IMcpServer } from "../../../../common/storage";
-import type { McpOperationResult } from "../McpProtocol";
-import { AbstractMcpAgent } from "../McpProtocol";
-import { safeExecFile } from "@process/utils/safeExec";
+import * as fs from 'fs';
+import * as os from 'os';
+import * as path from 'path';
+import type { IMcpServer } from '../../../../common/storage';
+import type { McpOperationResult } from '../McpProtocol';
+import { AbstractMcpAgent } from '../McpProtocol';
+import { safeExecFile } from '@process/utils/safeExec';
 
 /**
  * CodeBuddy MCP server entry in ~/.codebuddy/mcp.json
@@ -45,18 +45,18 @@ type CodebuddyMcpEntry = {
  */
 export class CodebuddyMcpAgent extends AbstractMcpAgent {
   constructor() {
-    super("codebuddy");
+    super('codebuddy');
   }
 
   getSupportedTransports(): string[] {
-    return ["stdio", "streamable_http", "sse"];
+    return ['stdio', 'streamable_http', 'sse'];
   }
 
   /**
    * Get CodeBuddy mcp.json path
    */
   private getMcpConfigPath(): string {
-    return path.join(os.homedir(), ".codebuddy", "mcp.json");
+    return path.join(os.homedir(), '.codebuddy', 'mcp.json');
   }
 
   /**
@@ -68,7 +68,7 @@ export class CodebuddyMcpAgent extends AbstractMcpAgent {
       if (!fs.existsSync(configPath)) {
         return null;
       }
-      const content = fs.readFileSync(configPath, "utf-8");
+      const content = fs.readFileSync(configPath, 'utf-8');
       const parsed = JSON.parse(content);
       return parsed?.mcpServers ?? null;
     } catch {
@@ -93,20 +93,20 @@ export class CodebuddyMcpAgent extends AbstractMcpAgent {
           const isDisabled = entry.disabled === true;
           const transportType = this.resolveTransportType(entry);
 
-          let transportObj: IMcpServer["transport"];
+          let transportObj: IMcpServer['transport'];
 
-          if (transportType === "stdio") {
+          if (transportType === 'stdio') {
             transportObj = {
-              type: "stdio" as const,
-              command: entry.command || "",
+              type: 'stdio' as const,
+              command: entry.command || '',
               args: entry.args || [],
               env: entry.env || {},
             };
           } else {
             // streamable-http, sse, or http
             transportObj = {
-              type: transportType as "sse" | "streamable_http" | "http",
-              url: entry.url || "",
+              type: transportType as 'sse' | 'streamable_http' | 'http',
+              url: entry.url || '',
               headers: entry.headers || entry.transport?.headers || {},
             };
           }
@@ -127,10 +127,10 @@ export class CodebuddyMcpAgent extends AbstractMcpAgent {
             transport: transportObj,
             tools: tools,
             enabled: !isDisabled,
-            status: isDisabled ? "disconnected" : "connected",
+            status: isDisabled ? 'disconnected' : 'connected',
             createdAt: Date.now(),
             updatedAt: Date.now(),
-            description: "",
+            description: '',
             originalJson: JSON.stringify({ mcpServers: { [name]: entry } }, null, 2),
           });
         }
@@ -138,12 +138,12 @@ export class CodebuddyMcpAgent extends AbstractMcpAgent {
         console.log(`[CodebuddyMcpAgent] Detection complete: found ${mcpServers.length} server(s)`);
         return mcpServers;
       } catch (error) {
-        console.warn("[CodebuddyMcpAgent] Failed to detect MCP servers:", error);
+        console.warn('[CodebuddyMcpAgent] Failed to detect MCP servers:', error);
         return [];
       }
     };
 
-    Object.defineProperty(detectOperation, "name", { value: "detectMcpServers" });
+    Object.defineProperty(detectOperation, 'name', { value: 'detectMcpServers' });
     return this.withLock(detectOperation);
   }
 
@@ -158,10 +158,10 @@ export class CodebuddyMcpAgent extends AbstractMcpAgent {
     }
     // If url is present without command, it's an HTTP-based transport
     if (entry.url && !entry.command) {
-      return "streamable_http";
+      return 'streamable_http';
     }
     // Default to stdio
-    return "stdio";
+    return 'stdio';
   }
 
   /**
@@ -169,7 +169,7 @@ export class CodebuddyMcpAgent extends AbstractMcpAgent {
    * CodeBuddy config may use "streamable-http" (with dash), but IMcpServerTransport uses "streamable_http" (with underscore).
    */
   private normalizeTransportType(type: string): string {
-    if (type === "streamable-http") return "streamable_http";
+    if (type === 'streamable-http') return 'streamable_http';
     return type;
   }
 
@@ -181,44 +181,40 @@ export class CodebuddyMcpAgent extends AbstractMcpAgent {
       try {
         for (const server of mcpServers) {
           try {
-            if (server.transport.type === "stdio") {
+            if (server.transport.type === 'stdio') {
               // Format: codebuddy mcp add -s user <name> <command> -- [args...] [-e KEY=VALUE...]
-              const args = ["mcp", "add", "-s", "user", server.name, server.transport.command];
+              const args = ['mcp', 'add', '-s', 'user', server.name, server.transport.command];
 
               if (server.transport.args?.length || Object.keys(server.transport.env || {}).length) {
-                args.push("--");
+                args.push('--');
                 if (server.transport.args?.length) {
                   args.push(...server.transport.args);
                 }
               }
 
               for (const [key, value] of Object.entries(server.transport.env || {})) {
-                args.push("-e", `${key}=${value}`);
+                args.push('-e', `${key}=${value}`);
               }
 
-              await safeExecFile("codebuddy", args, {
+              await safeExecFile('codebuddy', args, {
                 timeout: 5000,
-                env: { ...process.env, NODE_OPTIONS: "", TERM: "dumb", NO_COLOR: "1" },
+                env: { ...process.env, NODE_OPTIONS: '', TERM: 'dumb', NO_COLOR: '1' },
               });
-            } else if ("url" in server.transport && server.transport.url) {
+            } else if ('url' in server.transport && server.transport.url) {
               // For HTTP-based transports, use add-json to preserve full config
               const config: Record<string, unknown> = {
                 url: server.transport.url,
-                transportType: server.transport.type === "sse" ? "sse" : "streamable-http",
+                transportType: server.transport.type === 'sse' ? 'sse' : 'streamable-http',
               };
               if (server.transport.headers && Object.keys(server.transport.headers).length > 0) {
                 config.headers = server.transport.headers;
               }
 
               const jsonStr = JSON.stringify(config);
-              await safeExecFile(
-                "codebuddy",
-                ["mcp", "add-json", "-s", "user", server.name, jsonStr],
-                {
-                  timeout: 5000,
-                  env: { ...process.env, NODE_OPTIONS: "", TERM: "dumb", NO_COLOR: "1" },
-                },
-              );
+              await safeExecFile('codebuddy', ['mcp', 'add-json', '-s', 'user', server.name, jsonStr], {
+                timeout: 5000,
+                env: { ...process.env, NODE_OPTIONS: '', TERM: 'dumb', NO_COLOR: '1' },
+              });
             }
             console.log(`[CodebuddyMcpAgent] Added MCP server: ${server.name}`);
           } catch (error) {
@@ -231,7 +227,7 @@ export class CodebuddyMcpAgent extends AbstractMcpAgent {
       }
     };
 
-    Object.defineProperty(installOperation, "name", { value: "installMcpServers" });
+    Object.defineProperty(installOperation, 'name', { value: 'installMcpServers' });
     return this.withLock(installOperation);
   }
 
@@ -241,44 +237,36 @@ export class CodebuddyMcpAgent extends AbstractMcpAgent {
   removeMcpServer(mcpServerName: string): Promise<McpOperationResult> {
     const removeOperation = async () => {
       try {
-        const scopes = ["user", "local", "project"] as const;
+        const scopes = ['user', 'local', 'project'] as const;
 
         for (const scope of scopes) {
           try {
-            const result = await safeExecFile(
-              "codebuddy",
-              ["mcp", "remove", "-s", scope, mcpServerName],
-              {
-                timeout: 5000,
-                env: { ...process.env, NODE_OPTIONS: "", TERM: "dumb", NO_COLOR: "1" },
-              },
-            );
+            const result = await safeExecFile('codebuddy', ['mcp', 'remove', '-s', scope, mcpServerName], {
+              timeout: 5000,
+              env: { ...process.env, NODE_OPTIONS: '', TERM: 'dumb', NO_COLOR: '1' },
+            });
 
-            if (result.stdout && result.stdout.includes("removed")) {
-              console.log(
-                `[CodebuddyMcpAgent] Removed MCP server from ${scope} scope: ${mcpServerName}`,
-              );
+            if (result.stdout && result.stdout.includes('removed')) {
+              console.log(`[CodebuddyMcpAgent] Removed MCP server from ${scope} scope: ${mcpServerName}`);
               return { success: true };
             }
           } catch (error) {
             const errorMessage = error instanceof Error ? error.message : String(error);
-            if (errorMessage.includes("not found") || errorMessage.includes("does not exist")) {
+            if (errorMessage.includes('not found') || errorMessage.includes('does not exist')) {
               continue;
             }
             console.warn(`[CodebuddyMcpAgent] Failed to remove from ${scope} scope:`, errorMessage);
           }
         }
 
-        console.log(
-          `[CodebuddyMcpAgent] MCP server ${mcpServerName} not found in any scope (may already be removed)`,
-        );
+        console.log(`[CodebuddyMcpAgent] MCP server ${mcpServerName} not found in any scope (may already be removed)`);
         return { success: true };
       } catch (error) {
         return { success: false, error: error instanceof Error ? error.message : String(error) };
       }
     };
 
-    Object.defineProperty(removeOperation, "name", { value: "removeMcpServer" });
+    Object.defineProperty(removeOperation, 'name', { value: 'removeMcpServer' });
     return this.withLock(removeOperation);
   }
 }

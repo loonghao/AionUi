@@ -11,10 +11,10 @@
  * Uses Ed25519 key pairs for device authentication.
  */
 
-import crypto from "node:crypto";
-import fs from "node:fs";
-import os from "node:os";
-import path from "node:path";
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 
 export interface DeviceIdentity {
   deviceId: string;
@@ -32,23 +32,20 @@ interface StoredIdentity {
 
 // OpenClaw uses ~/.openclaw/identity/device.json
 // We use the same path for compatibility
-const DEFAULT_DIR = path.join(os.homedir(), ".openclaw", "identity");
-const DEFAULT_FILE = path.join(DEFAULT_DIR, "device.json");
+const DEFAULT_DIR = path.join(os.homedir(), '.openclaw', 'identity');
+const DEFAULT_FILE = path.join(DEFAULT_DIR, 'device.json');
 
 // Ed25519 SPKI prefix for extracting raw public key
-const ED25519_SPKI_PREFIX = Buffer.from("302a300506032b6570032100", "hex");
+const ED25519_SPKI_PREFIX = Buffer.from('302a300506032b6570032100', 'hex');
 
 function base64UrlEncode(buf: Buffer): string {
-  return buf.toString("base64").replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
+  return buf.toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
 }
 
 function derivePublicKeyRaw(publicKeyPem: string): Buffer {
   const key = crypto.createPublicKey(publicKeyPem);
-  const spki = key.export({ type: "spki", format: "der" }) as Buffer;
-  if (
-    spki.length === ED25519_SPKI_PREFIX.length + 32 &&
-    spki.subarray(0, ED25519_SPKI_PREFIX.length).equals(ED25519_SPKI_PREFIX)
-  ) {
+  const spki = key.export({ type: 'spki', format: 'der' }) as Buffer;
+  if (spki.length === ED25519_SPKI_PREFIX.length + 32 && spki.subarray(0, ED25519_SPKI_PREFIX.length).equals(ED25519_SPKI_PREFIX)) {
     return spki.subarray(ED25519_SPKI_PREFIX.length);
   }
   return spki;
@@ -56,13 +53,13 @@ function derivePublicKeyRaw(publicKeyPem: string): Buffer {
 
 function fingerprintPublicKey(publicKeyPem: string): string {
   const raw = derivePublicKeyRaw(publicKeyPem);
-  return crypto.createHash("sha256").update(raw).digest("hex");
+  return crypto.createHash('sha256').update(raw).digest('hex');
 }
 
 function generateIdentity(): DeviceIdentity {
-  const { publicKey, privateKey } = crypto.generateKeyPairSync("ed25519");
-  const publicKeyPem = publicKey.export({ type: "spki", format: "pem" }).toString();
-  const privateKeyPem = privateKey.export({ type: "pkcs8", format: "pem" }).toString();
+  const { publicKey, privateKey } = crypto.generateKeyPairSync('ed25519');
+  const publicKeyPem = publicKey.export({ type: 'spki', format: 'pem' }).toString();
+  const privateKeyPem = privateKey.export({ type: 'pkcs8', format: 'pem' }).toString();
   const deviceId = fingerprintPublicKey(publicKeyPem);
   return { deviceId, publicKeyPem, privateKeyPem };
 }
@@ -78,14 +75,9 @@ function ensureDir(filePath: string): void {
 export function loadOrCreateDeviceIdentity(filePath: string = DEFAULT_FILE): DeviceIdentity {
   try {
     if (fs.existsSync(filePath)) {
-      const raw = fs.readFileSync(filePath, "utf8");
+      const raw = fs.readFileSync(filePath, 'utf8');
       const parsed = JSON.parse(raw) as StoredIdentity;
-      if (
-        parsed?.version === 1 &&
-        typeof parsed.deviceId === "string" &&
-        typeof parsed.publicKeyPem === "string" &&
-        typeof parsed.privateKeyPem === "string"
-      ) {
+      if (parsed?.version === 1 && typeof parsed.deviceId === 'string' && typeof parsed.publicKeyPem === 'string' && typeof parsed.privateKeyPem === 'string') {
         // Verify deviceId matches public key fingerprint
         const derivedId = fingerprintPublicKey(parsed.publicKeyPem);
         if (derivedId && derivedId !== parsed.deviceId) {
@@ -141,7 +133,7 @@ export function loadOrCreateDeviceIdentity(filePath: string = DEFAULT_FILE): Dev
  */
 export function signDevicePayload(privateKeyPem: string, payload: string): string {
   const key = crypto.createPrivateKey(privateKeyPem);
-  const sig = crypto.sign(null, Buffer.from(payload, "utf8"), key);
+  const sig = crypto.sign(null, Buffer.from(payload, 'utf8'), key);
   return base64UrlEncode(sig);
 }
 
@@ -161,28 +153,19 @@ export interface DeviceAuthPayloadParams {
   signedAtMs: number;
   token?: string | null;
   nonce?: string | null;
-  version?: "v1" | "v2";
+  version?: 'v1' | 'v2';
 }
 
 /**
  * Build the payload string for device authentication signing
  */
 export function buildDeviceAuthPayload(params: DeviceAuthPayloadParams): string {
-  const version = params.version ?? (params.nonce ? "v2" : "v1");
-  const scopes = params.scopes.join(",");
-  const token = params.token ?? "";
-  const base = [
-    version,
-    params.deviceId,
-    params.clientId,
-    params.clientMode,
-    params.role,
-    scopes,
-    String(params.signedAtMs),
-    token,
-  ];
-  if (version === "v2") {
-    base.push(params.nonce ?? "");
+  const version = params.version ?? (params.nonce ? 'v2' : 'v1');
+  const scopes = params.scopes.join(',');
+  const token = params.token ?? '';
+  const base = [version, params.deviceId, params.clientId, params.clientMode, params.role, scopes, String(params.signedAtMs), token];
+  if (version === 'v2') {
+    base.push(params.nonce ?? '');
   }
-  return base.join("|");
+  return base.join('|');
 }

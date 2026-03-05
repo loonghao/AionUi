@@ -4,9 +4,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type React from "react";
-import { useEffect } from "react";
-import usePwaMode from "@/renderer/hooks/usePwaMode";
+import type React from 'react';
+import { useEffect } from 'react';
+import usePwaMode from '@/renderer/hooks/usePwaMode';
 
 /**
  * Lightweight pull-to-refresh for iOS PWA standalone mode.
@@ -19,10 +19,7 @@ const PwaPullToRefresh: React.FC = () => {
   useEffect(() => {
     if (!isPwa) return;
 
-    const container =
-      (document.querySelector(".layout-content") as HTMLElement) ||
-      (document.scrollingElement as HTMLElement) ||
-      document.documentElement;
+    const container = (document.querySelector('.layout-content') as HTMLElement) || (document.scrollingElement as HTMLElement) || document.documentElement;
 
     let startY = 0;
     let deltaY = 0;
@@ -33,9 +30,7 @@ const PwaPullToRefresh: React.FC = () => {
       let node: HTMLElement | null = el instanceof HTMLElement ? el : null;
       while (node && node !== document.body) {
         const style = window.getComputedStyle(node);
-        const canScroll =
-          (style.overflowY === "auto" || style.overflowY === "scroll") &&
-          node.scrollHeight > node.clientHeight;
+        const canScroll = (style.overflowY === 'auto' || style.overflowY === 'scroll') && node.scrollHeight > node.clientHeight;
         if (canScroll) return node;
         node = node.parentElement;
       }
@@ -44,14 +39,9 @@ const PwaPullToRefresh: React.FC = () => {
 
     const isAtPageTop = (startTarget: EventTarget | null): boolean => {
       const root = (document.scrollingElement as HTMLElement) || document.documentElement;
-      const layout = document.querySelector(".layout-content") as HTMLElement | null;
+      const layout = document.querySelector('.layout-content') as HTMLElement | null;
       const nearest = getNearestScrollable(startTarget);
-      const values: number[] = [
-        typeof window.scrollY === "number" ? window.scrollY : 0,
-        root && typeof (root as any).scrollTop === "number" ? (root as any).scrollTop : 0,
-        layout && typeof (layout as any).scrollTop === "number" ? (layout as any).scrollTop : 0,
-        nearest && typeof (nearest as any).scrollTop === "number" ? (nearest as any).scrollTop : 0,
-      ];
+      const values: number[] = [typeof window.scrollY === 'number' ? window.scrollY : 0, root && typeof (root as any).scrollTop === 'number' ? (root as any).scrollTop : 0, layout && typeof (layout as any).scrollTop === 'number' ? (layout as any).scrollTop : 0, nearest && typeof (nearest as any).scrollTop === 'number' ? (nearest as any).scrollTop : 0];
       const topMost = Math.max.apply(null, values);
       return topMost <= 0;
     };
@@ -59,7 +49,7 @@ const PwaPullToRefresh: React.FC = () => {
     const isTextInput = (el: EventTarget | null): boolean => {
       if (!(el instanceof HTMLElement)) return false;
       const tag = el.tagName;
-      if (tag === "INPUT" || tag === "TEXTAREA") return true;
+      if (tag === 'INPUT' || tag === 'TEXTAREA') return true;
       if ((el as HTMLElement).isContentEditable) return true;
       return false;
     };
@@ -89,14 +79,14 @@ const PwaPullToRefresh: React.FC = () => {
       }
     };
 
-    container.addEventListener("touchstart", onTouchStart, { passive: true });
-    container.addEventListener("touchmove", onTouchMove, { passive: true });
-    container.addEventListener("touchend", onTouchEnd, { passive: true });
+    container.addEventListener('touchstart', onTouchStart, { passive: true });
+    container.addEventListener('touchmove', onTouchMove, { passive: true });
+    container.addEventListener('touchend', onTouchEnd, { passive: true });
 
     return () => {
-      container.removeEventListener("touchstart", onTouchStart, false);
-      container.removeEventListener("touchmove", onTouchMove, false);
-      container.removeEventListener("touchend", onTouchEnd, false);
+      container.removeEventListener('touchstart', onTouchStart, false);
+      container.removeEventListener('touchmove', onTouchMove, false);
+      container.removeEventListener('touchend', onTouchEnd, false);
     };
   }, [isPwa]);
 

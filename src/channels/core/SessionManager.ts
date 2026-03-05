@@ -4,9 +4,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { uuid } from "@/common/utils";
-import { getDatabase } from "@/process/database";
-import type { ChannelAgentType, IChannelSession, IChannelUser, PluginType } from "../types";
+import { uuid } from '@/common/utils';
+import { getDatabase } from '@/process/database';
+import type { ChannelAgentType, IChannelSession, IChannelUser, PluginType } from '../types';
 
 /**
  * SessionManager - Manages user sessions for the Personal Assistant
@@ -55,11 +55,7 @@ export class SessionManager {
   /**
    * Get session by platform user (lookup user first, then get session)
    */
-  getSessionByPlatformUser(
-    platformUserId: string,
-    platformType: PluginType,
-    chatId?: string,
-  ): IChannelSession | null {
+  getSessionByPlatformUser(platformUserId: string, platformType: PluginType, chatId?: string): IChannelSession | null {
     const db = getDatabase();
     const userResult = db.getChannelUserByPlatform(platformUserId, platformType);
 
@@ -74,12 +70,7 @@ export class SessionManager {
    * Create a new session for a user
    * This will clear any existing session for the same user+chat combo
    */
-  createSession(
-    user: IChannelUser,
-    agentType: ChannelAgentType = "gemini",
-    workspace?: string,
-    chatId?: string,
-  ): IChannelSession {
+  createSession(user: IChannelUser, agentType: ChannelAgentType = 'gemini', workspace?: string, chatId?: string): IChannelSession {
     // Generate a new conversationId
     return this.createSessionWithConversation(user, uuid(), agentType, workspace, chatId);
   }
@@ -87,13 +78,7 @@ export class SessionManager {
   /**
    * Create a new session with a specific conversation ID
    */
-  createSessionWithConversation(
-    user: IChannelUser,
-    conversationId: string,
-    agentType: ChannelAgentType = "gemini",
-    workspace?: string,
-    chatId?: string,
-  ): IChannelSession {
+  createSessionWithConversation(user: IChannelUser, conversationId: string, agentType: ChannelAgentType = 'gemini', workspace?: string, chatId?: string): IChannelSession {
     const db = getDatabase();
     const key = this.buildKey(user.id, chatId);
 

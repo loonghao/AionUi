@@ -4,30 +4,20 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { channel } from "@/common/ipcBridge";
-import { getDatabase } from "@/process/database";
-import { getChannelManager } from "@/channels/core/ChannelManager";
-import { getPairingService } from "@/channels/pairing/PairingService";
-import { ExtensionRegistry } from "@/extensions";
-import type {
-  IChannelPluginStatus,
-  IChannelUser,
-  IChannelPairingRequest,
-  IChannelSession,
-} from "@/channels/types";
-import {
-  hasPluginCredentials,
-  rowToChannelUser,
-  rowToChannelSession,
-  rowToPairingRequest,
-} from "@/channels/types";
+import { channel } from '@/common/ipcBridge';
+import { getDatabase } from '@/process/database';
+import { getChannelManager } from '@/channels/core/ChannelManager';
+import { getPairingService } from '@/channels/pairing/PairingService';
+import { ExtensionRegistry } from '@/extensions';
+import type { IChannelPluginStatus, IChannelUser, IChannelPairingRequest, IChannelSession } from '@/channels/types';
+import { hasPluginCredentials, rowToChannelUser, rowToChannelSession, rowToPairingRequest } from '@/channels/types';
 
 /**
  * Initialize Channel IPC Bridge
  * Handles communication between renderer (Settings UI) and main process (Channel system)
  */
 export function initChannelBridge(): void {
-  console.log("[ChannelBridge] Initializing...");
+  console.log('[ChannelBridge] Initializing...');
 
   // ==================== Plugin Management ====================
 
@@ -45,7 +35,7 @@ export function initChannelBridge(): void {
 
       // Pre-fetch extension plugin metadata (lazy, cached by registry)
       const registry = ExtensionRegistry.getInstance();
-      const BUILTIN_TYPES = new Set(["telegram", "lark", "dingtalk", "slack", "discord"]);
+      const BUILTIN_TYPES = new Set(['telegram', 'lark', 'dingtalk', 'slack', 'discord']);
 
       const statuses: IChannelPluginStatus[] = result.data.map((plugin) => {
         const isExtension = !BUILTIN_TYPES.has(plugin.type);
@@ -54,7 +44,7 @@ export function initChannelBridge(): void {
           type: plugin.type,
           name: plugin.name,
           enabled: plugin.enabled,
-          connected: plugin.status === "running",
+          connected: plugin.status === 'running',
           status: plugin.status,
           lastConnected: plugin.lastConnected,
           activeUsers: 0,
@@ -66,19 +56,17 @@ export function initChannelBridge(): void {
         if (isExtension) {
           try {
             const meta = registry.getChannelPluginMeta(plugin.type);
-            if (meta && typeof meta === "object") {
+            if (meta && typeof meta === 'object') {
               const m = meta as Record<string, unknown>;
               status.extensionMeta = {
-                credentialFields: Array.isArray(m.credentialFields)
-                  ? m.credentialFields
-                  : undefined,
+                credentialFields: Array.isArray(m.credentialFields) ? m.credentialFields : undefined,
                 configFields: Array.isArray(m.configFields) ? m.configFields : undefined,
-                description: typeof m.description === "string" ? m.description : undefined,
+                description: typeof m.description === 'string' ? m.description : undefined,
               };
               // Try to find extension name from loaded extensions
               const extensions = registry.getLoadedExtensions();
               const ext = extensions.find((e) =>
-                e.manifest.contributes.channelPlugins?.some((cp) => cp.type === plugin.type),
+                e.manifest.contributes.channelPlugins?.some((cp) => cp.type === plugin.type)
               );
               if (ext) {
                 status.extensionMeta.extensionName = ext.manifest.displayName || ext.manifest.name;
@@ -94,7 +82,7 @@ export function initChannelBridge(): void {
 
       return { success: true, data: statuses };
     } catch (error: any) {
-      console.error("[ChannelBridge] getPluginStatus error:", error);
+      console.error('[ChannelBridge] getPluginStatus error:', error);
       return { success: false, msg: error.message };
     }
   });
@@ -113,7 +101,7 @@ export function initChannelBridge(): void {
 
       return { success: true };
     } catch (error: any) {
-      console.error("[ChannelBridge] enablePlugin error:", error);
+      console.error('[ChannelBridge] enablePlugin error:', error);
       return { success: false, msg: error.message };
     }
   });
@@ -132,7 +120,7 @@ export function initChannelBridge(): void {
 
       return { success: true };
     } catch (error: any) {
-      console.error("[ChannelBridge] disablePlugin error:", error);
+      console.error('[ChannelBridge] disablePlugin error:', error);
       return { success: false, msg: error.message };
     }
   });
@@ -146,7 +134,7 @@ export function initChannelBridge(): void {
       const result = await manager.testPlugin(pluginId, token, extraConfig);
       return { success: true, data: result };
     } catch (error: any) {
-      console.error("[ChannelBridge] testPlugin error:", error);
+      console.error('[ChannelBridge] testPlugin error:', error);
       return { success: false, data: { success: false, error: error.message } };
     }
   });
@@ -167,7 +155,7 @@ export function initChannelBridge(): void {
 
       return { success: true, data: result.data };
     } catch (error: any) {
-      console.error("[ChannelBridge] getPendingPairings error:", error);
+      console.error('[ChannelBridge] getPendingPairings error:', error);
       return { success: false, msg: error.message };
     }
   });
@@ -188,7 +176,7 @@ export function initChannelBridge(): void {
       console.log(`[ChannelBridge] Approved pairing for code ${code}`);
       return { success: true };
     } catch (error: any) {
-      console.error("[ChannelBridge] approvePairing error:", error);
+      console.error('[ChannelBridge] approvePairing error:', error);
       return { success: false, msg: error.message };
     }
   });
@@ -209,7 +197,7 @@ export function initChannelBridge(): void {
       console.log(`[ChannelBridge] Rejected pairing code ${code}`);
       return { success: true };
     } catch (error: any) {
-      console.error("[ChannelBridge] rejectPairing error:", error);
+      console.error('[ChannelBridge] rejectPairing error:', error);
       return { success: false, msg: error.message };
     }
   });
@@ -230,7 +218,7 @@ export function initChannelBridge(): void {
 
       return { success: true, data: result.data };
     } catch (error: any) {
-      console.error("[ChannelBridge] getAuthorizedUsers error:", error);
+      console.error('[ChannelBridge] getAuthorizedUsers error:', error);
       return { success: false, msg: error.message };
     }
   });
@@ -252,7 +240,7 @@ export function initChannelBridge(): void {
       console.log(`[ChannelBridge] Revoked user ${userId}`);
       return { success: true };
     } catch (error: any) {
-      console.error("[ChannelBridge] revokeUser error:", error);
+      console.error('[ChannelBridge] revokeUser error:', error);
       return { success: false, msg: error.message };
     }
   });
@@ -273,7 +261,7 @@ export function initChannelBridge(): void {
 
       return { success: true, data: result.data };
     } catch (error: any) {
-      console.error("[ChannelBridge] getActiveSessions error:", error);
+      console.error('[ChannelBridge] getActiveSessions error:', error);
       return { success: false, msg: error.message };
     }
   });
@@ -292,10 +280,10 @@ export function initChannelBridge(): void {
       }
       return { success: true };
     } catch (error: any) {
-      console.error("[ChannelBridge] syncChannelSettings error:", error);
+      console.error('[ChannelBridge] syncChannelSettings error:', error);
       return { success: false, msg: error.message };
     }
   });
 
-  console.log("[ChannelBridge] Initialized");
+  console.log('[ChannelBridge] Initialized');
 }

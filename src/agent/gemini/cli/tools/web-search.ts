@@ -4,25 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { GroundingMetadata } from "@google/genai";
-import { Type } from "@google/genai";
-import type {
-  ToolResult,
-  ToolInvocation,
-  ToolLocation,
-  ToolCallConfirmationDetails,
-  Config,
-  MessageBus,
-} from "@office-ai/aioncli-core";
-import {
-  BaseDeclarativeTool,
-  BaseToolInvocation,
-  Kind,
-  getErrorMessage,
-  ToolErrorType,
-  getResponseText,
-  LlmRole,
-} from "@office-ai/aioncli-core";
+import type { GroundingMetadata } from '@google/genai';
+import { Type } from '@google/genai';
+import type { ToolResult, ToolInvocation, ToolLocation, ToolCallConfirmationDetails, Config, MessageBus } from '@office-ai/aioncli-core';
+import { BaseDeclarativeTool, BaseToolInvocation, Kind, getErrorMessage, ToolErrorType, getResponseText, LlmRole } from '@office-ai/aioncli-core';
 
 interface GroundingChunkWeb {
   uri?: string;
@@ -59,62 +44,49 @@ export interface WebSearchToolParams {
  * Extends ToolResult to include sources for web search.
  */
 export interface WebSearchToolResult extends ToolResult {
-  sources?: GroundingMetadata extends { groundingChunks: GroundingChunkItem[] }
-    ? GroundingMetadata["groundingChunks"]
-    : GroundingChunkItem[];
+  sources?: GroundingMetadata extends { groundingChunks: GroundingChunkItem[] } ? GroundingMetadata['groundingChunks'] : GroundingChunkItem[];
 }
 
 /**
  * A tool to perform web searches using Google Search via the Gemini API.
  */
 export class WebSearchTool extends BaseDeclarativeTool<WebSearchToolParams, WebSearchToolResult> {
-  static readonly Name: string = "gemini_web_search";
+  static readonly Name: string = 'gemini_web_search';
 
   constructor(
     private readonly dedicatedConfig: Config,
-    messageBus: MessageBus,
+    messageBus: MessageBus
   ) {
     super(
       WebSearchTool.Name,
-      "GoogleSearch",
-      "Performs a web search using Google Search (via the Gemini API) and returns the results. This tool is useful for finding information on the internet based on a query.",
+      'GoogleSearch',
+      'Performs a web search using Google Search (via the Gemini API) and returns the results. This tool is useful for finding information on the internet based on a query.',
       Kind.Search,
       {
         type: Type.OBJECT,
         properties: {
           query: {
             type: Type.STRING,
-            description: "The search query to find information on the web.",
+            description: 'The search query to find information on the web.',
           },
         },
-        required: ["query"],
+        required: ['query'],
       },
       messageBus,
       true, // isOutputMarkdown
-      false, // canUpdateOutput
+      false // canUpdateOutput
     );
   }
 
   public override validateToolParams(params: WebSearchToolParams): string | null {
-    if (!params.query || params.query.trim() === "") {
+    if (!params.query || params.query.trim() === '') {
       return "The 'query' parameter cannot be empty.";
     }
     return null;
   }
 
-  protected createInvocation(
-    params: WebSearchToolParams,
-    messageBus: MessageBus,
-    _toolName?: string,
-    _toolDisplayName?: string,
-  ): ToolInvocation<WebSearchToolParams, WebSearchToolResult> {
-    return new WebSearchInvocation(
-      this.dedicatedConfig,
-      params,
-      messageBus,
-      _toolName,
-      _toolDisplayName,
-    );
+  protected createInvocation(params: WebSearchToolParams, messageBus: MessageBus, _toolName?: string, _toolDisplayName?: string): ToolInvocation<WebSearchToolParams, WebSearchToolResult> {
+    return new WebSearchInvocation(this.dedicatedConfig, params, messageBus, _toolName, _toolDisplayName);
   }
 }
 
@@ -124,7 +96,7 @@ class WebSearchInvocation extends BaseToolInvocation<WebSearchToolParams, WebSea
     params: WebSearchToolParams,
     messageBus: MessageBus,
     _toolName?: string,
-    _toolDisplayName?: string,
+    _toolDisplayName?: string
   ) {
     super(params, messageBus, _toolName, _toolDisplayName);
   }
@@ -142,14 +114,11 @@ class WebSearchInvocation extends BaseToolInvocation<WebSearchToolParams, WebSea
     return false;
   }
 
-  async execute(
-    signal: AbortSignal,
-    updateOutput?: (output: string) => void,
-  ): Promise<WebSearchToolResult> {
+  async execute(signal: AbortSignal, updateOutput?: (output: string) => void): Promise<WebSearchToolResult> {
     if (signal.aborted) {
       return {
-        llmContent: "Web search was cancelled by user before it could start.",
-        returnDisplay: "Operation cancelled by user.",
+        llmContent: 'Web search was cancelled by user before it could start.',
+        returnDisplay: 'Operation cancelled by user.',
       };
     }
 
@@ -161,19 +130,14 @@ class WebSearchInvocation extends BaseToolInvocation<WebSearchToolParams, WebSea
 
       // Use 'web-search' model config alias which has googleSearch enabled
       // See: aioncli-core/src/config/defaultModelConfigs.js
-      const response = await geminiClient.generateContent(
-        { model: "web-search" },
-        [{ role: "user", parts: [{ text: this.params.query }] }],
-        signal,
-        LlmRole.UTILITY_TOOL,
-      );
+      const response = await geminiClient.generateContent({ model: 'web-search' }, [{ role: 'user', parts: [{ text: this.params.query }] }], signal, LlmRole.UTILITY_TOOL);
 
-      const responseText = getResponseText(response) || "";
+      const responseText = getResponseText(response) || '';
       const groundingMetadata = response.candidates?.[0]?.groundingMetadata;
       const sources = groundingMetadata?.groundingChunks as GroundingChunkItem[] | undefined;
 
       if (!responseText) {
-        const errorMsg = "No search results received";
+        const errorMsg = 'No search results received';
         return {
           llmContent: `Error: ${errorMsg}`,
           returnDisplay: errorMsg,
@@ -188,7 +152,7 @@ class WebSearchInvocation extends BaseToolInvocation<WebSearchToolParams, WebSea
       let displayContent = responseText;
 
       if (sources && sources.length > 0) {
-        displayContent += "\n\n**Sources:**\n";
+        displayContent += '\n\n**Sources:**\n';
         sources.forEach((chunk, index) => {
           if (chunk.web?.title && chunk.web?.uri) {
             displayContent += `${index + 1}. [${chunk.web.title}](${chunk.web.uri})\n`;
@@ -198,7 +162,7 @@ class WebSearchInvocation extends BaseToolInvocation<WebSearchToolParams, WebSea
         });
       }
 
-      updateOutput?.("Search completed successfully");
+      updateOutput?.('Search completed successfully');
 
       return {
         llmContent: responseText,
@@ -208,8 +172,8 @@ class WebSearchInvocation extends BaseToolInvocation<WebSearchToolParams, WebSea
     } catch (error) {
       if (signal.aborted) {
         return {
-          llmContent: "Web search was cancelled by user.",
-          returnDisplay: "Operation cancelled by user.",
+          llmContent: 'Web search was cancelled by user.',
+          returnDisplay: 'Operation cancelled by user.',
         };
       }
 

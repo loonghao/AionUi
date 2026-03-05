@@ -44,7 +44,7 @@ export class BaseApprovalStore<K extends IApprovalKey = IApprovalKey> implements
   protected serializeKey(key: K): string {
     return JSON.stringify({
       action: key.action,
-      identifier: key.identifier || "",
+      identifier: key.identifier || '',
     });
   }
 

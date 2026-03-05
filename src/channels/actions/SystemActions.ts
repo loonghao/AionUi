@@ -4,46 +4,23 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { acpDetector } from "@/agent/acp/AcpDetector";
-import type { TProviderWithModel } from "@/common/storage";
-import { ProcessConfig } from "@/process/initStorage";
-import { ConversationService } from "@/process/services/conversationService";
-import WorkerManage from "@/process/WorkerManage";
-import { getChannelMessageService } from "../agent/ChannelMessageService";
-import { getChannelManager } from "../core/ChannelManager";
-import type { AgentDisplayInfo } from "../plugins/telegram/TelegramKeyboards";
-import {
-  createAgentSelectionKeyboard,
-  createHelpKeyboard,
-  createMainMenuKeyboard,
-  createSessionControlKeyboard,
-} from "../plugins/telegram/TelegramKeyboards";
-import { getChannelConversationName, resolveChannelConvType } from "../types";
-import {
-  createAgentSelectionCard,
-  createFeaturesCard,
-  createHelpCard,
-  createMainMenuCard,
-  createPairingGuideCard,
-  createSessionStatusCard,
-  createSettingsCard,
-  createTipsCard,
-} from "../plugins/lark/LarkCards";
-import {
-  createAgentSelectionCard as createDingTalkAgentSelectionCard,
-  createFeaturesCard as createDingTalkFeaturesCard,
-  createHelpCard as createDingTalkHelpCard,
-  createMainMenuCard as createDingTalkMainMenuCard,
-  createPairingGuideCard as createDingTalkPairingGuideCard,
-  createSessionStatusCard as createDingTalkSessionStatusCard,
-  createSettingsCard as createDingTalkSettingsCard,
-  createTipsCard as createDingTalkTipsCard,
-} from "../plugins/dingtalk/DingTalkCards";
-import type { ChannelAgentType, PluginType } from "../types";
-import type { ActionHandler, IRegisteredAction } from "./types";
-import { SystemActionNames, createErrorResponse, createSuccessResponse } from "./types";
-import { GOOGLE_AUTH_PROVIDER_ID } from "@/common/constants";
-import type { AcpBackend } from "@/types/acpTypes";
+import { acpDetector } from '@/agent/acp/AcpDetector';
+import type { TProviderWithModel } from '@/common/storage';
+import { ProcessConfig } from '@/process/initStorage';
+import { ConversationService } from '@/process/services/conversationService';
+import WorkerManage from '@/process/WorkerManage';
+import { getChannelMessageService } from '../agent/ChannelMessageService';
+import { getChannelManager } from '../core/ChannelManager';
+import type { AgentDisplayInfo } from '../plugins/telegram/TelegramKeyboards';
+import { createAgentSelectionKeyboard, createHelpKeyboard, createMainMenuKeyboard, createSessionControlKeyboard } from '../plugins/telegram/TelegramKeyboards';
+import { getChannelConversationName, resolveChannelConvType } from '../types';
+import { createAgentSelectionCard, createFeaturesCard, createHelpCard, createMainMenuCard, createPairingGuideCard, createSessionStatusCard, createSettingsCard, createTipsCard } from '../plugins/lark/LarkCards';
+import { createAgentSelectionCard as createDingTalkAgentSelectionCard, createFeaturesCard as createDingTalkFeaturesCard, createHelpCard as createDingTalkHelpCard, createMainMenuCard as createDingTalkMainMenuCard, createPairingGuideCard as createDingTalkPairingGuideCard, createSessionStatusCard as createDingTalkSessionStatusCard, createSettingsCard as createDingTalkSettingsCard, createTipsCard as createDingTalkTipsCard } from '../plugins/dingtalk/DingTalkCards';
+import type { ChannelAgentType, PluginType } from '../types';
+import type { ActionHandler, IRegisteredAction } from './types';
+import { SystemActionNames, createErrorResponse, createSuccessResponse } from './types';
+import { GOOGLE_AUTH_PROVIDER_ID } from '@/common/constants';
+import type { AcpBackend } from '@/types/acpTypes';
 
 /**
  * Get the default model for Channel assistant (Telegram/Lark)
@@ -52,14 +29,11 @@ import type { AcpBackend } from "@/types/acpTypes";
 
 export async function getChannelDefaultModel(platform: PluginType): Promise<TProviderWithModel> {
   try {
-    const providers = await ProcessConfig.get("model.config");
+    const providers = await ProcessConfig.get('model.config');
     const providerList = providers && Array.isArray(providers) ? providers : [];
 
     // Helper: find a provider with a valid API key
-    const findProviderWithApiKey = (
-      providerId: string,
-      modelName: string,
-    ): TProviderWithModel | null => {
+    const findProviderWithApiKey = (providerId: string, modelName: string): TProviderWithModel | null => {
       const provider = providerList.find((p) => p.id === providerId);
       if (provider?.apiKey && provider.model?.includes(modelName)) {
         return { ...provider, useModel: modelName } as TProviderWithModel;
@@ -68,23 +42,14 @@ export async function getChannelDefaultModel(platform: PluginType): Promise<TPro
     };
 
     // Try to get saved model selection
-    const savedModel =
-      platform === "lark"
-        ? await ProcessConfig.get("assistant.lark.defaultModel")
-        : platform === "dingtalk"
-          ? await ProcessConfig.get("assistant.dingtalk.defaultModel")
-          : await ProcessConfig.get("assistant.telegram.defaultModel");
+    const savedModel = platform === 'lark' ? await ProcessConfig.get('assistant.lark.defaultModel') : platform === 'dingtalk' ? await ProcessConfig.get('assistant.dingtalk.defaultModel') : await ProcessConfig.get('assistant.telegram.defaultModel');
     if (savedModel?.id && savedModel?.useModel) {
       // Google Auth is frontend-only (OAuth browser flow), not usable in channels.
       // Fall through to find a provider with a valid API key instead.
       if (savedModel.id === GOOGLE_AUTH_PROVIDER_ID) {
-        console.warn(
-          `[SystemActions] Google Auth is not supported in channel mode (${platform}), falling back to API key provider`,
-        );
+        console.warn(`[SystemActions] Google Auth is not supported in channel mode (${platform}), falling back to API key provider`);
         // Try to find any Gemini provider with API key for the same model
-        const fallback = providerList.find(
-          (p) => p.platform === "gemini" && p.apiKey && p.model?.includes(savedModel.useModel),
-        );
+        const fallback = providerList.find((p) => p.platform === 'gemini' && p.apiKey && p.model?.includes(savedModel.useModel));
         if (fallback) {
           return { ...fallback, useModel: savedModel.useModel } as TProviderWithModel;
         }
@@ -97,9 +62,7 @@ export async function getChannelDefaultModel(platform: PluginType): Promise<TPro
     }
 
     // Fallback: try to get any Gemini provider with a valid API key
-    const geminiProvider = providerList.find(
-      (p) => p.platform === "gemini" && p.apiKey && p.model?.length,
-    );
+    const geminiProvider = providerList.find((p) => p.platform === 'gemini' && p.apiKey && p.model?.length);
     if (geminiProvider) {
       return {
         ...geminiProvider,
@@ -110,29 +73,25 @@ export async function getChannelDefaultModel(platform: PluginType): Promise<TPro
     // Last resort: any provider with a valid API key
     const anyProvider = providerList.find((p) => p.apiKey && p.model?.length);
     if (anyProvider) {
-      console.warn(
-        `[SystemActions] No Gemini provider with API key, using ${anyProvider.platform} provider`,
-      );
+      console.warn(`[SystemActions] No Gemini provider with API key, using ${anyProvider.platform} provider`);
       return {
         ...anyProvider,
         useModel: anyProvider.model[0],
       } as TProviderWithModel;
     }
   } catch (error) {
-    console.warn("[SystemActions] Failed to get saved model, using default:", error);
+    console.warn('[SystemActions] Failed to get saved model, using default:', error);
   }
 
   // Default fallback - minimal config for Gemini (no API key — will fail with clear error)
-  console.error(
-    "[SystemActions] No provider with valid API key found. Channel messages will fail.",
-  );
+  console.error('[SystemActions] No provider with valid API key found. Channel messages will fail.');
   return {
-    id: "gemini_default",
-    platform: "gemini",
-    name: "Gemini",
-    baseUrl: "https://generativelanguage.googleapis.com",
-    apiKey: "",
-    useModel: "gemini-2.0-flash",
+    id: 'gemini_default',
+    platform: 'gemini',
+    name: 'Gemini',
+    baseUrl: 'https://generativelanguage.googleapis.com',
+    apiKey: '',
+    useModel: 'gemini-2.0-flash',
   };
 }
 
@@ -151,11 +110,11 @@ export const handleSessionNew: ActionHandler = async (context) => {
   const sessionManager = manager.getSessionManager();
 
   if (!sessionManager) {
-    return createErrorResponse("Session manager not available");
+    return createErrorResponse('Session manager not available');
   }
 
   if (!context.channelUser) {
-    return createErrorResponse("User not authorized");
+    return createErrorResponse('User not authorized');
   }
 
   // Clear existing session and agent for this user+chat
@@ -177,32 +136,18 @@ export const handleSessionNew: ActionHandler = async (context) => {
   sessionManager.clearSession(context.channelUser.id, context.chatId);
 
   const platform = context.platform;
-  const source = platform === "lark" ? "lark" : platform === "dingtalk" ? "dingtalk" : "telegram";
+  const source = platform === 'lark' ? 'lark' : platform === 'dingtalk' ? 'dingtalk' : 'telegram';
 
   // Selected agent (defaults to Gemini)
   let savedAgent: unknown = undefined;
   try {
-    savedAgent = await (platform === "lark"
-      ? ProcessConfig.get("assistant.lark.agent")
-      : platform === "dingtalk"
-        ? ProcessConfig.get("assistant.dingtalk.agent")
-        : ProcessConfig.get("assistant.telegram.agent"));
+    savedAgent = await (platform === 'lark' ? ProcessConfig.get('assistant.lark.agent') : platform === 'dingtalk' ? ProcessConfig.get('assistant.dingtalk.agent') : ProcessConfig.get('assistant.telegram.agent'));
   } catch {
     // ignore
   }
-  const backend = (
-    savedAgent && typeof savedAgent === "object" && typeof (savedAgent as any).backend === "string"
-      ? (savedAgent as any).backend
-      : "gemini"
-  ) as string;
-  const customAgentId =
-    savedAgent && typeof savedAgent === "object"
-      ? ((savedAgent as any).customAgentId as string | undefined)
-      : undefined;
-  const agentName =
-    savedAgent && typeof savedAgent === "object"
-      ? ((savedAgent as any).name as string | undefined)
-      : undefined;
+  const backend = (savedAgent && typeof savedAgent === 'object' && typeof (savedAgent as any).backend === 'string' ? (savedAgent as any).backend : 'gemini') as string;
+  const customAgentId = savedAgent && typeof savedAgent === 'object' ? ((savedAgent as any).customAgentId as string | undefined) : undefined;
+  const agentName = savedAgent && typeof savedAgent === 'object' ? ((savedAgent as any).name as string | undefined) : undefined;
 
   // Provider model is required by typing; ACP/Codex will ignore it.
   const model = await getChannelDefaultModel(platform);
@@ -212,25 +157,25 @@ export const handleSessionNew: ActionHandler = async (context) => {
   const { convType, convBackend } = resolveChannelConvType(backend);
   const name = getChannelConversationName(platform, convType, convBackend, channelChatId);
   const result =
-    backend === "codex"
+    backend === 'codex'
       ? await ConversationService.createConversation({
-          type: "codex",
+          type: 'codex',
           model,
           source,
           name,
           channelChatId,
           extra: {},
         })
-      : backend === "gemini"
+      : backend === 'gemini'
         ? await ConversationService.createGeminiConversation({
             model,
             source,
             name,
             channelChatId,
           })
-        : backend === "openclaw-gateway"
+        : backend === 'openclaw-gateway'
           ? await ConversationService.createConversation({
-              type: "openclaw-gateway",
+              type: 'openclaw-gateway',
               model,
               source,
               name,
@@ -238,7 +183,7 @@ export const handleSessionNew: ActionHandler = async (context) => {
               extra: {},
             })
           : await ConversationService.createConversation({
-              type: "acp",
+              type: 'acp',
               model,
               source,
               name,
@@ -251,29 +196,18 @@ export const handleSessionNew: ActionHandler = async (context) => {
             });
 
   if (!result.success || !result.conversation) {
-    return createErrorResponse(`Failed to create session: ${result.error || "Unknown error"}`);
+    return createErrorResponse(`Failed to create session: ${result.error || 'Unknown error'}`);
   }
 
   // Create session with the new conversation ID (scoped by chatId)
   const agentType = convType as ChannelAgentType;
-  const session = sessionManager.createSessionWithConversation(
-    context.channelUser,
-    result.conversation.id,
-    agentType,
-    undefined,
-    channelChatId,
-  );
+  const session = sessionManager.createSessionWithConversation(context.channelUser, result.conversation.id, agentType, undefined, channelChatId);
 
-  const markup =
-    context.platform === "lark"
-      ? createMainMenuCard()
-      : context.platform === "dingtalk"
-        ? createDingTalkMainMenuCard()
-        : createMainMenuKeyboard();
+  const markup = context.platform === 'lark' ? createMainMenuCard() : context.platform === 'dingtalk' ? createDingTalkMainMenuCard() : createMainMenuKeyboard();
   return createSuccessResponse({
-    type: "text",
+    type: 'text',
     text: `🆕 <b>New Session Created</b>\n\nSession ID: <code>${session.id.slice(-8)}</code>\n\nYou can start a new conversation now!`,
-    parseMode: "HTML",
+    parseMode: 'HTML',
     replyMarkup: markup,
   });
 };
@@ -286,50 +220,36 @@ export const handleSessionStatus: ActionHandler = async (context) => {
   const sessionManager = manager.getSessionManager();
 
   if (!sessionManager) {
-    return createErrorResponse("Session manager not available");
+    return createErrorResponse('Session manager not available');
   }
 
   const userId = context.channelUser?.id;
   const session = userId ? sessionManager.getSession(userId, context.chatId) : null;
 
   // Use platform-specific markup
-  if (context.platform === "lark") {
-    const sessionData = session
-      ? {
-          id: session.id,
-          agentType: session.agentType,
-          createdAt: session.createdAt,
-          lastActivity: session.lastActivity,
-        }
-      : undefined;
+  if (context.platform === 'lark') {
+    const sessionData = session ? { id: session.id, agentType: session.agentType, createdAt: session.createdAt, lastActivity: session.lastActivity } : undefined;
     return createSuccessResponse({
-      type: "text",
-      text: "", // Lark card includes the text
+      type: 'text',
+      text: '', // Lark card includes the text
       replyMarkup: createSessionStatusCard(sessionData),
     });
   }
 
-  if (context.platform === "dingtalk") {
-    const sessionData = session
-      ? {
-          id: session.id,
-          agentType: session.agentType,
-          createdAt: session.createdAt,
-          lastActivity: session.lastActivity,
-        }
-      : undefined;
+  if (context.platform === 'dingtalk') {
+    const sessionData = session ? { id: session.id, agentType: session.agentType, createdAt: session.createdAt, lastActivity: session.lastActivity } : undefined;
     return createSuccessResponse({
-      type: "text",
-      text: "", // DingTalk card includes the text
+      type: 'text',
+      text: '', // DingTalk card includes the text
       replyMarkup: createDingTalkSessionStatusCard(sessionData),
     });
   }
 
   if (!session) {
     return createSuccessResponse({
-      type: "text",
+      type: 'text',
       text: '📊 <b>Session Status</b>\n\nNo active session.\n\nSend a message to start a new conversation, or tap the "New Chat" button.',
-      parseMode: "HTML",
+      parseMode: 'HTML',
       replyMarkup: createSessionControlKeyboard(),
     });
   }
@@ -338,16 +258,9 @@ export const handleSessionStatus: ActionHandler = async (context) => {
   const lastActivity = Math.floor((Date.now() - session.lastActivity) / 1000);
 
   return createSuccessResponse({
-    type: "text",
-    text: [
-      "📊 <b>Session Status</b>",
-      "",
-      `🤖 Agent: <code>${session.agentType}</code>`,
-      `⏱ Duration: ${duration} min`,
-      `📝 Last activity: ${lastActivity} sec ago`,
-      `🔖 Session ID: <code>${session.id.slice(-8)}</code>`,
-    ].join("\n"),
-    parseMode: "HTML",
+    type: 'text',
+    text: ['📊 <b>Session Status</b>', '', `🤖 Agent: <code>${session.agentType}</code>`, `⏱ Duration: ${duration} min`, `📝 Last activity: ${lastActivity} sec ago`, `🔖 Session ID: <code>${session.id.slice(-8)}</code>`].join('\n'),
+    parseMode: 'HTML',
     replyMarkup: createSessionControlKeyboard(),
   });
 };
@@ -356,35 +269,24 @@ export const handleSessionStatus: ActionHandler = async (context) => {
  * Handle help.show - Show help menu
  */
 export const handleHelpShow: ActionHandler = async (context) => {
-  if (context.platform === "lark") {
+  if (context.platform === 'lark') {
     return createSuccessResponse({
-      type: "text",
-      text: "", // Lark card includes the text
+      type: 'text',
+      text: '', // Lark card includes the text
       replyMarkup: createHelpCard(),
     });
   }
-  if (context.platform === "dingtalk") {
+  if (context.platform === 'dingtalk') {
     return createSuccessResponse({
-      type: "text",
-      text: "",
+      type: 'text',
+      text: '',
       replyMarkup: createDingTalkHelpCard(),
     });
   }
   return createSuccessResponse({
-    type: "text",
-    text: [
-      "❓ <b>AionUi Assistant</b>",
-      "",
-      "A remote assistant to interact with AionUi via Telegram.",
-      "",
-      "<b>Common Actions:</b>",
-      "• 🆕 New Chat - Start a new session",
-      "• 📊 Status - View current session status",
-      "• ❓ Help - Show this help message",
-      "",
-      "Send a message to chat with the AI assistant.",
-    ].join("\n"),
-    parseMode: "HTML",
+    type: 'text',
+    text: ['❓ <b>AionUi Assistant</b>', '', 'A remote assistant to interact with AionUi via Telegram.', '', '<b>Common Actions:</b>', '• 🆕 New Chat - Start a new session', '• 📊 Status - View current session status', '• ❓ Help - Show this help message', '', 'Send a message to chat with the AI assistant.'].join('\n'),
+    parseMode: 'HTML',
     replyMarkup: createHelpKeyboard(),
   });
 };
@@ -393,41 +295,24 @@ export const handleHelpShow: ActionHandler = async (context) => {
  * Handle help.features - Show feature introduction
  */
 export const handleHelpFeatures: ActionHandler = async (context) => {
-  if (context.platform === "lark") {
+  if (context.platform === 'lark') {
     return createSuccessResponse({
-      type: "text",
-      text: "",
+      type: 'text',
+      text: '',
       replyMarkup: createFeaturesCard(),
     });
   }
-  if (context.platform === "dingtalk") {
+  if (context.platform === 'dingtalk') {
     return createSuccessResponse({
-      type: "text",
-      text: "",
+      type: 'text',
+      text: '',
       replyMarkup: createDingTalkFeaturesCard(),
     });
   }
   return createSuccessResponse({
-    type: "text",
-    text: [
-      "🤖 <b>Features</b>",
-      "",
-      "<b>AI Chat</b>",
-      "• Natural language conversation",
-      "• Streaming output, real-time display",
-      "• Context memory support",
-      "",
-      "<b>Session Management</b>",
-      "• Single session mode",
-      "• Clear context anytime",
-      "• View session status",
-      "",
-      "<b>Message Actions</b>",
-      "• Copy reply content",
-      "• Regenerate reply",
-      "• Continue conversation",
-    ].join("\n"),
-    parseMode: "HTML",
+    type: 'text',
+    text: ['🤖 <b>Features</b>', '', '<b>AI Chat</b>', '• Natural language conversation', '• Streaming output, real-time display', '• Context memory support', '', '<b>Session Management</b>', '• Single session mode', '• Clear context anytime', '• View session status', '', '<b>Message Actions</b>', '• Copy reply content', '• Regenerate reply', '• Continue conversation'].join('\n'),
+    parseMode: 'HTML',
     replyMarkup: createHelpKeyboard(),
   });
 };
@@ -436,37 +321,24 @@ export const handleHelpFeatures: ActionHandler = async (context) => {
  * Handle help.pairing - Show pairing guide
  */
 export const handleHelpPairing: ActionHandler = async (context) => {
-  if (context.platform === "lark") {
+  if (context.platform === 'lark') {
     return createSuccessResponse({
-      type: "text",
-      text: "",
+      type: 'text',
+      text: '',
       replyMarkup: createPairingGuideCard(),
     });
   }
-  if (context.platform === "dingtalk") {
+  if (context.platform === 'dingtalk') {
     return createSuccessResponse({
-      type: "text",
-      text: "",
+      type: 'text',
+      text: '',
       replyMarkup: createDingTalkPairingGuideCard(),
     });
   }
   return createSuccessResponse({
-    type: "text",
-    text: [
-      "🔗 <b>Pairing Guide</b>",
-      "",
-      "<b>First-time Setup:</b>",
-      "1. Send any message to the bot",
-      "2. Bot displays pairing code",
-      "3. Approve pairing in AionUi settings",
-      "4. Ready to use after pairing",
-      "",
-      "<b>Notes:</b>",
-      "• Pairing code valid for 10 minutes",
-      "• AionUi app must be running",
-      "• One Telegram account can only pair once",
-    ].join("\n"),
-    parseMode: "HTML",
+    type: 'text',
+    text: ['🔗 <b>Pairing Guide</b>', '', '<b>First-time Setup:</b>', '1. Send any message to the bot', '2. Bot displays pairing code', '3. Approve pairing in AionUi settings', '4. Ready to use after pairing', '', '<b>Notes:</b>', '• Pairing code valid for 10 minutes', '• AionUi app must be running', '• One Telegram account can only pair once'].join('\n'),
+    parseMode: 'HTML',
     replyMarkup: createHelpKeyboard(),
   });
 };
@@ -475,36 +347,24 @@ export const handleHelpPairing: ActionHandler = async (context) => {
  * Handle help.tips - Show usage tips
  */
 export const handleHelpTips: ActionHandler = async (context) => {
-  if (context.platform === "lark") {
+  if (context.platform === 'lark') {
     return createSuccessResponse({
-      type: "text",
-      text: "",
+      type: 'text',
+      text: '',
       replyMarkup: createTipsCard(),
     });
   }
-  if (context.platform === "dingtalk") {
+  if (context.platform === 'dingtalk') {
     return createSuccessResponse({
-      type: "text",
-      text: "",
+      type: 'text',
+      text: '',
       replyMarkup: createDingTalkTipsCard(),
     });
   }
   return createSuccessResponse({
-    type: "text",
-    text: [
-      "💬 <b>Tips</b>",
-      "",
-      "<b>Effective Conversations:</b>",
-      "• Be clear and specific",
-      "• Feel free to ask follow-ups",
-      "• Regenerate if not satisfied",
-      "",
-      "<b>Quick Actions:</b>",
-      "• Use bottom buttons for quick access",
-      "• Tap message buttons for actions",
-      "• New chat clears history context",
-    ].join("\n"),
-    parseMode: "HTML",
+    type: 'text',
+    text: ['💬 <b>Tips</b>', '', '<b>Effective Conversations:</b>', '• Be clear and specific', '• Feel free to ask follow-ups', '• Regenerate if not satisfied', '', '<b>Quick Actions:</b>', '• Use bottom buttons for quick access', '• Tap message buttons for actions', '• New chat clears history context'].join('\n'),
+    parseMode: 'HTML',
     replyMarkup: createHelpKeyboard(),
   });
 };
@@ -513,30 +373,24 @@ export const handleHelpTips: ActionHandler = async (context) => {
  * Handle settings.show - Show settings info
  */
 export const handleSettingsShow: ActionHandler = async (context) => {
-  if (context.platform === "lark") {
+  if (context.platform === 'lark') {
     return createSuccessResponse({
-      type: "text",
-      text: "",
+      type: 'text',
+      text: '',
       replyMarkup: createSettingsCard(),
     });
   }
-  if (context.platform === "dingtalk") {
+  if (context.platform === 'dingtalk') {
     return createSuccessResponse({
-      type: "text",
-      text: "",
+      type: 'text',
+      text: '',
       replyMarkup: createDingTalkSettingsCard(),
     });
   }
   return createSuccessResponse({
-    type: "text",
-    text: [
-      "⚙️ <b>Settings</b>",
-      "",
-      "Channel settings need to be configured in the AionUi app.",
-      "",
-      "Open AionUi → WebUI → Channels",
-    ].join("\n"),
-    parseMode: "HTML",
+    type: 'text',
+    text: ['⚙️ <b>Settings</b>', '', 'Channel settings need to be configured in the AionUi app.', '', 'Open AionUi → WebUI → Channels'].join('\n'),
+    parseMode: 'HTML',
     replyMarkup: createMainMenuKeyboard(),
   });
 };
@@ -549,48 +403,42 @@ export const handleAgentShow: ActionHandler = async (context) => {
   const sessionManager = manager.getSessionManager();
 
   if (!sessionManager) {
-    return createErrorResponse("Session manager not available");
+    return createErrorResponse('Session manager not available');
   }
 
   // Get current agent type from session (scoped by chatId)
   const userId = context.channelUser?.id;
   const session = userId ? sessionManager.getSession(userId, context.chatId) : null;
-  const currentAgent = session?.agentType || "gemini";
+  const currentAgent = session?.agentType || 'gemini';
 
   // Get available agents dynamically
   const availableAgents = getAvailableChannelAgents();
 
   if (availableAgents.length === 0) {
-    return createErrorResponse("No agents available");
+    return createErrorResponse('No agents available');
   }
 
   // Use platform-specific markup
-  if (context.platform === "lark") {
+  if (context.platform === 'lark') {
     return createSuccessResponse({
-      type: "text",
-      text: "", // Lark card includes the text
+      type: 'text',
+      text: '', // Lark card includes the text
       replyMarkup: createAgentSelectionCard(availableAgents, currentAgent),
     });
   }
 
-  if (context.platform === "dingtalk") {
+  if (context.platform === 'dingtalk') {
     return createSuccessResponse({
-      type: "text",
-      text: "",
+      type: 'text',
+      text: '',
       replyMarkup: createDingTalkAgentSelectionCard(availableAgents, currentAgent),
     });
   }
 
   return createSuccessResponse({
-    type: "text",
-    text: [
-      "🔄 <b>Switch Agent</b>",
-      "",
-      "Select an AI agent for your conversations:",
-      "",
-      `Current: <b>${getAgentDisplayName(currentAgent)}</b>`,
-    ].join("\n"),
-    parseMode: "HTML",
+    type: 'text',
+    text: ['🔄 <b>Switch Agent</b>', '', 'Select an AI agent for your conversations:', '', `Current: <b>${getAgentDisplayName(currentAgent)}</b>`].join('\n'),
+    parseMode: 'HTML',
     replyMarkup: createAgentSelectionKeyboard(availableAgents, currentAgent),
   });
 };
@@ -603,11 +451,11 @@ export const handleAgentSelect: ActionHandler = async (context, params) => {
   const sessionManager = manager.getSessionManager();
 
   if (!sessionManager) {
-    return createErrorResponse("Session manager not available");
+    return createErrorResponse('Session manager not available');
   }
 
   if (!context.channelUser) {
-    return createErrorResponse("User not authorized");
+    return createErrorResponse('User not authorized');
   }
 
   const newAgentType = params?.agentType as ChannelAgentType;
@@ -616,7 +464,7 @@ export const handleAgentSelect: ActionHandler = async (context, params) => {
   const availableAgents = getAvailableChannelAgents();
   const isValidAgent = availableAgents.some((agent) => agent.type === newAgentType);
   if (!newAgentType || !isValidAgent) {
-    return createErrorResponse("Invalid or unavailable agent type");
+    return createErrorResponse('Invalid or unavailable agent type');
   }
 
   // Get current session (scoped by chatId)
@@ -624,16 +472,11 @@ export const handleAgentSelect: ActionHandler = async (context, params) => {
 
   // If same agent, no need to switch
   if (existingSession?.agentType === newAgentType) {
-    const markup =
-      context.platform === "lark"
-        ? createMainMenuCard()
-        : context.platform === "dingtalk"
-          ? createDingTalkMainMenuCard()
-          : createMainMenuKeyboard();
+    const markup = context.platform === 'lark' ? createMainMenuCard() : context.platform === 'dingtalk' ? createDingTalkMainMenuCard() : createMainMenuKeyboard();
     return createSuccessResponse({
-      type: "text",
+      type: 'text',
       text: `✓ Already using <b>${getAgentDisplayName(newAgentType)}</b>`,
-      parseMode: "HTML",
+      parseMode: 'HTML',
       replyMarkup: markup,
     });
   }
@@ -654,29 +497,13 @@ export const handleAgentSelect: ActionHandler = async (context, params) => {
   sessionManager.clearSession(context.channelUser.id, context.chatId);
 
   // Create new session with the selected agent type (scoped by chatId)
-  const session = sessionManager.createSession(
-    context.channelUser,
-    newAgentType,
-    undefined,
-    context.chatId,
-  );
+  const session = sessionManager.createSession(context.channelUser, newAgentType, undefined, context.chatId);
 
-  const markup =
-    context.platform === "lark"
-      ? createMainMenuCard()
-      : context.platform === "dingtalk"
-        ? createDingTalkMainMenuCard()
-        : createMainMenuKeyboard();
+  const markup = context.platform === 'lark' ? createMainMenuCard() : context.platform === 'dingtalk' ? createDingTalkMainMenuCard() : createMainMenuKeyboard();
   return createSuccessResponse({
-    type: "text",
-    text: [
-      `✓ <b>Switched to ${getAgentDisplayName(newAgentType)}</b>`,
-      "",
-      "A new conversation has been started.",
-      "",
-      "Send a message to begin!",
-    ].join("\n"),
-    parseMode: "HTML",
+    type: 'text',
+    text: [`✓ <b>Switched to ${getAgentDisplayName(newAgentType)}</b>`, '', 'A new conversation has been started.', '', 'Send a message to begin!'].join('\n'),
+    parseMode: 'HTML',
     replyMarkup: markup,
   });
 };
@@ -686,10 +513,10 @@ export const handleAgentSelect: ActionHandler = async (context, params) => {
  */
 function getAgentDisplayName(agentType: ChannelAgentType): string {
   const names: Record<ChannelAgentType, string> = {
-    gemini: "🤖 Gemini",
-    acp: "🧠 Claude",
-    codex: "⚡ Codex",
-    "openclaw-gateway": "🦞 OpenClaw",
+    gemini: '🤖 Gemini',
+    acp: '🧠 Claude',
+    codex: '⚡ Codex',
+    'openclaw-gateway': '🦞 OpenClaw',
   };
   return names[agentType] || agentType;
 }
@@ -700,10 +527,10 @@ function getAgentDisplayName(agentType: ChannelAgentType): string {
  */
 function backendToChannelAgentType(backend: string): ChannelAgentType | null {
   const mapping: Record<string, ChannelAgentType> = {
-    gemini: "gemini",
-    claude: "acp",
-    codex: "codex",
-    "openclaw-gateway": "openclaw-gateway",
+    gemini: 'gemini',
+    claude: 'acp',
+    codex: 'codex',
+    'openclaw-gateway': 'openclaw-gateway',
   };
   return mapping[backend] || null;
 }
@@ -713,12 +540,12 @@ function backendToChannelAgentType(backend: string): ChannelAgentType | null {
  */
 function getAgentEmoji(backend: string): string {
   const emojis: Record<string, string> = {
-    gemini: "🤖",
-    claude: "🧠",
-    codex: "⚡",
-    "openclaw-gateway": "🦞",
+    gemini: '🤖',
+    claude: '🧠',
+    codex: '⚡',
+    'openclaw-gateway': '🦞',
   };
-  return emojis[backend] || "🤖";
+  return emojis[backend] || '🤖';
 }
 
 /**
@@ -731,8 +558,8 @@ function getAvailableChannelAgents(): AgentDisplayInfo[] {
   const seenTypes = new Set<ChannelAgentType>();
 
   // Always include Gemini as it's built-in
-  availableAgents.push({ type: "gemini", emoji: "🤖", name: "Gemini" });
-  seenTypes.add("gemini");
+  availableAgents.push({ type: 'gemini', emoji: '🤖', name: 'Gemini' });
+  seenTypes.add('gemini');
 
   // Add detected ACP agents (claude, codex, etc.)
   for (const agent of detectedAgents) {
@@ -756,56 +583,56 @@ function getAvailableChannelAgents(): AgentDisplayInfo[] {
 export const systemActions: IRegisteredAction[] = [
   {
     name: SystemActionNames.SESSION_NEW,
-    category: "system",
-    description: "Create a new conversation session",
+    category: 'system',
+    description: 'Create a new conversation session',
     handler: handleSessionNew,
   },
   {
     name: SystemActionNames.SESSION_STATUS,
-    category: "system",
-    description: "Show current session status",
+    category: 'system',
+    description: 'Show current session status',
     handler: handleSessionStatus,
   },
   {
     name: SystemActionNames.HELP_SHOW,
-    category: "system",
-    description: "Show help menu",
+    category: 'system',
+    description: 'Show help menu',
     handler: handleHelpShow,
   },
   {
     name: SystemActionNames.HELP_FEATURES,
-    category: "system",
-    description: "Show feature introduction",
+    category: 'system',
+    description: 'Show feature introduction',
     handler: handleHelpFeatures,
   },
   {
     name: SystemActionNames.HELP_PAIRING,
-    category: "system",
-    description: "Show pairing guide",
+    category: 'system',
+    description: 'Show pairing guide',
     handler: handleHelpPairing,
   },
   {
     name: SystemActionNames.HELP_TIPS,
-    category: "system",
-    description: "Show usage tips",
+    category: 'system',
+    description: 'Show usage tips',
     handler: handleHelpTips,
   },
   {
     name: SystemActionNames.SETTINGS_SHOW,
-    category: "system",
-    description: "Show settings info",
+    category: 'system',
+    description: 'Show settings info',
     handler: handleSettingsShow,
   },
   {
     name: SystemActionNames.AGENT_SHOW,
-    category: "system",
-    description: "Show agent selection",
+    category: 'system',
+    description: 'Show agent selection',
     handler: handleAgentShow,
   },
   {
     name: SystemActionNames.AGENT_SELECT,
-    category: "system",
-    description: "Switch to a different agent",
+    category: 'system',
+    description: 'Switch to a different agent',
     handler: handleAgentSelect,
   },
 ];

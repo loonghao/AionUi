@@ -4,14 +4,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Popover } from "@arco-design/web-react";
-import React, { useMemo } from "react";
-import { useTranslation } from "react-i18next";
+import { Popover } from '@arco-design/web-react';
+import React, { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 
-import type { TokenUsageData } from "@/common/storage";
+import type { TokenUsageData } from '@/common/storage';
 
 // 从 modelContextLimits 导入默认上下文限制
-import { DEFAULT_CONTEXT_LIMIT } from "@/renderer/utils/modelContextLimits";
+import { DEFAULT_CONTEXT_LIMIT } from '@/renderer/utils/modelContextLimits';
 
 interface ContextUsageIndicatorProps {
   tokenUsage: TokenUsageData | null;
@@ -20,19 +20,14 @@ interface ContextUsageIndicatorProps {
   size?: number;
 }
 
-const ContextUsageIndicator: React.FC<ContextUsageIndicatorProps> = ({
-  tokenUsage,
-  contextLimit = DEFAULT_CONTEXT_LIMIT,
-  className = "",
-  size = 24,
-}) => {
+const ContextUsageIndicator: React.FC<ContextUsageIndicatorProps> = ({ tokenUsage, contextLimit = DEFAULT_CONTEXT_LIMIT, className = '', size = 24 }) => {
   const { t } = useTranslation();
 
   const { percentage, displayTotal, displayLimit, isWarning, isDanger } = useMemo(() => {
     if (!tokenUsage) {
       return {
         percentage: 0,
-        displayTotal: "0",
+        displayTotal: '0',
         displayLimit: formatTokenCount(contextLimit, true),
         isWarning: false,
         isDanger: false,
@@ -64,64 +59,32 @@ const ContextUsageIndicator: React.FC<ContextUsageIndicatorProps> = ({
 
   // 根据状态获取颜色
   const getStrokeColor = () => {
-    if (isDanger) return "rgb(var(--danger-6))";
-    if (isWarning) return "rgb(var(--warning-6))";
-    return "rgb(var(--primary-6))";
+    if (isDanger) return 'rgb(var(--danger-6))';
+    if (isWarning) return 'rgb(var(--warning-6))';
+    return 'rgb(var(--primary-6))';
   };
 
   // 背景圆环颜色 - 适配深浅主题
   const getTrackColor = () => {
-    return "var(--color-fill-3)";
+    return 'var(--color-fill-3)';
   };
 
   const popoverContent = (
-    <div className="p-8px min-w-160px">
-      <div className="text-14px font-medium text-t-primary">
-        {percentage.toFixed(1)}% · {displayTotal} / {displayLimit}{" "}
-        {t("conversation.contextUsage.contextUsed", "context used")}
+    <div className='p-8px min-w-160px'>
+      <div className='text-14px font-medium text-t-primary'>
+        {percentage.toFixed(1)}% · {displayTotal} / {displayLimit} {t('conversation.contextUsage.contextUsed', 'context used')}
       </div>
     </div>
   );
 
   return (
-    <Popover
-      content={popoverContent}
-      position="top"
-      trigger="hover"
-      className="context-usage-popover"
-    >
-      <div
-        className={`context-usage-indicator cursor-pointer flex items-center justify-center ${className}`}
-        style={{ width: size, height: size }}
-      >
-        <svg
-          width={size}
-          height={size}
-          viewBox={`0 0 ${size} ${size}`}
-          style={{ transform: "rotate(-90deg)" }}
-        >
+    <Popover content={popoverContent} position='top' trigger='hover' className='context-usage-popover'>
+      <div className={`context-usage-indicator cursor-pointer flex items-center justify-center ${className}`} style={{ width: size, height: size }}>
+        <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} style={{ transform: 'rotate(-90deg)' }}>
           {/* 背景圆环 */}
-          <circle
-            cx={size / 2}
-            cy={size / 2}
-            r={radius}
-            fill="none"
-            stroke={getTrackColor()}
-            strokeWidth={strokeWidth}
-          />
+          <circle cx={size / 2} cy={size / 2} r={radius} fill='none' stroke={getTrackColor()} strokeWidth={strokeWidth} />
           {/* 进度圆环 */}
-          <circle
-            cx={size / 2}
-            cy={size / 2}
-            r={radius}
-            fill="none"
-            stroke={getStrokeColor()}
-            strokeWidth={strokeWidth}
-            strokeLinecap="round"
-            strokeDasharray={circumference}
-            strokeDashoffset={strokeDashoffset}
-            style={{ transition: "stroke-dashoffset 0.3s ease, stroke 0.3s ease" }}
-          />
+          <circle cx={size / 2} cy={size / 2} r={radius} fill='none' stroke={getStrokeColor()} strokeWidth={strokeWidth} strokeLinecap='round' strokeDasharray={circumference} strokeDashoffset={strokeDashoffset} style={{ transition: 'stroke-dashoffset 0.3s ease, stroke 0.3s ease' }} />
         </svg>
       </div>
     </Popover>
@@ -138,12 +101,12 @@ export function formatTokenCount(count: number, hideZeroDecimals = false): strin
   if (count >= 1_000_000) {
     const value = count / 1_000_000;
     const formatted = value.toFixed(1);
-    return hideZeroDecimals && formatted.endsWith(".0") ? `${Math.floor(value)}M` : `${formatted}M`;
+    return hideZeroDecimals && formatted.endsWith('.0') ? `${Math.floor(value)}M` : `${formatted}M`;
   }
   if (count >= 1_000) {
     const value = count / 1_000;
     const formatted = value.toFixed(1);
-    return hideZeroDecimals && formatted.endsWith(".0") ? `${Math.floor(value)}K` : `${formatted}K`;
+    return hideZeroDecimals && formatted.endsWith('.0') ? `${Math.floor(value)}K` : `${formatted}K`;
   }
   return count.toString();
 }

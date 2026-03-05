@@ -13,13 +13,13 @@
  * the app is launched from Finder / launchd instead of a terminal.
  */
 
-import { execFile, execFileSync } from "child_process";
-import { accessSync, existsSync, readdirSync } from "fs";
-import os from "os";
-import path from "path";
+import { execFile, execFileSync } from 'child_process';
+import { accessSync, existsSync, readdirSync } from 'fs';
+import os from 'os';
+import path from 'path';
 
 /** Enable ACP performance diagnostics via ACP_PERF=1 */
-const PERF_LOG = process.env.ACP_PERF === "1";
+const PERF_LOG = process.env.ACP_PERF === '1';
 
 /**
  * Environment variables to inherit from user's shell.
@@ -29,16 +29,16 @@ const PERF_LOG = process.env.ACP_PERF === "1";
  * 当 Electron 应用从 Finder/launchd 启动时，这些变量可能不可用。
  */
 const SHELL_INHERITED_ENV_VARS = [
-  "PATH", // Required for finding CLI tools (e.g., ~/.npm-global/bin, ~/.nvm/...)
-  "NODE_EXTRA_CA_CERTS", // Custom CA certificates
-  "SSL_CERT_FILE",
-  "SSL_CERT_DIR",
-  "REQUESTS_CA_BUNDLE",
-  "CURL_CA_BUNDLE",
-  "NODE_TLS_REJECT_UNAUTHORIZED",
-  "ANTHROPIC_AUTH_TOKEN", // Claude authentication (#776)
-  "ANTHROPIC_API_KEY",
-  "ANTHROPIC_BASE_URL",
+  'PATH', // Required for finding CLI tools (e.g., ~/.npm-global/bin, ~/.nvm/...)
+  'NODE_EXTRA_CA_CERTS', // Custom CA certificates
+  'SSL_CERT_FILE',
+  'SSL_CERT_DIR',
+  'REQUESTS_CA_BUNDLE',
+  'CURL_CA_BUNDLE',
+  'NODE_TLS_REJECT_UNAUTHORIZED',
+  'ANTHROPIC_AUTH_TOKEN', // Claude authentication (#776)
+  'ANTHROPIC_API_KEY',
+  'ANTHROPIC_BASE_URL',
 ] as const;
 
 /** Cache for shell environment (loaded once per session) */
@@ -60,30 +60,29 @@ function loadShellEnvironment(): Record<string, string> {
   cachedShellEnv = {};
 
   // Skip on Windows - shell config loading not needed
-  if (process.platform === "win32") {
-    if (PERF_LOG)
-      console.log(`[ShellEnv] connect: shell env skipped (Windows) ${Date.now() - startTime}ms`);
+  if (process.platform === 'win32') {
+    if (PERF_LOG) console.log(`[ShellEnv] connect: shell env skipped (Windows) ${Date.now() - startTime}ms`);
     return cachedShellEnv;
   }
 
   try {
-    const shell = process.env.SHELL || "/bin/bash";
+    const shell = process.env.SHELL || '/bin/bash';
     if (!path.isAbsolute(shell)) {
-      console.warn("[ShellEnv] SHELL is not an absolute path, skipping shell env loading:", shell);
+      console.warn('[ShellEnv] SHELL is not an absolute path, skipping shell env loading:', shell);
       return cachedShellEnv;
     }
     // Use -i (interactive) and -l (login) to load all shell configs
     // including .bashrc, .zshrc, .bash_profile, .zprofile, etc.
-    const output = execFileSync(shell, ["-i", "-l", "-c", "env"], {
-      encoding: "utf-8",
+    const output = execFileSync(shell, ['-i', '-l', '-c', 'env'], {
+      encoding: 'utf-8',
       timeout: 5000,
-      stdio: ["pipe", "pipe", "pipe"],
+      stdio: ['pipe', 'pipe', 'pipe'],
       env: { ...process.env, HOME: os.homedir() },
     });
 
     // Parse and capture only the variables we need
-    for (const line of output.split("\n")) {
-      const eqIndex = line.indexOf("=");
+    for (const line of output.split('\n')) {
+      const eqIndex = line.indexOf('=');
       if (eqIndex > 0) {
         const key = line.substring(0, eqIndex);
         const value = line.substring(eqIndex + 1);
@@ -94,17 +93,11 @@ function loadShellEnvironment(): Record<string, string> {
     }
 
     if (PERF_LOG && cachedShellEnv.PATH) {
-      console.log(
-        "[ShellEnv] Loaded PATH from shell:",
-        cachedShellEnv.PATH.substring(0, 100) + "...",
-      );
+      console.log('[ShellEnv] Loaded PATH from shell:', cachedShellEnv.PATH.substring(0, 100) + '...');
     }
   } catch (error) {
     // Silent fail - shell environment loading is best-effort
-    console.warn(
-      "[ShellEnv] Failed to load shell environment:",
-      error instanceof Error ? error.message : String(error),
-    );
+    console.warn('[ShellEnv] Failed to load shell environment:', error instanceof Error ? error.message : String(error));
   }
 
   if (PERF_LOG) console.log(`[ShellEnv] connect: shell env loaded ${Date.now() - startTime}ms`);
@@ -123,7 +116,7 @@ export async function loadShellEnvironmentAsync(): Promise<Record<string, string
     return cachedShellEnv;
   }
 
-  if (process.platform === "win32") {
+  if (process.platform === 'win32') {
     cachedShellEnv = {};
     return cachedShellEnv;
   }
@@ -131,12 +124,9 @@ export async function loadShellEnvironmentAsync(): Promise<Record<string, string
   const startTime = Date.now();
 
   try {
-    const shell = process.env.SHELL || "/bin/bash";
+    const shell = process.env.SHELL || '/bin/bash';
     if (!path.isAbsolute(shell)) {
-      console.warn(
-        "[ShellEnv] SHELL is not an absolute path, skipping async shell env loading:",
-        shell,
-      );
+      console.warn('[ShellEnv] SHELL is not an absolute path, skipping async shell env loading:', shell);
       cachedShellEnv = {};
       return cachedShellEnv;
     }
@@ -144,22 +134,22 @@ export async function loadShellEnvironmentAsync(): Promise<Record<string, string
     const output = await new Promise<string>((resolve, reject) => {
       execFile(
         shell,
-        ["-i", "-l", "-c", "env"],
+        ['-i', '-l', '-c', 'env'],
         {
-          encoding: "utf-8",
+          encoding: 'utf-8',
           timeout: 5000,
           env: { ...process.env, HOME: os.homedir() },
         },
         (error, stdout) => {
           if (error) reject(error);
           else resolve(stdout);
-        },
+        }
       );
     });
 
     const env: Record<string, string> = {};
-    for (const line of output.split("\n")) {
-      const eqIndex = line.indexOf("=");
+    for (const line of output.split('\n')) {
+      const eqIndex = line.indexOf('=');
       if (eqIndex > 0) {
         const key = line.substring(0, eqIndex);
         const value = line.substring(eqIndex + 1);
@@ -172,19 +162,12 @@ export async function loadShellEnvironmentAsync(): Promise<Record<string, string
     cachedShellEnv = env;
 
     if (PERF_LOG && cachedShellEnv.PATH) {
-      console.log(
-        "[ShellEnv] Preloaded PATH from shell:",
-        cachedShellEnv.PATH.substring(0, 100) + "...",
-      );
+      console.log('[ShellEnv] Preloaded PATH from shell:', cachedShellEnv.PATH.substring(0, 100) + '...');
     }
-    if (PERF_LOG)
-      console.log(`[ShellEnv] preload: shell env async loaded ${Date.now() - startTime}ms`);
+    if (PERF_LOG) console.log(`[ShellEnv] preload: shell env async loaded ${Date.now() - startTime}ms`);
   } catch (error) {
     cachedShellEnv = {};
-    console.warn(
-      "[ShellEnv] Failed to async load shell environment:",
-      error instanceof Error ? error.message : String(error),
-    );
+    console.warn('[ShellEnv] Failed to async load shell environment:', error instanceof Error ? error.message : String(error));
   }
 
   return cachedShellEnv;
@@ -196,7 +179,7 @@ export async function loadShellEnvironmentAsync(): Promise<Record<string, string
  * 合并两个 PATH 字符串，去重并保持顺序。
  */
 export function mergePaths(path1?: string, path2?: string): string {
-  const separator = process.platform === "win32" ? ";" : ":";
+  const separator = process.platform === 'win32' ? ';' : ':';
   const paths1 = path1?.split(separator).filter(Boolean) || [];
   const paths2 = path2?.split(separator).filter(Boolean) || [];
 
@@ -233,26 +216,24 @@ export function mergePaths(path1?: string, path2?: string): string {
  * 扫描 Windows 常见工具安装目录，返回当前 PATH 中缺少的路径。
  */
 function getWindowsExtraToolPaths(): string[] {
-  if (process.platform !== "win32") return [];
+  if (process.platform !== 'win32') return [];
 
   const homeDir = os.homedir();
-  const appData = process.env.APPDATA || path.join(homeDir, "AppData", "Roaming");
-  const localAppData = process.env.LOCALAPPDATA || path.join(homeDir, "AppData", "Local");
-  const currentPath = process.env.PATH || "";
+  const appData = process.env.APPDATA || path.join(homeDir, 'AppData', 'Roaming');
+  const localAppData = process.env.LOCALAPPDATA || path.join(homeDir, 'AppData', 'Local');
+  const currentPath = process.env.PATH || '';
 
   const candidates = [
     // npm global packages (most common - installed with Node.js)
-    path.join(appData, "npm"),
+    path.join(appData, 'npm'),
     // nvm-windows: %APPDATA%\nvm (the active version symlink lives here)
-    process.env.NVM_HOME || path.join(appData, "nvm"),
+    process.env.NVM_HOME || path.join(appData, 'nvm'),
     // Volta: cross-platform Node version manager
-    path.join(homeDir, ".volta", "bin"),
+    path.join(homeDir, '.volta', 'bin'),
     // Scoop: Windows package manager
-    process.env.SCOOP
-      ? path.join(process.env.SCOOP, "shims")
-      : path.join(homeDir, "scoop", "shims"),
+    process.env.SCOOP ? path.join(process.env.SCOOP, 'shims') : path.join(homeDir, 'scoop', 'shims'),
     // pnpm global store shims
-    path.join(localAppData, "pnpm"),
+    path.join(localAppData, 'pnpm'),
   ];
 
   return candidates.filter((p) => existsSync(p) && !currentPath.includes(p));
@@ -281,7 +262,7 @@ export function getEnhancedEnv(customEnv?: Record<string, string>): Record<strin
   // 在 Windows 上，追加未在 PATH 中的常见工具路径
   const winExtraPaths = getWindowsExtraToolPaths();
   if (winExtraPaths.length > 0) {
-    mergedPath = mergePaths(mergedPath, winExtraPaths.join(";"));
+    mergedPath = mergePaths(mergedPath, winExtraPaths.join(';'));
   }
 
   return {
@@ -303,41 +284,38 @@ export function getEnhancedEnv(customEnv?: Record<string, string>): Record<strin
  */
 export function findSuitableNodeBin(minMajor: number, minMinor: number): string | null {
   const homeDir = os.homedir();
-  const isWin = process.platform === "win32";
-  const isMac = process.platform === "darwin";
+  const isWin = process.platform === 'win32';
+  const isMac = process.platform === 'darwin';
 
   const searchPaths: Array<{ base: string; binSuffix: string }> = [];
 
   // nvm: ~/.nvm/versions/node/v20.10.0/bin/
-  const nvmDir = process.env.NVM_DIR || path.join(homeDir, ".nvm");
-  searchPaths.push({ base: path.join(nvmDir, "versions", "node"), binSuffix: "bin" });
+  const nvmDir = process.env.NVM_DIR || path.join(homeDir, '.nvm');
+  searchPaths.push({ base: path.join(nvmDir, 'versions', 'node'), binSuffix: 'bin' });
 
   // fnm (macOS): ~/Library/Application Support/fnm/node-versions/v20.10.0/installation/bin/
   // fnm (Linux): ~/.local/share/fnm/node-versions/v20.10.0/installation/bin/
   if (isMac) {
     searchPaths.push({
-      base: path.join(homeDir, "Library", "Application Support", "fnm", "node-versions"),
-      binSuffix: path.join("installation", "bin"),
+      base: path.join(homeDir, 'Library', 'Application Support', 'fnm', 'node-versions'),
+      binSuffix: path.join('installation', 'bin'),
     });
   } else if (!isWin) {
     searchPaths.push({
-      base: path.join(homeDir, ".local", "share", "fnm", "node-versions"),
-      binSuffix: path.join("installation", "bin"),
+      base: path.join(homeDir, '.local', 'share', 'fnm', 'node-versions'),
+      binSuffix: path.join('installation', 'bin'),
     });
   }
 
   // volta: ~/.volta/tools/image/node/20.10.0/bin/
-  searchPaths.push({
-    base: path.join(homeDir, ".volta", "tools", "image", "node"),
-    binSuffix: "bin",
-  });
+  searchPaths.push({ base: path.join(homeDir, '.volta', 'tools', 'image', 'node'), binSuffix: 'bin' });
 
   const candidates: Array<{ major: number; minor: number; patch: number; binDir: string }> = [];
 
   for (const { base, binSuffix } of searchPaths) {
     try {
       for (const entry of readdirSync(base)) {
-        const vStr = entry.replace(/^v/, "");
+        const vStr = entry.replace(/^v/, '');
         const m = vStr.match(/^(\d+)\.(\d+)\.(\d+)/);
         if (!m) continue;
 
@@ -347,7 +325,7 @@ export function findSuitableNodeBin(minMajor: number, minMinor: number): string 
         if (maj < minMajor || (maj === minMajor && min < minMinor)) continue;
 
         const binDir = path.join(base, entry, binSuffix);
-        const nodeBin = path.join(binDir, isWin ? "node.exe" : "node");
+        const nodeBin = path.join(binDir, isWin ? 'node.exe' : 'node');
         try {
           accessSync(nodeBin);
           candidates.push({ major: maj, minor: min, patch: pat, binDir });
@@ -378,7 +356,7 @@ function parseEnvOutput(output: string): Record<string, string> {
   let currentKey: string | null = null;
   let currentValue: string | null = null;
 
-  for (const line of output.split("\n")) {
+  for (const line of output.split('\n')) {
     const match = varStartRe.exec(line);
     if (match) {
       // Flush previous variable
@@ -389,7 +367,7 @@ function parseEnvOutput(output: string): Record<string, string> {
       currentValue = match[2];
     } else if (currentKey !== null) {
       // Continuation of a multi-line value
-      currentValue += "\n" + line;
+      currentValue += '\n' + line;
     }
   }
   // Flush last variable
@@ -409,33 +387,31 @@ function parseEnvOutput(output: string): Record<string, string> {
  * @returns Absolute path to a modern npx, or bare `npx`/`npx.cmd` as fallback
  */
 export function resolveNpxPath(env: Record<string, string | undefined>): string {
-  const isWindows = process.platform === "win32";
-  const npxName = isWindows ? "npx.cmd" : "npx";
+  const isWindows = process.platform === 'win32';
+  const npxName = isWindows ? 'npx.cmd' : 'npx';
   try {
-    const whichCmd = isWindows ? "where" : "which";
-    const nodePath = execFileSync(whichCmd, ["node"], {
+    const whichCmd = isWindows ? 'where' : 'which';
+    const nodePath = execFileSync(whichCmd, ['node'], {
       env,
-      encoding: "utf-8",
+      encoding: 'utf-8',
       timeout: 5000,
-      stdio: ["pipe", "pipe", "pipe"],
+      stdio: ['pipe', 'pipe', 'pipe'],
     })
       .trim()
-      .split("\n")[0]; // `where` on Windows may return multiple lines
+      .split('\n')[0]; // `where` on Windows may return multiple lines
     const npxCandidate = path.join(path.dirname(nodePath), npxName);
     // Verify the candidate exists AND is modern (npm >= 7 bundles npx >= 7)
-    const versionOutput = execFileSync(npxCandidate, ["--version"], {
+    const versionOutput = execFileSync(npxCandidate, ['--version'], {
       env,
-      encoding: "utf-8",
+      encoding: 'utf-8',
       timeout: 5000,
-      stdio: ["pipe", "pipe", "pipe"],
+      stdio: ['pipe', 'pipe', 'pipe'],
     }).trim();
-    const majorVersion = parseInt(versionOutput.split(".")[0], 10);
+    const majorVersion = parseInt(versionOutput.split('.')[0], 10);
     if (majorVersion >= 7) {
       return npxCandidate;
     }
-    console.warn(
-      `[ShellEnv] npx at ${npxCandidate} is v${versionOutput} (too old), falling back to PATH lookup`,
-    );
+    console.warn(`[ShellEnv] npx at ${npxCandidate} is v${versionOutput} (too old), falling back to PATH lookup`);
   } catch {
     // which/node/npx resolution failed
   }
@@ -454,29 +430,26 @@ let cachedFullShellEnv: Record<string, string> | null = null;
 export function loadFullShellEnvironment(): Record<string, string> {
   if (cachedFullShellEnv !== null) return cachedFullShellEnv;
   cachedFullShellEnv = {};
-  if (process.platform === "win32") return cachedFullShellEnv;
+  if (process.platform === 'win32') return cachedFullShellEnv;
 
   try {
-    const shell = process.env.SHELL || "/bin/bash";
+    const shell = process.env.SHELL || '/bin/bash';
     if (!path.isAbsolute(shell)) return cachedFullShellEnv;
 
-    const output = execFileSync(shell, ["-i", "-l", "-c", "env"], {
-      encoding: "utf-8",
+    const output = execFileSync(shell, ['-i', '-l', '-c', 'env'], {
+      encoding: 'utf-8',
       timeout: 5000,
-      stdio: ["pipe", "pipe", "pipe"],
+      stdio: ['pipe', 'pipe', 'pipe'],
       env: { ...process.env, HOME: os.homedir() },
     });
 
     cachedFullShellEnv = parseEnvOutput(output);
     const varCount = Object.keys(cachedFullShellEnv).length;
-    const shellPath = cachedFullShellEnv.PATH || "(empty)";
+    const shellPath = cachedFullShellEnv.PATH || '(empty)';
     console.log(`[ShellEnv] Full shell env loaded: ${varCount} vars, shell=${shell}`);
     console.log(`[ShellEnv] Shell PATH (first 200 chars): ${shellPath.substring(0, 200)}`);
   } catch (error) {
-    console.warn(
-      "[ShellEnv] Failed to load full shell env:",
-      error instanceof Error ? error.message : String(error),
-    );
+    console.warn('[ShellEnv] Failed to load full shell env:', error instanceof Error ? error.message : String(error));
   }
   return cachedFullShellEnv;
 }

@@ -4,11 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { TMessage } from "@/common/chatLib";
-import { composeMessage } from "@/common/chatLib";
-import type { AcpBackend } from "@/types/acpTypes";
-import { getDatabase } from "./database/export";
-import { ProcessChat } from "./initStorage";
+import type { TMessage } from '@/common/chatLib';
+import { composeMessage } from '@/common/chatLib';
+import type { AcpBackend } from '@/types/acpTypes';
+import { getDatabase } from './database/export';
+import { ProcessChat } from './initStorage';
 
 const Cache = new Map<string, ConversationManageWithDB>();
 
@@ -16,7 +16,7 @@ const Cache = new Map<string, ConversationManageWithDB>();
 // Ensure that the update mechanism for each message is consistent with the front end, meaning that the database and UI data are in sync
 // Aggregate multiple messages for synchronous updates, reducing database operations
 class ConversationManageWithDB {
-  private stack: Array<["insert" | "accumulate", TMessage]> = [];
+  private stack: Array<['insert' | 'accumulate', TMessage]> = [];
   private db = getDatabase();
   private timer: NodeJS.Timeout;
   private savePromise = Promise.resolve();
@@ -29,10 +29,10 @@ class ConversationManageWithDB {
     Cache.set(conversation_id, manage);
     return manage;
   }
-  sync(type: "insert" | "accumulate", message: TMessage) {
+  sync(type: 'insert' | 'accumulate', message: TMessage) {
     this.stack.push([type, message]);
     clearTimeout(this.timer);
-    if (type === "insert") {
+    if (type === 'insert') {
       this.save2DataBase();
       return;
     }
@@ -46,17 +46,17 @@ class ConversationManageWithDB {
       .then(() => {
         const stack = this.stack.slice();
         this.stack = [];
-        const messages = this.db.getConversationMessages(this.conversation_id, 0, 50, "DESC"); //
+        const messages = this.db.getConversationMessages(this.conversation_id, 0, 50, 'DESC'); //
         let messageList = messages.data.reverse();
         let updateMessage = stack.shift();
         while (updateMessage) {
-          if (updateMessage[0] === "insert") {
+          if (updateMessage[0] === 'insert') {
             this.db.insertMessage(updateMessage[1]);
             messageList.push(updateMessage[1]);
           } else {
             messageList = composeMessage(updateMessage[1], messageList, (type, message) => {
-              if (type === "insert") this.db.insertMessage(message);
-              if (type === "update") {
+              if (type === 'insert') this.db.insertMessage(message);
+              if (type === 'update') {
                 this.db.updateMessage(message.id, message);
               }
             });
@@ -81,17 +81,14 @@ class ConversationManageWithDB {
  * Wraps async work inside an IIFE to keep call sites synchronous.
  */
 export const addMessage = (conversation_id: string, message: TMessage): void => {
-  ConversationManageWithDB.get(conversation_id).sync("insert", message);
+  ConversationManageWithDB.get(conversation_id).sync('insert', message);
 };
 
 /**
  * Ensure conversation exists in database
  * If not, load from file storage and create it
  */
-async function ensureConversationExists(
-  db: ReturnType<typeof getDatabase>,
-  conversation_id: string,
-): Promise<void> {
+async function ensureConversationExists(db: ReturnType<typeof getDatabase>, conversation_id: string): Promise<void> {
   // Check if conversation exists in database
   const existingConv = db.getConversation(conversation_id);
   if (existingConv.success && existingConv.data) {
@@ -99,7 +96,7 @@ async function ensureConversationExists(
   }
 
   // Load conversation from file storage
-  const history = await ProcessChat.get("chat.history");
+  const history = await ProcessChat.get('chat.history');
   const conversation = (history || []).find((c) => c.id === conversation_id);
 
   if (!conversation) {
@@ -118,23 +115,19 @@ async function ensureConversationExists(
  * Add or update a single message
  * If message exists (by id), update it; otherwise insert it
  */
-export const addOrUpdateMessage = (
-  conversation_id: string,
-  message: TMessage,
-  backend?: AcpBackend,
-): void => {
+export const addOrUpdateMessage = (conversation_id: string, message: TMessage, backend?: AcpBackend): void => {
   // Validate message
   if (!message) {
-    console.error("[Message] Cannot add or update undefined message");
+    console.error('[Message] Cannot add or update undefined message');
     return;
   }
 
   if (!message.id) {
-    console.error("[Message] Message missing required id field:", message);
+    console.error('[Message] Message missing required id field:', message);
     return;
   }
 
-  ConversationManageWithDB.get(conversation_id).sync("accumulate", message);
+  ConversationManageWithDB.get(conversation_id).sync('accumulate', message);
 };
 
 /**
@@ -157,7 +150,7 @@ export const executePendingCallbacks = (): void => {
       try {
         callback();
       } catch (error) {
-        console.error("[Message] Error in pending callback:", error);
+        console.error('[Message] Error in pending callback:', error);
       }
     }
   }
@@ -167,5 +160,5 @@ export const executePendingCallbacks = (): void => {
  * @deprecated This function is no longer needed with direct database operations
  */
 export const nextTickToLocalRunning = (_fn: (list: TMessage[]) => TMessage[]): void => {
-  console.warn("[Message] nextTickToLocalRunning is deprecated with database storage");
+  console.warn('[Message] nextTickToLocalRunning is deprecated with database storage');
 };

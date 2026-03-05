@@ -9,7 +9,7 @@ interface InspectMessages {
 }
 
 const DEFAULT_MESSAGES: InspectMessages = {
-  copySuccess: "✓ Copied HTML snippet",
+  copySuccess: '✓ Copied HTML snippet',
 };
 
 /**
@@ -20,10 +20,7 @@ const DEFAULT_MESSAGES: InspectMessages = {
  * @param messages - 自定义提示消息
  * @returns 注入脚本字符串
  */
-export function generateInspectScript(
-  inspectMode: boolean,
-  messages: InspectMessages = DEFAULT_MESSAGES,
-): string {
+export function generateInspectScript(inspectMode: boolean, messages: InspectMessages = DEFAULT_MESSAGES): string {
   const copySuccess = JSON.stringify(messages.copySuccess);
   return `
     (function() {

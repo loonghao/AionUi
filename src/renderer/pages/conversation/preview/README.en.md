@@ -113,16 +113,8 @@ interface PreviewContextValue {
   saveContent: (tabId?: string) => Promise<boolean>;
 
   // Tab finding and management
-  findPreviewTab: (
-    type: PreviewContentType,
-    content?: string,
-    metadata?: PreviewMetadata,
-  ) => PreviewTab | null;
-  closePreviewByIdentity: (
-    type: PreviewContentType,
-    content?: string,
-    metadata?: PreviewMetadata,
-  ) => void;
+  findPreviewTab: (type: PreviewContentType, content?: string, metadata?: PreviewMetadata) => PreviewTab | null;
+  closePreviewByIdentity: (type: PreviewContentType, content?: string, metadata?: PreviewMetadata) => void;
 
   // Send box integration
   addToSendBox: (text: string) => void;
@@ -184,7 +176,7 @@ When an agent writes to workspace files, the Preview module automatically receiv
 ```typescript
 // Subscribe to file content updates
 ipcBridge.fileStream.contentUpdate.on(({ filePath, content, operation }) => {
-  if (operation === "delete") {
+  if (operation === 'delete') {
     // File deleted, close corresponding tab
     closeTabByFilePath(filePath);
   } else {
@@ -223,7 +215,7 @@ if (savingFilesRef.current.has(filePath) || tab.isDirty) {
 ### Basic Usage
 
 ```tsx
-import { PreviewProvider, usePreviewContext } from "./preview";
+import { PreviewProvider, usePreviewContext } from './preview';
 
 function App() {
   return (
@@ -238,10 +230,10 @@ function YourComponent() {
 
   const handleOpenFile = async (filePath: string) => {
     const content = await readFile(filePath);
-    openPreview(content, "markdown", {
-      fileName: "example.md",
-      filePath: "/path/to/example.md",
-      workspace: "/workspace/root",
+    openPreview(content, 'markdown', {
+      fileName: 'example.md',
+      filePath: '/path/to/example.md',
+      workspace: '/workspace/root',
     });
   };
 
@@ -253,30 +245,30 @@ function YourComponent() {
 
 ```tsx
 // Markdown file
-openPreview(markdownContent, "markdown", {
-  fileName: "README.md",
-  filePath: "/workspace/README.md",
-  workspace: "/workspace",
+openPreview(markdownContent, 'markdown', {
+  fileName: 'README.md',
+  filePath: '/workspace/README.md',
+  workspace: '/workspace',
 });
 
 // Code file
-openPreview(codeContent, "code", {
-  fileName: "app.tsx",
-  filePath: "/workspace/src/app.tsx",
-  workspace: "/workspace",
-  language: "typescript",
+openPreview(codeContent, 'code', {
+  fileName: 'app.tsx',
+  filePath: '/workspace/src/app.tsx',
+  workspace: '/workspace',
+  language: 'typescript',
 });
 
 // Image file
-openPreview(base64Content, "image", {
-  fileName: "screenshot.png",
-  filePath: "/workspace/screenshot.png",
-  workspace: "/workspace",
+openPreview(base64Content, 'image', {
+  fileName: 'screenshot.png',
+  filePath: '/workspace/screenshot.png',
+  workspace: '/workspace',
 });
 
 // Diff file
-openPreview(diffContent, "diff", {
-  fileName: "changes.diff",
+openPreview(diffContent, 'diff', {
+  fileName: 'changes.diff',
 });
 ```
 
@@ -284,8 +276,8 @@ openPreview(diffContent, "diff", {
 
 ```tsx
 // Find tab
-const tab = findPreviewTab("markdown", undefined, {
-  filePath: "/workspace/README.md",
+const tab = findPreviewTab('markdown', undefined, {
+  filePath: '/workspace/README.md',
 });
 
 // Close specific tab
@@ -294,8 +286,8 @@ if (tab) {
 }
 
 // Close tab by identity
-closePreviewByIdentity("markdown", undefined, {
-  filePath: "/workspace/README.md",
+closePreviewByIdentity('markdown', undefined, {
+  filePath: '/workspace/README.md',
 });
 ```
 
@@ -304,7 +296,7 @@ closePreviewByIdentity("markdown", undefined, {
 ```tsx
 function SendBox() {
   const { setSendBoxHandler } = usePreviewContext();
-  const [text, setText] = useState("");
+  const [text, setText] = useState('');
 
   useEffect(() => {
     // Register handler
@@ -551,7 +543,7 @@ export const MIN_SPLIT_WIDTH = 30;
 export const MAX_SPLIT_WIDTH = 70;
 
 // File types with built-in open button
-export const FILE_TYPES_WITH_BUILTIN_OPEN = ["pdf", "word", "excel", "ppt"];
+export const FILE_TYPES_WITH_BUILTIN_OPEN = ['pdf', 'word', 'excel', 'ppt'];
 ```
 
 ## Related Links

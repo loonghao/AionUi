@@ -17,8 +17,8 @@
 - **0.2. 资源加载检查**:
   - **强规定性指令**: `initGame()` 函数的**第一步**必须是检查 `THREE` 全局对象是否存在。这是为了处理 `three.min.js` 脚本加载失败的边界情况。必须使用以下精确代码实现此检查：
     ```javascript
-    if (typeof THREE === "undefined") {
-      alert("Three.js 加载失败，请检查网络连接。");
+    if (typeof THREE === 'undefined') {
+      alert('Three.js 加载失败，请检查网络连接。');
       return;
     }
     ```
@@ -26,7 +26,7 @@
   - **强规定性指令**: 在 `initGame()` 函数的**最后**，必须隐藏加载提示并启动游戏循环：
     ```javascript
     // 隐藏加载提示
-    document.getElementById("loading").style.display = "none";
+    document.getElementById('loading').style.display = 'none';
     // 启动游戏循环
     animate();
     ```
@@ -50,22 +50,22 @@
     ```javascript
     const keys = { w: false, a: false, s: false, d: false, space: false };
 
-    document.addEventListener("keydown", (e) => {
+    document.addEventListener('keydown', (e) => {
       const key = e.key.toLowerCase();
-      if (key === "w" || key === "arrowup") keys.w = true;
-      if (key === "s" || key === "arrowdown") keys.s = true;
-      if (key === "a" || key === "arrowleft") keys.a = true;
-      if (key === "d" || key === "arrowright") keys.d = true;
-      if (key === " ") keys.space = true;
+      if (key === 'w' || key === 'arrowup') keys.w = true;
+      if (key === 's' || key === 'arrowdown') keys.s = true;
+      if (key === 'a' || key === 'arrowleft') keys.a = true;
+      if (key === 'd' || key === 'arrowright') keys.d = true;
+      if (key === ' ') keys.space = true;
     });
 
-    document.addEventListener("keyup", (e) => {
+    document.addEventListener('keyup', (e) => {
       const key = e.key.toLowerCase();
-      if (key === "w" || key === "arrowup") keys.w = false;
-      if (key === "s" || key === "arrowdown") keys.s = false;
-      if (key === "a" || key === "arrowleft") keys.a = false;
-      if (key === "d" || key === "arrowright") keys.d = false;
-      if (key === " ") keys.space = false;
+      if (key === 'w' || key === 'arrowup') keys.w = false;
+      if (key === 's' || key === 'arrowdown') keys.s = false;
+      if (key === 'a' || key === 'arrowleft') keys.a = false;
+      if (key === 'd' || key === 'arrowright') keys.d = false;
+      if (key === ' ') keys.space = false;
     });
     ```
 
@@ -192,7 +192,7 @@
     ```javascript
     function restartGame() {
       // 1. 隐藏胜利弹窗
-      winModal.style.display = "none";
+      winModal.style.display = 'none';
 
       // 2. 重置游戏状态
       gameState.score = 0;

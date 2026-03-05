@@ -19,7 +19,7 @@
  * 4. Connection State Monitoring / 连接状态监控
  */
 
-import type { ServerGeminiStreamEvent } from "@office-ai/aioncli-core";
+import type { ServerGeminiStreamEvent } from '@office-ai/aioncli-core';
 
 // Stream Connection Configuration / 流式连接配置
 export interface StreamResilienceConfig {
@@ -67,20 +67,15 @@ export const DEFAULT_STREAM_RESILIENCE_CONFIG: StreamResilienceConfig = {
 
 // Stream State / 流状态
 export enum StreamConnectionState {
-  CONNECTING = "connecting",
-  CONNECTED = "connected",
-  RECONNECTING = "reconnecting",
-  DISCONNECTED = "disconnected",
-  FAILED = "failed",
+  CONNECTING = 'connecting',
+  CONNECTED = 'connected',
+  RECONNECTING = 'reconnecting',
+  DISCONNECTED = 'disconnected',
+  FAILED = 'failed',
 }
 
 // Connection Event Types / 连接事件类型
-export type StreamConnectionEvent =
-  | { type: "state_change"; state: StreamConnectionState; reason?: string }
-  | { type: "heartbeat_timeout"; lastEventTime: number }
-  | { type: "retry_attempt"; attempt: number; maxRetries: number; delayMs: number }
-  | { type: "reconnect_success"; attempt: number }
-  | { type: "reconnect_failed"; error: Error };
+export type StreamConnectionEvent = { type: 'state_change'; state: StreamConnectionState; reason?: string } | { type: 'heartbeat_timeout'; lastEventTime: number } | { type: 'retry_attempt'; attempt: number; maxRetries: number; delayMs: number } | { type: 'reconnect_success'; attempt: number } | { type: 'reconnect_failed'; error: Error };
 
 // Stream Monitor / 流监控器
 export class StreamMonitor {
@@ -90,10 +85,7 @@ export class StreamMonitor {
   private config: StreamResilienceConfig;
   private onConnectionEvent?: (event: StreamConnectionEvent) => void;
 
-  constructor(
-    config: Partial<StreamResilienceConfig> = {},
-    onConnectionEvent?: (event: StreamConnectionEvent) => void,
-  ) {
+  constructor(config: Partial<StreamResilienceConfig> = {}, onConnectionEvent?: (event: StreamConnectionEvent) => void) {
     this.config = { ...DEFAULT_STREAM_RESILIENCE_CONFIG, ...config };
     this.onConnectionEvent = onConnectionEvent;
   }
@@ -114,10 +106,7 @@ export class StreamMonitor {
    */
   recordEvent(): void {
     this.lastEventTime = Date.now();
-    if (
-      this.state === StreamConnectionState.CONNECTING ||
-      this.state === StreamConnectionState.RECONNECTING
-    ) {
+    if (this.state === StreamConnectionState.CONNECTING || this.state === StreamConnectionState.RECONNECTING) {
       this.setState(StreamConnectionState.CONNECTED);
     }
   }
@@ -175,7 +164,7 @@ export class StreamMonitor {
   private setState(state: StreamConnectionState, reason?: string): void {
     if (this.state !== state) {
       this.state = state;
-      this.onConnectionEvent?.({ type: "state_change", state, reason });
+      this.onConnectionEvent?.({ type: 'state_change', state, reason });
     }
   }
 
@@ -184,7 +173,7 @@ export class StreamMonitor {
     this.heartbeatTimer = setInterval(() => {
       if (this.isHeartbeatTimeout()) {
         this.onConnectionEvent?.({
-          type: "heartbeat_timeout",
+          type: 'heartbeat_timeout',
           lastEventTime: this.lastEventTime,
         });
         // Do not stop automatically, let upper layer decide how to handle / 不自动停止，让上层决定如何处理
@@ -206,11 +195,7 @@ export class StreamMonitor {
  * 带弹性处理的流包装器
  * 包装原始流，添加心跳检测和超时处理
  */
-export async function* wrapStreamWithResilience<T extends ServerGeminiStreamEvent>(
-  stream: AsyncIterable<T>,
-  config: Partial<StreamResilienceConfig> = {},
-  onConnectionEvent?: (event: StreamConnectionEvent) => void,
-): AsyncGenerator<T, void, unknown> {
+export async function* wrapStreamWithResilience<T extends ServerGeminiStreamEvent>(stream: AsyncIterable<T>, config: Partial<StreamResilienceConfig> = {}, onConnectionEvent?: (event: StreamConnectionEvent) => void): AsyncGenerator<T, void, unknown> {
   const fullConfig = { ...DEFAULT_STREAM_RESILIENCE_CONFIG, ...config };
   const monitor = new StreamMonitor(fullConfig, onConnectionEvent);
 
@@ -236,15 +221,15 @@ export async function* wrapStreamWithResilience<T extends ServerGeminiStreamEven
 export function delay(ms: number, signal?: AbortSignal): Promise<void> {
   return new Promise((resolve, reject) => {
     if (signal?.aborted) {
-      reject(new Error("Aborted"));
+      reject(new Error('Aborted'));
       return;
     }
 
     const timer = setTimeout(resolve, ms);
 
-    signal?.addEventListener("abort", () => {
+    signal?.addEventListener('abort', () => {
       clearTimeout(timer);
-      reject(new Error("Aborted"));
+      reject(new Error('Aborted'));
     });
   });
 }
@@ -267,23 +252,11 @@ export function isRetryableError(error: unknown): boolean {
   if (error instanceof Error) {
     const message = error.message.toLowerCase();
     // Network related errors / 网络相关错误
-    if (
-      message.includes("fetch failed") ||
-      message.includes("network") ||
-      message.includes("timeout") ||
-      message.includes("connection") ||
-      message.includes("econnreset") ||
-      message.includes("socket hang up")
-    ) {
+    if (message.includes('fetch failed') || message.includes('network') || message.includes('timeout') || message.includes('connection') || message.includes('econnreset') || message.includes('socket hang up')) {
       return true;
     }
     // HTTP Status Code related / HTTP 状态码相关
-    if (
-      message.includes("429") ||
-      message.includes("503") ||
-      message.includes("502") ||
-      message.includes("504")
-    ) {
+    if (message.includes('429') || message.includes('503') || message.includes('502') || message.includes('504')) {
       return true;
     }
   }

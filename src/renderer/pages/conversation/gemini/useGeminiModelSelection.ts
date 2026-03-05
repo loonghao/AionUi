@@ -1,7 +1,7 @@
-import type { IProvider, TProviderWithModel } from "@/common/storage";
-import type { GeminiModeOption } from "@/renderer/hooks/useModeModeList";
-import { useModelProviderList } from "@/renderer/hooks/useModelProviderList";
-import { useCallback, useEffect, useState } from "react";
+import type { IProvider, TProviderWithModel } from '@/common/storage';
+import type { GeminiModeOption } from '@/renderer/hooks/useModeModeList';
+import { useModelProviderList } from '@/renderer/hooks/useModelProviderList';
+import { useCallback, useEffect, useState } from 'react';
 
 export interface GeminiModelSelection {
   currentModel?: TProviderWithModel;
@@ -19,18 +19,14 @@ export interface UseGeminiModelSelectionOptions {
 }
 
 // Centralize model selection logic for reuse across header, send box, and channel settings
-export const useGeminiModelSelection = ({
-  initialModel,
-  onSelectModel,
-}: UseGeminiModelSelectionOptions): GeminiModelSelection => {
+export const useGeminiModelSelection = ({ initialModel, onSelectModel }: UseGeminiModelSelectionOptions): GeminiModelSelection => {
   const [currentModel, setCurrentModel] = useState<TProviderWithModel | undefined>(initialModel);
 
   useEffect(() => {
     setCurrentModel(initialModel);
   }, [initialModel?.id, initialModel?.useModel]);
 
-  const { providers, geminiModeLookup, getAvailableModels, formatModelLabel } =
-    useModelProviderList();
+  const { providers, geminiModeLookup, getAvailableModels, formatModelLabel } = useModelProviderList();
 
   const handleSelectModel = useCallback(
     async (provider: IProvider, modelName: string) => {
@@ -43,17 +39,17 @@ export const useGeminiModelSelection = ({
         setCurrentModel(selected);
       }
     },
-    [onSelectModel],
+    [onSelectModel]
   );
 
   const getDisplayModelName = useCallback(
     (modelName?: string) => {
-      if (!modelName) return "";
+      if (!modelName) return '';
       const label = formatModelLabel(currentModel, modelName);
       const maxLength = 20;
       return label.length > maxLength ? `${label.slice(0, maxLength)}...` : label;
     },
-    [currentModel, formatModelLabel],
+    [currentModel, formatModelLabel]
   );
 
   return {

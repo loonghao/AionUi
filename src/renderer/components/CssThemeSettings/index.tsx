@@ -4,22 +4,20 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { ConfigStorage, type ICssTheme } from "@/common/storage";
-import { ipcBridge } from "@/common";
-import { uuid } from "@/common/utils";
-import { Button, Message, Modal } from "@arco-design/web-react";
-import { EditTwo, Plus, CheckOne, Puzzle } from "@icon-park/react";
-import React, { useCallback, useEffect, useState } from "react";
-import { useTranslation } from "react-i18next";
-import CssThemeModal from "./CssThemeModal";
-import { PRESET_THEMES, DEFAULT_THEME_ID } from "./presets";
-import { BACKGROUND_BLOCK_START, injectBackgroundCssBlock } from "./backgroundUtils";
-import { setExtensionThemesCache } from "@/renderer/utils/themeCssSync";
-import { resolveExtensionAssetUrl } from "@/renderer/utils/platform";
+import { ConfigStorage, type ICssTheme } from '@/common/storage';
+import { ipcBridge } from '@/common';
+import { uuid } from '@/common/utils';
+import { Button, Message, Modal } from '@arco-design/web-react';
+import { EditTwo, Plus, CheckOne, Puzzle } from '@icon-park/react';
+import React, { useCallback, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import CssThemeModal from './CssThemeModal';
+import { PRESET_THEMES, DEFAULT_THEME_ID } from './presets';
+import { BACKGROUND_BLOCK_START, injectBackgroundCssBlock } from './backgroundUtils';
+import { setExtensionThemesCache } from '@/renderer/utils/themeCssSync';
+import { resolveExtensionAssetUrl } from '@/renderer/utils/platform';
 
-const ensureBackgroundCss = <T extends { id?: string; cover?: string; css: string }>(
-  theme: T,
-): T => {
+const ensureBackgroundCss = <T extends { id?: string; cover?: string; css: string }>(theme: T): T => {
   // 跳过 Default 主题，不注入背景图 CSS / Skip Default theme, do not inject background CSS
   if (theme.id === DEFAULT_THEME_ID) {
     return theme;
@@ -30,9 +28,7 @@ const ensureBackgroundCss = <T extends { id?: string; cover?: string; css: strin
   return theme;
 };
 
-const normalizeUserThemes = (
-  themes: ICssTheme[],
-): { normalized: ICssTheme[]; updated: boolean } => {
+const normalizeUserThemes = (themes: ICssTheme[]): { normalized: ICssTheme[]; updated: boolean } => {
   let updated = false;
   const normalized = themes.map((theme) => {
     const nextTheme = ensureBackgroundCss(theme);
@@ -45,7 +41,7 @@ const normalizeUserThemes = (
 };
 
 const dispatchCustomCssUpdated = (css: string) => {
-  window.dispatchEvent(new CustomEvent("custom-css-updated", { detail: { customCss: css } }));
+  window.dispatchEvent(new CustomEvent('custom-css-updated', { detail: { customCss: css } }));
 };
 
 /**
@@ -55,7 +51,7 @@ const dispatchCustomCssUpdated = (css: string) => {
 const CssThemeSettings: React.FC = () => {
   const { t } = useTranslation();
   const [themes, setThemes] = useState<ICssTheme[]>([]);
-  const [activeThemeId, setActiveThemeId] = useState<string>("");
+  const [activeThemeId, setActiveThemeId] = useState<string>('');
   const [modalVisible, setModalVisible] = useState(false);
   const [editingTheme, setEditingTheme] = useState<ICssTheme | null>(null);
   const [hoveredThemeId, setHoveredThemeId] = useState<string | null>(null);
@@ -64,14 +60,14 @@ const CssThemeSettings: React.FC = () => {
   useEffect(() => {
     const loadThemes = async () => {
       try {
-        const savedThemes = (await ConfigStorage.get("css.themes")) || [];
+        const savedThemes = (await ConfigStorage.get('css.themes')) || [];
         const { normalized, updated } = normalizeUserThemes(savedThemes);
-        const activeId = await ConfigStorage.get("css.activeThemeId");
+        const activeId = await ConfigStorage.get('css.activeThemeId');
 
         if (updated) {
           await ConfigStorage.set(
-            "css.themes",
-            normalized.filter((t) => !t.isPreset),
+            'css.themes',
+            normalized.filter((t) => !t.isPreset)
           );
         }
 
@@ -97,11 +93,7 @@ const CssThemeSettings: React.FC = () => {
         // Merge preset, extension, and user themes; deduplicate by ID (first occurrence wins)
         const seenIds = new Set<string>();
         const allThemes: ICssTheme[] = [];
-        for (const theme of [
-          ...normalizedPresets,
-          ...extensionThemes,
-          ...normalized.filter((t) => !t.isPreset),
-        ]) {
+        for (const theme of [...normalizedPresets, ...extensionThemes, ...normalized.filter((t) => !t.isPreset)]) {
           if (!theme?.id || seenIds.has(theme.id)) continue;
           seenIds.add(theme.id);
           allThemes.push(theme);
@@ -113,27 +105,27 @@ const CssThemeSettings: React.FC = () => {
         // 如果激活主题不存在（扩展被移除等），回退到默认主题
         // If active theme no longer exists (extension removed etc.), fall back to default
         let effectiveActiveId = resolvedActiveId;
-        let expectedCss = activeTheme?.css || "";
+        let expectedCss = activeTheme?.css || '';
         if (!activeTheme && resolvedActiveId !== DEFAULT_THEME_ID) {
           effectiveActiveId = DEFAULT_THEME_ID;
           const defaultTheme = allThemes.find((t) => t.id === DEFAULT_THEME_ID);
-          expectedCss = defaultTheme?.css || "";
+          expectedCss = defaultTheme?.css || '';
           // Persist the fallback so we don't repeat this on every mount
-          await ConfigStorage.set("css.activeThemeId", effectiveActiveId);
+          await ConfigStorage.set('css.activeThemeId', effectiveActiveId);
         }
 
         setThemes(allThemes);
         setActiveThemeId(effectiveActiveId);
 
         // Self-heal potential split-brain state (activeThemeId != customCss) caused by partial IPC write failures.
-        const savedCustomCss = (await ConfigStorage.get("customCss")) || "";
+        const savedCustomCss = (await ConfigStorage.get('customCss')) || '';
         if (savedCustomCss !== expectedCss) {
-          await ConfigStorage.set("customCss", expectedCss);
+          await ConfigStorage.set('customCss', expectedCss);
           // Only dispatch when CSS actually changed to avoid redundant re-renders
           dispatchCustomCssUpdated(expectedCss);
         }
       } catch (error) {
-        console.error("Failed to load CSS themes:", error);
+        console.error('Failed to load CSS themes:', error);
       }
     };
     void loadThemes();
@@ -150,30 +142,24 @@ const CssThemeSettings: React.FC = () => {
       try {
         // Queued Concurrent Writes: Not strictly atomic, but eliminates client-side async interleaving.
         // True atomicity would require a single RPC/key batch in the main process.
-        await Promise.all([
-          ConfigStorage.set("customCss", css),
-          ConfigStorage.set("css.activeThemeId", themeId),
-        ]);
+        await Promise.all([ConfigStorage.set('customCss', css), ConfigStorage.set('css.activeThemeId', themeId)]);
 
         // Pessimistic UI Update - only updates if backend storage succeeded completely
         setActiveThemeId(themeId);
         dispatchCustomCssUpdated(css);
       } catch (error) {
-        console.error(
-          "Failed to apply theme (IPC/Storage Error). Initiating source-of-truth recovery:",
-          error,
-        );
+        console.error('Failed to apply theme (IPC/Storage Error). Initiating source-of-truth recovery:', error);
 
         // Recover state unconditionally from what is actually in storage
         try {
-          const realId = (await ConfigStorage.get("css.activeThemeId")) || DEFAULT_THEME_ID;
-          const realCss = (await ConfigStorage.get("customCss")) || "";
+          const realId = (await ConfigStorage.get('css.activeThemeId')) || DEFAULT_THEME_ID;
+          const realCss = (await ConfigStorage.get('customCss')) || '';
 
           // Unconditionally align UI state with the real storage state
           setActiveThemeId(realId);
           dispatchCustomCssUpdated(realCss);
         } catch (syncError) {
-          console.error("Fallback sync failed:", syncError);
+          console.error('Fallback sync failed:', syncError);
         }
         throw error;
       }
@@ -190,13 +176,13 @@ const CssThemeSettings: React.FC = () => {
       try {
         // Use queued, best-effort write function
         await applyThemeCss(theme.css, theme.id);
-        Message.success(t("settings.cssTheme.applied", { name: theme.name }));
+        Message.success(t('settings.cssTheme.applied', { name: theme.name }));
       } catch (error) {
         // applyThemeCss internally handles the UI state recovery now.
-        Message.error(t("settings.cssTheme.applyFailed"));
+        Message.error(t('settings.cssTheme.applyFailed'));
       }
     },
-    [applyThemeCss, t],
+    [applyThemeCss, t]
   );
 
   /**
@@ -220,7 +206,7 @@ const CssThemeSettings: React.FC = () => {
    * 保存主题 / Save theme
    */
   const handleSaveTheme = useCallback(
-    async (themeData: Omit<ICssTheme, "id" | "createdAt" | "updatedAt" | "isPreset">) => {
+    async (themeData: Omit<ICssTheme, 'id' | 'createdAt' | 'updatedAt' | 'isPreset'>) => {
       try {
         const now = Date.now();
         let updatedThemes: ICssTheme[];
@@ -228,9 +214,7 @@ const CssThemeSettings: React.FC = () => {
 
         if (editingTheme && !editingTheme.isPreset) {
           // 更新现有用户主题 / Update existing user theme
-          updatedThemes = themes.map((t) =>
-            t.id === editingTheme.id ? { ...t, ...normalizedThemeData, updatedAt: now } : t,
-          );
+          updatedThemes = themes.map((t) => (t.id === editingTheme.id ? { ...t, ...normalizedThemeData, updatedAt: now } : t));
         } else {
           // 添加新主题（包括从预设主题编辑创建副本）/ Add new theme (including copy from preset)
           const newTheme: ICssTheme = {
@@ -245,18 +229,18 @@ const CssThemeSettings: React.FC = () => {
 
         // 只保存用户主题 / Only save user themes
         const userThemes = updatedThemes.filter((t) => !t.isPreset);
-        await ConfigStorage.set("css.themes", userThemes);
+        await ConfigStorage.set('css.themes', userThemes);
 
         setThemes(updatedThemes);
         setModalVisible(false);
         setEditingTheme(null);
-        Message.success(t("common.saveSuccess"));
+        Message.success(t('common.saveSuccess'));
       } catch (error) {
-        console.error("Failed to save theme:", error);
-        Message.error(t("common.saveFailed"));
+        console.error('Failed to save theme:', error);
+        Message.error(t('common.saveFailed'));
       }
     },
-    [editingTheme, themes, t],
+    [editingTheme, themes, t]
   );
 
   /**
@@ -265,107 +249,79 @@ const CssThemeSettings: React.FC = () => {
   const handleDeleteTheme = useCallback(
     (themeId: string) => {
       Modal.confirm({
-        title: t("common.confirmDelete"),
-        content: t("settings.cssTheme.deleteConfirm"),
-        okButtonProps: { status: "danger" },
+        title: t('common.confirmDelete'),
+        content: t('settings.cssTheme.deleteConfirm'),
+        okButtonProps: { status: 'danger' },
         onOk: async () => {
           try {
             const updatedThemes = themes.filter((t) => t.id !== themeId);
             const userThemes = updatedThemes.filter((t) => !t.isPreset);
-            await ConfigStorage.set("css.themes", userThemes);
+            await ConfigStorage.set('css.themes', userThemes);
 
             // 如果删除的是当前激活主题，清除激活状态 / If deleting active theme, clear active state
             if (activeThemeId === themeId) {
               // 删除操作也使用强一致性的状态重置 / Use strongly consistent state reset for delete too
-              await applyThemeCss("", "");
+              await applyThemeCss('', '');
             }
 
             setThemes(updatedThemes);
             setModalVisible(false);
             setEditingTheme(null);
-            Message.success(t("common.deleteSuccess"));
+            Message.success(t('common.deleteSuccess'));
           } catch (error) {
-            console.error("Failed to delete theme:", error);
-            Message.error(t("common.deleteFailed"));
+            console.error('Failed to delete theme:', error);
+            Message.error(t('common.deleteFailed'));
           }
         },
       });
     },
-    [themes, activeThemeId, applyThemeCss, t],
+    [themes, activeThemeId, applyThemeCss, t]
   );
 
   return (
-    <div className="space-y-16px">
+    <div className='space-y-16px'>
       {/* 标题栏 / Header */}
-      <div className="flex items-center justify-between">
-        <span className="text-14px text-t-secondary">
-          {t("settings.cssTheme.selectOrCustomize")}
-        </span>
-        <Button
-          type="outline"
-          size="small"
-          className="rd-20px"
-          icon={<Plus theme="outline" size="14" />}
-          onClick={handleAddTheme}
-        >
-          {t("settings.cssTheme.addManually")}
+      <div className='flex items-center justify-between'>
+        <span className='text-14px text-t-secondary'>{t('settings.cssTheme.selectOrCustomize')}</span>
+        <Button type='outline' size='small' className='rd-20px' icon={<Plus theme='outline' size='14' />} onClick={handleAddTheme}>
+          {t('settings.cssTheme.addManually')}
         </Button>
       </div>
 
       {/* 主题卡片列表 / Theme card list */}
-      <div className="flex flex-wrap gap-10px">
+      <div className='flex flex-wrap gap-10px'>
         {themes.map((theme) => (
-          <div
-            key={theme.id}
-            className={`relative cursor-pointer rounded-12px overflow-hidden border-2 transition-all duration-200 w-180px h-112px ${activeThemeId === theme.id ? "border-[var(--color-primary)]" : "border-transparent hover:border-border-2"}`}
-            style={
-              theme.cover
-                ? {
-                    backgroundImage: `url(${theme.cover})`,
-                    backgroundSize: "100% 100%",
-                    backgroundPosition: "center",
-                    backgroundRepeat: "no-repeat",
-                    backgroundColor: "var(--fill-1)",
-                  }
-                : { backgroundColor: "var(--fill-1)" }
-            }
-            onClick={() => handleSelectTheme(theme)}
-            onMouseEnter={() => setHoveredThemeId(theme.id)}
-            onMouseLeave={() => setHoveredThemeId(null)}
-          >
+          <div key={theme.id} className={`relative cursor-pointer rounded-12px overflow-hidden border-2 transition-all duration-200 w-180px h-112px ${activeThemeId === theme.id ? 'border-[var(--color-primary)]' : 'border-transparent hover:border-border-2'}`} style={theme.cover ? { backgroundImage: `url(${theme.cover})`, backgroundSize: '100% 100%', backgroundPosition: 'center', backgroundRepeat: 'no-repeat', backgroundColor: 'var(--fill-1)' } : { backgroundColor: 'var(--fill-1)' }} onClick={() => handleSelectTheme(theme)} onMouseEnter={() => setHoveredThemeId(theme.id)} onMouseLeave={() => setHoveredThemeId(null)}>
             {/* 无封面时显示名称占位 / Show name placeholder when no cover */}
             {!theme.cover && (
-              <div className="absolute inset-0 flex items-center justify-center">
-                <span className="text-t-secondary text-14px">{theme.name}</span>
+              <div className='absolute inset-0 flex items-center justify-center'>
+                <span className='text-t-secondary text-14px'>{theme.name}</span>
               </div>
             )}
 
             {/* 底部渐变遮罩与名称、编辑按钮 / Bottom gradient overlay with name and edit button */}
-            <div className="absolute bottom-0 left-0 right-0 h-1/3 bg-gradient-to-t from-black/60 to-transparent flex items-end justify-between p-8px">
-              <span className="text-13px text-white truncate flex-1">{theme.name}</span>
+            <div className='absolute bottom-0 left-0 right-0 h-1/3 bg-gradient-to-t from-black/60 to-transparent flex items-end justify-between p-8px'>
+              <span className='text-13px text-white truncate flex-1'>{theme.name}</span>
               {/* 编辑按钮 / Edit button */}
               {hoveredThemeId === theme.id && (
-                <div
-                  className="p-4px rounded-6px bg-white/20 cursor-pointer hover:bg-white/40 transition-colors ml-8px"
-                  onClick={(e) => handleEditTheme(theme, e)}
-                >
-                  <EditTwo theme="outline" size="16" fill="#fff" />
+                <div className='p-4px rounded-6px bg-white/20 cursor-pointer hover:bg-white/40 transition-colors ml-8px' onClick={(e) => handleEditTheme(theme, e)}>
+                  <EditTwo theme='outline' size='16' fill='#fff' />
                 </div>
               )}
             </div>
 
             {/* 扩展主题标识 / Extension theme badge */}
-            {theme.id.startsWith("ext-") && (
-              <div className="absolute top-8px left-8px bg-black/40 backdrop-blur-4px rounded-4px px-4px py-2px flex items-center gap-2px">
-                <Puzzle theme="outline" size="10" fill="#fff" />
-                <span className="text-10px text-white leading-none">Ext</span>
+            {theme.id.startsWith('ext-') && (
+              <div className='absolute top-8px left-8px bg-black/40 backdrop-blur-4px rounded-4px px-4px py-2px flex items-center gap-2px'>
+                <Puzzle theme='outline' size='10' fill='#fff' />
+                <span className='text-10px text-white leading-none'>Ext</span>
               </div>
             )}
 
             {/* 选中标记 / Selected indicator */}
             {activeThemeId === theme.id && (
-              <div className="absolute top-8px right-8px">
-                <CheckOne theme="filled" size="20" fill="var(--color-primary)" />
+              <div className='absolute top-8px right-8px'>
+                <CheckOne theme='filled' size='20' fill='var(--color-primary)' />
               </div>
             )}
           </div>
@@ -381,11 +337,7 @@ const CssThemeSettings: React.FC = () => {
           setEditingTheme(null);
         }}
         onSave={handleSaveTheme}
-        onDelete={
-          editingTheme && !editingTheme.isPreset
-            ? () => handleDeleteTheme(editingTheme.id)
-            : undefined
-        }
+        onDelete={editingTheme && !editingTheme.isPreset ? () => handleDeleteTheme(editingTheme.id) : undefined}
       />
     </div>
   );

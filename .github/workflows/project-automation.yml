@@ -1,4 +1,4 @@
-name: "📋 Project Automation"
+name: '📋 Project Automation'
 
 on:
   issues:
@@ -8,7 +8,7 @@ on:
 
 # Minimal permissions at workflow level, jobs use PROJECT_TOKEN secret
 permissions:
-  contents: "read"
+  contents: 'read'
 
 env:
   PROJECT_NUMBER: 5
@@ -33,7 +33,7 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event_name == 'issues' && github.event.action == 'opened'
     permissions:
-      contents: "read"
+      contents: 'read'
     outputs:
       item_id: ${{ steps.add.outputs.itemId }}
     steps:
@@ -57,7 +57,7 @@ jobs:
     needs: add-issue-to-project
     if: github.event_name == 'issues' && github.event.action == 'opened' && needs.add-issue-to-project.outputs.item_id
     permissions:
-      contents: "read"
+      contents: 'read'
     steps:
       - name: Mint identity token
         id: mint_token
@@ -98,7 +98,7 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event_name == 'issues' && github.event.action == 'closed'
     permissions:
-      contents: "read"
+      contents: 'read'
     steps:
       - name: Mint identity token
         id: mint_token
@@ -165,7 +165,7 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event_name == 'issues' && github.event.action == 'reopened'
     permissions:
-      contents: "read"
+      contents: 'read'
     steps:
       - name: Mint identity token
         id: mint_token
@@ -235,8 +235,8 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request'
     permissions:
-      contents: "read"
-      pull-requests: "read"
+      contents: 'read'
+      pull-requests: 'read'
     steps:
       - name: Mint identity token
         id: mint_token

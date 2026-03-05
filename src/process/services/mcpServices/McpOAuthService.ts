@@ -4,14 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import {
-  MCPOAuthProvider,
-  OAUTH_DISPLAY_MESSAGE_EVENT,
-} from "@office-ai/aioncli-core/dist/src/mcp/oauth-provider.js";
-import { MCPOAuthTokenStorage } from "@office-ai/aioncli-core/dist/src/mcp/oauth-token-storage.js";
-import type { MCPOAuthConfig } from "@office-ai/aioncli-core/dist/src/mcp/oauth-provider.js";
-import { EventEmitter } from "node:events";
-import type { IMcpServer } from "../../../common/storage";
+import { MCPOAuthProvider, OAUTH_DISPLAY_MESSAGE_EVENT } from '@office-ai/aioncli-core/dist/src/mcp/oauth-provider.js';
+import { MCPOAuthTokenStorage } from '@office-ai/aioncli-core/dist/src/mcp/oauth-token-storage.js';
+import type { MCPOAuthConfig } from '@office-ai/aioncli-core/dist/src/mcp/oauth-provider.js';
+import { EventEmitter } from 'node:events';
+import type { IMcpServer } from '../../../common/storage';
 
 export interface OAuthStatus {
   isAuthenticated: boolean;
@@ -37,7 +34,7 @@ export class McpOAuthService {
 
     // 监听 OAuth 显示消息事件
     this.eventEmitter.on(OAUTH_DISPLAY_MESSAGE_EVENT, (message: string) => {
-      console.log("[McpOAuthService] OAuth Message:", message);
+      console.log('[McpOAuthService] OAuth Message:', message);
       // 可以通过 WebSocket 发送到前端
     });
   }
@@ -49,7 +46,7 @@ export class McpOAuthService {
   async checkOAuthStatus(server: IMcpServer): Promise<OAuthStatus> {
     try {
       // 只有 HTTP/SSE 传输类型才支持 OAuth
-      if (server.transport.type !== "http" && server.transport.type !== "sse") {
+      if (server.transport.type !== 'http' && server.transport.type !== 'sse') {
         return {
           isAuthenticated: true,
           needsLogin: false,
@@ -61,21 +58,21 @@ export class McpOAuthService {
         return {
           isAuthenticated: false,
           needsLogin: false,
-          error: "No URL provided",
+          error: 'No URL provided',
         };
       }
 
       // 尝试访问 MCP 服务器
       const response = await fetch(url, {
-        method: "GET",
+        method: 'GET',
         headers: {
-          Accept: "application/json",
+          Accept: 'application/json',
         },
       });
 
       // 检查是否返回 401 Unauthorized
       if (response.status === 401) {
-        const wwwAuthenticate = response.headers.get("WWW-Authenticate");
+        const wwwAuthenticate = response.headers.get('WWW-Authenticate');
 
         if (wwwAuthenticate) {
           // 服务器要求 OAuth 认证
@@ -89,7 +86,7 @@ export class McpOAuthService {
             return {
               isAuthenticated: !isExpired,
               needsLogin: isExpired,
-              error: isExpired ? "Token expired" : undefined,
+              error: isExpired ? 'Token expired' : undefined,
             };
           }
 
@@ -107,7 +104,7 @@ export class McpOAuthService {
         needsLogin: false,
       };
     } catch (error) {
-      console.error("[McpOAuthService] Error checking OAuth status:", error);
+      console.error('[McpOAuthService] Error checking OAuth status:', error);
       return {
         isAuthenticated: false,
         needsLogin: false,
@@ -119,16 +116,13 @@ export class McpOAuthService {
   /**
    * 执行 OAuth 登录流程
    */
-  async login(
-    server: IMcpServer,
-    oauthConfig?: MCPOAuthConfig,
-  ): Promise<{ success: boolean; error?: string }> {
+  async login(server: IMcpServer, oauthConfig?: MCPOAuthConfig): Promise<{ success: boolean; error?: string }> {
     try {
       // 只有 HTTP/SSE 传输类型才支持 OAuth
-      if (server.transport.type !== "http" && server.transport.type !== "sse") {
+      if (server.transport.type !== 'http' && server.transport.type !== 'sse') {
         return {
           success: false,
-          error: "OAuth only supported for HTTP/SSE transport",
+          error: 'OAuth only supported for HTTP/SSE transport',
         };
       }
 
@@ -136,7 +130,7 @@ export class McpOAuthService {
       if (!url) {
         return {
           success: false,
-          error: "No URL provided",
+          error: 'No URL provided',
         };
       }
 
@@ -155,7 +149,7 @@ export class McpOAuthService {
       console.log(`[McpOAuthService] OAuth login successful for ${server.name}`);
       return { success: true };
     } catch (error) {
-      console.error("[McpOAuthService] OAuth login failed:", error);
+      console.error('[McpOAuthService] OAuth login failed:', error);
       return {
         success: false,
         error: error instanceof Error ? error.message : String(error),
@@ -171,7 +165,7 @@ export class McpOAuthService {
       const config = oauthConfig || { enabled: true };
       return await this.oauthProvider.getValidToken(server.name, config);
     } catch (error) {
-      console.error("[McpOAuthService] Failed to get valid token:", error);
+      console.error('[McpOAuthService] Failed to get valid token:', error);
       return null;
     }
   }
@@ -184,7 +178,7 @@ export class McpOAuthService {
       await this.tokenStorage.deleteCredentials(serverName);
       console.log(`[McpOAuthService] Logged out from ${serverName}`);
     } catch (error) {
-      console.error("[McpOAuthService] Failed to logout:", error);
+      console.error('[McpOAuthService] Failed to logout:', error);
       throw error;
     }
   }
@@ -196,7 +190,7 @@ export class McpOAuthService {
     try {
       return await this.tokenStorage.listServers();
     } catch (error) {
-      console.error("[McpOAuthService] Failed to list servers:", error);
+      console.error('[McpOAuthService] Failed to list servers:', error);
       return [];
     }
   }

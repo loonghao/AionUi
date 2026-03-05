@@ -4,35 +4,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type {
-  AllToolCallsCompleteHandler,
-  CancelledToolCall,
-  CompletedToolCall,
-  Config,
-  Status as CoreStatus,
-  EditorType,
-  ExecutingToolCall,
-  OutputUpdateHandler,
-  ScheduledToolCall,
-  ToolCall,
-  ToolCallRequestInfo,
-  ToolCallsUpdateHandler,
-  ValidatingToolCall,
-  WaitingToolCall,
-} from "@office-ai/aioncli-core";
-import { CoreToolScheduler } from "@office-ai/aioncli-core";
-import { useCallback, useMemo, useState } from "react";
-import type {
-  HistoryItemToolGroup,
-  HistoryItemWithoutId,
-  IndividualToolCallDisplay,
-} from "./types";
-import { ToolCallStatus } from "./types";
+import type { AllToolCallsCompleteHandler, CancelledToolCall, CompletedToolCall, Config, Status as CoreStatus, EditorType, ExecutingToolCall, OutputUpdateHandler, ScheduledToolCall, ToolCall, ToolCallRequestInfo, ToolCallsUpdateHandler, ValidatingToolCall, WaitingToolCall } from '@office-ai/aioncli-core';
+import { CoreToolScheduler } from '@office-ai/aioncli-core';
+import { useCallback, useMemo, useState } from 'react';
+import type { HistoryItemToolGroup, HistoryItemWithoutId, IndividualToolCallDisplay } from './types';
+import { ToolCallStatus } from './types';
 
-export type ScheduleFn = (
-  request: ToolCallRequestInfo | ToolCallRequestInfo[],
-  signal: AbortSignal,
-) => void;
+export type ScheduleFn = (request: ToolCallRequestInfo | ToolCallRequestInfo[], signal: AbortSignal) => void;
 export type MarkToolsAsSubmittedFn = (callIds: string[]) => void;
 
 export type TrackedScheduledToolCall = ScheduledToolCall & {
@@ -54,35 +32,20 @@ export type TrackedCancelledToolCall = CancelledToolCall & {
   responseSubmittedToGemini?: boolean;
 };
 
-export type TrackedToolCall =
-  | TrackedScheduledToolCall
-  | TrackedValidatingToolCall
-  | TrackedWaitingToolCall
-  | TrackedExecutingToolCall
-  | TrackedCompletedToolCall
-  | TrackedCancelledToolCall;
+export type TrackedToolCall = TrackedScheduledToolCall | TrackedValidatingToolCall | TrackedWaitingToolCall | TrackedExecutingToolCall | TrackedCompletedToolCall | TrackedCancelledToolCall;
 
 // aioncli-core v0.18.4: onEditorClose 回调已从 CoreToolSchedulerOptions 中移除
 // aioncli-core v0.18.4: onEditorClose callback was removed from CoreToolSchedulerOptions
-export function useReactToolScheduler(
-  onComplete: (tools: CompletedToolCall[]) => Promise<void>,
-  config: Config,
-  setPendingHistoryItem: React.Dispatch<React.SetStateAction<HistoryItemWithoutId | null>>,
-  getPreferredEditor: () => EditorType | undefined,
-): [TrackedToolCall[], ScheduleFn, MarkToolsAsSubmittedFn] {
+export function useReactToolScheduler(onComplete: (tools: CompletedToolCall[]) => Promise<void>, config: Config, setPendingHistoryItem: React.Dispatch<React.SetStateAction<HistoryItemWithoutId | null>>, getPreferredEditor: () => EditorType | undefined): [TrackedToolCall[], ScheduleFn, MarkToolsAsSubmittedFn] {
   const [toolCallsForDisplay, setToolCallsForDisplay] = useState<TrackedToolCall[]>([]);
 
   const outputUpdateHandler: OutputUpdateHandler = useCallback(
     (toolCallId, outputChunk) => {
       setPendingHistoryItem((prevItem) => {
-        if (prevItem?.type === "tool_group") {
+        if (prevItem?.type === 'tool_group') {
           return {
             ...prevItem,
-            tools: prevItem.tools.map((toolDisplay) =>
-              toolDisplay.callId === toolCallId && toolDisplay.status === ToolCallStatus.Executing
-                ? { ...toolDisplay, resultDisplay: outputChunk }
-                : toolDisplay,
-            ),
+            tools: prevItem.tools.map((toolDisplay) => (toolDisplay.callId === toolCallId && toolDisplay.status === ToolCallStatus.Executing ? { ...toolDisplay, resultDisplay: outputChunk } : toolDisplay)),
           };
         }
         return prevItem;
@@ -90,40 +53,38 @@ export function useReactToolScheduler(
 
       setToolCallsForDisplay((prevCalls) =>
         prevCalls.map((tc) => {
-          if (tc.request.callId === toolCallId && tc.status === "executing") {
+          if (tc.request.callId === toolCallId && tc.status === 'executing') {
             const executingTc = tc as TrackedExecutingToolCall;
             return { ...executingTc, liveOutput: outputChunk };
           }
           return tc;
-        }),
+        })
       );
     },
-    [setPendingHistoryItem],
+    [setPendingHistoryItem]
   );
 
   const allToolCallsCompleteHandler: AllToolCallsCompleteHandler = useCallback(
     async (completedToolCalls) => {
       await onComplete(completedToolCalls);
     },
-    [onComplete],
+    [onComplete]
   );
 
   const toolCallsUpdateHandler: ToolCallsUpdateHandler = useCallback(
     (updatedCoreToolCalls: ToolCall[]) => {
       setToolCallsForDisplay((prevTrackedCalls) =>
         updatedCoreToolCalls.map((coreTc) => {
-          const existingTrackedCall = prevTrackedCalls.find(
-            (ptc) => ptc.request.callId === coreTc.request.callId,
-          );
+          const existingTrackedCall = prevTrackedCalls.find((ptc) => ptc.request.callId === coreTc.request.callId);
           const newTrackedCall: TrackedToolCall = {
             ...coreTc,
             responseSubmittedToGemini: existingTrackedCall?.responseSubmittedToGemini ?? false,
           } as TrackedToolCall;
           return newTrackedCall;
-        }),
+        })
       );
     },
-    [setToolCallsForDisplay],
+    [setToolCallsForDisplay]
   );
 
   const scheduler = useMemo(
@@ -137,28 +98,18 @@ export function useReactToolScheduler(
         // onEditorClose 在 aioncli-core v0.18.4 中已移除
         // onEditorClose was removed in aioncli-core v0.18.4
       }),
-    [
-      config,
-      outputUpdateHandler,
-      allToolCallsCompleteHandler,
-      toolCallsUpdateHandler,
-      getPreferredEditor,
-    ],
+    [config, outputUpdateHandler, allToolCallsCompleteHandler, toolCallsUpdateHandler, getPreferredEditor]
   );
 
   const schedule: ScheduleFn = useCallback(
     (request: ToolCallRequestInfo | ToolCallRequestInfo[], signal: AbortSignal) => {
       void scheduler.schedule(request, signal);
     },
-    [scheduler],
+    [scheduler]
   );
 
   const markToolsAsSubmitted: MarkToolsAsSubmittedFn = useCallback((callIdsToMark: string[]) => {
-    setToolCallsForDisplay((prevCalls) =>
-      prevCalls.map((tc) =>
-        callIdsToMark.includes(tc.request.callId) ? { ...tc, responseSubmittedToGemini: true } : tc,
-      ),
-    );
+    setToolCallsForDisplay((prevCalls) => prevCalls.map((tc) => (callIdsToMark.includes(tc.request.callId) ? { ...tc, responseSubmittedToGemini: true } : tc)));
   }, []);
 
   return [toolCallsForDisplay, schedule, markToolsAsSubmitted];
@@ -169,19 +120,19 @@ export function useReactToolScheduler(
  */
 function mapCoreStatusToDisplayStatus(coreStatus: CoreStatus): ToolCallStatus {
   switch (coreStatus) {
-    case "validating":
+    case 'validating':
       return ToolCallStatus.Executing;
-    case "awaiting_approval":
+    case 'awaiting_approval':
       return ToolCallStatus.Confirming;
-    case "executing":
+    case 'executing':
       return ToolCallStatus.Executing;
-    case "success":
+    case 'success':
       return ToolCallStatus.Success;
-    case "cancelled":
+    case 'cancelled':
       return ToolCallStatus.Canceled;
-    case "error":
+    case 'error':
       return ToolCallStatus.Error;
-    case "scheduled":
+    case 'scheduled':
       return ToolCallStatus.Pending;
     default: {
       console.warn(`Unknown core status encountered: ${coreStatus}`);
@@ -193,9 +144,7 @@ function mapCoreStatusToDisplayStatus(coreStatus: CoreStatus): ToolCallStatus {
 /**
  * Transforms `TrackedToolCall` objects into `HistoryItemToolGroup` objects for UI display.
  */
-export function mapToDisplay(
-  toolOrTools: TrackedToolCall[] | TrackedToolCall,
-): HistoryItemToolGroup {
+export function mapToDisplay(toolOrTools: TrackedToolCall[] | TrackedToolCall): HistoryItemToolGroup {
   const toolCalls = Array.isArray(toolOrTools) ? toolOrTools : [toolOrTools];
 
   const toolDisplays = toolCalls.map((trackedCall): IndividualToolCallDisplay => {
@@ -203,9 +152,8 @@ export function mapToDisplay(
     let description: string;
     let renderOutputAsMarkdown = false;
 
-    if (trackedCall.status === "error") {
-      displayName =
-        trackedCall.tool === undefined ? trackedCall.request.name : trackedCall.tool.displayName;
+    if (trackedCall.status === 'error') {
+      displayName = trackedCall.tool === undefined ? trackedCall.request.name : trackedCall.tool.displayName;
       // Include error message in description for better debugging visibility
       // 在描述中包含错误信息，便于调试
       const errorMsg = trackedCall.response.error?.message;
@@ -217,10 +165,7 @@ export function mapToDisplay(
       renderOutputAsMarkdown = trackedCall.tool.isOutputMarkdown;
     }
 
-    const baseDisplayProperties: Omit<
-      IndividualToolCallDisplay,
-      "status" | "resultDisplay" | "confirmationDetails"
-    > = {
+    const baseDisplayProperties: Omit<IndividualToolCallDisplay, 'status' | 'resultDisplay' | 'confirmationDetails'> = {
       callId: trackedCall.request.callId,
       name: displayName,
       description,
@@ -228,14 +173,14 @@ export function mapToDisplay(
     };
 
     switch (trackedCall.status) {
-      case "success":
+      case 'success':
         return {
           ...baseDisplayProperties,
           status: mapCoreStatusToDisplayStatus(trackedCall.status),
           resultDisplay: trackedCall.response.resultDisplay,
           confirmationDetails: undefined,
         };
-      case "error": {
+      case 'error': {
         // Fallback: when resultDisplay is empty, construct from error info
         // 兜底：当 resultDisplay 为空时，从错误信息中构造显示内容
         let errorResultDisplay = trackedCall.response.resultDisplay;
@@ -243,7 +188,7 @@ export function mapToDisplay(
           const errMsg = trackedCall.response.error?.message;
           const errType = trackedCall.response.errorType;
           if (errMsg || errType) {
-            errorResultDisplay = [errType && `[${errType}]`, errMsg].filter(Boolean).join(" ");
+            errorResultDisplay = [errType && `[${errType}]`, errMsg].filter(Boolean).join(' ');
           }
         }
         return {
@@ -253,29 +198,29 @@ export function mapToDisplay(
           confirmationDetails: undefined,
         };
       }
-      case "cancelled":
+      case 'cancelled':
         return {
           ...baseDisplayProperties,
           status: mapCoreStatusToDisplayStatus(trackedCall.status),
           resultDisplay: trackedCall.response.resultDisplay,
           confirmationDetails: undefined,
         };
-      case "awaiting_approval":
+      case 'awaiting_approval':
         return {
           ...baseDisplayProperties,
           status: mapCoreStatusToDisplayStatus(trackedCall.status),
           resultDisplay: undefined,
           confirmationDetails: trackedCall.confirmationDetails,
         };
-      case "executing":
+      case 'executing':
         return {
           ...baseDisplayProperties,
           status: mapCoreStatusToDisplayStatus(trackedCall.status),
           resultDisplay: (trackedCall as TrackedExecutingToolCall).liveOutput ?? undefined,
           confirmationDetails: undefined,
         };
-      case "validating": // Fallthrough
-      case "scheduled":
+      case 'validating': // Fallthrough
+      case 'scheduled':
         return {
           ...baseDisplayProperties,
           status: mapCoreStatusToDisplayStatus(trackedCall.status),
@@ -285,10 +230,10 @@ export function mapToDisplay(
       default: {
         return {
           callId: (trackedCall as TrackedToolCall).request.callId,
-          name: "Unknown Tool",
-          description: "Encountered an unknown tool call state.",
+          name: 'Unknown Tool',
+          description: 'Encountered an unknown tool call state.',
           status: ToolCallStatus.Error,
-          resultDisplay: "Unknown tool call state",
+          resultDisplay: 'Unknown tool call state',
           confirmationDetails: undefined,
           renderOutputAsMarkdown: false,
         };
@@ -297,7 +242,7 @@ export function mapToDisplay(
   });
 
   return {
-    type: "tool_group",
+    type: 'tool_group',
     tools: toolDisplays,
   };
 }

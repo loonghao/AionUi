@@ -10,5 +10,5 @@
 export {};
 
 if (require.main === module) {
-  console.log("Nanobot worker started");
+  console.log('Nanobot worker started');
 }

@@ -4,21 +4,21 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import crypto from "crypto";
-import { ipcMain } from "electron";
-import { webui } from "@/common/ipcBridge";
-import { AuthService } from "@/webserver/auth/service/AuthService";
-import { UserRepository } from "@/webserver/auth/repository/UserRepository";
-import { AUTH_CONFIG, SERVER_CONFIG } from "@/webserver/config/constants";
-import { WebuiService } from "./services/WebuiService";
+import crypto from 'crypto';
+import { ipcMain } from 'electron';
+import { webui } from '@/common/ipcBridge';
+import { AuthService } from '@/webserver/auth/service/AuthService';
+import { UserRepository } from '@/webserver/auth/repository/UserRepository';
+import { AUTH_CONFIG, SERVER_CONFIG } from '@/webserver/config/constants';
+import { WebuiService } from './services/WebuiService';
 // 预加载 webserver 模块避免启动时延迟 / Preload webserver module to avoid startup delay
-import { startWebServerWithInstance } from "@/webserver/index";
-import { cleanupWebAdapter } from "@/webserver/adapter";
+import { startWebServerWithInstance } from '@/webserver/index';
+import { cleanupWebAdapter } from '@/webserver/adapter';
 
 // WebUI 服务器实例引用 / WebUI server instance reference
 let webServerInstance: {
-  server: import("http").Server;
-  wss: import("ws").WebSocketServer;
+  server: import('http').Server;
+  wss: import('ws').WebSocketServer;
   port: number;
   allowRemote: boolean;
 } | null = null;
@@ -26,10 +26,7 @@ let webServerInstance: {
 // QR Token 存储 (内存中，有效期短) / QR Token store (in-memory, short-lived)
 // 增加 allowLocalOnly 标志，限制本地模式下只能从本地网络使用
 // Added allowLocalOnly flag to restrict local mode to local network only
-const qrTokenStore = new Map<
-  string,
-  { expiresAt: number; used: boolean; allowLocalOnly: boolean }
->();
+const qrTokenStore = new Map<string, { expiresAt: number; used: boolean; allowLocalOnly: boolean }>();
 
 // QR Token 有效期 5 分钟 / QR Token validity: 5 minutes
 const QR_TOKEN_EXPIRY = 5 * 60 * 1000;
@@ -38,15 +35,12 @@ const QR_TOKEN_EXPIRY = 5 * 60 * 1000;
  * 直接生成二维码登录 URL（供服务端启动时调用）
  * Generate QR login URL directly (for server-side use on startup)
  */
-export function generateQRLoginUrlDirect(
-  port: number,
-  allowRemote: boolean,
-): { qrUrl: string; expiresAt: number } {
+export function generateQRLoginUrlDirect(port: number, allowRemote: boolean): { qrUrl: string; expiresAt: number } {
   // 清理过期 token / Clean up expired tokens
   cleanupExpiredTokens();
 
   // 生成随机 token / Generate random token
-  const token = crypto.randomBytes(32).toString("hex");
+  const token = crypto.randomBytes(32).toString('hex');
   const expiresAt = Date.now() + QR_TOKEN_EXPIRY;
 
   // 存储 token / Store token
@@ -68,22 +62,22 @@ export function generateQRLoginUrlDirect(
 function isLocalIP(ip: string): boolean {
   if (!ip) return false;
   // 处理 IPv6 格式的 localhost / Handle IPv6 localhost format
-  const cleanIP = ip.replace(/^::ffff:/, "");
+  const cleanIP = ip.replace(/^::ffff:/, '');
 
   // localhost
-  if (cleanIP === "127.0.0.1" || cleanIP === "localhost" || cleanIP === "::1") {
+  if (cleanIP === '127.0.0.1' || cleanIP === 'localhost' || cleanIP === '::1') {
     return true;
   }
 
   // 私有网络地址 / Private network addresses
   // 10.0.0.0/8
-  if (cleanIP.startsWith("10.")) return true;
+  if (cleanIP.startsWith('10.')) return true;
   // 172.16.0.0/12
   if (/^172\.(1[6-9]|2[0-9]|3[0-1])\./.test(cleanIP)) return true;
   // 192.168.0.0/16
-  if (cleanIP.startsWith("192.168.")) return true;
+  if (cleanIP.startsWith('192.168.')) return true;
   // Link-local
-  if (cleanIP.startsWith("169.254.")) return true;
+  if (cleanIP.startsWith('169.254.')) return true;
 
   return false;
 }
@@ -95,17 +89,14 @@ function isLocalIP(ip: string): boolean {
  * @param qrToken - QR token string
  * @param clientIP - 客户端 IP 地址（用于本地网络限制）/ Client IP address (for local network restriction)
  */
-export async function verifyQRTokenDirect(
-  qrToken: string,
-  clientIP?: string,
-): Promise<{ success: boolean; data?: { sessionToken: string; username: string }; msg?: string }> {
+export async function verifyQRTokenDirect(qrToken: string, clientIP?: string): Promise<{ success: boolean; data?: { sessionToken: string; username: string }; msg?: string }> {
   try {
     // 检查 token 是否存在 / Check if token exists
     const tokenData = qrTokenStore.get(qrToken);
     if (!tokenData) {
       return {
         success: false,
-        msg: "Invalid or expired QR token",
+        msg: 'Invalid or expired QR token',
       };
     }
 
@@ -114,7 +105,7 @@ export async function verifyQRTokenDirect(
       qrTokenStore.delete(qrToken);
       return {
         success: false,
-        msg: "QR token has expired",
+        msg: 'QR token has expired',
       };
     }
 
@@ -123,18 +114,16 @@ export async function verifyQRTokenDirect(
       qrTokenStore.delete(qrToken);
       return {
         success: false,
-        msg: "QR token has already been used",
+        msg: 'QR token has already been used',
       };
     }
 
     // P0 安全修复：检查本地网络限制 / P0 Security fix: Check local network restriction
     if (tokenData.allowLocalOnly && clientIP && !isLocalIP(clientIP)) {
-      console.warn(
-        `[WebUI Bridge] QR token rejected: non-local IP ${clientIP} attempted to use local-only token`,
-      );
+      console.warn(`[WebUI Bridge] QR token rejected: non-local IP ${clientIP} attempted to use local-only token`);
       return {
         success: false,
-        msg: "QR login is only allowed from local network",
+        msg: 'QR login is only allowed from local network',
       };
     }
 
@@ -146,7 +135,7 @@ export async function verifyQRTokenDirect(
     if (!adminUser) {
       return {
         success: false,
-        msg: "Admin user not found",
+        msg: 'Admin user not found',
       };
     }
 
@@ -167,10 +156,10 @@ export async function verifyQRTokenDirect(
       },
     };
   } catch (error) {
-    console.error("[WebUI Bridge] Verify QR token error:", error);
+    console.error('[WebUI Bridge] Verify QR token error:', error);
     return {
       success: false,
-      msg: error instanceof Error ? error.message : "Failed to verify QR token",
+      msg: error instanceof Error ? error.message : 'Failed to verify QR token',
     };
   }
 }
@@ -214,7 +203,7 @@ export function initWebuiBridge(): void {
     return WebuiService.handleAsync(async () => {
       const status = await WebuiService.getStatus(webServerInstance);
       return { success: true, data: status };
-    }, "Get status");
+    }, 'Get status');
   });
 
   // 启动 WebUI / Start WebUI
@@ -225,7 +214,7 @@ export function initWebuiBridge(): void {
       if (webServerInstance) {
         try {
           const { server: oldServer, wss: oldWss } = webServerInstance;
-          oldWss.clients.forEach((client) => client.close(1000, "Server restarting"));
+          oldWss.clients.forEach((client) => client.close(1000, 'Server restarting'));
           await new Promise<void>((resolve) => {
             oldServer.close(() => resolve());
             // Force resolve after 2s to avoid hanging
@@ -233,7 +222,7 @@ export function initWebuiBridge(): void {
           });
           cleanupWebAdapter();
         } catch (err) {
-          console.warn("[WebUI Bridge] Error stopping previous server:", err);
+          console.warn('[WebUI Bridge] Error stopping previous server:', err);
         }
         webServerInstance = null;
       }
@@ -271,10 +260,10 @@ export function initWebuiBridge(): void {
         },
       };
     } catch (error) {
-      console.error("[WebUI Bridge] Start error:", error);
+      console.error('[WebUI Bridge] Start error:', error);
       return {
         success: false,
-        msg: error instanceof Error ? error.message : "Failed to start WebUI",
+        msg: error instanceof Error ? error.message : 'Failed to start WebUI',
       };
     }
   });
@@ -285,7 +274,7 @@ export function initWebuiBridge(): void {
       if (!webServerInstance) {
         return {
           success: false,
-          msg: "WebUI is not running",
+          msg: 'WebUI is not running',
         };
       }
 
@@ -293,7 +282,7 @@ export function initWebuiBridge(): void {
 
       // 关闭所有 WebSocket 连接 / Close all WebSocket connections
       wss.clients.forEach((client) => {
-        client.close(1000, "Server shutting down");
+        client.close(1000, 'Server shutting down');
       });
 
       // 关闭服务器 / Close server
@@ -316,10 +305,10 @@ export function initWebuiBridge(): void {
 
       return { success: true };
     } catch (error) {
-      console.error("[WebUI Bridge] Stop error:", error);
+      console.error('[WebUI Bridge] Stop error:', error);
       return {
         success: false,
-        msg: error instanceof Error ? error.message : "Failed to stop WebUI",
+        msg: error instanceof Error ? error.message : 'Failed to stop WebUI',
       };
     }
   });
@@ -329,7 +318,7 @@ export function initWebuiBridge(): void {
     return WebuiService.handleAsync(async () => {
       await WebuiService.changePassword(newPassword);
       return { success: true };
-    }, "Change password");
+    }, 'Change password');
   });
 
   // 重置密码（生成新随机密码）/ Reset password (generate new random password)
@@ -341,7 +330,7 @@ export function initWebuiBridge(): void {
     const result = await WebuiService.handleAsync(async () => {
       const newPassword = await WebuiService.resetPassword();
       return { success: true, data: { newPassword } };
-    }, "Reset password");
+    }, 'Reset password');
 
     // 通过 emitter 发送结果 / Emit result via emitter
     if (result.success && result.data) {
@@ -359,7 +348,7 @@ export function initWebuiBridge(): void {
     if (!webServerInstance) {
       return {
         success: false,
-        msg: "WebUI is not running. Please start WebUI first.",
+        msg: 'WebUI is not running. Please start WebUI first.',
       };
     }
 
@@ -371,7 +360,7 @@ export function initWebuiBridge(): void {
       const { port, allowRemote } = webServerInstance;
 
       // 生成随机 token / Generate random token
-      const token = crypto.randomBytes(32).toString("hex");
+      const token = crypto.randomBytes(32).toString('hex');
       const expiresAt = Date.now() + QR_TOKEN_EXPIRY;
 
       // 存储 token / Store token
@@ -394,10 +383,10 @@ export function initWebuiBridge(): void {
         },
       };
     } catch (error) {
-      console.error("[WebUI Bridge] Generate QR token error:", error);
+      console.error('[WebUI Bridge] Generate QR token error:', error);
       return {
         success: false,
-        msg: error instanceof Error ? error.message : "Failed to generate QR token",
+        msg: error instanceof Error ? error.message : 'Failed to generate QR token',
       };
     }
   });
@@ -410,7 +399,7 @@ export function initWebuiBridge(): void {
       if (!tokenData) {
         return {
           success: false,
-          msg: "Invalid or expired QR token",
+          msg: 'Invalid or expired QR token',
         };
       }
 
@@ -419,7 +408,7 @@ export function initWebuiBridge(): void {
         qrTokenStore.delete(qrToken);
         return {
           success: false,
-          msg: "QR token has expired",
+          msg: 'QR token has expired',
         };
       }
 
@@ -428,7 +417,7 @@ export function initWebuiBridge(): void {
         qrTokenStore.delete(qrToken);
         return {
           success: false,
-          msg: "QR token has already been used",
+          msg: 'QR token has already been used',
         };
       }
 
@@ -440,7 +429,7 @@ export function initWebuiBridge(): void {
       if (!adminUser) {
         return {
           success: false,
-          msg: "Admin user not found",
+          msg: 'Admin user not found',
         };
       }
 
@@ -461,10 +450,10 @@ export function initWebuiBridge(): void {
         },
       };
     } catch (error) {
-      console.error("[WebUI Bridge] Verify QR token error:", error);
+      console.error('[WebUI Bridge] Verify QR token error:', error);
       return {
         success: false,
-        msg: error instanceof Error ? error.message : "Failed to verify QR token",
+        msg: error instanceof Error ? error.message : 'Failed to verify QR token',
       };
     }
   });
@@ -474,39 +463,36 @@ export function initWebuiBridge(): void {
   // These handlers return results directly, without relying on emitter pattern
 
   // 直接 IPC: 重置密码 / Direct IPC: Reset password
-  ipcMain.handle("webui-direct-reset-password", async () => {
+  ipcMain.handle('webui-direct-reset-password', async () => {
     return WebuiService.handleAsync(async () => {
       const newPassword = await WebuiService.resetPassword();
       return { success: true, newPassword };
-    }, "Direct IPC: Reset password");
+    }, 'Direct IPC: Reset password');
   });
 
   // 直接 IPC: 获取状态 / Direct IPC: Get status
-  ipcMain.handle("webui-direct-get-status", async () => {
+  ipcMain.handle('webui-direct-get-status', async () => {
     return WebuiService.handleAsync(async () => {
       const status = await WebuiService.getStatus(webServerInstance);
       return { success: true, data: status };
-    }, "Direct IPC: Get status");
+    }, 'Direct IPC: Get status');
   });
 
   // 直接 IPC: 修改密码（不需要当前密码）/ Direct IPC: Change password (no current password required)
-  ipcMain.handle(
-    "webui-direct-change-password",
-    async (_event, { newPassword }: { newPassword: string }) => {
-      return WebuiService.handleAsync(async () => {
-        await WebuiService.changePassword(newPassword);
-        return { success: true };
-      }, "Direct IPC: Change password");
-    },
-  );
+  ipcMain.handle('webui-direct-change-password', async (_event, { newPassword }: { newPassword: string }) => {
+    return WebuiService.handleAsync(async () => {
+      await WebuiService.changePassword(newPassword);
+      return { success: true };
+    }, 'Direct IPC: Change password');
+  });
 
   // 直接 IPC: 生成二维码 token / Direct IPC: Generate QR token
-  ipcMain.handle("webui-direct-generate-qr-token", async () => {
+  ipcMain.handle('webui-direct-generate-qr-token', async () => {
     // 检查 webServerInstance 状态
     if (!webServerInstance) {
       return {
         success: false,
-        msg: "WebUI is not running. Please start WebUI first.",
+        msg: 'WebUI is not running. Please start WebUI first.',
       };
     }
 
@@ -518,7 +504,7 @@ export function initWebuiBridge(): void {
       const { port, allowRemote } = webServerInstance;
 
       // 生成随机 token / Generate random token
-      const token = crypto.randomBytes(32).toString("hex");
+      const token = crypto.randomBytes(32).toString('hex');
       const expiresAt = Date.now() + QR_TOKEN_EXPIRY;
 
       // 存储 token / Store token
@@ -539,10 +525,10 @@ export function initWebuiBridge(): void {
         },
       };
     } catch (error) {
-      console.error("[WebUI Bridge] Direct IPC: Generate QR token error:", error);
+      console.error('[WebUI Bridge] Direct IPC: Generate QR token error:', error);
       return {
         success: false,
-        msg: error instanceof Error ? error.message : "Failed to generate QR token",
+        msg: error instanceof Error ? error.message : 'Failed to generate QR token',
       };
     }
   });

@@ -4,16 +4,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { McpOperationResult } from "../McpProtocol";
-import { AbstractMcpAgent } from "../McpProtocol";
-import type { IMcpServer } from "@/common/storage";
-import { getEnhancedEnv } from "@process/utils/shellEnv";
-import { safeExec } from "@process/utils/safeExec";
+import type { McpOperationResult } from '../McpProtocol';
+import { AbstractMcpAgent } from '../McpProtocol';
+import type { IMcpServer } from '@/common/storage';
+import { getEnhancedEnv } from '@process/utils/shellEnv';
+import { safeExec } from '@process/utils/safeExec';
 
 /** Env options for exec calls — ensures CLI is found from Finder/launchd launches */
-const getExecEnv = () => ({
-  env: { ...getEnhancedEnv(), NODE_OPTIONS: "", TERM: "dumb", NO_COLOR: "1" } as NodeJS.ProcessEnv,
-});
+const getExecEnv = () => ({ env: { ...getEnhancedEnv(), NODE_OPTIONS: '', TERM: 'dumb', NO_COLOR: '1' } as NodeJS.ProcessEnv });
 
 /**
  * Codex CLI MCP代理实现
@@ -23,12 +21,12 @@ const getExecEnv = () => ({
  */
 export class CodexMcpAgent extends AbstractMcpAgent {
   constructor() {
-    super("codex");
+    super('codex');
   }
 
   getSupportedTransports(): string[] {
     // Codex CLI supports stdio and streamable HTTP (via --url flag)
-    return ["stdio", "http", "streamable_http"];
+    return ['stdio', 'http', 'streamable_http'];
   }
 
   /**
@@ -38,13 +36,10 @@ export class CodexMcpAgent extends AbstractMcpAgent {
     const detectOperation = async () => {
       try {
         // 使用 Codex CLI 命令获取 MCP 配置
-        const { stdout: result } = await safeExec("codex mcp list", {
-          timeout: this.timeout,
-          ...getExecEnv(),
-        });
+        const { stdout: result } = await safeExec('codex mcp list', { timeout: this.timeout, ...getExecEnv() });
 
         // 如果没有配置任何MCP服务器，返回空数组
-        if (result.includes("No MCP servers configured") || !result.trim()) {
+        if (result.includes('No MCP servers configured') || !result.trim()) {
           return [];
         }
 
@@ -53,14 +48,14 @@ export class CodexMcpAgent extends AbstractMcpAgent {
         // Name  Command  Args      Env
         // Bazi  npx      bazi-mcp  -
         const mcpServers: IMcpServer[] = [];
-        const lines = result.split("\n");
+        const lines = result.split('\n');
 
         // 跳过表头行（第一行）
         for (let i = 1; i < lines.length; i++) {
           const line = lines[i];
           // 清除 ANSI 颜色代码
           // eslint-disable-next-line no-control-regex
-          const cleanLine = line.replace(/\u001b\[[0-?]*[ -/]*[@-~]/g, "").trim();
+          const cleanLine = line.replace(/\u001b\[[0-?]*[ -/]*[@-~]/g, '').trim();
 
           if (!cleanLine) continue;
 
@@ -70,19 +65,19 @@ export class CodexMcpAgent extends AbstractMcpAgent {
 
           const name = parts[0].trim();
           const command = parts[1].trim();
-          const argsStr = parts[2]?.trim() || "";
-          const envStr = parts[3]?.trim() || "";
+          const argsStr = parts[2]?.trim() || '';
+          const envStr = parts[3]?.trim() || '';
 
           // 解析 args（如果是 "-" 则表示没有参数）
-          const args = argsStr === "-" ? [] : argsStr.split(/\s+/);
+          const args = argsStr === '-' ? [] : argsStr.split(/\s+/);
 
           // 解析 env（如果是 "-" 则表示没有环境变量）
           const env: Record<string, string> = {};
-          if (envStr && envStr !== "-") {
+          if (envStr && envStr !== '-') {
             // 环境变量格式可能是 KEY=VALUE 形式
             const envPairs = envStr.split(/\s+/);
             for (const pair of envPairs) {
-              const [key, value] = pair.split("=");
+              const [key, value] = pair.split('=');
               if (key && value) {
                 env[key] = value;
               }
@@ -93,7 +88,7 @@ export class CodexMcpAgent extends AbstractMcpAgent {
           let tools: Array<{ name: string; description?: string }> = [];
           try {
             const testResult = await this.testMcpConnection({
-              type: "stdio",
+              type: 'stdio',
               command: command,
               args: args,
               env: env,
@@ -107,17 +102,17 @@ export class CodexMcpAgent extends AbstractMcpAgent {
             id: `codex_${name}`,
             name: name,
             transport: {
-              type: "stdio",
+              type: 'stdio',
               command: command,
               args: args,
               env: env,
             },
             tools: tools,
             enabled: true,
-            status: tools.length > 0 ? "connected" : "disconnected",
+            status: tools.length > 0 ? 'connected' : 'disconnected',
             createdAt: Date.now(),
             updatedAt: Date.now(),
-            description: "",
+            description: '',
             originalJson: JSON.stringify(
               {
                 mcpServers: {
@@ -129,7 +124,7 @@ export class CodexMcpAgent extends AbstractMcpAgent {
                 },
               },
               null,
-              2,
+              2
             ),
           });
         }
@@ -137,12 +132,12 @@ export class CodexMcpAgent extends AbstractMcpAgent {
         console.log(`[CodexMcpAgent] Detection complete: found ${mcpServers.length} server(s)`);
         return mcpServers;
       } catch (error) {
-        console.warn("[CodexMcpAgent] Failed to get Codex MCP config:", error);
+        console.warn('[CodexMcpAgent] Failed to get Codex MCP config:', error);
         return [];
       }
     };
 
-    Object.defineProperty(detectOperation, "name", { value: "detectMcpServers" });
+    Object.defineProperty(detectOperation, 'name', { value: 'detectMcpServers' });
     return this.withLock(detectOperation);
   }
 
@@ -153,27 +148,17 @@ export class CodexMcpAgent extends AbstractMcpAgent {
     const installOperation = async () => {
       try {
         for (const server of mcpServers) {
-          if (server.transport.type === "stdio") {
+          if (server.transport.type === 'stdio') {
             // 使用 Codex CLI 添加 MCP 服务器
             // 格式: codex mcp add <NAME> <COMMAND> [ARGS]... [--env KEY=VALUE]
             const args = server.transport.args || [];
-            const envArgs = Object.entries(server.transport.env || {}).map(
-              ([key, value]) => `--env ${key}=${value}`,
-            );
+            const envArgs = Object.entries(server.transport.env || {}).map(([key, value]) => `--env ${key}=${value}`);
 
             // 构建命令数组
-            const commandParts = [
-              "codex",
-              "mcp",
-              "add",
-              server.name,
-              server.transport.command,
-              ...args,
-              ...envArgs,
-            ];
+            const commandParts = ['codex', 'mcp', 'add', server.name, server.transport.command, ...args, ...envArgs];
 
             // 将命令数组转换为 shell 命令字符串
-            const command = commandParts.map((part) => `"${part}"`).join(" ");
+            const command = commandParts.map((part) => `"${part}"`).join(' ');
 
             try {
               await safeExec(command, { timeout: 5000, ...getExecEnv() });
@@ -182,30 +167,23 @@ export class CodexMcpAgent extends AbstractMcpAgent {
               console.warn(`Failed to add MCP ${server.name} to Codex:`, error);
               // 继续处理其他服务器，不要因为一个失败就停止
             }
-          } else if (
-            server.transport.type === "http" ||
-            server.transport.type === "streamable_http"
-          ) {
+          } else if (server.transport.type === 'http' || server.transport.type === 'streamable_http') {
             // Codex CLI uses --url flag for streamable HTTP servers
             // Format: codex mcp add <NAME> --url <URL>
-            const url = "url" in server.transport ? server.transport.url : "";
-            const commandParts = ["codex", "mcp", "add", server.name, "--url", url];
+            const url = 'url' in server.transport ? server.transport.url : '';
+            const commandParts = ['codex', 'mcp', 'add', server.name, '--url', url];
 
             // Add bearer token env var if available in headers
-            if ("headers" in server.transport && server.transport.headers) {
-              const authHeader = Object.entries(server.transport.headers).find(
-                ([key]) => key.toLowerCase() === "authorization",
-              );
+            if ('headers' in server.transport && server.transport.headers) {
+              const authHeader = Object.entries(server.transport.headers).find(([key]) => key.toLowerCase() === 'authorization');
               if (authHeader) {
                 // Codex expects --bearer-token-env-var, not direct token
                 // For now, just log a warning
-                console.warn(
-                  `[CodexMcpAgent] ${server.name}: Codex CLI uses --bearer-token-env-var for auth, manual header not supported`,
-                );
+                console.warn(`[CodexMcpAgent] ${server.name}: Codex CLI uses --bearer-token-env-var for auth, manual header not supported`);
               }
             }
 
-            const command = commandParts.map((part) => `"${part}"`).join(" ");
+            const command = commandParts.map((part) => `"${part}"`).join(' ');
 
             try {
               await safeExec(command, { timeout: 5000, ...getExecEnv() });
@@ -214,9 +192,7 @@ export class CodexMcpAgent extends AbstractMcpAgent {
               console.warn(`Failed to add MCP ${server.name} to Codex:`, error);
             }
           } else {
-            console.warn(
-              `Skipping ${server.name}: Codex CLI does not support ${server.transport.type} transport type`,
-            );
+            console.warn(`Skipping ${server.name}: Codex CLI does not support ${server.transport.type} transport type`);
           }
         }
         return { success: true };
@@ -225,7 +201,7 @@ export class CodexMcpAgent extends AbstractMcpAgent {
       }
     };
 
-    Object.defineProperty(installOperation, "name", { value: "installMcpServers" });
+    Object.defineProperty(installOperation, 'name', { value: 'installMcpServers' });
     return this.withLock(installOperation);
   }
 
@@ -242,20 +218,12 @@ export class CodexMcpAgent extends AbstractMcpAgent {
           const result = await safeExec(removeCommand, { timeout: 5000, ...getExecEnv() });
 
           // 检查输出确认删除成功
-          if (
-            result.stdout &&
-            (result.stdout.includes("removed") || result.stdout.includes("Removed"))
-          ) {
+          if (result.stdout && (result.stdout.includes('removed') || result.stdout.includes('Removed'))) {
             console.log(`[CodexMcpAgent] Removed MCP server: ${mcpServerName}`);
             return { success: true };
-          } else if (
-            result.stdout &&
-            (result.stdout.includes("not found") || result.stdout.includes("No such server"))
-          ) {
+          } else if (result.stdout && (result.stdout.includes('not found') || result.stdout.includes('No such server'))) {
             // 服务器不存在，也认为成功
-            console.log(
-              `[CodexMcpAgent] MCP server '${mcpServerName}' not found, nothing to remove`,
-            );
+            console.log(`[CodexMcpAgent] MCP server '${mcpServerName}' not found, nothing to remove`);
             return { success: true };
           } else {
             // 其他情况认为成功（向后兼容）
@@ -263,23 +231,17 @@ export class CodexMcpAgent extends AbstractMcpAgent {
           }
         } catch (cmdError) {
           // 如果命令执行失败，检查是否是因为服务器不存在
-          if (
-            cmdError instanceof Error &&
-            (cmdError.message.includes("not found") || cmdError.message.includes("does not exist"))
-          ) {
+          if (cmdError instanceof Error && (cmdError.message.includes('not found') || cmdError.message.includes('does not exist'))) {
             return { success: true };
           }
-          return {
-            success: false,
-            error: cmdError instanceof Error ? cmdError.message : String(cmdError),
-          };
+          return { success: false, error: cmdError instanceof Error ? cmdError.message : String(cmdError) };
         }
       } catch (error) {
         return { success: false, error: error instanceof Error ? error.message : String(error) };
       }
     };
 
-    Object.defineProperty(removeOperation, "name", { value: "removeMcpServer" });
+    Object.defineProperty(removeOperation, 'name', { value: 'removeMcpServer' });
     return this.withLock(removeOperation);
   }
 }

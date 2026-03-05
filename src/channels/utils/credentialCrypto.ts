@@ -24,13 +24,13 @@ export function isEncryptionAvailable(): boolean {
  * @returns Base64-encoded string with prefix
  */
 export function encryptString(plaintext: string): string {
-  if (!plaintext) return "";
+  if (!plaintext) return '';
 
   try {
-    const encoded = Buffer.from(plaintext, "utf-8").toString("base64");
+    const encoded = Buffer.from(plaintext, 'utf-8').toString('base64');
     return `b64:${encoded}`;
   } catch (error) {
-    console.error("[CredentialStorage] Encoding failed:", error);
+    console.error('[CredentialStorage] Encoding failed:', error);
     // Fallback to plain storage with prefix
     return `plain:${plaintext}`;
   }
@@ -42,38 +42,38 @@ export function encryptString(plaintext: string): string {
  * @returns The decoded plaintext
  */
 export function decryptString(encoded: string): string {
-  if (!encoded) return "";
+  if (!encoded) return '';
 
   // Handle plain: prefix
-  if (encoded.startsWith("plain:")) {
+  if (encoded.startsWith('plain:')) {
     return encoded.slice(6);
   }
 
   // Handle b64: prefix (new format)
-  if (encoded.startsWith("b64:")) {
+  if (encoded.startsWith('b64:')) {
     try {
-      return Buffer.from(encoded.slice(4), "base64").toString("utf-8");
+      return Buffer.from(encoded.slice(4), 'base64').toString('utf-8');
     } catch (error) {
-      console.error("[CredentialStorage] Decoding failed:", error);
-      return "";
+      console.error('[CredentialStorage] Decoding failed:', error);
+      return '';
     }
   }
 
   // Handle enc: prefix (legacy format from safeStorage)
   // Try to decode as base64 for backward compatibility
-  if (encoded.startsWith("enc:")) {
-    console.warn("[CredentialStorage] Found legacy enc: format, attempting base64 decode");
+  if (encoded.startsWith('enc:')) {
+    console.warn('[CredentialStorage] Found legacy enc: format, attempting base64 decode');
     try {
-      return Buffer.from(encoded.slice(4), "base64").toString("utf-8");
+      return Buffer.from(encoded.slice(4), 'base64').toString('utf-8');
     } catch {
-      console.error("[CredentialStorage] Cannot decode legacy enc: format");
-      return "";
+      console.error('[CredentialStorage] Cannot decode legacy enc: format');
+      return '';
     }
   }
 
   // Legacy: no prefix means it was stored before encoding was added
   // Return as-is for backward compatibility
-  console.warn("[CredentialStorage] Found legacy unencoded value, returning as-is");
+  console.warn('[CredentialStorage] Found legacy unencoded value, returning as-is');
   return encoded;
 }
 
@@ -81,9 +81,7 @@ export function decryptString(encoded: string): string {
  * Encode credentials object
  * Only encodes sensitive fields (token)
  */
-export function encryptCredentials(
-  credentials: { token?: string } | undefined,
-): { token?: string } | undefined {
+export function encryptCredentials(credentials: { token?: string } | undefined): { token?: string } | undefined {
   if (!credentials) return undefined;
 
   return {
@@ -95,9 +93,7 @@ export function encryptCredentials(
 /**
  * Decode credentials object
  */
-export function decryptCredentials(
-  credentials: { token?: string } | undefined,
-): { token?: string } | undefined {
+export function decryptCredentials(credentials: { token?: string } | undefined): { token?: string } | undefined {
   if (!credentials) return undefined;
 
   return {

@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { BrowserWindow } from "electron";
+import { BrowserWindow } from 'electron';
 
 const UI_SCALE_DEFAULT = 1;
 const UI_SCALE_MIN = 0.8;

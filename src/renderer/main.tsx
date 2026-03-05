@@ -4,11 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React from "react";
-import Layout from "./layout";
-import Router from "./router";
-import Sider from "./sider";
-import { useAuth } from "./context/AuthContext";
+import React from 'react';
+import Layout from './layout';
+import Router from './router';
+import Sider from './sider';
+import { useAuth } from './context/AuthContext';
 
 const Main = () => {
   const { ready } = useAuth();

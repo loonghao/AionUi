@@ -4,20 +4,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { autoUpdater } from "electron-updater";
-import type { ProgressInfo, UpdateInfo } from "electron-updater";
-import log from "electron-log";
-import { EventEmitter } from "events";
+import { autoUpdater } from 'electron-updater';
+import type { ProgressInfo, UpdateInfo } from 'electron-updater';
+import log from 'electron-log';
+import { EventEmitter } from 'events';
 
 export interface AutoUpdateStatus {
-  status:
-    | "checking"
-    | "available"
-    | "not-available"
-    | "downloading"
-    | "downloaded"
-    | "error"
-    | "cancelled";
+  status: 'checking' | 'available' | 'not-available' | 'downloading' | 'downloaded' | 'error' | 'cancelled';
   version?: string;
   releaseDate?: string;
   releaseNotes?: string;
@@ -35,7 +28,7 @@ export type StatusBroadcastCallback = (status: AutoUpdateStatus) => void;
 
 /** Events emitted by AutoUpdaterService */
 export interface AutoUpdaterEvents {
-  "update-status": (status: AutoUpdateStatus) => void;
+  'update-status': (status: AutoUpdateStatus) => void;
 }
 
 class AutoUpdaterService extends EventEmitter {
@@ -50,7 +43,7 @@ class AutoUpdaterService extends EventEmitter {
     super();
     // Configure logging
     autoUpdater.logger = log;
-    (autoUpdater.logger as typeof log).transports.file.level = "info";
+    (autoUpdater.logger as typeof log).transports.file.level = 'info';
 
     // Disable auto-download for manual control
     autoUpdater.autoDownload = false;
@@ -110,10 +103,7 @@ class AutoUpdaterService extends EventEmitter {
     // Remove each registered handler from autoUpdater to prevent
     // duplicate handler accumulation across multiple initialize() calls in tests
     for (const [event, handler] of this._autoUpdaterHandlers) {
-      autoUpdater.removeListener(
-        event as Parameters<typeof autoUpdater.removeListener>[0],
-        handler as Parameters<typeof autoUpdater.removeListener>[1],
-      );
+      autoUpdater.removeListener(event as Parameters<typeof autoUpdater.removeListener>[0], handler as Parameters<typeof autoUpdater.removeListener>[1]);
     }
     this._autoUpdaterHandlers.clear();
   }
@@ -126,9 +116,7 @@ class AutoUpdaterService extends EventEmitter {
   triggerEventForTest(event: string, ...args: unknown[]): void {
     const handler = this._autoUpdaterHandlers.get(event);
     if (!handler) {
-      throw new Error(
-        `No handler registered for autoUpdater event "${event}". Did you call initialize() first?`,
-      );
+      throw new Error(`No handler registered for autoUpdater event "${event}". Did you call initialize() first?`);
     }
     handler(...args);
   }
@@ -142,7 +130,7 @@ class AutoUpdaterService extends EventEmitter {
     autoUpdater.allowPrerelease = allow;
     // When allowing prerelease, also allow downgrade for channel switching
     autoUpdater.allowDowngrade = allow;
-    log.info(`Prerelease updates ${allow ? "enabled" : "disabled"}`);
+    log.info(`Prerelease updates ${allow ? 'enabled' : 'disabled'}`);
   }
 
   /**
@@ -155,37 +143,34 @@ class AutoUpdaterService extends EventEmitter {
   private setupEventHandlers(): void {
     const register = <T extends unknown[]>(event: string, handler: (...args: T) => void) => {
       // Cast to satisfy overloaded autoUpdater.on signature
-      autoUpdater.on(
-        event as Parameters<typeof autoUpdater.on>[0],
-        handler as Parameters<typeof autoUpdater.on>[1],
-      );
+      autoUpdater.on(event as Parameters<typeof autoUpdater.on>[0], handler as Parameters<typeof autoUpdater.on>[1]);
       this._autoUpdaterHandlers.set(event, handler as (...args: unknown[]) => void);
     };
 
-    register("checking-for-update", () => {
-      log.info("Checking for updates...");
-      this.broadcastStatus({ status: "checking" });
+    register('checking-for-update', () => {
+      log.info('Checking for updates...');
+      this.broadcastStatus({ status: 'checking' });
     });
 
-    register("update-available", (info: UpdateInfo) => {
+    register('update-available', (info: UpdateInfo) => {
       log.info(`Update available: ${info.version}`);
       this.broadcastStatus({
-        status: "available",
+        status: 'available',
         version: info.version,
         releaseDate: info.releaseDate,
-        releaseNotes: typeof info.releaseNotes === "string" ? info.releaseNotes : undefined,
+        releaseNotes: typeof info.releaseNotes === 'string' ? info.releaseNotes : undefined,
       });
     });
 
-    register("update-not-available", () => {
-      log.info("Application is up to date");
-      this.broadcastStatus({ status: "not-available" });
+    register('update-not-available', () => {
+      log.info('Application is up to date');
+      this.broadcastStatus({ status: 'not-available' });
     });
 
-    register("download-progress", (progress: ProgressInfo) => {
+    register('download-progress', (progress: ProgressInfo) => {
       log.info(`Download progress: ${progress.percent.toFixed(2)}%`);
       this.broadcastStatus({
-        status: "downloading",
+        status: 'downloading',
         progress: {
           bytesPerSecond: progress.bytesPerSecond,
           percent: progress.percent,
@@ -195,18 +180,18 @@ class AutoUpdaterService extends EventEmitter {
       });
     });
 
-    register("update-downloaded", (info: UpdateInfo) => {
-      log.info("Update downloaded");
+    register('update-downloaded', (info: UpdateInfo) => {
+      log.info('Update downloaded');
       this.broadcastStatus({
-        status: "downloaded",
+        status: 'downloaded',
         version: info.version,
       });
     });
 
-    register("error", (error: Error) => {
-      log.error("Auto-updater error:", error);
+    register('error', (error: Error) => {
+      log.error('Auto-updater error:', error);
       this.broadcastStatus({
-        status: "error",
+        status: 'error',
         error: error.message,
       });
     });
@@ -217,7 +202,7 @@ class AutoUpdaterService extends EventEmitter {
    */
   private broadcastStatus(status: AutoUpdateStatus): void {
     // Emit to internal listeners (for testing and extensibility)
-    this.emit("update-status", status);
+    this.emit('update-status', status);
 
     // Call the registered callback if available
     if (this._statusBroadcastCallback) {
@@ -228,15 +213,12 @@ class AutoUpdaterService extends EventEmitter {
   async checkForUpdates(): Promise<{ success: boolean; updateInfo?: UpdateInfo; error?: string }> {
     try {
       if (!this._isInitialized) {
-        throw new Error("AutoUpdaterService not initialized");
+        throw new Error('AutoUpdaterService not initialized');
       }
 
       const result = await autoUpdater.checkForUpdates();
       if (!result) {
-        return {
-          success: false,
-          error: "checkForUpdates returned null (not packaged or dev mode)",
-        };
+        return { success: false, error: 'checkForUpdates returned null (not packaged or dev mode)' };
       }
       return {
         success: true,
@@ -244,7 +226,7 @@ class AutoUpdaterService extends EventEmitter {
       };
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      log.error("Check for updates failed:", message);
+      log.error('Check for updates failed:', message);
       return {
         success: false,
         error: message,
@@ -255,14 +237,14 @@ class AutoUpdaterService extends EventEmitter {
   async downloadUpdate(): Promise<{ success: boolean; error?: string }> {
     try {
       if (!this._isInitialized) {
-        throw new Error("AutoUpdaterService not initialized");
+        throw new Error('AutoUpdaterService not initialized');
       }
 
       await autoUpdater.downloadUpdate();
       return { success: true };
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      log.error("Download update failed:", message);
+      log.error('Download update failed:', message);
       return {
         success: false,
         error: message,
@@ -271,7 +253,7 @@ class AutoUpdaterService extends EventEmitter {
   }
 
   quitAndInstall(): void {
-    log.info("Quitting and installing update...");
+    log.info('Quitting and installing update...');
     autoUpdater.quitAndInstall(false, true);
   }
 
@@ -284,7 +266,7 @@ class AutoUpdaterService extends EventEmitter {
       autoUpdater.allowDowngrade = false;
       await autoUpdater.checkForUpdatesAndNotify();
     } catch (error) {
-      log.error("Auto-update check failed:", error);
+      log.error('Auto-update check failed:', error);
     }
   }
 }

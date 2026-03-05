@@ -4,39 +4,26 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { AcpAdapter } from "@/agent/acp/AcpAdapter";
-import { extractAtPaths, parseAllAtCommands, reconstructQuery } from "@/common/atCommandParser";
-import type { TMessage } from "@/common/chatLib";
-import type { IResponseMessage } from "@/common/ipcBridge";
-import { NavigationInterceptor } from "@/common/navigation";
-import type { SlashCommandItem } from "@/common/slash/types";
-import { uuid } from "@/common/utils";
-import type {
-  AcpBackend,
-  AcpModelInfo,
-  AcpPermissionRequest,
-  AcpResult,
-  AcpSessionUpdate,
-  AvailableCommandsUpdate,
-  ToolCallUpdate,
-} from "@/types/acpTypes";
-import { AcpErrorType, createAcpError } from "@/types/acpTypes";
-import { spawn } from "child_process";
-import { promises as fs } from "fs";
-import * as path from "path";
-import { AcpConnection } from "./AcpConnection";
-import { getEnhancedEnv, resolveNpxPath } from "@process/utils/shellEnv";
-import { AcpApprovalStore, createAcpApprovalKey } from "./ApprovalStore";
-import {
-  CLAUDE_YOLO_SESSION_MODE,
-  CODEBUDDY_YOLO_SESSION_MODE,
-  IFLOW_YOLO_SESSION_MODE,
-  QWEN_YOLO_SESSION_MODE,
-} from "./constants";
-import { getClaudeModel } from "./utils";
+import { AcpAdapter } from '@/agent/acp/AcpAdapter';
+import { extractAtPaths, parseAllAtCommands, reconstructQuery } from '@/common/atCommandParser';
+import type { TMessage } from '@/common/chatLib';
+import type { IResponseMessage } from '@/common/ipcBridge';
+import { NavigationInterceptor } from '@/common/navigation';
+import type { SlashCommandItem } from '@/common/slash/types';
+import { uuid } from '@/common/utils';
+import type { AcpBackend, AcpModelInfo, AcpPermissionRequest, AcpResult, AcpSessionUpdate, AvailableCommandsUpdate, ToolCallUpdate } from '@/types/acpTypes';
+import { AcpErrorType, createAcpError } from '@/types/acpTypes';
+import { spawn } from 'child_process';
+import { promises as fs } from 'fs';
+import * as path from 'path';
+import { AcpConnection } from './AcpConnection';
+import { getEnhancedEnv, resolveNpxPath } from '@process/utils/shellEnv';
+import { AcpApprovalStore, createAcpApprovalKey } from './ApprovalStore';
+import { CLAUDE_YOLO_SESSION_MODE, CODEBUDDY_YOLO_SESSION_MODE, IFLOW_YOLO_SESSION_MODE, QWEN_YOLO_SESSION_MODE } from './constants';
+import { getClaudeModel } from './utils';
 
 /** Enable ACP performance diagnostics via ACP_PERF=1 */
-const ACP_PERF_LOG = process.env.ACP_PERF === "1";
+const ACP_PERF_LOG = process.env.ACP_PERF === '1';
 
 /**
  * Initialize response result interface
@@ -54,7 +41,7 @@ interface InitializeResult {
  * ACP available command type - subset of SlashCommandItem for ACP protocol layer
  * ACP 可用命令类型 - SlashCommandItem 的子集，用于 ACP 协议层
  */
-export type AcpAvailableCommand = Pick<SlashCommandItem, "name" | "description" | "hint">;
+export type AcpAvailableCommand = Pick<SlashCommandItem, 'name' | 'description' | 'hint'>;
 
 /**
  * Helper function to normalize tool call status
@@ -64,16 +51,14 @@ export type AcpAvailableCommand = Pick<SlashCommandItem, "name" | "description" 
  * Only converts falsy values to 'pending', keeps all truthy values unchanged
  * 注意：保持原始行为，只将 falsy 值转换为 'pending'，保留所有 truthy 值
  */
-function normalizeToolCallStatus(
-  status: string | undefined,
-): "pending" | "in_progress" | "completed" | "failed" {
+function normalizeToolCallStatus(status: string | undefined): 'pending' | 'in_progress' | 'completed' | 'failed' {
   // Matches original: (status as any) || 'pending'
   // If falsy (undefined, null, ''), return 'pending'
   if (!status) {
-    return "pending";
+    return 'pending';
   }
   // Preserve original value for backward compatibility
-  return status as "pending" | "in_progress" | "completed" | "failed";
+  return status as 'pending' | 'in_progress' | 'completed' | 'failed';
 }
 
 export interface AcpAgentConfig {
@@ -122,10 +107,7 @@ export class AcpAgent {
   };
   private connection: AcpConnection;
   private adapter: AcpAdapter;
-  private pendingPermissions = new Map<
-    string,
-    { resolve: (response: { optionId: string }) => void; reject: (error: Error) => void }
-  >();
+  private pendingPermissions = new Map<string, { resolve: (response: { optionId: string }) => void; reject: (error: Error) => void }>();
   private statusMessageId: string | null = null;
   private readonly onStreamEvent: (data: IResponseMessage) => void;
   private readonly onSignalEvent?: (data: IResponseMessage) => void;
@@ -151,10 +133,7 @@ export class AcpAgent {
   private pendingModelSwitchNotice: string | null = null;
 
   // Store permission request metadata for later use in confirmMessage
-  private permissionRequestMeta = new Map<
-    string,
-    { kind?: string; title?: string; rawInput?: Record<string, unknown> }
-  >();
+  private permissionRequestMeta = new Map<string, { kind?: string; title?: string; rawInput?: Record<string, unknown> }>();
 
   constructor(config: AcpAgentConfig) {
     this.id = config.id;
@@ -213,11 +192,7 @@ export class AcpAgent {
    * Delegates to NavigationInterceptor for unified logic
    */
   // eslint-disable-next-line max-len
-  private extractNavigationUrl(toolCall: {
-    rawInput?: Record<string, unknown>;
-    content?: Array<{ type?: string; content?: { type?: string; text?: string }; text?: string }>;
-    title?: string;
-  }): string | null {
+  private extractNavigationUrl(toolCall: { rawInput?: Record<string, unknown>; content?: Array<{ type?: string; content?: { type?: string; text?: string }; text?: string }>; title?: string }): string | null {
     return NavigationInterceptor.extractUrl(toolCall);
   }
 
@@ -234,52 +209,35 @@ export class AcpAgent {
   async start(): Promise<void> {
     const startTotal = Date.now();
     try {
-      this.emitStatusMessage("connecting");
+      this.emitStatusMessage('connecting');
 
       let connectTimeoutId: NodeJS.Timeout | null = null;
       const connectTimeoutPromise = new Promise<never>((_, reject) => {
-        connectTimeoutId = setTimeout(
-          () => reject(new Error("Connection timeout after 70 seconds")),
-          70000,
-        );
+        connectTimeoutId = setTimeout(() => reject(new Error('Connection timeout after 70 seconds')), 70000);
       });
 
       const connectStart = Date.now();
       try {
-        await Promise.race([
-          this.connection.connect(
-            this.extra.backend,
-            this.extra.cliPath,
-            this.extra.workspace,
-            this.extra.customArgs,
-            this.extra.customEnv,
-          ),
-          connectTimeoutPromise,
-        ]);
+        await Promise.race([this.connection.connect(this.extra.backend, this.extra.cliPath, this.extra.workspace, this.extra.customArgs, this.extra.customEnv), connectTimeoutPromise]);
       } finally {
         if (connectTimeoutId) {
           clearTimeout(connectTimeoutId);
         }
       }
-      if (ACP_PERF_LOG)
-        console.log(
-          `[ACP-PERF] start: connection.connect() completed ${Date.now() - connectStart}ms`,
-        );
+      if (ACP_PERF_LOG) console.log(`[ACP-PERF] start: connection.connect() completed ${Date.now() - connectStart}ms`);
 
-      this.emitStatusMessage("connected");
+      this.emitStatusMessage('connected');
 
       const authStart = Date.now();
       await this.performAuthentication();
-      if (ACP_PERF_LOG)
-        console.log(`[ACP-PERF] start: authentication completed ${Date.now() - authStart}ms`);
+      if (ACP_PERF_LOG) console.log(`[ACP-PERF] start: authentication completed ${Date.now() - authStart}ms`);
 
       // 避免重复创建会话：仅当尚无活动会话时再创建
       // Create new session or resume existing one (if ACP backend supports it)
       if (!this.connection.hasActiveSession) {
         const sessionStart = Date.now();
         await this.createOrResumeSession();
-        if (ACP_PERF_LOG)
-          console.log(`[ACP-PERF] start: session created ${Date.now() - sessionStart}ms`);
+        if (ACP_PERF_LOG) console.log(`[ACP-PERF] start: session created ${Date.now() - sessionStart}ms`);
       }
 
       // YOLO mode: bypass all permission checks for supported backends
@@ -295,13 +253,10 @@ export class AcpAgent {
           try {
             const modeStart = Date.now();
             await this.connection.setSessionMode(sessionMode);
-            if (ACP_PERF_LOG)
-              console.log(`[ACP-PERF] start: session mode set ${Date.now() - modeStart}ms`);
+            if (ACP_PERF_LOG) console.log(`[ACP-PERF] start: session mode set ${Date.now() - modeStart}ms`);
           } catch (error) {
             const errorMessage = error instanceof Error ? error.message : String(error);
-            throw new Error(
-              `[ACP] Failed to enable ${this.extra.backend} YOLO mode (${sessionMode}): ${errorMessage}`,
-            );
+            throw new Error(`[ACP] Failed to enable ${this.extra.backend} YOLO mode (${sessionMode}): ${errorMessage}`);
           }
         }
       }
@@ -310,14 +265,13 @@ export class AcpAgent {
       // claude-agent-acp may default to a region-mismatched Bedrock model;
       // explicitly setting the model from settings ensures correctness.
       // Uses session/set_model (direct CLI control) for consistency with runtime switching.
-      if (this.extra.backend === "claude") {
+      if (this.extra.backend === 'claude') {
         const configuredModel = getClaudeModel();
         if (configuredModel) {
           try {
             const modelStart = Date.now();
             await this.connection.setModel(configuredModel);
-            if (ACP_PERF_LOG)
-              console.log(`[ACP-PERF] start: model set ${Date.now() - modelStart}ms`);
+            if (ACP_PERF_LOG) console.log(`[ACP-PERF] start: model set ${Date.now() - modelStart}ms`);
           } catch (error) {
             const errMsg = error instanceof Error ? error.message : String(error);
             console.warn(`[ACP] Failed to set model from settings: ${errMsg}`);
@@ -325,13 +279,8 @@ export class AcpAgent {
             // These services route by model name and may not have channels configured for
             // specific model IDs like "claude-sonnet-4-6". Emit a visible warning so the
             // user knows to update their relay's model configuration.
-            if (errMsg.includes("model_not_found") || errMsg.includes("无可用渠道")) {
-              this.emitErrorMessage(
-                `Model "${configuredModel}" is not available on your API relay service. ` +
-                  `Please add this model to your relay's channel configuration, ` +
-                  `or update ANTHROPIC_MODEL in ~/.claude/settings.json to a supported model name. ` +
-                  `Falling back to the relay's default model.`,
-              );
+            if (errMsg.includes('model_not_found') || errMsg.includes('无可用渠道')) {
+              this.emitErrorMessage(`Model "${configuredModel}" is not available on your API relay service. ` + `Please add this model to your relay's channel configuration, ` + `or update ANTHROPIC_MODEL in ~/.claude/settings.json to a supported model name. ` + `Falling back to the relay's default model.`);
             }
           }
         }
@@ -340,11 +289,11 @@ export class AcpAgent {
       // Emit initial model info after session setup completes
       this.emitModelInfo();
 
-      this.emitStatusMessage("session_active");
+      this.emitStatusMessage('session_active');
       if (ACP_PERF_LOG) console.log(`[ACP-PERF] start: total ${Date.now() - startTotal}ms`);
     } catch (error) {
       if (ACP_PERF_LOG) console.log(`[ACP-PERF] start: failed after ${Date.now() - startTotal}ms`);
-      this.emitStatusMessage("error");
+      this.emitStatusMessage('error');
       throw error;
     }
   }
@@ -378,22 +327,16 @@ export class AcpAgent {
     // Try stable API first: configOptions with category 'model'
     const configOptions = this.connection.getConfigOptions();
     if (configOptions) {
-      const modelOption = configOptions.find((opt) => opt.category === "model");
-      if (modelOption && modelOption.type === "select" && modelOption.options) {
+      const modelOption = configOptions.find((opt) => opt.category === 'model');
+      if (modelOption && modelOption.type === 'select' && modelOption.options) {
         // Support both currentValue (ACP spec) and selectedValue (some agents)
         const activeValue = modelOption.currentValue || modelOption.selectedValue || null;
         return {
           currentModelId: activeValue,
-          currentModelLabel:
-            modelOption.options.find((o) => o.value === activeValue)?.name ||
-            modelOption.options.find((o) => o.value === activeValue)?.label ||
-            activeValue,
-          availableModels: modelOption.options.map((o) => ({
-            id: o.value,
-            label: o.name || o.label || o.value,
-          })),
+          currentModelLabel: modelOption.options.find((o) => o.value === activeValue)?.name || modelOption.options.find((o) => o.value === activeValue)?.label || activeValue,
+          availableModels: modelOption.options.map((o) => ({ id: o.value, label: o.name || o.label || o.value })),
           canSwitch: modelOption.options.length > 1,
-          source: "configOption",
+          source: 'configOption',
           configOptionId: modelOption.id,
         };
       }
@@ -404,19 +347,13 @@ export class AcpAgent {
     if (models) {
       const available = models.availableModels || [];
       // Support both 'id' (spec) and 'modelId' (OpenCode) field names
-      const getModelId = (m: (typeof available)[0]) => m.id || m.modelId || "";
+      const getModelId = (m: (typeof available)[0]) => m.id || m.modelId || '';
       return {
         currentModelId: models.currentModelId || null,
-        currentModelLabel:
-          available.find((m) => getModelId(m) === models.currentModelId)?.name ||
-          models.currentModelId ||
-          null,
-        availableModels: available.map((m) => ({
-          id: getModelId(m),
-          label: m.name || getModelId(m),
-        })),
+        currentModelLabel: available.find((m) => getModelId(m) === models.currentModelId)?.name || models.currentModelId || null,
+        availableModels: available.map((m) => ({ id: getModelId(m), label: m.name || getModelId(m) })),
         canSwitch: available.length > 1,
-        source: "models",
+        source: 'models',
       };
     }
 
@@ -438,7 +375,7 @@ export class AcpAgent {
   async setModelByConfigOption(modelId: string): Promise<AcpModelInfo | null> {
     const modelInfo = this.getModelInfo();
     if (!modelInfo) {
-      throw new Error("No model info available");
+      throw new Error('No model info available');
     }
 
     // Always use session/set_model for direct CLI control.
@@ -448,7 +385,7 @@ export class AcpAgent {
       await this.connection.setModel(modelId);
     } catch (setModelError) {
       // Fallback to set_config_option if set_model is not supported
-      if (modelInfo.source === "configOption" && modelInfo.configOptionId) {
+      if (modelInfo.source === 'configOption' && modelInfo.configOptionId) {
         await this.connection.setConfigOption(modelInfo.configOptionId, modelId);
       } else {
         throw setModelError;
@@ -474,7 +411,7 @@ export class AcpAgent {
     const modelInfo = this.getModelInfo();
     if (modelInfo) {
       this.onStreamEvent({
-        type: "acp_model_info",
+        type: 'acp_model_info',
         conversation_id: this.id,
         msg_id: uuid(),
         data: modelInfo,
@@ -484,13 +421,13 @@ export class AcpAgent {
 
   async stop(): Promise<void> {
     await this.connection.disconnect();
-    this.emitStatusMessage("disconnected");
+    this.emitStatusMessage('disconnected');
     // Clear session-scoped caches when session ends
     this.approvalStore.clear();
     this.permissionRequestMeta.clear();
     // Emit finish event to reset frontend UI state
     this.onStreamEvent({
-      type: "finish",
+      type: 'finish',
       conversation_id: this.id,
       msg_id: uuid(),
       data: null,
@@ -498,11 +435,7 @@ export class AcpAgent {
   }
 
   // 发送消息到ACP服务器
-  async sendMessage(data: {
-    content: string;
-    files?: string[];
-    msg_id?: string;
-  }): Promise<AcpResult> {
+  async sendMessage(data: { content: string; files?: string[]; msg_id?: string }): Promise<AcpResult> {
     const sendStart = Date.now();
     try {
       // Auto-reconnect if connection is lost (e.g., after unexpected process exit)
@@ -510,29 +443,20 @@ export class AcpAgent {
         const reconnectStart = Date.now();
         try {
           await this.start();
-          if (ACP_PERF_LOG)
-            console.log(
-              `[ACP-PERF] send: auto-reconnect completed ${Date.now() - reconnectStart}ms`,
-            );
+          if (ACP_PERF_LOG) console.log(`[ACP-PERF] send: auto-reconnect completed ${Date.now() - reconnectStart}ms`);
         } catch (reconnectError) {
-          if (ACP_PERF_LOG)
-            console.log(`[ACP-PERF] send: auto-reconnect failed ${Date.now() - reconnectStart}ms`);
-          const errorMsg =
-            reconnectError instanceof Error ? reconnectError.message : String(reconnectError);
+          if (ACP_PERF_LOG) console.log(`[ACP-PERF] send: auto-reconnect failed ${Date.now() - reconnectStart}ms`);
+          const errorMsg = reconnectError instanceof Error ? reconnectError.message : String(reconnectError);
           return {
             success: false,
-            error: createAcpError(
-              AcpErrorType.CONNECTION_NOT_READY,
-              `Failed to reconnect: ${errorMsg}`,
-              true,
-            ),
+            error: createAcpError(AcpErrorType.CONNECTION_NOT_READY, `Failed to reconnect: ${errorMsg}`, true),
           };
         }
       }
 
       // Emit start event to set frontend loading state
       this.onStreamEvent({
-        type: "start",
+        type: 'start',
         conversation_id: this.id,
         msg_id: data.msg_id || uuid(),
         data: null,
@@ -550,14 +474,14 @@ export class AcpAgent {
             // Use full path instead of just filename
             // Escape paths with spaces using quotes for Claude CLI
             // 对含空格的路径使用引号包裹，确保 Claude CLI 正确解析
-            if (filePath.includes(" ")) {
+            if (filePath.includes(' ')) {
               return `@"${filePath}"`;
             }
-            return "@" + filePath;
+            return '@' + filePath;
           })
-          .join(" ");
+          .join(' ');
         // Prepend file references to the content
-        processedContent = fileRefs + " " + processedContent;
+        processedContent = fileRefs + ' ' + processedContent;
       }
 
       // Process @ file references in the message
@@ -566,8 +490,7 @@ export class AcpAgent {
       processedContent = await this.processAtFileReferences(processedContent, data.files);
       const atFileDuration = Date.now() - atFileStart;
       if (atFileDuration > 10) {
-        if (ACP_PERF_LOG)
-          console.log(`[ACP-PERF] send: @file references processed ${atFileDuration}ms`);
+        if (ACP_PERF_LOG) console.log(`[ACP-PERF] send: @file references processed ${atFileDuration}ms`);
       }
 
       // Re-assert model override before sending prompt.
@@ -580,9 +503,7 @@ export class AcpAgent {
           try {
             await this.connection.setModel(expected);
           } catch (err) {
-            console.warn(
-              `[ACP] Pre-prompt model re-assert failed: ${err instanceof Error ? err.message : String(err)}`,
-            );
+            console.warn(`[ACP] Pre-prompt model re-assert failed: ${err instanceof Error ? err.message : String(err)}`);
           }
         }
       }
@@ -590,36 +511,24 @@ export class AcpAgent {
       // Inject model switch notice for Claude backend.
       // In terminal, "/model X" output appears in conversation so the AI knows about
       // the switch. In ACP mode set_model is silent, so we prepend an equivalent notice.
-      if (this.pendingModelSwitchNotice && this.extra.backend === "claude") {
-        const modelNotice =
-          `<system-reminder>\n` +
-          `Model switch: The active model has been changed to ${this.pendingModelSwitchNotice} via the /model command. ` +
-          `You are now running as ${this.pendingModelSwitchNotice}. ` +
-          `The ANTHROPIC_MODEL environment variable and the earlier "You are powered by" text in the system prompt are stale (cached from session start) and no longer reflect the actual model. ` +
-          `When asked which model you are, answer ${this.pendingModelSwitchNotice}.\n` +
-          `</system-reminder>\n\n`;
+      if (this.pendingModelSwitchNotice && this.extra.backend === 'claude') {
+        const modelNotice = `<system-reminder>\n` + `Model switch: The active model has been changed to ${this.pendingModelSwitchNotice} via the /model command. ` + `You are now running as ${this.pendingModelSwitchNotice}. ` + `The ANTHROPIC_MODEL environment variable and the earlier "You are powered by" text in the system prompt are stale (cached from session start) and no longer reflect the actual model. ` + `When asked which model you are, answer ${this.pendingModelSwitchNotice}.\n` + `</system-reminder>\n\n`;
         processedContent = modelNotice + processedContent;
         this.pendingModelSwitchNotice = null;
       }
 
       const promptStart = Date.now();
       await this.connection.sendPrompt(processedContent);
-      if (ACP_PERF_LOG)
-        console.log(
-          `[ACP-PERF] send: sendPrompt completed ${Date.now() - promptStart}ms (total send: ${Date.now() - sendStart}ms)`,
-        );
+      if (ACP_PERF_LOG) console.log(`[ACP-PERF] send: sendPrompt completed ${Date.now() - promptStart}ms (total send: ${Date.now() - sendStart}ms)`);
 
       this.statusMessageId = null;
       return { success: true, data: null };
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error);
       // Special handling for Internal error
-      if (errorMsg.includes("Internal error")) {
-        if (this.extra.backend === "qwen") {
-          const enhancedMsg =
-            `Qwen ACP Internal Error: This usually means authentication failed or ` +
-            `the Qwen CLI has compatibility issues. Please try: 1) Restart the application ` +
-            `2) Use 'npx @qwen-code/qwen-code' instead of global qwen 3) Check if you have valid Qwen credentials.`;
+      if (errorMsg.includes('Internal error')) {
+        if (this.extra.backend === 'qwen') {
+          const enhancedMsg = `Qwen ACP Internal Error: This usually means authentication failed or ` + `the Qwen CLI has compatibility issues. Please try: 1) Restart the application ` + `2) Use 'npx @qwen-code/qwen-code' instead of global qwen 3) Check if you have valid Qwen credentials.`;
           this.emitErrorMessage(enhancedMsg);
           return {
             success: false,
@@ -631,24 +540,16 @@ export class AcpAgent {
       let errorType: AcpErrorType = AcpErrorType.UNKNOWN;
       let retryable = false;
 
-      if (
-        errorMsg.includes("authentication") ||
-        errorMsg.includes("认证失败") ||
-        errorMsg.includes("[ACP-AUTH-")
-      ) {
+      if (errorMsg.includes('authentication') || errorMsg.includes('认证失败') || errorMsg.includes('[ACP-AUTH-')) {
         errorType = AcpErrorType.AUTHENTICATION_FAILED;
         retryable = false;
-      } else if (
-        errorMsg.includes("timeout") ||
-        errorMsg.includes("Timeout") ||
-        errorMsg.includes("timed out")
-      ) {
+      } else if (errorMsg.includes('timeout') || errorMsg.includes('Timeout') || errorMsg.includes('timed out')) {
         errorType = AcpErrorType.TIMEOUT;
         retryable = true;
-      } else if (errorMsg.includes("permission") || errorMsg.includes("Permission")) {
+      } else if (errorMsg.includes('permission') || errorMsg.includes('Permission')) {
         errorType = AcpErrorType.PERMISSION_DENIED;
         retryable = false;
-      } else if (errorMsg.includes("connection") || errorMsg.includes("Connection")) {
+      } else if (errorMsg.includes('connection') || errorMsg.includes('Connection')) {
         errorType = AcpErrorType.NETWORK_ERROR;
         retryable = true;
       }
@@ -669,10 +570,7 @@ export class AcpAgent {
    * reads their content, and appends it to the message.
    * 此方法解析工作区中的 @ 引用，读取文件内容并附加到消息中。
    */
-  private async processAtFileReferences(
-    content: string,
-    uploadedFiles?: string[],
-  ): Promise<string> {
+  private async processAtFileReferences(content: string, uploadedFiles?: string[]): Promise<string> {
     const workspace = this.extra.workspace;
     if (!workspace) {
       return content;
@@ -726,7 +624,7 @@ export class AcpAgent {
       if (resolvedPath) {
         try {
           // Try to read as text file
-          const fileContent = await fs.readFile(resolvedPath, "utf-8");
+          const fileContent = await fs.readFile(resolvedPath, 'utf-8');
           resolvedFiles.set(atPath, fileContent);
         } catch (error) {
           // Binary files (images, etc.) cannot be read as text
@@ -746,24 +644,24 @@ export class AcpAgent {
     const reconstructedQuery = reconstructQuery(parts, (atPath) => {
       // Remove duplicate filename references (when full path already exists)
       if (referencesToRemove.has(atPath)) {
-        return "";
+        return '';
       }
       if (resolvedFiles.has(atPath)) {
         // Replace with just the filename (without @) as the reference
         return atPath;
       }
       // Keep unresolved @ references as-is
-      return "@" + atPath;
+      return '@' + atPath;
     });
 
     // Append file contents at the end of the message
     let result = reconstructedQuery;
     if (resolvedFiles.size > 0) {
-      result += "\n\n--- Referenced file contents ---";
+      result += '\n\n--- Referenced file contents ---';
       for (const [atPath, fileContent] of resolvedFiles) {
         result += `\n\n[Content of ${atPath}]:\n${fileContent}`;
       }
-      result += "\n--- End of file contents ---";
+      result += '\n--- End of file contents ---';
     }
 
     return result;
@@ -801,11 +699,7 @@ export class AcpAgent {
    * Simple file search in workspace (non-recursive for performance)
    * 在工作区中简单搜索文件（非递归以保证性能）
    */
-  private async findFileInWorkspace(
-    workspace: string,
-    fileName: string,
-    maxDepth: number = 3,
-  ): Promise<string | null> {
+  private async findFileInWorkspace(workspace: string, fileName: string, maxDepth: number = 3): Promise<string | null> {
     const searchDir = async (dir: string, depth: number): Promise<string | null> => {
       if (depth > maxDepth) return null;
 
@@ -816,7 +710,7 @@ export class AcpAgent {
           if (entry.isFile() && entry.name === fileName) {
             return fullPath;
           }
-          if (entry.isDirectory() && !entry.name.startsWith(".") && entry.name !== "node_modules") {
+          if (entry.isDirectory() && !entry.name.startsWith('.') && entry.name !== 'node_modules') {
             const found = await searchDir(fullPath, depth + 1);
             if (found) return found;
           }
@@ -838,7 +732,7 @@ export class AcpAgent {
 
         // Store "allow_always" decision to ApprovalStore for future auto-approval
         // Workaround for claude-agent-acp bug: it returns updatedPermissions but doesn't check suggestions
-        if (data.confirmKey === "allow_always") {
+        if (data.confirmKey === 'allow_always') {
           const meta = this.permissionRequestMeta.get(data.callId);
           if (meta) {
             const approvalKey = createAcpApprovalKey({
@@ -846,7 +740,7 @@ export class AcpAgent {
               title: meta.title,
               rawInput: meta.rawInput,
             });
-            this.approvalStore.put(approvalKey, "allow_always");
+            this.approvalStore.put(approvalKey, 'allow_always');
           }
         }
 
@@ -858,11 +752,7 @@ export class AcpAgent {
       }
       return Promise.resolve({
         success: false,
-        error: createAcpError(
-          AcpErrorType.UNKNOWN,
-          `Permission request not found for callId: ${data.callId}`,
-          false,
-        ),
+        error: createAcpError(AcpErrorType.UNKNOWN, `Permission request not found for callId: ${data.callId}`, false),
       });
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error);
@@ -875,13 +765,13 @@ export class AcpAgent {
 
   private handleSessionUpdate(data: AcpSessionUpdate): void {
     try {
-      if (data.update?.sessionUpdate === "available_commands_update") {
+      if (data.update?.sessionUpdate === 'available_commands_update') {
         const commandUpdate = data as AvailableCommandsUpdate;
         const commands: AcpAvailableCommand[] = [];
         for (const command of commandUpdate.update?.availableCommands || []) {
           const name = command.name?.trim();
           if (!name) continue;
-          const description = (command.description || command.name || "").trim();
+          const description = (command.description || command.name || '').trim();
           commands.push({
             name,
             description: description || name,
@@ -893,9 +783,9 @@ export class AcpAgent {
 
       // Intercept chrome-devtools navigation tools from session updates
       // 从会话更新中拦截 chrome-devtools 导航工具
-      if (data.update?.sessionUpdate === "tool_call") {
+      if (data.update?.sessionUpdate === 'tool_call') {
         const toolCallUpdate = data as ToolCallUpdate;
-        const toolName = toolCallUpdate.update?.title || "";
+        const toolName = toolCallUpdate.update?.title || '';
         const toolCallId = toolCallUpdate.update?.toolCallId;
         if (this.isNavigationTool(toolName)) {
           // Track this navigation tool call for result interception
@@ -914,20 +804,20 @@ export class AcpAgent {
 
       // Intercept tool_call_update to extract URL from navigation tool results
       // 拦截 tool_call_update 以从导航工具结果中提取 URL
-      if (data.update?.sessionUpdate === "tool_call_update") {
-        const statusUpdate = data as import("@/types/acpTypes").ToolCallUpdateStatus;
+      if (data.update?.sessionUpdate === 'tool_call_update') {
+        const statusUpdate = data as import('@/types/acpTypes').ToolCallUpdateStatus;
         const toolCallId = statusUpdate.update?.toolCallId;
         if (toolCallId && this.pendingNavigationTools.has(toolCallId)) {
           // This is a result for a tracked navigation tool
           // 这是已跟踪的导航工具的结果
-          if (statusUpdate.update?.status === "completed" && statusUpdate.update?.content) {
+          if (statusUpdate.update?.status === 'completed' && statusUpdate.update?.content) {
             // Try to extract URL from the result content
             // 尝试从结果内容中提取 URL
             for (const item of statusUpdate.update.content) {
-              const text = item.content?.text || "";
+              const text = item.content?.text || '';
               const urlMatch = text.match(/https?:\/\/[^\s<>"]+/i);
               if (urlMatch) {
-                this.handleInterceptedNavigation(urlMatch[0], "navigate_page");
+                this.handleInterceptedNavigation(urlMatch[0], 'navigate_page');
                 break;
               }
             }
@@ -939,7 +829,7 @@ export class AcpAgent {
       }
 
       // Emit updated model info when config_option_update arrives
-      if (data.update?.sessionUpdate === "config_option_update") {
+      if (data.update?.sessionUpdate === 'config_option_update') {
         this.emitModelInfo();
       }
 
@@ -951,9 +841,7 @@ export class AcpAgent {
         this.emitMessage(message);
       }
     } catch (error) {
-      this.emitErrorMessage(
-        `Failed to process session update: ${error instanceof Error ? error.message : String(error)}`,
-      );
+      this.emitErrorMessage(`Failed to process session update: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 
@@ -971,7 +859,7 @@ export class AcpAgent {
       const approvalKey = createAcpApprovalKey(data.toolCall);
       if (this.approvalStore.isApprovedForSession(approvalKey)) {
         // Auto-approve without showing dialog - no metadata storage needed
-        resolve({ optionId: "allow_always" });
+        resolve({ optionId: 'allow_always' });
         return;
       }
 
@@ -992,7 +880,7 @@ export class AcpAgent {
       // 拦截 chrome-devtools 导航工具，在预览面板中显示
       // Note: We only emit preview_open event, do NOT block tool execution
       // 注意：只发送 preview_open 事件，不阻止工具执行，agent 需要 chrome-devtools 获取网页内容
-      const toolName = data.toolCall?.title || "";
+      const toolName = data.toolCall?.title || '';
       if (this.isNavigationTool(toolName)) {
         const url = this.extractNavigationUrl(data.toolCall);
         if (url) {
@@ -1010,7 +898,7 @@ export class AcpAgent {
         // 如果是重复请求，先清理旧的
         const oldRequest = this.pendingPermissions.get(requestId);
         if (oldRequest) {
-          oldRequest.reject(new Error("Replaced by new permission request"));
+          oldRequest.reject(new Error('Replaced by new permission request'));
         }
         this.pendingPermissions.delete(requestId);
       }
@@ -1029,7 +917,7 @@ export class AcpAgent {
       setTimeout(() => {
         if (this.pendingPermissions.has(requestId)) {
           this.pendingPermissions.delete(requestId);
-          reject(new Error("Permission request timed out"));
+          reject(new Error('Permission request timed out'));
         }
       }, 70000);
     });
@@ -1039,7 +927,7 @@ export class AcpAgent {
     // 使用信号回调发送 end_turn 事件，不添加到消息列表
     if (this.onSignalEvent) {
       this.onSignalEvent({
-        type: "finish",
+        type: 'finish',
         conversation_id: this.id,
         msg_id: uuid(),
         data: null,
@@ -1053,19 +941,16 @@ export class AcpAgent {
    */
   private handleDisconnect(error: { code: number | null; signal: NodeJS.Signals | null }): void {
     // 1. Emit disconnected status to frontend
-    this.emitStatusMessage("disconnected");
+    this.emitStatusMessage('disconnected');
 
     // 2. Emit error message with helpful information
-    const errorMsg =
-      `${this.extra.backend} process disconnected unexpectedly ` +
-      `(code: ${error.code}, signal: ${error.signal}). ` +
-      `Please try sending a new message to reconnect.`;
+    const errorMsg = `${this.extra.backend} process disconnected unexpectedly ` + `(code: ${error.code}, signal: ${error.signal}). ` + `Please try sending a new message to reconnect.`;
     this.emitErrorMessage(errorMsg);
 
     // 3. Emit finish signal to reset UI loading state
     if (this.onSignalEvent) {
       this.onSignalEvent({
-        type: "finish",
+        type: 'finish',
         conversation_id: this.id,
         msg_id: uuid(),
         data: null,
@@ -1080,18 +965,13 @@ export class AcpAgent {
     this.statusMessageId = null;
   }
 
-  private handleFileOperation(operation: {
-    method: string;
-    path: string;
-    content?: string;
-    sessionId: string;
-  }): void {
+  private handleFileOperation(operation: { method: string; path: string; content?: string; sessionId: string }): void {
     // 创建文件操作消息显示在UI中
     const fileOperationMessage: TMessage = {
       id: uuid(),
       conversation_id: this.id,
-      type: "text",
-      position: "left",
+      type: 'text',
+      position: 'left',
       createdAt: Date.now(),
       content: {
         content: this.formatFileOperationMessage(operation),
@@ -1101,33 +981,20 @@ export class AcpAgent {
     this.emitMessage(fileOperationMessage);
   }
 
-  private formatFileOperationMessage(operation: {
-    method: string;
-    path: string;
-    content?: string;
-    sessionId: string;
-  }): string {
+  private formatFileOperationMessage(operation: { method: string; path: string; content?: string; sessionId: string }): string {
     switch (operation.method) {
-      case "fs/write_text_file": {
-        const content = operation.content || "";
+      case 'fs/write_text_file': {
+        const content = operation.content || '';
         return `📝 File written: \`${operation.path}\`\n\n\`\`\`\n${content}\n\`\`\``;
       }
-      case "fs/read_text_file":
+      case 'fs/read_text_file':
         return `📖 File read: \`${operation.path}\``;
       default:
         return `🔧 File operation: \`${operation.path}\``;
     }
   }
 
-  private emitStatusMessage(
-    status:
-      | "connecting"
-      | "connected"
-      | "authenticated"
-      | "session_active"
-      | "disconnected"
-      | "error",
-  ): void {
+  private emitStatusMessage(status: 'connecting' | 'connected' | 'authenticated' | 'session_active' | 'disconnected' | 'error'): void {
     // Use fixed ID for status messages so they update instead of duplicate
     if (!this.statusMessageId) {
       this.statusMessageId = uuid();
@@ -1137,8 +1004,8 @@ export class AcpAgent {
       id: this.statusMessageId,
       msg_id: this.statusMessageId,
       conversation_id: this.id,
-      type: "agent_status",
-      position: "center",
+      type: 'agent_status',
+      position: 'center',
       createdAt: Date.now(),
       content: {
         backend: this.extra.backend,
@@ -1154,26 +1021,26 @@ export class AcpAgent {
     // 这样后续的 tool_call_update 事件就能找到对应的 tool call 了
     if (data.toolCall) {
       // 将权限请求中的 kind 映射到正确的类型
-      const mapKindToValidType = (kind?: string): "read" | "edit" | "execute" => {
+      const mapKindToValidType = (kind?: string): 'read' | 'edit' | 'execute' => {
         switch (kind) {
-          case "read":
-            return "read";
-          case "edit":
-            return "edit";
-          case "execute":
-            return "execute";
+          case 'read':
+            return 'read';
+          case 'edit':
+            return 'edit';
+          case 'execute':
+            return 'execute';
           default:
-            return "execute"; // 默认为 execute
+            return 'execute'; // 默认为 execute
         }
       };
 
       const toolCallUpdate: ToolCallUpdate = {
         sessionId: data.sessionId,
         update: {
-          sessionUpdate: "tool_call" as const,
+          sessionUpdate: 'tool_call' as const,
           toolCallId: data.toolCall.toolCallId,
           status: normalizeToolCallStatus(data.toolCall.status),
-          title: data.toolCall.title || "Tool Call",
+          title: data.toolCall.title || 'Tool Call',
           kind: mapKindToValidType(data.toolCall.kind),
           content: data.toolCall.content || [],
           locations: data.toolCall.locations || [],
@@ -1188,7 +1055,7 @@ export class AcpAgent {
     // Permission request 是临时交互消息，一旦用户做出选择就失去意义
     if (this.onSignalEvent) {
       this.onSignalEvent({
-        type: "acp_permission",
+        type: 'acp_permission',
         conversation_id: this.id,
         msg_id: uuid(),
         data: data,
@@ -1200,12 +1067,12 @@ export class AcpAgent {
     const errorMessage: TMessage = {
       id: uuid(),
       conversation_id: this.id,
-      type: "tips",
-      position: "center",
+      type: 'tips',
+      position: 'center',
       createdAt: Date.now(),
       content: {
         content: error,
-        type: "error",
+        type: 'error',
       },
     };
 
@@ -1213,7 +1080,7 @@ export class AcpAgent {
   }
 
   private extractThoughtSubject(content: string): string {
-    const lines = content.split("\n");
+    const lines = content.split('\n');
     const firstLine = lines[0].trim();
 
     // Try to extract subject from **Subject** format
@@ -1223,23 +1090,23 @@ export class AcpAgent {
     }
 
     // Use first line as subject if it looks like a title
-    if (firstLine.length < 80 && !firstLine.endsWith(".")) {
+    if (firstLine.length < 80 && !firstLine.endsWith('.')) {
       return firstLine;
     }
 
     // Extract first sentence as subject
-    const firstSentence = content.split(".")[0];
+    const firstSentence = content.split('.')[0];
     if (firstSentence.length < 100) {
       return firstSentence;
     }
 
-    return "Thinking";
+    return 'Thinking';
   }
 
   private emitMessage(message: TMessage): void {
     // Create response message based on the message type, following GeminiAgentTask pattern
     const responseMessage: IResponseMessage = {
-      type: "", // Will be set in switch statement
+      type: '', // Will be set in switch statement
       data: null, // Will be set in switch statement
       conversation_id: this.id,
       msg_id: message.msg_id || message.id, // 使用消息自己的 msg_id
@@ -1247,60 +1114,59 @@ export class AcpAgent {
 
     // Map TMessage types to backend response types
     switch (message.type) {
-      case "text":
-        responseMessage.type = "content";
+      case 'text':
+        responseMessage.type = 'content';
         responseMessage.data = message.content.content;
         break;
-      case "agent_status":
-        responseMessage.type = "agent_status";
+      case 'agent_status':
+        responseMessage.type = 'agent_status';
         responseMessage.data = message.content;
         break;
-      case "acp_permission":
-        responseMessage.type = "acp_permission";
+      case 'acp_permission':
+        responseMessage.type = 'acp_permission';
         responseMessage.data = message.content;
         break;
-      case "tips":
+      case 'tips':
         // Distinguish between thought messages and error messages
-        if (message.content.type === "warning" && message.position === "center") {
+        if (message.content.type === 'warning' && message.position === 'center') {
           const subject = this.extractThoughtSubject(message.content.content);
 
-          responseMessage.type = "thought";
+          responseMessage.type = 'thought';
           responseMessage.data = {
             subject,
             description: message.content.content,
           };
         } else {
-          responseMessage.type = "error";
+          responseMessage.type = 'error';
           responseMessage.data = message.content.content;
         }
         break;
-      case "acp_tool_call": {
-        responseMessage.type = "acp_tool_call";
+      case 'acp_tool_call': {
+        responseMessage.type = 'acp_tool_call';
         responseMessage.data = message.content;
         break;
       }
-      case "plan":
+      case 'plan':
         {
-          responseMessage.type = "plan";
+          responseMessage.type = 'plan';
           responseMessage.data = message.content;
         }
         break;
       // Disabled: available_commands messages are too noisy and distracting in the chat UI
-      case "available_commands":
+      case 'available_commands':
         return;
       default:
-        responseMessage.type = "content";
-        responseMessage.data =
-          typeof message.content === "string" ? message.content : JSON.stringify(message.content);
+        responseMessage.type = 'content';
+        responseMessage.data = typeof message.content === 'string' ? message.content : JSON.stringify(message.content);
     }
     this.onStreamEvent(responseMessage);
   }
 
   postMessagePromise(action: string, data: unknown): Promise<AcpResult | void> {
     switch (action) {
-      case "send.message":
+      case 'send.message':
         return this.sendMessage(data as { content: string; files?: string[]; msg_id?: string });
-      case "stop.stream":
+      case 'stop.stream':
         return this.stop();
       default:
         return Promise.reject(new Error(`Unknown action: ${action}`));
@@ -1345,10 +1211,7 @@ export class AcpAgent {
         }
         return;
       } catch (resumeError) {
-        console.warn(
-          `[AcpAgent] Failed to resume session ${resumeSessionId}, creating fresh session:`,
-          resumeError instanceof Error ? resumeError.message : String(resumeError),
-        );
+        console.warn(`[AcpAgent] Failed to resume session ${resumeSessionId}, creating fresh session:`, resumeError instanceof Error ? resumeError.message : String(resumeError));
       }
     }
 
@@ -1363,7 +1226,7 @@ export class AcpAgent {
   // Add kill method for compatibility with WorkerManage
   kill(): void {
     this.stop().catch((error) => {
-      console.error("Error stopping ACP agent:", error);
+      console.error('Error stopping ACP agent:', error);
     });
   }
 
@@ -1376,24 +1239,21 @@ export class AcpAgent {
    */
   async setMode(mode: string): Promise<{ success: boolean; error?: string }> {
     if (!this.connection.isConnected || !this.connection.hasActiveSession) {
-      return {
-        success: false,
-        error: "No active session. Please send a message first to establish a session.",
-      };
+      return { success: false, error: 'No active session. Please send a message first to establish a session.' };
     }
     try {
       await this.connection.setSessionMode(mode);
       return { success: true };
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error);
-      console.error("[AcpAgent] Failed to set mode:", errorMsg);
+      console.error('[AcpAgent] Failed to set mode:', errorMsg);
       return { success: false, error: errorMsg };
     }
   }
 
   private async ensureBackendAuth(backend: AcpBackend, loginArg: string): Promise<void> {
     try {
-      this.emitStatusMessage("connecting");
+      this.emitStatusMessage('connecting');
 
       // 使用配置的 CLI 路径调用 login 命令
       if (!this.extra.cliPath) {
@@ -1405,9 +1265,9 @@ export class AcpAgent {
       let command: string;
       let args: string[];
 
-      if (this.extra.cliPath.startsWith("npx ")) {
+      if (this.extra.cliPath.startsWith('npx ')) {
         // For "npx @qwen-code/qwen-code" or "npx @anthropic-ai/claude-code"
-        const parts = this.extra.cliPath.split(" ");
+        const parts = this.extra.cliPath.split(' ');
         command = resolveNpxPath(cleanEnv);
         args = [...parts.slice(1), loginArg];
       } else {
@@ -1417,13 +1277,13 @@ export class AcpAgent {
       }
 
       const loginProcess = spawn(command, args, {
-        stdio: "pipe",
+        stdio: 'pipe',
         timeout: 70000,
         env: cleanEnv,
       });
 
       await new Promise<void>((resolve, reject) => {
-        loginProcess.on("close", (code) => {
+        loginProcess.on('close', (code) => {
           if (code === 0) {
             console.log(`${backend} authentication refreshed`);
             resolve();
@@ -1432,7 +1292,7 @@ export class AcpAgent {
           }
         });
 
-        loginProcess.on("error", reject);
+        loginProcess.on('error', reject);
       });
     } catch (error) {
       console.warn(`${backend} auth refresh failed, will try to connect anyway:`, error);
@@ -1441,13 +1301,13 @@ export class AcpAgent {
   }
 
   private async ensureQwenAuth(): Promise<void> {
-    if (this.extra.backend !== "qwen") return;
-    await this.ensureBackendAuth("qwen", "login");
+    if (this.extra.backend !== 'qwen') return;
+    await this.ensureBackendAuth('qwen', 'login');
   }
 
   private async ensureClaudeAuth(): Promise<void> {
-    if (this.extra.backend !== "claude") return;
-    await this.ensureBackendAuth("claude", "/login");
+    if (this.extra.backend !== 'claude') return;
+    await this.ensureBackendAuth('claude', '/login');
   }
 
   private async performAuthentication(): Promise<void> {
@@ -1456,7 +1316,7 @@ export class AcpAgent {
       const result = initResponse?.result as InitializeResult | undefined;
       if (!initResponse || !result?.authMethods?.length) {
         // No auth methods available - CLI should handle authentication itself
-        this.emitStatusMessage("authenticated");
+        this.emitStatusMessage('authenticated');
         return;
       }
 
@@ -1464,16 +1324,16 @@ export class AcpAgent {
       // Try to create/resume session to check if already authenticated
       try {
         await this.createOrResumeSession();
-        this.emitStatusMessage("authenticated");
+        this.emitStatusMessage('authenticated');
         return;
       } catch (_err) {
         // 需要鉴权，进行条件化"预热"尝试
       }
 
       // 条件化预热：仅在需要鉴权时尝试调用后端CLI登录以刷新token
-      if (this.extra.backend === "qwen") {
+      if (this.extra.backend === 'qwen') {
         await this.ensureQwenAuth();
-      } else if (this.extra.backend === "claude") {
+      } else if (this.extra.backend === 'claude') {
         await this.ensureClaudeAuth();
       }
       // Note: CodeBuddy does not have a CLI login command; auth is handled by the CLI itself
@@ -1482,15 +1342,15 @@ export class AcpAgent {
       // Retry creating/resuming session after warmup
       try {
         await this.createOrResumeSession();
-        this.emitStatusMessage("authenticated");
+        this.emitStatusMessage('authenticated');
         return;
       } catch (error) {
         // If still failing, guide user to login manually
         // 如果仍然失败，引导用户手动登录
-        this.emitStatusMessage("error");
+        this.emitStatusMessage('error');
       }
     } catch (error) {
-      this.emitStatusMessage("error");
+      this.emitStatusMessage('error');
     }
   }
 }

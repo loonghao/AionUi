@@ -4,11 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Router } from "express";
-import path from "path";
-import fs from "fs";
-import os from "os";
-import { fileOperationLimiter } from "./middleware/security";
+import { Router } from 'express';
+import path from 'path';
+import fs from 'fs';
+import os from 'os';
+import { fileOperationLimiter } from './middleware/security';
 
 // Allow browsing within the running workspace, current user's home directory,
 // WSL mount points (/mnt/*) on Linux, and all drive letters on Windows
@@ -19,7 +19,7 @@ export const DEFAULT_ALLOWED_DIRECTORIES = (() => {
 
   // On Windows, add all available drive letters (C:, D:, E:, etc.)
   // 在 Windows 上，添加所有可用的驱动器盘符
-  if (process.platform === "win32") {
+  if (process.platform === 'win32') {
     // Check common drive letters A-Z
     for (let charCode = 65; charCode <= 90; charCode++) {
       const driveLetter = String.fromCharCode(charCode);
@@ -36,11 +36,11 @@ export const DEFAULT_ALLOWED_DIRECTORIES = (() => {
 
   // On Linux (WSL), add /mnt to allow browsing Windows drives
   // 在 Linux（WSL）环境中，添加 /mnt 以允许浏览 Windows 驱动器
-  if (process.platform === "linux" && fs.existsSync("/mnt")) {
+  if (process.platform === 'linux' && fs.existsSync('/mnt')) {
     try {
-      const mntEntries = fs.readdirSync("/mnt");
+      const mntEntries = fs.readdirSync('/mnt');
       for (const entry of mntEntries) {
-        const mountPath = path.join("/mnt", entry);
+        const mountPath = path.join('/mnt', entry);
         try {
           if (fs.statSync(mountPath).isDirectory()) {
             baseDirs.push(mountPath);
@@ -75,11 +75,7 @@ function isWindowsStylePath(value: string): boolean {
 }
 
 function shouldUseWin32PathOps(targetPath: string, basePaths: string[]): boolean {
-  return (
-    process.platform === "win32" ||
-    isWindowsStylePath(targetPath) ||
-    basePaths.some((basePath) => isWindowsStylePath(basePath))
-  );
+  return process.platform === 'win32' || isWindowsStylePath(targetPath) || basePaths.some((basePath) => isWindowsStylePath(basePath));
 }
 
 function resolveForComparison(inputPath: string, useWin32PathOps: boolean): string {
@@ -100,17 +96,14 @@ function resolveForComparison(inputPath: string, useWin32PathOps: boolean): stri
 function isSubPath(targetPath: string, basePath: string, useWin32PathOps: boolean): boolean {
   const pathApi = useWin32PathOps ? path.win32 : path;
   const relative = pathApi.relative(basePath, targetPath);
-  return relative === "" || (!relative.startsWith("..") && !pathApi.isAbsolute(relative));
+  return relative === '' || (!relative.startsWith('..') && !pathApi.isAbsolute(relative));
 }
 
 /**
  * Check if a path falls within the allowed directory trees
  * @exported for testing
  */
-export function isPathAllowed(
-  targetPath: string,
-  allowedBasePaths = DEFAULT_ALLOWED_DIRECTORIES,
-): boolean {
+export function isPathAllowed(targetPath: string, allowedBasePaths = DEFAULT_ALLOWED_DIRECTORIES): boolean {
   const useWin32PathOps = shouldUseWin32PathOps(targetPath, allowedBasePaths);
   const resolved = resolveForComparison(targetPath, useWin32PathOps);
 
@@ -132,14 +125,12 @@ export function isPathAllowed(
  * @throws Error if path is invalid or outside allowed directories / 如果路径无效或在允许目录之外则抛出错误
  */
 function validatePath(userPath: string, allowedBasePaths = DEFAULT_ALLOWED_DIRECTORIES): string {
-  if (!userPath || typeof userPath !== "string") {
-    throw new Error("Invalid path: path must be a non-empty string");
+  if (!userPath || typeof userPath !== 'string') {
+    throw new Error('Invalid path: path must be a non-empty string');
   }
 
   const trimmedPath = userPath.trim();
-  const expandedPath = trimmedPath.startsWith("~")
-    ? path.join(os.homedir(), trimmedPath.slice(1))
-    : trimmedPath;
+  const expandedPath = trimmedPath.startsWith('~') ? path.join(os.homedir(), trimmedPath.slice(1)) : trimmedPath;
 
   // First normalize to remove any .., ., and redundant separators
   // 首先规范化以移除任何 .., ., 和多余的分隔符
@@ -153,8 +144,8 @@ function validatePath(userPath: string, allowedBasePaths = DEFAULT_ALLOWED_DIREC
 
   // Check for null bytes (prevents null byte injection attacks)
   // 检查空字节（防止空字节注入攻击）
-  if (resolvedPath.includes("\0")) {
-    throw new Error("Invalid path: null bytes detected");
+  if (resolvedPath.includes('\0')) {
+    throw new Error('Invalid path: null bytes detected');
   }
 
   // If no allowed base paths specified, allow any valid absolute path
@@ -166,17 +157,15 @@ function validatePath(userPath: string, allowedBasePaths = DEFAULT_ALLOWED_DIREC
     .filter((basePath, index, arr) => arr.indexOf(basePath) === index);
 
   if (sanitizedBasePaths.length === 0) {
-    throw new Error("Invalid configuration: no allowed base directories defined");
+    throw new Error('Invalid configuration: no allowed base directories defined');
   }
 
   // Ensure resolved path is within one of the allowed base directories
   // 确保解析后的路径在允许的基础目录之一内
-  const isAllowed = sanitizedBasePaths.some((basePath) =>
-    isSubPath(resolvedPath, basePath, useWin32PathOps),
-  );
+  const isAllowed = sanitizedBasePaths.some((basePath) => isSubPath(resolvedPath, basePath, useWin32PathOps));
 
   if (!isAllowed) {
-    throw new Error("Invalid path: access denied to directory outside allowed paths");
+    throw new Error('Invalid path: access denied to directory outside allowed paths');
   }
 
   return resolvedPath;
@@ -186,12 +175,7 @@ function validatePath(userPath: string, allowedBasePaths = DEFAULT_ALLOWED_DIREC
  * Get available Windows drive letters
  * 获取 Windows 可用的驱动器盘符列表
  */
-function getWindowsDrives(): Array<{
-  name: string;
-  path: string;
-  isDirectory: boolean;
-  isFile: boolean;
-}> {
+function getWindowsDrives(): Array<{ name: string; path: string; isDirectory: boolean; isFile: boolean }> {
   const drives: Array<{ name: string; path: string; isDirectory: boolean; isFile: boolean }> = [];
   for (let charCode = 65; charCode <= 90; charCode++) {
     const driveLetter = String.fromCharCode(charCode);
@@ -217,16 +201,16 @@ function getWindowsDrives(): Array<{
  */
 // Rate limit directory browsing to mitigate brute-force scanning
 // 为目录浏览接口增加限流，避免暴力扫描
-router.get("/browse", fileOperationLimiter, (req, res) => {
+router.get('/browse', fileOperationLimiter, (req, res) => {
   try {
     const queryPath = req.query.path as string;
 
     // On Windows, when path is empty or '__ROOT__', return drive list
     // 在 Windows 上，当路径为空或 '__ROOT__' 时，返回驱动器列表
-    if (process.platform === "win32" && (!queryPath || queryPath === "__ROOT__")) {
+    if (process.platform === 'win32' && (!queryPath || queryPath === '__ROOT__')) {
       const drives = getWindowsDrives();
       return res.json({
-        currentPath: "",
+        currentPath: '',
         parentPath: undefined,
         items: drives,
         canGoUp: false,
@@ -249,7 +233,7 @@ router.get("/browse", fileOperationLimiter, (req, res) => {
       const canonicalPath = fs.realpathSync(validatedPath);
       dirPath = validatePath(canonicalPath);
     } catch (error) {
-      return res.status(404).json({ error: "Directory not found or inaccessible" });
+      return res.status(404).json({ error: 'Directory not found or inaccessible' });
     }
 
     // Break taint flow by creating a new sanitized string
@@ -263,20 +247,20 @@ router.get("/browse", fileOperationLimiter, (req, res) => {
     try {
       stats = fs.statSync(safeDir);
     } catch (error) {
-      return res.status(404).json({ error: "Unable to access directory" });
+      return res.status(404).json({ error: 'Unable to access directory' });
     }
 
     if (!stats.isDirectory()) {
-      return res.status(400).json({ error: "Path is not a directory" });
+      return res.status(400).json({ error: 'Path is not a directory' });
     }
 
     // 获取查询参数，确定是否显示文件
-    const showFiles = req.query.showFiles === "true";
+    const showFiles = req.query.showFiles === 'true';
 
     // 读取目录内容，过滤隐藏文件/目录
     const items = fs
       .readdirSync(safeDir)
-      .filter((name) => !name.startsWith(".")) // 过滤隐藏文件/目录
+      .filter((name) => !name.startsWith('.')) // 过滤隐藏文件/目录
       .map((name) => {
         const itemPath = validatePath(path.join(safeDir, name), [safeDir]);
         // Apply String() conversion to break taint flow for CodeQL
@@ -321,21 +305,21 @@ router.get("/browse", fileOperationLimiter, (req, res) => {
     // On Windows, check if we're at a drive root (e.g., C:\)
     // 在 Windows 上，检查是否在驱动器根目录
     const parentDir = path.dirname(safeDir);
-    const isAtDriveRoot = process.platform === "win32" && parentDir === safeDir;
+    const isAtDriveRoot = process.platform === 'win32' && parentDir === safeDir;
     const canGoUp = isAtDriveRoot || (parentDir !== safeDir && isPathAllowed(parentDir));
 
     res.json({
       currentPath: safeDir,
       // On Windows drive root, parent should be '__ROOT__' to show drive list
       // 在 Windows 驱动器根目录，父目录应为 '__ROOT__' 以显示驱动器列表
-      parentPath: isAtDriveRoot ? "__ROOT__" : parentDir,
+      parentPath: isAtDriveRoot ? '__ROOT__' : parentDir,
       items: limitedItems,
       canGoUp,
       truncated,
     });
   } catch (error) {
-    console.error("Directory browse error:", error);
-    res.status(500).json({ error: "Failed to read directory" });
+    console.error('Directory browse error:', error);
+    res.status(500).json({ error: 'Failed to read directory' });
   }
 });
 
@@ -344,12 +328,12 @@ router.get("/browse", fileOperationLimiter, (req, res) => {
  */
 // Rate limit directory validation endpoint as well
 // 同样为目录验证接口增加限流
-router.post("/validate", fileOperationLimiter, (req, res) => {
+router.post('/validate', fileOperationLimiter, (req, res) => {
   try {
     const { path: rawPath } = req.body;
 
-    if (!rawPath || typeof rawPath !== "string") {
-      return res.status(400).json({ error: "Path is required" });
+    if (!rawPath || typeof rawPath !== 'string') {
+      return res.status(400).json({ error: 'Path is required' });
     }
 
     // Validate path to prevent directory traversal / 验证路径以防止目录遍历
@@ -362,7 +346,7 @@ router.post("/validate", fileOperationLimiter, (req, res) => {
       const canonicalPath = fs.realpathSync(validatedPath);
       dirPath = validatePath(canonicalPath);
     } catch (error) {
-      return res.status(404).json({ error: "Path does not exist" });
+      return res.status(404).json({ error: 'Path does not exist' });
     }
 
     // Break taint flow by creating a new sanitized string
@@ -376,18 +360,18 @@ router.post("/validate", fileOperationLimiter, (req, res) => {
     try {
       stats = fs.statSync(safeValidatedPath);
     } catch (error) {
-      return res.status(404).json({ error: "Unable to access path" });
+      return res.status(404).json({ error: 'Unable to access path' });
     }
 
     if (!stats.isDirectory()) {
-      return res.status(400).json({ error: "Path is not a directory" });
+      return res.status(400).json({ error: 'Path is not a directory' });
     }
 
     // 检查是否可读
     try {
       fs.accessSync(safeValidatedPath, fs.constants.R_OK);
     } catch {
-      return res.status(403).json({ error: "Directory is not readable" });
+      return res.status(403).json({ error: 'Directory is not readable' });
     }
 
     res.json({
@@ -396,11 +380,9 @@ router.post("/validate", fileOperationLimiter, (req, res) => {
       name: path.basename(safeValidatedPath),
     });
   } catch (error) {
-    console.error("Path validation error:", error);
-    const errorMessage = error instanceof Error ? error.message : "Failed to validate path";
-    res
-      .status(error instanceof Error && error.message.includes("access denied") ? 403 : 500)
-      .json({ error: errorMessage });
+    console.error('Path validation error:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Failed to validate path';
+    res.status(error instanceof Error && error.message.includes('access denied') ? 403 : 500).json({ error: errorMessage });
   }
 });
 
@@ -409,40 +391,40 @@ router.post("/validate", fileOperationLimiter, (req, res) => {
  */
 // Rate limit shortcut fetching to keep behavior consistent
 // 快捷目录获取接口也使用相同的限流策略
-router.get("/shortcuts", fileOperationLimiter, (_req, res) => {
+router.get('/shortcuts', fileOperationLimiter, (_req, res) => {
   try {
     const shortcuts = [
       {
-        name: "AionUi Directory",
+        name: 'AionUi Directory',
         path: process.cwd(),
-        icon: "🤖",
+        icon: '🤖',
       },
       {
-        name: "Home",
+        name: 'Home',
         path: os.homedir(),
-        icon: "🏠",
+        icon: '🏠',
       },
       {
-        name: "Desktop",
-        path: path.join(os.homedir(), "Desktop"),
-        icon: "🖥️",
+        name: 'Desktop',
+        path: path.join(os.homedir(), 'Desktop'),
+        icon: '🖥️',
       },
       {
-        name: "Documents",
-        path: path.join(os.homedir(), "Documents"),
-        icon: "📄",
+        name: 'Documents',
+        path: path.join(os.homedir(), 'Documents'),
+        icon: '📄',
       },
       {
-        name: "Downloads",
-        path: path.join(os.homedir(), "Downloads"),
-        icon: "📥",
+        name: 'Downloads',
+        path: path.join(os.homedir(), 'Downloads'),
+        icon: '📥',
       },
     ].filter((shortcut) => fs.existsSync(shortcut.path));
 
     res.json(shortcuts);
   } catch (error) {
-    console.error("Shortcuts error:", error);
-    res.status(500).json({ error: "Failed to get shortcuts" });
+    console.error('Shortcuts error:', error);
+    res.status(500).json({ error: 'Failed to get shortcuts' });
   }
 });
 

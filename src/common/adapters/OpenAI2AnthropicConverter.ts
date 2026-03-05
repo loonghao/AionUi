@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { ProtocolConverter, ConverterConfig } from "./ProtocolConverter";
-import type Anthropic from "@anthropic-ai/sdk";
+import type { ProtocolConverter, ConverterConfig } from './ProtocolConverter';
+import type Anthropic from '@anthropic-ai/sdk';
 
 // OpenAI types - compatible with actual OpenAI SDK types
 export interface OpenAIChatCompletionParams {
@@ -26,14 +26,14 @@ export interface OpenAIChatCompletionParams {
   stop?: string | string[];
   stream?: boolean;
   tools?: Array<{
-    type: "function";
+    type: 'function';
     function: {
       name: string;
       description?: string;
       parameters?: unknown;
     };
   }>;
-  tool_choice?: "auto" | "none" | { type: "function"; function: { name: string } };
+  tool_choice?: 'auto' | 'none' | { type: 'function'; function: { name: string } };
 }
 
 export interface OpenAIChatCompletionResponse {
@@ -47,7 +47,7 @@ export interface OpenAIChatCompletionResponse {
       role: string;
       content: string;
       images?: Array<{
-        type: "image_url";
+        type: 'image_url';
         image_url: { url: string };
       }>;
     };
@@ -67,16 +67,12 @@ export type AnthropicMessageResponse = Anthropic.Message;
 /**
  * Converter for transforming OpenAI chat completion format to/from Anthropic format
  */
-export class OpenAI2AnthropicConverter implements ProtocolConverter<
-  OpenAIChatCompletionParams,
-  AnthropicMessageRequest,
-  OpenAIChatCompletionResponse
-> {
+export class OpenAI2AnthropicConverter implements ProtocolConverter<OpenAIChatCompletionParams, AnthropicMessageRequest, OpenAIChatCompletionResponse> {
   private readonly config: ConverterConfig;
 
   constructor(config: ConverterConfig = {}) {
     this.config = {
-      defaultModel: "claude-sonnet-4-20250514",
+      defaultModel: 'claude-sonnet-4-20250514',
       ...config,
     };
   }
@@ -90,13 +86,13 @@ export class OpenAI2AnthropicConverter implements ProtocolConverter<
     const messages: Anthropic.MessageParam[] = [];
 
     for (const msg of params.messages) {
-      if (msg.role === "system") {
+      if (msg.role === 'system') {
         // Anthropic uses a separate system parameter
         systemMessage = this.extractTextContent(msg.content);
-      } else if (msg.role === "user" || msg.role === "assistant") {
+      } else if (msg.role === 'user' || msg.role === 'assistant') {
         const content = this.convertMessageContent(msg.content);
         messages.push({
-          role: msg.role as "user" | "assistant",
+          role: msg.role as 'user' | 'assistant',
           content,
         });
       }
@@ -132,11 +128,8 @@ export class OpenAI2AnthropicConverter implements ProtocolConverter<
     if (params.tools && params.tools.length > 0) {
       request.tools = params.tools.map((tool) => ({
         name: tool.function.name,
-        description: tool.function.description || "",
-        input_schema: (tool.function.parameters as Anthropic.Tool.InputSchema) || {
-          type: "object",
-          properties: {},
-        },
+        description: tool.function.description || '',
+        input_schema: (tool.function.parameters as Anthropic.Tool.InputSchema) || { type: 'object', properties: {} },
       }));
     }
 
@@ -146,16 +139,13 @@ export class OpenAI2AnthropicConverter implements ProtocolConverter<
   /**
    * Convert Anthropic message response to OpenAI chat completion format
    */
-  convertResponse(
-    anthropicResponse: AnthropicMessageResponse,
-    requestedModel: string,
-  ): OpenAIChatCompletionResponse {
-    let content = "";
-    const images: Array<{ type: "image_url"; image_url: { url: string } }> = [];
+  convertResponse(anthropicResponse: AnthropicMessageResponse, requestedModel: string): OpenAIChatCompletionResponse {
+    let content = '';
+    const images: Array<{ type: 'image_url'; image_url: { url: string } }> = [];
 
     // Process all content blocks in the response
     for (const block of anthropicResponse.content) {
-      if (block.type === "text") {
+      if (block.type === 'text') {
         content += block.text;
       }
       // Note: Anthropic doesn't return images in the same way as image generation models
@@ -163,15 +153,15 @@ export class OpenAI2AnthropicConverter implements ProtocolConverter<
 
     return {
       id: anthropicResponse.id,
-      object: "chat.completion",
+      object: 'chat.completion',
       created: Math.floor(Date.now() / 1000),
       model: requestedModel,
       choices: [
         {
           index: 0,
           message: {
-            role: "assistant",
-            content: content || "",
+            role: 'assistant',
+            content: content || '',
             ...(images.length > 0 ? { images } : {}),
           },
           finish_reason: this.mapStopReason(anthropicResponse.stop_reason),
@@ -188,59 +178,55 @@ export class OpenAI2AnthropicConverter implements ProtocolConverter<
   /**
    * Extract text content from OpenAI message content
    */
-  private extractTextContent(
-    content: string | Array<{ type: string; text?: string; image_url?: { url: string } }>,
-  ): string {
-    if (typeof content === "string") {
+  private extractTextContent(content: string | Array<{ type: string; text?: string; image_url?: { url: string } }>): string {
+    if (typeof content === 'string') {
       return content;
     }
 
     return content
-      .filter((part) => part.type === "text" && part.text)
+      .filter((part) => part.type === 'text' && part.text)
       .map((part) => part.text!)
-      .join("\n");
+      .join('\n');
   }
 
   /**
    * Convert OpenAI message content to Anthropic content format
    */
-  private convertMessageContent(
-    content: string | Array<{ type: string; text?: string; image_url?: { url: string } }>,
-  ): Anthropic.ContentBlockParam[] | string {
-    if (typeof content === "string") {
+  private convertMessageContent(content: string | Array<{ type: string; text?: string; image_url?: { url: string } }>): Anthropic.ContentBlockParam[] | string {
+    if (typeof content === 'string') {
       return content;
     }
 
     const contentBlocks: Anthropic.ContentBlockParam[] = [];
 
     for (const part of content) {
-      if (part.type === "text" && part.text) {
+      if (part.type === 'text' && part.text) {
         contentBlocks.push({
-          type: "text",
+          type: 'text',
           text: part.text,
         });
-      } else if (part.type === "image_url" && part.image_url?.url) {
+      } else if (part.type === 'image_url' && part.image_url?.url) {
         const imageUrl = part.image_url.url;
 
-        if (imageUrl.startsWith("data:")) {
+        if (imageUrl.startsWith('data:')) {
           // Handle base64 data URLs
-          const [mimeInfo, base64Data] = imageUrl.split(",");
-          const mimeType = mimeInfo.match(/data:(.*?);base64/)?.[1] || "image/png";
+          const [mimeInfo, base64Data] = imageUrl.split(',');
+          const mimeType = mimeInfo.match(/data:(.*?);base64/)?.[1] || 'image/png';
 
           contentBlocks.push({
-            type: "image",
+            type: 'image',
             source: {
-              type: "base64",
-              media_type: mimeType as "image/jpeg" | "image/png" | "image/gif" | "image/webp",
+              type: 'base64',
+              media_type: mimeType as 'image/jpeg' | 'image/png' | 'image/gif' | 'image/webp',
               data: base64Data,
             },
           });
-        } else if (imageUrl.startsWith("http")) {
+        } else if (imageUrl.startsWith('http')) {
           // Anthropic supports URL-based images
           contentBlocks.push({
-            type: "image",
+            type: 'image',
             source: {
-              type: "url",
+              type: 'url',
               url: imageUrl,
             },
           });
@@ -248,9 +234,7 @@ export class OpenAI2AnthropicConverter implements ProtocolConverter<
       }
     }
 
-    return contentBlocks.length === 1 && contentBlocks[0].type === "text"
-      ? (contentBlocks[0] as Anthropic.TextBlockParam).text
-      : contentBlocks;
+    return contentBlocks.length === 1 && contentBlocks[0].type === 'text' ? (contentBlocks[0] as Anthropic.TextBlockParam).text : contentBlocks;
   }
 
   /**
@@ -274,18 +258,12 @@ export class OpenAI2AnthropicConverter implements ProtocolConverter<
         const newContent = msg.content;
 
         // Merge contents
-        if (typeof lastContent === "string" && typeof newContent === "string") {
-          lastMsg.content = lastContent + "\n" + newContent;
+        if (typeof lastContent === 'string' && typeof newContent === 'string') {
+          lastMsg.content = lastContent + '\n' + newContent;
         } else {
           // Convert to array and merge
-          const lastArray =
-            typeof lastContent === "string"
-              ? [{ type: "text" as const, text: lastContent }]
-              : lastContent;
-          const newArray =
-            typeof newContent === "string"
-              ? [{ type: "text" as const, text: newContent }]
-              : newContent;
+          const lastArray = typeof lastContent === 'string' ? [{ type: 'text' as const, text: lastContent }] : lastContent;
+          const newArray = typeof newContent === 'string' ? [{ type: 'text' as const, text: newContent }] : newContent;
           lastMsg.content = [...lastArray, ...newArray];
         }
       } else {
@@ -294,10 +272,10 @@ export class OpenAI2AnthropicConverter implements ProtocolConverter<
     }
 
     // Ensure first message is from user
-    if (result.length > 0 && result[0].role !== "user") {
+    if (result.length > 0 && result[0].role !== 'user') {
       result.unshift({
-        role: "user",
-        content: "Continue the conversation.",
+        role: 'user',
+        content: 'Continue the conversation.',
       });
     }
 
@@ -309,16 +287,16 @@ export class OpenAI2AnthropicConverter implements ProtocolConverter<
    */
   private mapStopReason(stopReason: string | null): string {
     switch (stopReason) {
-      case "end_turn":
-        return "stop";
-      case "max_tokens":
-        return "length";
-      case "stop_sequence":
-        return "stop";
-      case "tool_use":
-        return "tool_calls";
+      case 'end_turn':
+        return 'stop';
+      case 'max_tokens':
+        return 'length';
+      case 'stop_sequence':
+        return 'stop';
+      case 'tool_use':
+        return 'tool_calls';
       default:
-        return "stop";
+        return 'stop';
     }
   }
 }

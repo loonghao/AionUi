@@ -4,13 +4,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { getAgentLogo } from "@/renderer/utils/agentLogo";
-import { resolveExtensionAssetUrl } from "@/renderer/utils/platform";
-import { useLayoutContext } from "@/renderer/context/LayoutContext";
-import type { AcpBackend, AvailableAgent } from "../types";
-import { Robot } from "@icon-park/react";
-import React from "react";
-import styles from "../index.module.css";
+import { getAgentLogo } from '@/renderer/utils/agentLogo';
+import { resolveExtensionAssetUrl } from '@/renderer/utils/platform';
+import { useLayoutContext } from '@/renderer/context/LayoutContext';
+import type { AcpBackend, AvailableAgent } from '../types';
+import { Robot } from '@icon-park/react';
+import React from 'react';
+import styles from '../index.module.css';
 
 type AgentPillBarProps = {
   availableAgents: AvailableAgent[];
@@ -19,88 +19,45 @@ type AgentPillBarProps = {
   onSelectAgent: (key: string) => void;
 };
 
-const AgentPillBar: React.FC<AgentPillBarProps> = ({
-  availableAgents,
-  selectedAgentKey,
-  getAgentKey,
-  onSelectAgent,
-}) => {
+const AgentPillBar: React.FC<AgentPillBarProps> = ({ availableAgents, selectedAgentKey, getAgentKey, onSelectAgent }) => {
   const layout = useLayoutContext();
   const isMobile = layout?.isMobile ?? false;
 
   return (
-    <div className="w-full flex justify-center">
+    <div className='w-full flex justify-center'>
       <div
-        className="flex items-center justify-center"
+        className='flex items-center justify-center'
         style={{
           marginBottom: 20,
-          padding: "6px",
-          borderRadius: "30px",
-          backgroundColor: "var(--color-guid-agent-bar, var(--aou-2))",
-          transition: "background-color 0.35s ease",
-          width: "fit-content",
-          maxWidth: "100%",
-          overflow: "hidden",
+          padding: '6px',
+          borderRadius: '30px',
+          backgroundColor: 'var(--color-guid-agent-bar, var(--aou-2))',
+          transition: 'background-color 0.35s ease',
+          width: 'fit-content',
+          maxWidth: '100%',
+          overflow: 'hidden',
           gap: 4,
-          color: "var(--text-primary)",
+          color: 'var(--text-primary)',
         }}
       >
         {availableAgents
-          .filter((agent) => agent.backend !== "custom" || agent.isExtension)
+          .filter((agent) => agent.backend !== 'custom' || agent.isExtension)
           .map((agent, index) => {
             const isSelected = selectedAgentKey === getAgentKey(agent);
-            const extensionAvatar = resolveExtensionAssetUrl(
-              agent.isExtension ? agent.avatar : undefined,
-            );
+            const extensionAvatar = resolveExtensionAssetUrl(agent.isExtension ? agent.avatar : undefined);
             const logoSrc = extensionAvatar || getAgentLogo(agent.backend);
 
             return (
               <React.Fragment key={getAgentKey(agent)}>
-                {index > 0 && <div className="text-16px lh-1 p-2px select-none opacity-30">|</div>}
-                <div
-                  className={`group relative flex items-center cursor-pointer whitespace-nowrap overflow-hidden ${isSelected ? `opacity-100 px-12px py-8px rd-20px mx-2px ${styles.agentItemSelected}` : isMobile ? "opacity-70 p-4px" : "opacity-60 p-4px hover:opacity-100"}`}
-                  style={
-                    isSelected
-                      ? isMobile
-                        ? {
-                            animation: "none",
-                            transition: "opacity 0.2s ease, background-color 0.2s ease",
-                          }
-                        : undefined
-                      : { transition: "opacity 0.2s ease" }
-                  }
-                  onClick={() => onSelectAgent(getAgentKey(agent))}
-                >
-                  {logoSrc ? (
-                    <img
-                      src={logoSrc}
-                      alt={`${agent.backend} logo`}
-                      width={20}
-                      height={20}
-                      style={{ objectFit: "contain", flexShrink: 0 }}
-                    />
-                  ) : (
-                    <Robot
-                      theme="outline"
-                      size={20}
-                      fill="currentColor"
-                      style={{ flexShrink: 0 }}
-                    />
-                  )}
-                  {agent.isExtension && (
-                    <span className="absolute -top-2px -right-2px text-[9px] leading-none px-4px py-2px rd-8px bg-[var(--color-primary)] text-white">
-                      Ext
-                    </span>
-                  )}
+                {index > 0 && <div className='text-16px lh-1 p-2px select-none opacity-30'>|</div>}
+                <div className={`group relative flex items-center cursor-pointer whitespace-nowrap overflow-hidden ${isSelected ? `opacity-100 px-12px py-8px rd-20px mx-2px ${styles.agentItemSelected}` : isMobile ? 'opacity-70 p-4px' : 'opacity-60 p-4px hover:opacity-100'}`} style={isSelected ? (isMobile ? { animation: 'none', transition: 'opacity 0.2s ease, background-color 0.2s ease' } : undefined) : { transition: 'opacity 0.2s ease' }} onClick={() => onSelectAgent(getAgentKey(agent))}>
+                  {logoSrc ? <img src={logoSrc} alt={`${agent.backend} logo`} width={20} height={20} style={{ objectFit: 'contain', flexShrink: 0 }} /> : <Robot theme='outline' size={20} fill='currentColor' style={{ flexShrink: 0 }} />}
+                  {agent.isExtension && <span className='absolute -top-2px -right-2px text-[9px] leading-none px-4px py-2px rd-8px bg-[var(--color-primary)] text-white'>Ext</span>}
                   <span
-                    className={`font-medium text-14px ${isSelected ? "font-semibold ml-4px" : isMobile ? "max-w-0 opacity-0 overflow-hidden" : "max-w-0 opacity-0 overflow-hidden group-hover:max-w-100px group-hover:opacity-100 group-hover:ml-8px"}`}
+                    className={`font-medium text-14px ${isSelected ? 'font-semibold ml-4px' : isMobile ? 'max-w-0 opacity-0 overflow-hidden' : 'max-w-0 opacity-0 overflow-hidden group-hover:max-w-100px group-hover:opacity-100 group-hover:ml-8px'}`}
                     style={{
-                      color: "var(--text-primary)",
-                      transition: isSelected
-                        ? "color 0.2s ease, font-weight 0.2s ease"
-                        : isMobile
-                          ? "none"
-                          : "max-width 0.6s cubic-bezier(0.2, 0.8, 0.3, 1), opacity 0.5s cubic-bezier(0.2, 0.8, 0.3, 1) 0.05s, margin 0.6s cubic-bezier(0.2, 0.8, 0.3, 1)",
+                      color: 'var(--text-primary)',
+                      transition: isSelected ? 'color 0.2s ease, font-weight 0.2s ease' : isMobile ? 'none' : 'max-width 0.6s cubic-bezier(0.2, 0.8, 0.3, 1), opacity 0.5s cubic-bezier(0.2, 0.8, 0.3, 1) 0.05s, margin 0.6s cubic-bezier(0.2, 0.8, 0.3, 1)',
                     }}
                   >
                     {agent.name}

@@ -4,19 +4,19 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { AcpAdapter } from "@/agent/acp/AcpAdapter";
-import { AcpApprovalStore } from "@/agent/acp/ApprovalStore";
-import type { TMessage } from "@/common/chatLib";
-import type { IResponseMessage } from "@/common/ipcBridge";
-import { NavigationInterceptor } from "@/common/navigation";
-import { uuid } from "@/common/utils";
-import type { AcpResult, AcpSessionUpdate, ToolCallUpdate } from "@/types/acpTypes";
-import { AcpErrorType, createAcpError } from "@/types/acpTypes";
-import net from "node:net";
-import { OpenClawGatewayConnection } from "./OpenClawGatewayConnection";
-import { OpenClawGatewayManager } from "./OpenClawGatewayManager";
-import { getGatewayAuthPassword, getGatewayAuthToken, getGatewayPort } from "./openclawConfig";
-import type { ChatEvent, EventFrame, HelloOk, OpenClawGatewayConfig } from "./types";
+import { AcpAdapter } from '@/agent/acp/AcpAdapter';
+import { AcpApprovalStore } from '@/agent/acp/ApprovalStore';
+import type { TMessage } from '@/common/chatLib';
+import type { IResponseMessage } from '@/common/ipcBridge';
+import { NavigationInterceptor } from '@/common/navigation';
+import { uuid } from '@/common/utils';
+import type { AcpResult, AcpSessionUpdate, ToolCallUpdate } from '@/types/acpTypes';
+import { AcpErrorType, createAcpError } from '@/types/acpTypes';
+import net from 'node:net';
+import { OpenClawGatewayConnection } from './OpenClawGatewayConnection';
+import { OpenClawGatewayManager } from './OpenClawGatewayManager';
+import { getGatewayAuthPassword, getGatewayAuthToken, getGatewayPort } from './openclawConfig';
+import type { ChatEvent, EventFrame, HelloOk, OpenClawGatewayConfig } from './types';
 
 async function isTcpPortOpen(host: string, port: number, timeoutMs = 300): Promise<boolean> {
   return await new Promise<boolean>((resolve) => {
@@ -27,9 +27,9 @@ async function isTcpPortOpen(host: string, port: number, timeoutMs = 300): Promi
       resolve(result);
     };
     socket.setTimeout(timeoutMs);
-    socket.once("connect", () => done(true));
-    socket.once("timeout", () => done(false));
-    socket.once("error", () => done(false));
+    socket.once('connect', () => done(true));
+    socket.once('timeout', () => done(false));
+    socket.once('error', () => done(false));
   });
 }
 
@@ -69,16 +69,13 @@ export class OpenClawAgent {
   private connection: OpenClawGatewayConnection | null = null;
   private adapter: AcpAdapter;
   private approvalStore = new AcpApprovalStore();
-  private pendingPermissions = new Map<
-    string,
-    { resolve: (response: { optionId: string }) => void; reject: (error: Error) => void }
-  >();
+  private pendingPermissions = new Map<string, { resolve: (response: { optionId: string }) => void; reject: (error: Error) => void }>();
   private statusMessageId: string | null = null;
   private pendingNavigationTools = new Set<string>();
 
   // Streaming message state - independent from AcpAdapter
   private currentStreamMsgId: string | null = null;
-  private accumulatedAssistantText = "";
+  private accumulatedAssistantText = '';
 
   private readonly onStreamEvent: (data: IResponseMessage) => void;
   private readonly onSignalEvent?: (data: IResponseMessage) => void;
@@ -92,7 +89,7 @@ export class OpenClawAgent {
     this.onSessionKeyUpdate = config.onSessionKeyUpdate;
 
     // Initialize adapter with 'openclaw-gateway' backend
-    this.adapter = new AcpAdapter(this.id, "openclaw-gateway");
+    this.adapter = new AcpAdapter(this.id, 'openclaw-gateway');
   }
 
   /**
@@ -103,36 +100,34 @@ export class OpenClawAgent {
    */
   async start(): Promise<void> {
     try {
-      this.emitStatusMessage("connecting");
+      this.emitStatusMessage('connecting');
 
       const gatewayConfig: OpenClawGatewayConfig = this.config.gateway || { port: 18789 };
       const useExternal = gatewayConfig.useExternalGateway ?? false;
       const port = gatewayConfig.port || getGatewayPort();
-      const host = gatewayConfig.host || "localhost";
+      const host = gatewayConfig.host || 'localhost';
 
       // Auto-load token/password from OpenClaw config if not explicitly provided
       const token = gatewayConfig.token ?? getGatewayAuthToken() ?? undefined;
       const password = gatewayConfig.password ?? getGatewayAuthPassword() ?? undefined;
 
       if (token) {
-        console.log("[OpenClawAgent] Using gateway auth token from config");
+        console.log('[OpenClawAgent] Using gateway auth token from config');
       } else if (password) {
-        console.log("[OpenClawAgent] Using gateway auth password from config");
+        console.log('[OpenClawAgent] Using gateway auth password from config');
       }
 
       // Start gateway process if not using external
       if (!useExternal) {
         // If a gateway is already listening on the target port, don't try to spawn another one.
         // This avoids failures like "port already in use" when the user runs the Gateway service via launchd/systemd.
-        const probeHost = host === "localhost" ? "127.0.0.1" : host;
+        const probeHost = host === 'localhost' ? '127.0.0.1' : host;
         const alreadyListening = await isTcpPortOpen(probeHost, port);
         if (alreadyListening) {
-          console.log(
-            `[OpenClawAgent] Gateway already listening on ${probeHost}:${port}, skip spawning`,
-          );
+          console.log(`[OpenClawAgent] Gateway already listening on ${probeHost}:${port}, skip spawning`);
         } else {
           this.gatewayManager = new OpenClawGatewayManager({
-            cliPath: gatewayConfig.cliPath || "openclaw",
+            cliPath: gatewayConfig.cliPath || 'openclaw',
             port,
           });
 
@@ -161,13 +156,13 @@ export class OpenClawAgent {
 
       // Wait for connection to be established
       await this.waitForConnection();
-      this.emitStatusMessage("connected");
+      this.emitStatusMessage('connected');
 
       // Resolve session
       await this.resolveSession();
-      this.emitStatusMessage("session_active");
+      this.emitStatusMessage('session_active');
     } catch (error) {
-      this.emitStatusMessage("error");
+      this.emitStatusMessage('error');
       throw error;
     }
   }
@@ -193,11 +188,11 @@ export class OpenClawAgent {
     this.pendingPermissions.clear();
     this.pendingNavigationTools.clear();
 
-    this.emitStatusMessage("disconnected");
+    this.emitStatusMessage('disconnected');
 
     // Emit finish event
     this.onStreamEvent({
-      type: "finish",
+      type: 'finish',
       conversation_id: this.id,
       msg_id: uuid(),
       data: null,
@@ -207,11 +202,7 @@ export class OpenClawAgent {
   /**
    * Send a message
    */
-  async sendMessage(data: {
-    content: string;
-    files?: string[];
-    msg_id?: string;
-  }): Promise<AcpResult> {
+  async sendMessage(data: { content: string; files?: string[]; msg_id?: string }): Promise<AcpResult> {
     try {
       // Auto-reconnect if needed
       if (!this.connection?.isConnected || !this.connection?.sessionKey) {
@@ -220,13 +211,13 @@ export class OpenClawAgent {
 
       // Reset streaming state for new message
       this.currentStreamMsgId = null;
-      this.accumulatedAssistantText = "";
+      this.accumulatedAssistantText = '';
       this.adapter.resetMessageTracking();
 
       // Process file references
       let processedContent = data.content;
       if (data.files && data.files.length > 0) {
-        const fileRefs = data.files.map((f) => (f.includes(" ") ? `@"${f}"` : `@${f}`)).join(" ");
+        const fileRefs = data.files.map((f) => (f.includes(' ') ? `@"${f}"` : `@${f}`)).join(' ');
         processedContent = `${fileRefs} ${processedContent}`;
       }
 
@@ -255,18 +246,14 @@ export class OpenClawAgent {
     if (!pending) {
       return Promise.resolve({
         success: false,
-        error: createAcpError(
-          AcpErrorType.UNKNOWN,
-          `Permission request not found: ${data.callId}`,
-          false,
-        ),
+        error: createAcpError(AcpErrorType.UNKNOWN, `Permission request not found: ${data.callId}`, false),
       });
     }
 
     this.pendingPermissions.delete(data.callId);
 
     // Cache "always allow" decisions
-    if (data.confirmKey === "allow_always") {
+    if (data.confirmKey === 'allow_always') {
       // TODO: Store in approval store
     }
 
@@ -287,7 +274,7 @@ export class OpenClawAgent {
     const startTime = Date.now();
     while (!this.connection?.isConnected) {
       if (Date.now() - startTime > timeoutMs) {
-        throw new Error("Connection timeout");
+        throw new Error('Connection timeout');
       }
       await new Promise((resolve) => setTimeout(resolve, 100));
     }
@@ -295,7 +282,7 @@ export class OpenClawAgent {
 
   private async resolveSession(): Promise<void> {
     if (!this.connection) {
-      throw new Error("Connection not available");
+      throw new Error('Connection not available');
     }
 
     const resumeKey = this.config.extra?.sessionKey;
@@ -305,17 +292,17 @@ export class OpenClawAgent {
       try {
         const result = await this.connection.sessionsResolve({ key: resumeKey });
         this.connection.sessionKey = result.key;
-        console.log("[OpenClawAgent] Resumed session:", result.key);
+        console.log('[OpenClawAgent] Resumed session:', result.key);
         return;
       } catch (err) {
-        console.warn("[OpenClawAgent] Failed to resume session, using default:", err);
+        console.warn('[OpenClawAgent] Failed to resume session, using default:', err);
       }
     }
 
     // Use "main" as default session key - OpenClaw will create it if needed
-    const defaultKey = "main";
+    const defaultKey = 'main';
     this.connection.sessionKey = defaultKey;
-    console.log("[OpenClawAgent] Using default session key:", defaultKey);
+    console.log('[OpenClawAgent] Using default session key:', defaultKey);
 
     // Notify about session key
     if (defaultKey !== resumeKey) {
@@ -327,49 +314,49 @@ export class OpenClawAgent {
     // Handle different event types
     switch (evt.event) {
       // Chat events - streaming message updates
-      case "chat":
-      case "chat.event":
+      case 'chat':
+      case 'chat.event':
         this.handleChatEvent(evt.payload as ChatEvent);
         break;
 
       // Agent events - lifecycle, assistant text, tool calls
-      case "agent":
-      case "agent.event":
+      case 'agent':
+      case 'agent.event':
         this.handleAgentEvent(evt.payload);
         break;
 
       // Permission/approval requests
-      case "exec.approval.request":
+      case 'exec.approval.request':
         this.handleApprovalRequest(evt.payload);
         break;
 
       // Gateway shutdown
-      case "shutdown":
-        console.log("[OpenClawAgent] Gateway shutdown:", evt.payload);
-        this.handleDisconnect("Gateway shutdown");
+      case 'shutdown':
+        console.log('[OpenClawAgent] Gateway shutdown:', evt.payload);
+        this.handleDisconnect('Gateway shutdown');
         break;
 
       // Ignore health and tick events
-      case "health":
-      case "tick":
+      case 'health':
+      case 'tick':
         break;
 
       default:
         // Log unknown events for debugging
-        console.log("[OpenClawAgent] Unhandled event:", evt.event, evt.payload);
+        console.log('[OpenClawAgent] Unhandled event:', evt.event, evt.payload);
     }
   }
 
   private handleChatEvent(event: ChatEvent): void {
     // Skip delta processing when handleAgentEvent is already handling the assistant stream
     // This prevents duplicate messages with different msg_ids
-    if (event.state === "delta" && this.currentStreamMsgId) {
+    if (event.state === 'delta' && this.currentStreamMsgId) {
       // Agent stream is active, skip to avoid duplicate content
       return;
     }
 
     // Convert to ACP session update format for adapter reuse
-    if (event.state === "delta" && event.message) {
+    if (event.state === 'delta' && event.message) {
       // Convert OpenClaw message format to ACP format
       const acpUpdate = this.convertToAcpFormat(event);
       if (acpUpdate) {
@@ -378,11 +365,11 @@ export class OpenClawAgent {
           this.emitMessage(message);
         }
       }
-    } else if (event.state === "final" || event.state === "aborted") {
+    } else if (event.state === 'final' || event.state === 'aborted') {
       // End of turn
       this.handleEndTurn();
-    } else if (event.state === "error") {
-      this.emitErrorMessage(event.errorMessage || "Unknown error");
+    } else if (event.state === 'error') {
+      this.emitErrorMessage(event.errorMessage || 'Unknown error');
       this.handleEndTurn();
     }
   }
@@ -392,7 +379,7 @@ export class OpenClawAgent {
     const event = payload as { stream: string; data: Record<string, unknown>; runId?: string };
 
     // Map agent event streams to ACP update types
-    if ((event.stream === "assistant" || event.stream === "message") && event.data) {
+    if ((event.stream === 'assistant' || event.stream === 'message') && event.data) {
       // Use delta for streaming, fallback to text for full content
       const rawDelta = (event.data.delta as string) || (event.data.text as string);
       if (!rawDelta) return;
@@ -400,7 +387,7 @@ export class OpenClawAgent {
       // Initialize msg_id for this streaming session if not set
       if (!this.currentStreamMsgId) {
         this.currentStreamMsgId = uuid();
-        this.accumulatedAssistantText = "";
+        this.accumulatedAssistantText = '';
       }
 
       // Heuristic: detect if rawDelta is cumulative text or incremental delta.
@@ -408,9 +395,7 @@ export class OpenClawAgent {
       // if the delta content happens to start with the accumulated text. A protocol-level
       // indicator from the gateway would be more reliable.
       let actualDelta: string;
-      const isCumulative =
-        rawDelta.startsWith(this.accumulatedAssistantText) &&
-        this.accumulatedAssistantText.length > 0;
+      const isCumulative = rawDelta.startsWith(this.accumulatedAssistantText) && this.accumulatedAssistantText.length > 0;
 
       if (isCumulative) {
         // OpenClaw returns cumulative text, extract only the new part
@@ -432,31 +417,31 @@ export class OpenClawAgent {
 
       // Emit content directly with stable msg_id - bypass adapter
       this.onStreamEvent({
-        type: "content",
+        type: 'content',
         conversation_id: this.id,
         msg_id: this.currentStreamMsgId!, // Non-null after initialization above
         data: actualDelta,
       });
-    } else if ((event.stream === "thinking" || event.stream === "thought") && event.data) {
+    } else if ((event.stream === 'thinking' || event.stream === 'thought') && event.data) {
       const delta = (event.data.delta as string) || (event.data.text as string);
       if (!delta) return;
 
       // Emit thought as signal event (not persisted)
       if (this.onSignalEvent) {
         this.onSignalEvent({
-          type: "thought",
+          type: 'thought',
           conversation_id: this.id,
           msg_id: uuid(),
-          data: { subject: "Thinking", description: delta },
+          data: { subject: 'Thinking', description: delta },
         });
       }
-    } else if (event.stream === "lifecycle") {
+    } else if (event.stream === 'lifecycle') {
       // Handle lifecycle events (start/end)
       const phase = event.data.phase as string;
-      if (phase === "end") {
+      if (phase === 'end') {
         this.handleEndTurn();
       }
-    } else if (event.stream === "tool_call") {
+    } else if (event.stream === 'tool_call') {
       // Handle tool calls
       const toolData = event.data as {
         toolCallId?: string;
@@ -469,13 +454,12 @@ export class OpenClawAgent {
       const acpUpdate: ToolCallUpdate = {
         sessionId: this.id,
         update: {
-          sessionUpdate: "tool_call",
+          sessionUpdate: 'tool_call',
           toolCallId: toolData.toolCallId || uuid(),
-          status:
-            (toolData.status as "pending" | "in_progress" | "completed" | "failed") || "pending",
-          title: toolData.title || "Tool Call",
-          kind: (toolData.kind as "read" | "edit" | "execute") || "execute",
-          content: toolData.content as ToolCallUpdate["update"]["content"],
+          status: (toolData.status as 'pending' | 'in_progress' | 'completed' | 'failed') || 'pending',
+          title: toolData.title || 'Tool Call',
+          kind: (toolData.kind as 'read' | 'edit' | 'execute') || 'execute',
+          content: toolData.content as ToolCallUpdate['update']['content'],
         },
       };
 
@@ -517,26 +501,26 @@ export class OpenClawAgent {
     // Store pending and emit to UI
     this.pendingPermissions.set(requestId, {
       resolve: (response) => {
-        console.log("[OpenClawAgent] Permission response:", response);
+        console.log('[OpenClawAgent] Permission response:', response);
       },
       reject: (error) => {
-        console.error("[OpenClawAgent] Permission error:", error);
+        console.error('[OpenClawAgent] Permission error:', error);
       },
     });
 
     // Emit permission request
     if (this.onSignalEvent) {
       this.onSignalEvent({
-        type: "acp_permission",
+        type: 'acp_permission',
         conversation_id: this.id,
         msg_id: uuid(),
         data: {
           sessionId: this.id,
           toolCall: request.toolCall || { toolCallId: requestId },
           options: request.options || [
-            { optionId: "allow_once", name: "Allow", kind: "allow_once" },
-            { optionId: "allow_always", name: "Always Allow", kind: "allow_always" },
-            { optionId: "reject_once", name: "Reject", kind: "reject_once" },
+            { optionId: 'allow_once', name: 'Allow', kind: 'allow_once' },
+            { optionId: 'allow_always', name: 'Always Allow', kind: 'allow_always' },
+            { optionId: 'reject_once', name: 'Reject', kind: 'reject_once' },
           ],
         },
       });
@@ -547,33 +531,33 @@ export class OpenClawAgent {
       const pending = this.pendingPermissions.get(requestId);
       if (pending) {
         this.pendingPermissions.delete(requestId);
-        pending.reject(new Error("Permission request timed out"));
+        pending.reject(new Error('Permission request timed out'));
       }
     }, 70000);
   }
 
   private handleHelloOk(hello: HelloOk): void {
-    console.log("[OpenClawAgent] Connected to gateway:", hello.server.version);
+    console.log('[OpenClawAgent] Connected to gateway:', hello.server.version);
   }
 
   private handleConnectError(err: Error): void {
-    console.error("[OpenClawAgent] Connection error:", err);
+    console.error('[OpenClawAgent] Connection error:', err);
     this.emitErrorMessage(`Connection error: ${err.message}`);
   }
 
   private handleClose(code: number, reason: string): void {
-    console.log("[OpenClawAgent] Connection closed:", code, reason);
+    console.log('[OpenClawAgent] Connection closed:', code, reason);
     this.handleDisconnect(reason);
   }
 
   private handleEndTurn(): void {
     // Reset streaming state for next turn
     this.currentStreamMsgId = null;
-    this.accumulatedAssistantText = "";
+    this.accumulatedAssistantText = '';
 
     if (this.onSignalEvent) {
       this.onSignalEvent({
-        type: "finish",
+        type: 'finish',
         conversation_id: this.id,
         msg_id: uuid(),
         data: null,
@@ -582,12 +566,12 @@ export class OpenClawAgent {
   }
 
   private handleDisconnect(reason: string): void {
-    this.emitStatusMessage("disconnected");
+    this.emitStatusMessage('disconnected');
     this.emitErrorMessage(`Gateway disconnected: ${reason}`);
 
     if (this.onSignalEvent) {
       this.onSignalEvent({
-        type: "finish",
+        type: 'finish',
         conversation_id: this.id,
         msg_id: uuid(),
         data: null,
@@ -613,14 +597,14 @@ export class OpenClawAgent {
     if (!message) return null;
 
     // Extract text content
-    let text = "";
-    if (typeof message.content === "string") {
+    let text = '';
+    if (typeof message.content === 'string') {
       text = message.content;
     } else if (Array.isArray(message.content)) {
       text = message.content
-        .filter((item) => item.type === "text")
-        .map((item) => item.text || "")
-        .join("");
+        .filter((item) => item.type === 'text')
+        .map((item) => item.text || '')
+        .join('');
     }
 
     if (!text) return null;
@@ -628,9 +612,9 @@ export class OpenClawAgent {
     return {
       sessionId: event.sessionKey,
       update: {
-        sessionUpdate: "agent_message_chunk",
+        sessionUpdate: 'agent_message_chunk',
         content: {
-          type: "text",
+          type: 'text',
           text,
         },
       },
@@ -639,9 +623,7 @@ export class OpenClawAgent {
 
   // ========== Message Emission ==========
 
-  private emitStatusMessage(
-    status: "connecting" | "connected" | "session_active" | "disconnected" | "error",
-  ): void {
+  private emitStatusMessage(status: 'connecting' | 'connected' | 'session_active' | 'disconnected' | 'error'): void {
     if (!this.statusMessageId) {
       this.statusMessageId = uuid();
     }
@@ -651,11 +633,11 @@ export class OpenClawAgent {
       id: msgId,
       msg_id: msgId,
       conversation_id: this.id,
-      type: "agent_status",
-      position: "center",
+      type: 'agent_status',
+      position: 'center',
       createdAt: Date.now(),
       content: {
-        backend: "openclaw-gateway",
+        backend: 'openclaw-gateway',
         status,
       },
     };
@@ -667,12 +649,12 @@ export class OpenClawAgent {
     const message: TMessage = {
       id: uuid(),
       conversation_id: this.id,
-      type: "tips",
-      position: "center",
+      type: 'tips',
+      position: 'center',
       createdAt: Date.now(),
       content: {
         content: error,
-        type: "error",
+        type: 'error',
       },
     };
 
@@ -682,35 +664,35 @@ export class OpenClawAgent {
   private emitMessage(message: TMessage): void {
     const finalMsgId = message.msg_id || message.id;
     const responseMessage: IResponseMessage = {
-      type: "",
+      type: '',
       data: null,
       conversation_id: this.id,
       msg_id: finalMsgId,
     };
 
     switch (message.type) {
-      case "text":
-        responseMessage.type = "content";
+      case 'text':
+        responseMessage.type = 'content';
         responseMessage.data = message.content.content;
         break;
-      case "agent_status":
-        responseMessage.type = "agent_status";
+      case 'agent_status':
+        responseMessage.type = 'agent_status';
         responseMessage.data = message.content;
         break;
-      case "tips":
-        responseMessage.type = "error";
+      case 'tips':
+        responseMessage.type = 'error';
         responseMessage.data = message.content.content;
         break;
-      case "acp_tool_call":
-        responseMessage.type = "acp_tool_call";
+      case 'acp_tool_call':
+        responseMessage.type = 'acp_tool_call';
         responseMessage.data = message.content;
         break;
-      case "plan":
-        responseMessage.type = "plan";
+      case 'plan':
+        responseMessage.type = 'plan';
         responseMessage.data = message.content;
         break;
-      case "tool_group":
-        responseMessage.type = "tool_group";
+      case 'tool_group':
+        responseMessage.type = 'tool_group';
         responseMessage.data = message.content;
         break;
       default:
@@ -737,6 +719,6 @@ export class OpenClawAgent {
 }
 
 // Re-export types and utilities
-export { OpenClawGatewayConnection } from "./OpenClawGatewayConnection";
-export { OpenClawGatewayManager } from "./OpenClawGatewayManager";
-export type { OpenClawGatewayConfig } from "./types";
+export { OpenClawGatewayConnection } from './OpenClawGatewayConnection';
+export { OpenClawGatewayManager } from './OpenClawGatewayManager';
+export type { OpenClawGatewayConfig } from './types';

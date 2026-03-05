@@ -25,8 +25,8 @@ export interface SlashCommandListAvailabilityInput {
  * @returns true if slash commands should be enabled
  */
 export function isSlashCommandListEnabled(input: SlashCommandListAvailabilityInput): boolean {
-  if (input.conversationType !== "codex") {
+  if (input.conversationType !== 'codex') {
     return true;
   }
-  return input.codexStatus === "session_active";
+  return input.codexStatus === 'session_active';
 }

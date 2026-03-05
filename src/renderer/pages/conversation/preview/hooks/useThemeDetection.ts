@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useEffect, useState } from "react";
+import { useEffect, useState } from 'react';
 
 /**
  * 检测并监听主题变化
@@ -12,22 +12,21 @@ import { useEffect, useState } from "react";
  *
  * @returns 当前主题 / Current theme
  */
-export const useThemeDetection = (): "light" | "dark" => {
-  const [currentTheme, setCurrentTheme] = useState<"light" | "dark">(() => {
-    return (document.documentElement.getAttribute("data-theme") as "light" | "dark") || "light";
+export const useThemeDetection = (): 'light' | 'dark' => {
+  const [currentTheme, setCurrentTheme] = useState<'light' | 'dark'>(() => {
+    return (document.documentElement.getAttribute('data-theme') as 'light' | 'dark') || 'light';
   });
 
   useEffect(() => {
     const updateTheme = () => {
-      const theme =
-        (document.documentElement.getAttribute("data-theme") as "light" | "dark") || "light";
+      const theme = (document.documentElement.getAttribute('data-theme') as 'light' | 'dark') || 'light';
       setCurrentTheme(theme);
     };
 
     const observer = new MutationObserver(updateTheme);
     observer.observe(document.documentElement, {
       attributes: true,
-      attributeFilter: ["data-theme"],
+      attributeFilter: ['data-theme'],
     });
 
     return () => observer.disconnect();

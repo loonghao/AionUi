@@ -4,24 +4,24 @@ on:
   workflow_call:
     inputs:
       matrix:
-        description: "Build matrix as JSON string (passed via fromJSON in caller)"
+        description: 'Build matrix as JSON string (passed via fromJSON in caller)'
         type: string
         required: true
       ref:
-        description: "Git ref to checkout (leave empty to use the triggering commit)"
+        description: 'Git ref to checkout (leave empty to use the triggering commit)'
         type: string
-        default: ""
+        default: ''
       skip_code_quality:
-        description: "Skip code quality checks (faster builds for debugging)"
+        description: 'Skip code quality checks (faster builds for debugging)'
         type: boolean
         default: false
       append_commit_hash:
-        description: "Append short commit hash to artifact names"
+        description: 'Append short commit hash to artifact names'
         type: boolean
         default: false
 
 env:
-  BUN_INSTALL_REGISTRY: "https://registry.npmjs.org/"
+  BUN_INSTALL_REGISTRY: 'https://registry.npmjs.org/'
 
 jobs:
   code-quality:
@@ -38,7 +38,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "22"
+          node-version: '22'
 
       - name: Setup bun
         uses: oven-sh/setup-bun@v2
@@ -93,7 +93,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "22"
+          node-version: '22'
 
       - name: Setup bun
         uses: oven-sh/setup-bun@v2
@@ -103,53 +103,26 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
-
-      # Set platform-specific cache directories BEFORE the cache step
-      # Windows: LOCALAPPDATA (default for electron & electron-builder)
-      # macOS/Linux: ~/.cache (XDG default)
-      - name: Set Electron cache env vars
-        shell: bash
-        run: |
-          if [[ "${{ runner.os }}" == "Windows" ]]; then
-            # Use LOCALAPPDATA on Windows (electron-builder default)
-            echo "ELECTRON_CACHE=${LOCALAPPDATA}\\electron\\Cache" >> $GITHUB_ENV
-            echo "ELECTRON_BUILDER_CACHE=${LOCALAPPDATA}\\electron-builder\\Cache" >> $GITHUB_ENV
-            echo "electron_cache_dir=${LOCALAPPDATA}\\electron\\Cache" >> $GITHUB_ENV
-            echo "electron_builder_cache_dir=${LOCALAPPDATA}\\electron-builder\\Cache" >> $GITHUB_ENV
-          else
-            echo "ELECTRON_CACHE=$HOME/.cache/electron" >> $GITHUB_ENV
-            echo "ELECTRON_BUILDER_CACHE=$HOME/.cache/electron-builder" >> $GITHUB_ENV
-            echo "electron_cache_dir=$HOME/.cache/electron" >> $GITHUB_ENV
-            echo "electron_builder_cache_dir=$HOME/.cache/electron-builder" >> $GITHUB_ENV
-          fi
+          python-version: '3.12'
 
       # Restore Electron/Electron-Builder caches before any build-related install
-      - name: Cache Electron binaries
+      - name: Cache Electron artifacts
         id: electron-cache
         uses: actions/cache@v4
         with:
-          path: ${{ env.electron_cache_dir }}
-          key: electron-bin-${{ matrix.platform }}-${{ matrix.arch }}-${{ hashFiles('package.json') }}
+          path: |
+            ${{ runner.temp }}/.cache/electron
+            ${{ runner.temp }}/.cache/electron-builder
+            ~/.cache/electron
+            ~/.cache/electron-builder
+            ${{ env.LOCALAPPDATA }}\electron-builder\Cache
+          key: electron-cache-${{ matrix.platform }}-${{ matrix.arch }}-${{ hashFiles('package.json', 'bun.lock') }}
           restore-keys: |
-            electron-bin-${{ matrix.platform }}-${{ matrix.arch }}-
-
-      - name: Cache Electron Builder binaries
-        id: electron-builder-cache
-        uses: actions/cache@v4
-        with:
-          path: ${{ env.electron_builder_cache_dir }}
-          key: electron-builder-bin-${{ matrix.platform }}-${{ matrix.arch }}-${{ hashFiles('package.json') }}
-          restore-keys: |
-            electron-builder-bin-${{ matrix.platform }}-${{ matrix.arch }}-
+            electron-cache-${{ matrix.platform }}-${{ matrix.arch }}-
+            electron-cache-${{ matrix.platform }}-
 
       - name: Cache status
-        shell: bash
-        run: |
-          echo "electron-cache-hit=${{ steps.electron-cache.outputs.cache-hit }}"
-          echo "electron-builder-cache-hit=${{ steps.electron-builder-cache.outputs.cache-hit }}"
-          echo "ELECTRON_CACHE=${{ env.ELECTRON_CACHE }}"
-          echo "ELECTRON_BUILDER_CACHE=${{ env.ELECTRON_BUILDER_CACHE }}"
+        run: echo "electron-cache-hit=${{ steps.electron-cache.outputs.cache-hit }}"
 
       - name: Install dependencies
         run: bun install --no-frozen-lockfile
@@ -184,7 +157,7 @@ jobs:
         if: startsWith(matrix.platform, 'windows')
         uses: microsoft/setup-msbuild@v2
         with:
-          vs-version: "17.0"
+          vs-version: '17.0'
 
       - name: Rebuild native modules for Electron
         if: "!startsWith(matrix.platform, 'windows')"
@@ -192,6 +165,8 @@ jobs:
         env:
           npm_config_runtime: electron
           npm_config_disturl: https://electronjs.org/headers
+          ELECTRON_CACHE: ${{ runner.temp }}/.cache/electron
+          ELECTRON_BUILDER_CACHE: ${{ runner.temp }}/.cache/electron-builder
 
       - name: Print build configuration
         shell: bash
@@ -356,7 +331,8 @@ jobs:
           npm_config_disturl: https://electronjs.org/headers
           npm_config_build_from_source: true
           npm_config_cache: ${{ runner.temp }}/.npm
-          # ELECTRON_CACHE & ELECTRON_BUILDER_CACHE inherited from GITHUB_ENV
+          ELECTRON_CACHE: ${{ runner.temp }}/.cache/electron
+          ELECTRON_BUILDER_CACHE: ${{ runner.temp }}/.cache/electron-builder
           # Signing & IDs / 签名与应用 ID 配置
           APP_ID: ${{ secrets.APP_ID }}
           appleId: ${{ secrets.APPLE_ID }}
@@ -449,7 +425,8 @@ jobs:
           CSC_NAME: ${{ secrets.IDENTITY }}
           CSC_IDENTITY_AUTO_DISCOVERY: false
           npm_config_cache: ${{ runner.temp }}/.npm
-          # ELECTRON_CACHE & ELECTRON_BUILDER_CACHE inherited from GITHUB_ENV
+          ELECTRON_CACHE: ${{ runner.temp }}/.cache/electron
+          ELECTRON_BUILDER_CACHE: ${{ runner.temp }}/.cache/electron-builder
           ELECTRON_BUILDER_BINARIES_MIRROR: https://github.com/electron-userland/electron-builder-binaries/releases/download/
           npm_config_electron_builder_binaries_mirror: https://github.com/electron-userland/electron-builder-binaries/releases/download/
           ELECTRON_MIRROR: ""
@@ -483,6 +460,8 @@ jobs:
           npm_config_target_arch: ${{ matrix.arch }}
           CI: true
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
+
+
 
       - name: Verify packaged i18n assets
         if: >-

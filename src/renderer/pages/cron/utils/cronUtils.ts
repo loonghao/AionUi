@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { ICronJob } from "@/common/ipcBridge";
+import type { ICronJob } from '@/common/ipcBridge';
 
 /**
  * Format schedule for display - use human-readable description
@@ -17,7 +17,7 @@ export function formatSchedule(job: ICronJob): string {
  * Format next run time for display
  */
 export function formatNextRun(nextRunAtMs?: number): string {
-  if (!nextRunAtMs) return "-";
+  if (!nextRunAtMs) return '-';
   const date = new Date(nextRunAtMs);
   return date.toLocaleString();
 }
@@ -27,7 +27,7 @@ export function formatNextRun(nextRunAtMs?: number): string {
  */
 export function getJobStatusFlags(job: ICronJob): { hasError: boolean; isPaused: boolean } {
   return {
-    hasError: job.state.lastStatus === "error",
+    hasError: job.state.lastStatus === 'error',
     isPaused: !job.enabled,
   };
 }

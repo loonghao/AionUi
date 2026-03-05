@@ -10,11 +10,11 @@
  *
  * Must be imported as early as possible in the main process entry point.
  */
-if (process.platform === "win32") {
+if (process.platform === 'win32') {
   try {
     // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const { execSync } = require("child_process");
-    execSync("chcp 65001", { stdio: "ignore" });
+    const { execSync } = require('child_process');
+    execSync('chcp 65001', { stdio: 'ignore' });
   } catch {
     // Silently ignore — non-critical
   }

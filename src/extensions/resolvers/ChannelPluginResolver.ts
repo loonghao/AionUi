@@ -4,13 +4,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import * as path from "path";
-import fs from "fs";
-import { BasePlugin } from "@/channels/plugins/BasePlugin";
-import type { LoadedExtension, ExtChannelPlugin } from "../types";
+import * as path from 'path';
+import fs from 'fs';
+import { BasePlugin } from '@/channels/plugins/BasePlugin';
+import type { LoadedExtension, ExtChannelPlugin } from '../types';
 
 const DEBUG_ENABLED =
-  process.env.AIONUI_EXTENSION_DEBUG === "1" || process.env.AIONUI_EXTENSION_DEBUG === "true";
+  process.env.AIONUI_EXTENSION_DEBUG === '1' || process.env.AIONUI_EXTENSION_DEBUG === 'true';
 
 function logSecurity(message: string): void {
   if (DEBUG_ENABLED) {
@@ -29,20 +29,18 @@ type ChannelPluginEntry = {
  * use duck-typing to verify they implement the required contract instead of
  * relying on `instanceof BasePlugin`.
  */
-const REQUIRED_METHODS = ["start", "stop", "sendMessage"] as const;
+const REQUIRED_METHODS = ['start', 'stop', 'sendMessage'] as const;
 
 function isValidPluginClass(PluginClass: unknown): boolean {
-  if (typeof PluginClass !== "function") return false;
+  if (typeof PluginClass !== 'function') return false;
   const proto = (PluginClass as { prototype?: unknown }).prototype;
-  if (!proto || typeof proto !== "object") return false;
+  if (!proto || typeof proto !== 'object') return false;
   return REQUIRED_METHODS.every(
-    (method) => typeof (proto as Record<string, unknown>)[method] === "function",
+    (method) => typeof (proto as Record<string, unknown>)[method] === 'function',
   );
 }
 
-export function resolveChannelPlugins(
-  extensions: LoadedExtension[],
-): Map<string, ChannelPluginEntry> {
+export function resolveChannelPlugins(extensions: LoadedExtension[]): Map<string, ChannelPluginEntry> {
   const result = new Map<string, ChannelPluginEntry>();
   for (const ext of extensions) {
     const plugins = ext.manifest.contributes.channelPlugins;
@@ -65,12 +63,12 @@ export function resolveChannelPlugins(
       logSecurity(
         `Loading channel plugin "${plugin.type}" from: ${entryPath}\n` +
           `  ⚠️  This code will run with FULL process privileges.\n` +
-          `  ⚠️  Only load extensions from trusted sources.`,
+          `  ⚠️  Only load extensions from trusted sources.`
       );
 
       try {
         // eslint-disable-next-line no-eval
-        const nativeRequire = eval("require");
+        const nativeRequire = eval('require');
         const mod = nativeRequire(entryPath);
         const PluginClass = mod.default || mod.Plugin || mod[Object.keys(mod)[0]];
 
@@ -83,7 +81,7 @@ export function resolveChannelPlugins(
         if (!isInternal && !isDuckValid) {
           console.warn(
             `[Extension] Channel plugin "${plugin.type}": exported class must extend BasePlugin ` +
-              `or implement the required methods (${REQUIRED_METHODS.join(", ")})`,
+              `or implement the required methods (${REQUIRED_METHODS.join(', ')})`
           );
           continue;
         }
@@ -94,7 +92,7 @@ export function resolveChannelPlugins(
         });
         console.log(
           `[Extension] Loaded channel plugin: ${plugin.type} (${plugin.name})` +
-            (isDuckValid ? " [duck-typed]" : ""),
+            (isDuckValid ? ' [duck-typed]' : ''),
         );
         logSecurity(`Channel plugin "${plugin.type}" loaded successfully`);
       } catch (error) {

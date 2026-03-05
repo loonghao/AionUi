@@ -2,7 +2,7 @@
 
 /* Light Mode */
 :root,
-[data-color-scheme="default"] {
+[data-color-scheme='default'] {
   /* AOU Brand Colors - Light Mode */
   --aou-1: #eff0f6;
   --aou-2: #e5e7f0;
@@ -72,7 +72,7 @@
 }
 
 /* Dark Mode */
-[data-color-scheme="default"][data-theme="dark"] {
+[data-color-scheme='default'][data-theme='dark'] {
   /* AOU Brand Colors - Dark Mode */
   --aou-1: #2a2a2a;
   --aou-2: #3d4150;

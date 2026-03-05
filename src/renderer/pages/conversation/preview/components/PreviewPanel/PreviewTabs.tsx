@@ -4,12 +4,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { iconColors } from "@/renderer/theme/colors";
-import { Close } from "@icon-park/react";
-import { IconShrink } from "@arco-design/web-react/icon";
-import React from "react";
-import { useTranslation } from "react-i18next";
-import type { TabFadeState } from "../../hooks/useTabOverflow";
+import { iconColors } from '@/renderer/theme/colors';
+import { Close } from '@icon-park/react';
+import { IconShrink } from '@arco-design/web-react/icon';
+import React from 'react';
+import { useTranslation } from 'react-i18next';
+import type { TabFadeState } from '../../hooks/useTabOverflow';
 
 /**
  * Tab 信息
@@ -98,50 +98,28 @@ interface PreviewTabsProps {
  * 包含左右渐变指示器，提示用户可以滚动查看更多 Tab
  * Includes left/right gradient indicators to prompt users that more tabs can be scrolled
  */
-const PreviewTabs: React.FC<PreviewTabsProps> = ({
-  tabs,
-  activeTabId,
-  tabFadeState,
-  tabsContainerRef,
-  onSwitchTab,
-  onCloseTab,
-  onContextMenu,
-  onClosePanel,
-}) => {
+const PreviewTabs: React.FC<PreviewTabsProps> = ({ tabs, activeTabId, tabFadeState, tabsContainerRef, onSwitchTab, onCloseTab, onContextMenu, onClosePanel }) => {
   const { t } = useTranslation();
   const { left: showLeftFade, right: showRightFade } = tabFadeState;
 
   return (
-    <div
-      className="relative flex-shrink-0 bg-bg-2"
-      style={{ minHeight: "36px", borderBottom: "1px solid var(--border-base)" }}
-    >
-      <div className="flex items-center h-36px w-full">
+    <div className='relative flex-shrink-0 bg-bg-2' style={{ minHeight: '36px', borderBottom: '1px solid var(--border-base)' }}>
+      <div className='flex items-center h-36px w-full'>
         {/* Tabs 滚动区域 / Tabs scroll area */}
-        <div ref={tabsContainerRef} className="flex items-center h-full flex-1 overflow-x-auto">
+        <div ref={tabsContainerRef} className='flex items-center h-full flex-1 overflow-x-auto'>
           {tabs.length > 0 ? (
             tabs.map((tab) => (
-              <div
-                key={tab.id}
-                className={`flex items-center gap-6px px-10px h-full cursor-pointer transition-colors flex-shrink-0 ${tab.id === activeTabId ? "bg-bg-1 text-t-primary" : "text-t-secondary hover:bg-bg-3"}`}
-                onClick={() => onSwitchTab(tab.id)}
-                onContextMenu={(e) => onContextMenu(e, tab.id)}
-              >
-                <span className="text-12px whitespace-nowrap flex items-center gap-4px">
+              <div key={tab.id} className={`flex items-center gap-6px px-10px h-full cursor-pointer transition-colors flex-shrink-0 ${tab.id === activeTabId ? 'bg-bg-1 text-t-primary' : 'text-t-secondary hover:bg-bg-3'}`} onClick={() => onSwitchTab(tab.id)} onContextMenu={(e) => onContextMenu(e, tab.id)}>
+                <span className='text-12px whitespace-nowrap flex items-center gap-4px'>
                   {tab.title}
                   {/* 未保存指示器 / Unsaved indicator */}
-                  {tab.isDirty && (
-                    <span
-                      className="w-6px h-6px rd-full bg-primary"
-                      title={t("preview.unsavedChangesTitle")}
-                    />
-                  )}
+                  {tab.isDirty && <span className='w-6px h-6px rd-full bg-primary' title={t('preview.unsavedChangesTitle')} />}
                 </span>
                 <Close
-                  theme="outline"
-                  size="14"
+                  theme='outline'
+                  size='14'
                   fill={iconColors.secondary}
-                  className="hover:fill-primary"
+                  className='hover:fill-primary'
                   onClick={(e) => {
                     e.stopPropagation();
                     onCloseTab(tab.id);
@@ -150,18 +128,14 @@ const PreviewTabs: React.FC<PreviewTabsProps> = ({
               </div>
             ))
           ) : (
-            <div className="text-12px text-t-tertiary px-10px">{t("preview.noTabs")}</div>
+            <div className='text-12px text-t-tertiary px-10px'>{t('preview.noTabs')}</div>
           )}
         </div>
 
         {/* 收起面板按钮 / Collapse panel button */}
         {onClosePanel && (
-          <div className="flex items-center h-full px-10px flex-shrink-0 rounded-tr-[16px]">
-            <div
-              className="flex items-center justify-center w-20px h-20px rd-4px cursor-pointer hover:bg-bg-3 transition-colors"
-              onClick={onClosePanel}
-              title={t("preview.collapsePanel")}
-            >
+          <div className='flex items-center h-full px-10px flex-shrink-0 rounded-tr-[16px]'>
+            <div className='flex items-center justify-center w-20px h-20px rd-4px cursor-pointer hover:bg-bg-3 transition-colors' onClick={onClosePanel} title={t('preview.collapsePanel')}>
               <IconShrink style={{ fontSize: 14, color: iconColors.secondary }} />
             </div>
           </div>
@@ -171,9 +145,9 @@ const PreviewTabs: React.FC<PreviewTabsProps> = ({
       {/* 左侧渐变指示器 / Left gradient indicator */}
       {showLeftFade && (
         <div
-          className="pointer-events-none absolute left-0 top-0 bottom-0 w-32px rounded-tl-[16px]"
+          className='pointer-events-none absolute left-0 top-0 bottom-0 w-32px rounded-tl-[16px]'
           style={{
-            background: "linear-gradient(90deg, var(--bg-2) 0%, transparent 100%)",
+            background: 'linear-gradient(90deg, var(--bg-2) 0%, transparent 100%)',
           }}
         />
       )}
@@ -181,9 +155,9 @@ const PreviewTabs: React.FC<PreviewTabsProps> = ({
       {/* 右侧渐变指示器 / Right gradient indicator */}
       {showRightFade && (
         <div
-          className="pointer-events-none absolute right-0 top-0 bottom-0 w-32px rounded-tr-[16px]"
+          className='pointer-events-none absolute right-0 top-0 bottom-0 w-32px rounded-tr-[16px]'
           style={{
-            background: "linear-gradient(270deg, var(--bg-2) 0%, transparent 100%)",
+            background: 'linear-gradient(270deg, var(--bg-2) 0%, transparent 100%)',
           }}
         />
       )}

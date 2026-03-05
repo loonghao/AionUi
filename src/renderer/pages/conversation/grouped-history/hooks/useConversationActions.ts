@@ -4,18 +4,18 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { ipcBridge } from "@/common";
-import type { TChatConversation } from "@/common/storage";
-import { emitter } from "@/renderer/utils/emitter";
-import { blockMobileInputFocus, blurActiveElement } from "@/renderer/utils/focus";
-import { Message, Modal } from "@arco-design/web-react";
-import { useCallback, useEffect, useState } from "react";
-import { useTranslation } from "react-i18next";
-import { useNavigate, useParams } from "react-router-dom";
+import { ipcBridge } from '@/common';
+import type { TChatConversation } from '@/common/storage';
+import { emitter } from '@/renderer/utils/emitter';
+import { blockMobileInputFocus, blurActiveElement } from '@/renderer/utils/focus';
+import { Message, Modal } from '@arco-design/web-react';
+import { useCallback, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useNavigate, useParams } from 'react-router-dom';
 
-import { useConversationTabs } from "../../context/ConversationTabsContext";
-import { isConversationPinned } from "../utils/groupingHelpers";
-import { useCronJobsMap } from "@/renderer/pages/cron";
+import { useConversationTabs } from '../../context/ConversationTabsContext';
+import { isConversationPinned } from '../utils/groupingHelpers';
+import { useCronJobsMap } from '@/renderer/pages/cron';
 
 type UseConversationActionsParams = {
   batchMode: boolean;
@@ -26,16 +26,9 @@ type UseConversationActionsParams = {
   toggleSelectedConversation: (conversation: TChatConversation) => void;
 };
 
-export const useConversationActions = ({
-  batchMode,
-  onSessionClick,
-  onBatchModeChange,
-  selectedConversationIds,
-  setSelectedConversationIds,
-  toggleSelectedConversation,
-}: UseConversationActionsParams) => {
+export const useConversationActions = ({ batchMode, onSessionClick, onBatchModeChange, selectedConversationIds, setSelectedConversationIds, toggleSelectedConversation }: UseConversationActionsParams) => {
   const [renameModalVisible, setRenameModalVisible] = useState(false);
-  const [renameModalName, setRenameModalName] = useState<string>("");
+  const [renameModalName, setRenameModalName] = useState<string>('');
   const [renameModalId, setRenameModalId] = useState<string | null>(null);
   const [renameLoading, setRenameLoading] = useState(false);
   const [dropdownVisibleId, setDropdownVisibleId] = useState<string | null>(null);
@@ -87,16 +80,7 @@ export const useConversationActions = ({
         onSessionClick();
       }
     },
-    [
-      batchMode,
-      toggleSelectedConversation,
-      markAsRead,
-      closeAllTabs,
-      navigate,
-      onSessionClick,
-      activeTab,
-      openTab,
-    ],
+    [batchMode, toggleSelectedConversation, markAsRead, closeAllTabs, navigate, onSessionClick, activeTab, openTab]
   );
 
   const removeConversation = useCallback(
@@ -106,91 +90,81 @@ export const useConversationActions = ({
         return false;
       }
 
-      emitter.emit("conversation.deleted", conversationId);
+      emitter.emit('conversation.deleted', conversationId);
       if (id === conversationId) {
-        void navigate("/");
+        void navigate('/');
       }
       return true;
     },
-    [id, navigate],
+    [id, navigate]
   );
 
   const handleDeleteClick = useCallback(
     (conversationId: string) => {
       Modal.confirm({
-        title: t("conversation.history.deleteTitle"),
-        content: t("conversation.history.deleteConfirm"),
-        okText: t("conversation.history.confirmDelete"),
-        cancelText: t("conversation.history.cancelDelete"),
-        okButtonProps: { status: "warning" },
+        title: t('conversation.history.deleteTitle'),
+        content: t('conversation.history.deleteConfirm'),
+        okText: t('conversation.history.confirmDelete'),
+        cancelText: t('conversation.history.cancelDelete'),
+        okButtonProps: { status: 'warning' },
         onOk: async () => {
           try {
             const success = await removeConversation(conversationId);
             if (success) {
-              emitter.emit("chat.history.refresh");
-              Message.success(t("conversation.history.deleteSuccess"));
+              emitter.emit('chat.history.refresh');
+              Message.success(t('conversation.history.deleteSuccess'));
             } else {
-              Message.error(t("conversation.history.deleteFailed"));
+              Message.error(t('conversation.history.deleteFailed'));
             }
           } catch (error) {
-            console.error("Failed to remove conversation:", error);
-            Message.error(t("conversation.history.deleteFailed"));
+            console.error('Failed to remove conversation:', error);
+            Message.error(t('conversation.history.deleteFailed'));
           }
         },
-        style: { borderRadius: "12px" },
+        style: { borderRadius: '12px' },
         alignCenter: true,
         getPopupContainer: () => document.body,
       });
     },
-    [removeConversation, t],
+    [removeConversation, t]
   );
 
   const handleBatchDelete = useCallback(() => {
     if (selectedConversationIds.size === 0) {
-      Message.warning(t("conversation.history.batchNoSelection"));
+      Message.warning(t('conversation.history.batchNoSelection'));
       return;
     }
 
     Modal.confirm({
-      title: t("conversation.history.batchDelete"),
-      content: t("conversation.history.batchDeleteConfirm", {
-        count: selectedConversationIds.size,
-      }),
-      okText: t("conversation.history.confirmDelete"),
-      cancelText: t("conversation.history.cancelDelete"),
-      okButtonProps: { status: "warning" },
+      title: t('conversation.history.batchDelete'),
+      content: t('conversation.history.batchDeleteConfirm', { count: selectedConversationIds.size }),
+      okText: t('conversation.history.confirmDelete'),
+      cancelText: t('conversation.history.cancelDelete'),
+      okButtonProps: { status: 'warning' },
       onOk: async () => {
         const selectedIds = Array.from(selectedConversationIds);
         try {
-          const results = await Promise.all(
-            selectedIds.map((conversationId) => removeConversation(conversationId)),
-          );
+          const results = await Promise.all(selectedIds.map((conversationId) => removeConversation(conversationId)));
           const successCount = results.filter(Boolean).length;
-          emitter.emit("chat.history.refresh");
+          emitter.emit('chat.history.refresh');
           if (successCount > 0) {
-            Message.success(t("conversation.history.batchDeleteSuccess", { count: successCount }));
+            Message.success(t('conversation.history.batchDeleteSuccess', { count: successCount }));
           } else {
-            Message.error(t("conversation.history.deleteFailed"));
+            Message.error(t('conversation.history.deleteFailed'));
           }
         } catch (error) {
-          console.error("Failed to batch delete conversations:", error);
-          Message.error(t("conversation.history.deleteFailed"));
+          console.error('Failed to batch delete conversations:', error);
+          Message.error(t('conversation.history.deleteFailed'));
         } finally {
           setSelectedConversationIds(new Set());
           onBatchModeChange?.(false);
         }
       },
-      style: { borderRadius: "12px" },
+      style: { borderRadius: '12px' },
       alignCenter: true,
       getPopupContainer: () => document.body,
     });
-  }, [
-    onBatchModeChange,
-    removeConversation,
-    selectedConversationIds,
-    t,
-    setSelectedConversationIds,
-  ]);
+  }, [onBatchModeChange, removeConversation, selectedConversationIds, t, setSelectedConversationIds]);
 
   const handleEditStart = useCallback((conversation: TChatConversation) => {
     setRenameModalId(conversation.id);
@@ -210,17 +184,17 @@ export const useConversationActions = ({
 
       if (success) {
         updateTabName(renameModalId, renameModalName.trim());
-        emitter.emit("chat.history.refresh");
+        emitter.emit('chat.history.refresh');
         setRenameModalVisible(false);
         setRenameModalId(null);
-        setRenameModalName("");
-        Message.success(t("conversation.history.renameSuccess"));
+        setRenameModalName('');
+        Message.success(t('conversation.history.renameSuccess'));
       } else {
-        Message.error(t("conversation.history.renameFailed"));
+        Message.error(t('conversation.history.renameFailed'));
       }
     } catch (error) {
-      console.error("Failed to update conversation name:", error);
-      Message.error(t("conversation.history.renameFailed"));
+      console.error('Failed to update conversation name:', error);
+      Message.error(t('conversation.history.renameFailed'));
     } finally {
       setRenameLoading(false);
     }
@@ -229,7 +203,7 @@ export const useConversationActions = ({
   const handleRenameCancel = useCallback(() => {
     setRenameModalVisible(false);
     setRenameModalId(null);
-    setRenameModalName("");
+    setRenameModalName('');
   }, []);
 
   const handleTogglePin = useCallback(
@@ -243,22 +217,22 @@ export const useConversationActions = ({
             extra: {
               pinned: !pinned,
               pinnedAt: pinned ? undefined : Date.now(),
-            } as Partial<TChatConversation["extra"]>,
+            } as Partial<TChatConversation['extra']>,
           } as Partial<TChatConversation>,
           mergeExtra: true,
         });
 
         if (success) {
-          emitter.emit("chat.history.refresh");
+          emitter.emit('chat.history.refresh');
         } else {
-          Message.error(t("conversation.history.pinFailed"));
+          Message.error(t('conversation.history.pinFailed'));
         }
       } catch (error) {
-        console.error("Failed to toggle pin conversation:", error);
-        Message.error(t("conversation.history.pinFailed"));
+        console.error('Failed to toggle pin conversation:', error);
+        Message.error(t('conversation.history.pinFailed'));
       }
     },
-    [t],
+    [t]
   );
 
   const handleMenuVisibleChange = useCallback((conversationId: string, visible: boolean) => {

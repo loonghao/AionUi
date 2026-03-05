@@ -302,11 +302,7 @@ class LarkPlugin extends BasePlugin {
 
   // 消息处理
   async sendMessage(chatId: string, message: IUnifiedOutgoingMessage): Promise<string>;
-  async editMessage(
-    chatId: string,
-    messageId: string,
-    message: IUnifiedOutgoingMessage,
-  ): Promise<void>;
+  async editMessage(chatId: string, messageId: string, message: IUnifiedOutgoingMessage): Promise<void>;
 
   // 事件处理
   private handleMessageEvent(event: LarkMessageEvent): void;
@@ -323,7 +319,7 @@ class LarkPlugin extends BasePlugin {
 interface LarkPluginConfig {
   appId: string;
   appSecret: string;
-  mode: "websocket" | "webhook";
+  mode: 'websocket' | 'webhook';
   webhookUrl?: string;
   encryptKey?: string; // 事件加密密钥
   verificationToken?: string; // 事件验证令牌

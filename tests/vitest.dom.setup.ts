@@ -3,7 +3,7 @@
  * Configuration for React component and hook tests using jsdom
  */
 
-import "@testing-library/jest-dom/vitest";
+import '@testing-library/jest-dom/vitest';
 
 // Make this a module
 export {};
@@ -32,7 +32,7 @@ const windowControlsMock = {
   windowControls: windowControlsMock,
 };
 
-if (typeof window !== "undefined") {
+if (typeof window !== 'undefined') {
   (window as any).electronAPI = (global as any).electronAPI;
 }
 

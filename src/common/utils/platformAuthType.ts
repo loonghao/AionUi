@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { AuthType } from "@office-ai/aioncli-core";
-import { isNewApiPlatform } from "./platformConstants";
+import { AuthType } from '@office-ai/aioncli-core';
+import { isNewApiPlatform } from './platformConstants';
 
 /**
  * 根据平台名称获取对应的认证类型
@@ -13,26 +13,26 @@ import { isNewApiPlatform } from "./platformConstants";
  * @returns 对应的AuthType
  */
 export function getAuthTypeFromPlatform(platform: string): AuthType {
-  const platformLower = platform?.toLowerCase() || "";
+  const platformLower = platform?.toLowerCase() || '';
 
   // Gemini 相关平台
-  if (platformLower.includes("gemini-with-google-auth")) {
+  if (platformLower.includes('gemini-with-google-auth')) {
     return AuthType.LOGIN_WITH_GOOGLE;
   }
-  if (platformLower.includes("gemini-vertex-ai") || platformLower.includes("vertex-ai")) {
+  if (platformLower.includes('gemini-vertex-ai') || platformLower.includes('vertex-ai')) {
     return AuthType.USE_VERTEX_AI;
   }
-  if (platformLower.includes("gemini") || platformLower.includes("google")) {
+  if (platformLower.includes('gemini') || platformLower.includes('google')) {
     return AuthType.USE_GEMINI;
   }
 
   // Anthropic/Claude 相关平台
-  if (platformLower.includes("anthropic") || platformLower.includes("claude")) {
+  if (platformLower.includes('anthropic') || platformLower.includes('claude')) {
     return AuthType.USE_ANTHROPIC;
   }
 
   // AWS Bedrock 平台
-  if (platformLower.includes("bedrock")) {
+  if (platformLower.includes('bedrock')) {
     return AuthType.USE_BEDROCK;
   }
 
@@ -51,12 +51,7 @@ export function getAuthTypeFromPlatform(platform: string): AuthType {
  * @param provider 包含platform和可选authType的provider配置
  * @returns 认证类型
  */
-export function getProviderAuthType(provider: {
-  platform: string;
-  authType?: AuthType;
-  modelProtocols?: Record<string, string>;
-  useModel?: string;
-}): AuthType {
+export function getProviderAuthType(provider: { platform: string; authType?: AuthType; modelProtocols?: Record<string, string>; useModel?: string }): AuthType {
   // 如果明确指定了authType，直接使用
   if (provider.authType) {
     return provider.authType;

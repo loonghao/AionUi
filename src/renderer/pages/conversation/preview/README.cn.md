@@ -113,16 +113,8 @@ interface PreviewContextValue {
   saveContent: (tabId?: string) => Promise<boolean>;
 
   // Tab 查找和管理
-  findPreviewTab: (
-    type: PreviewContentType,
-    content?: string,
-    metadata?: PreviewMetadata,
-  ) => PreviewTab | null;
-  closePreviewByIdentity: (
-    type: PreviewContentType,
-    content?: string,
-    metadata?: PreviewMetadata,
-  ) => void;
+  findPreviewTab: (type: PreviewContentType, content?: string, metadata?: PreviewMetadata) => PreviewTab | null;
+  closePreviewByIdentity: (type: PreviewContentType, content?: string, metadata?: PreviewMetadata) => void;
 
   // 发送框集成
   addToSendBox: (text: string) => void;
@@ -184,7 +176,7 @@ interface PreviewToolbarExtras {
 ```typescript
 // 订阅文件内容更新
 ipcBridge.fileStream.contentUpdate.on(({ filePath, content, operation }) => {
-  if (operation === "delete") {
+  if (operation === 'delete') {
     // 文件被删除，关闭对应的 Tab
     closeTabByFilePath(filePath);
   } else {
@@ -223,7 +215,7 @@ if (savingFilesRef.current.has(filePath) || tab.isDirty) {
 ### 基础用法
 
 ```tsx
-import { PreviewProvider, usePreviewContext } from "./preview";
+import { PreviewProvider, usePreviewContext } from './preview';
 
 function App() {
   return (
@@ -238,10 +230,10 @@ function YourComponent() {
 
   const handleOpenFile = async (filePath: string) => {
     const content = await readFile(filePath);
-    openPreview(content, "markdown", {
-      fileName: "example.md",
-      filePath: "/path/to/example.md",
-      workspace: "/workspace/root",
+    openPreview(content, 'markdown', {
+      fileName: 'example.md',
+      filePath: '/path/to/example.md',
+      workspace: '/workspace/root',
     });
   };
 
@@ -253,30 +245,30 @@ function YourComponent() {
 
 ```tsx
 // Markdown 文件
-openPreview(markdownContent, "markdown", {
-  fileName: "README.md",
-  filePath: "/workspace/README.md",
-  workspace: "/workspace",
+openPreview(markdownContent, 'markdown', {
+  fileName: 'README.md',
+  filePath: '/workspace/README.md',
+  workspace: '/workspace',
 });
 
 // 代码文件
-openPreview(codeContent, "code", {
-  fileName: "app.tsx",
-  filePath: "/workspace/src/app.tsx",
-  workspace: "/workspace",
-  language: "typescript",
+openPreview(codeContent, 'code', {
+  fileName: 'app.tsx',
+  filePath: '/workspace/src/app.tsx',
+  workspace: '/workspace',
+  language: 'typescript',
 });
 
 // 图片文件
-openPreview(base64Content, "image", {
-  fileName: "screenshot.png",
-  filePath: "/workspace/screenshot.png",
-  workspace: "/workspace",
+openPreview(base64Content, 'image', {
+  fileName: 'screenshot.png',
+  filePath: '/workspace/screenshot.png',
+  workspace: '/workspace',
 });
 
 // Diff 文件
-openPreview(diffContent, "diff", {
-  fileName: "changes.diff",
+openPreview(diffContent, 'diff', {
+  fileName: 'changes.diff',
 });
 ```
 
@@ -284,8 +276,8 @@ openPreview(diffContent, "diff", {
 
 ```tsx
 // 查找 Tab
-const tab = findPreviewTab("markdown", undefined, {
-  filePath: "/workspace/README.md",
+const tab = findPreviewTab('markdown', undefined, {
+  filePath: '/workspace/README.md',
 });
 
 // 关闭特定 Tab
@@ -294,8 +286,8 @@ if (tab) {
 }
 
 // 根据身份关闭 Tab
-closePreviewByIdentity("markdown", undefined, {
-  filePath: "/workspace/README.md",
+closePreviewByIdentity('markdown', undefined, {
+  filePath: '/workspace/README.md',
 });
 ```
 
@@ -304,7 +296,7 @@ closePreviewByIdentity("markdown", undefined, {
 ```tsx
 function SendBox() {
   const { setSendBoxHandler } = usePreviewContext();
-  const [text, setText] = useState("");
+  const [text, setText] = useState('');
 
   useEffect(() => {
     // 注册处理器
@@ -551,7 +543,7 @@ export const MIN_SPLIT_WIDTH = 30;
 export const MAX_SPLIT_WIDTH = 70;
 
 // 内置打开按钮的文件类型
-export const FILE_TYPES_WITH_BUILTIN_OPEN = ["pdf", "word", "excel", "ppt"];
+export const FILE_TYPES_WITH_BUILTIN_OPEN = ['pdf', 'word', 'excel', 'ppt'];
 ```
 
 ## 相关链接

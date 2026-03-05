@@ -4,14 +4,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import fs from "fs/promises";
-import * as path from "path";
-import { existsSync } from "fs";
-import type { LoadedExtension, ExtAssistant } from "../types";
+import fs from 'fs/promises';
+import * as path from 'path';
+import { existsSync } from 'fs';
+import type { LoadedExtension, ExtAssistant } from '../types';
 
-export async function resolveAssistants(
-  extensions: LoadedExtension[],
-): Promise<Record<string, unknown>[]> {
+export async function resolveAssistants(extensions: LoadedExtension[]): Promise<Record<string, unknown>[]> {
   const assistants: Record<string, unknown>[] = [];
   for (const ext of extensions) {
     const declaredAssistants = ext.manifest.contributes.assistants;
@@ -23,7 +21,7 @@ export async function resolveAssistants(
       } catch (error) {
         console.warn(
           `[Extensions] Failed to resolve assistant "${assistant.id}" from ${ext.manifest.name}:`,
-          error instanceof Error ? error.message : error,
+          error instanceof Error ? error.message : error
         );
       }
     }
@@ -33,7 +31,7 @@ export async function resolveAssistants(
 
 async function convertAssistant(
   assistant: ExtAssistant,
-  ext: LoadedExtension,
+  ext: LoadedExtension
 ): Promise<Record<string, unknown>> {
   const context = await readContextFile(assistant.contextFile, ext.directory);
   let contextI18n: Record<string, string> | undefined;
@@ -59,7 +57,7 @@ async function convertAssistant(
     descriptionI18n: assistant.descriptionI18n,
     avatar: assistant.avatar ? resolveIconPath(assistant.avatar, ext.directory) : undefined,
     presetAgentType: assistant.presetAgentType,
-    context: context || "",
+    context: context || '',
     contextI18n,
     models: assistant.models,
     enabledSkills: assistant.enabledSkills,
@@ -68,7 +66,7 @@ async function convertAssistant(
     isPreset: true,
     isBuiltin: false,
     enabled: true,
-    _source: "extension",
+    _source: 'extension',
     _extensionName: ext.manifest.name,
   };
 }
@@ -84,19 +82,19 @@ async function readContextFile(relativePath: string, extensionDir: string): Prom
     return null;
   }
   try {
-    return await fs.readFile(absolutePath, "utf-8");
+    return await fs.readFile(absolutePath, 'utf-8');
   } catch (error) {
     console.warn(
       `[Extensions] Failed to read context file ${absolutePath}:`,
-      error instanceof Error ? error.message : error,
+      error instanceof Error ? error.message : error
     );
     return null;
   }
 }
 
 function resolveIconPath(icon: string, extensionDir: string): string {
-  if (icon.startsWith("http://") || icon.startsWith("https://")) return icon;
-  if (!icon.includes("/") && !icon.includes("\\") && !icon.includes(".")) return icon;
+  if (icon.startsWith('http://') || icon.startsWith('https://')) return icon;
+  if (!icon.includes('/') && !icon.includes('\\') && !icon.includes('.')) return icon;
   const absPath = path.isAbsolute(icon) ? icon : path.resolve(extensionDir, icon);
-  return `file://${absPath.replace(/\\/g, "/")}`;
+  return `file://${absPath.replace(/\\/g, '/')}`;
 }

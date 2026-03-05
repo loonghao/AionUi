@@ -4,19 +4,19 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import fs from "fs/promises";
-import * as path from "path";
-import { existsSync } from "fs";
-import stripJsonComments from "strip-json-comments";
+import fs from 'fs/promises';
+import * as path from 'path';
+import { existsSync } from 'fs';
+import stripJsonComments from 'strip-json-comments';
 import {
   getUserExtensionsDir,
   getAppDataExtensionsDir,
   getEnvExtensionsDirs,
   EXTENSION_MANIFEST_FILE,
-} from "./constants";
-import { ExtensionManifestSchema, type LoadedExtension, type ExtensionSource } from "./types";
-import { resolveEnvInObject, UndefinedEnvVariableError } from "./envResolver";
-import { resolveFileRefs } from "./fileResolver";
+} from './constants';
+import { ExtensionManifestSchema, type LoadedExtension, type ExtensionSource } from './types';
+import { resolveEnvInObject, UndefinedEnvVariableError } from './envResolver';
+import { resolveFileRefs } from './fileResolver';
 
 type ExtensionLoaderOptions = {
   continueOnError?: boolean;
@@ -43,7 +43,7 @@ export class ExtensionLoader {
       for (const ext of extensions) {
         if (seenNames.has(ext.manifest.name)) {
           console.warn(
-            `[Extensions] Skipping duplicate extension "${ext.manifest.name}" from ${ext.directory} (already loaded)`,
+            `[Extensions] Skipping duplicate extension "${ext.manifest.name}" from ${ext.directory} (already loaded)`
           );
           continue;
         }
@@ -58,25 +58,22 @@ export class ExtensionLoader {
   private getScanSources(): Array<{ dir: string; source: ExtensionSource }> {
     const sources: Array<{ dir: string; source: ExtensionSource }> = [];
     const userDir = getUserExtensionsDir();
-    sources.push({ dir: userDir, source: "local" });
+    sources.push({ dir: userDir, source: 'local' });
 
     const appDataDir = getAppDataExtensionsDir();
     if (appDataDir !== userDir) {
-      sources.push({ dir: appDataDir, source: "appdata" });
+      sources.push({ dir: appDataDir, source: 'appdata' });
     }
 
     const envDirs = getEnvExtensionsDirs();
     for (const dir of envDirs) {
-      sources.push({ dir, source: "env" });
+      sources.push({ dir, source: 'env' });
     }
 
     return sources;
   }
 
-  private async scanDirectory(
-    baseDir: string,
-    source: ExtensionSource,
-  ): Promise<LoadedExtension[]> {
+  private async scanDirectory(baseDir: string, source: ExtensionSource): Promise<LoadedExtension[]> {
     if (!existsSync(baseDir)) {
       return [];
     }
@@ -102,12 +99,12 @@ export class ExtensionLoader {
               throw error;
             }
             console.error(
-              `[Extensions] Failed to load extension from ${extensionDir}: ${error.message}`,
+              `[Extensions] Failed to load extension from ${extensionDir}: ${error.message}`
             );
           } else {
             console.warn(
               `[Extensions] Failed to load extension from ${extensionDir}:`,
-              error instanceof Error ? error.message : error,
+              error instanceof Error ? error.message : error
             );
           }
         }
@@ -115,7 +112,7 @@ export class ExtensionLoader {
     } catch (error) {
       console.warn(
         `[Extensions] Failed to scan directory ${baseDir}:`,
-        error instanceof Error ? error.message : error,
+        error instanceof Error ? error.message : error
       );
     }
 
@@ -125,9 +122,9 @@ export class ExtensionLoader {
   private async loadManifest(
     extensionDir: string,
     manifestPath: string,
-    source: ExtensionSource,
+    source: ExtensionSource
   ): Promise<LoadedExtension | null> {
-    const raw = await fs.readFile(manifestPath, "utf-8");
+    const raw = await fs.readFile(manifestPath, 'utf-8');
     const jsonStr = stripJsonComments(raw);
     let parsed: unknown;
 
@@ -136,7 +133,7 @@ export class ExtensionLoader {
     } catch (error) {
       console.warn(
         `[Extensions] Invalid JSON in ${manifestPath}:`,
-        error instanceof Error ? error.message : error,
+        error instanceof Error ? error.message : error
       );
       return null;
     }
@@ -146,7 +143,7 @@ export class ExtensionLoader {
 
     const result = ExtensionManifestSchema.safeParse(resolved);
     if (!result.success) {
-      const errors = result.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join("; ");
+      const errors = result.error.issues.map((i) => `${i.path.join('.')}: ${i.message}`).join('; ');
       console.warn(`[Extensions] Schema validation failed for ${manifestPath}: ${errors}`);
       return null;
     }

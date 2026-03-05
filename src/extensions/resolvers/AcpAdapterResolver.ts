@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import * as path from "path";
-import type { LoadedExtension, ExtAcpAdapter } from "../types";
+import * as path from 'path';
+import type { LoadedExtension, ExtAcpAdapter } from '../types';
 
 export function resolveAcpAdapters(extensions: LoadedExtension[]): Record<string, unknown>[] {
   const adapters: Record<string, unknown>[] = [];
@@ -20,7 +20,7 @@ export function resolveAcpAdapters(extensions: LoadedExtension[]): Record<string
 }
 
 function convertAcpAdapter(adapter: ExtAcpAdapter, ext: LoadedExtension): Record<string, unknown> {
-  const connectionType = adapter.connectionType ?? "cli";
+  const connectionType = adapter.connectionType ?? 'cli';
   return {
     id: adapter.id,
     name: adapter.name,
@@ -43,14 +43,14 @@ function convertAcpAdapter(adapter: ExtAcpAdapter, ext: LoadedExtension): Record
     isPreset: false,
     isBuiltin: false,
     enabled: true,
-    _source: "extension",
+    _source: 'extension',
     _extensionName: ext.manifest.name,
   };
 }
 
 function resolveIconPath(icon: string, extensionDir: string): string {
-  if (icon.startsWith("http://") || icon.startsWith("https://")) return icon;
-  if (!icon.includes("/") && !icon.includes("\\") && !icon.includes(".")) return icon;
+  if (icon.startsWith('http://') || icon.startsWith('https://')) return icon;
+  if (!icon.includes('/') && !icon.includes('\\') && !icon.includes('.')) return icon;
   const absPath = path.isAbsolute(icon) ? icon : path.resolve(extensionDir, icon);
-  return `file://${absPath.replace(/\\/g, "/")}`;
+  return `file://${absPath.replace(/\\/g, '/')}`;
 }

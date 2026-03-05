@@ -4,12 +4,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { ipcBridge } from "@/common";
-import { joinPath } from "@/common/chatLib";
-import type { PreviewContentType } from "@/common/types/preview";
-import { useConversationContextSafe } from "@/renderer/context/ConversationContext";
-import { usePreviewContext } from "@/renderer/pages/conversation/preview";
-import { useCallback, useState } from "react";
+import { ipcBridge } from '@/common';
+import { joinPath } from '@/common/chatLib';
+import type { PreviewContentType } from '@/common/types/preview';
+import { useConversationContextSafe } from '@/renderer/context/ConversationContext';
+import { usePreviewContext } from '@/renderer/pages/conversation/preview';
+import { useCallback, useState } from 'react';
 
 /**
  * 预览启动选项 / Preview launch options
@@ -56,28 +56,16 @@ export const usePreviewLauncher = () => {
    * 启动预览面板 / Launch preview panel
    */
   const launchPreview = useCallback(
-    async ({
-      relativePath,
-      originalPath,
-      fileName,
-      title,
-      language,
-      contentType,
-      editable,
-      fallbackContent,
-      diffContent,
-    }: PreviewLaunchOptions) => {
+    async ({ relativePath, originalPath, fileName, title, language, contentType, editable, fallbackContent, diffContent }: PreviewLaunchOptions) => {
       setLoading(true);
 
       // 路径解析 / Path resolution
       // 优先使用工作区 + 相对路径拼接绝对路径 / Prefer workspace + relative path to build absolute path
-      const absolutePath =
-        workspace && relativePath ? joinPath(workspace, relativePath) : undefined;
+      const absolutePath = workspace && relativePath ? joinPath(workspace, relativePath) : undefined;
       const resolvedPath = absolutePath || originalPath || relativePath || undefined;
 
       // 文件名和标题计算 / Compute file name and title
-      const computedFileName =
-        fileName || (relativePath ? relativePath.split(/[\\/]/).pop() || relativePath : undefined);
+      const computedFileName = fileName || (relativePath ? relativePath.split(/[\\/]/).pop() || relativePath : undefined);
       const previewTitle = title || computedFileName || relativePath || contentType.toUpperCase();
 
       // 预览元数据 / Preview metadata
@@ -91,7 +79,7 @@ export const usePreviewLauncher = () => {
 
       // 1. 乐观预览：如果有回退内容（如 Diff 中提取的内容），立即显示 / Optimistic preview: Show fallback content immediately if available
       let hasOpened = false;
-      if (typeof fallbackContent === "string") {
+      if (typeof fallbackContent === 'string') {
         openPreview(fallbackContent, contentType, {
           ...metadata,
           editable,
@@ -105,7 +93,7 @@ export const usePreviewLauncher = () => {
           try {
             const pathToRead = absolutePath || originalPath;
 
-            if (contentType === "image") {
+            if (contentType === 'image') {
               const base64 = await ipcBridge.fs.getImageBase64.invoke({ path: pathToRead! });
               openPreview(base64, contentType, {
                 ...metadata,
@@ -114,11 +102,11 @@ export const usePreviewLauncher = () => {
               return;
             }
 
-            const binaryOnlyTypes: PreviewContentType[] = ["pdf", "ppt", "word", "excel"];
+            const binaryOnlyTypes: PreviewContentType[] = ['pdf', 'ppt', 'word', 'excel'];
             if (binaryOnlyTypes.includes(contentType)) {
               // 这类格式仅依赖文件路径渲染，不需要实际读取内容
               // These formats rely on file path; no need to read file content
-              openPreview("", contentType, {
+              openPreview('', contentType, {
                 ...metadata,
                 editable,
               });
@@ -126,12 +114,7 @@ export const usePreviewLauncher = () => {
             }
 
             // 使用 Promise.race 防止长时间卡死 / Use Promise.race to prevent hanging
-            const content = await Promise.race([
-              ipcBridge.fs.readFile.invoke({ path: pathToRead! }),
-              new Promise<never>((_, reject) =>
-                setTimeout(() => reject(new Error("File read timeout")), 5000),
-              ),
-            ]);
+            const content = await Promise.race([ipcBridge.fs.readFile.invoke({ path: pathToRead! }), new Promise<never>((_, reject) => setTimeout(() => reject(new Error('File read timeout')), 5000))]);
             openPreview(content, contentType, {
               ...metadata,
               editable,
@@ -147,7 +130,7 @@ export const usePreviewLauncher = () => {
         if (!hasOpened) {
           // 显示 diff 内容（只读）/ Show diff content (read-only)
           if (diffContent) {
-            openPreview(diffContent, "diff", {
+            openPreview(diffContent, 'diff', {
               ...metadata,
               editable: false,
             });
@@ -155,12 +138,12 @@ export const usePreviewLauncher = () => {
           }
         }
       } catch (error) {
-        console.error("[usePreviewLauncher] Failed to open preview:", error);
+        console.error('[usePreviewLauncher] Failed to open preview:', error);
       } finally {
         setLoading(false);
       }
     },
-    [workspace, openPreview],
+    [workspace, openPreview]
   );
 
   return { launchPreview, loading };

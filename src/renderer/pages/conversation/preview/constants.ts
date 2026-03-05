@@ -61,10 +61,10 @@ export const MAX_SPLIT_WIDTH = 80;
  * 具有内置打开按钮的文件类型
  * File types with built-in open buttons
  */
-export const FILE_TYPES_WITH_BUILTIN_OPEN = ["word", "ppt", "pdf", "excel"] as const;
+export const FILE_TYPES_WITH_BUILTIN_OPEN = ['word', 'ppt', 'pdf', 'excel'] as const;
 
 /**
  * 可编辑的内容类型
  * Editable content types
  */
-export const EDITABLE_CONTENT_TYPES = ["markdown", "html", "code"] as const;
+export const EDITABLE_CONTENT_TYPES = ['markdown', 'html', 'code'] as const;

@@ -3,8 +3,8 @@
  * Copyright 2025 AionUi (aionui.com)
  * SPDX-License-Identifier: Apache-2.0
  */
-import type { CodexError, ErrorCode } from "@/common/codex/types/errorTypes";
-import { ERROR_CODES } from "@/common/codex/types/errorTypes";
+import type { CodexError, ErrorCode } from '@/common/codex/types/errorTypes';
+import { ERROR_CODES } from '@/common/codex/types/errorTypes';
 
 // Re-export types for convenience
 export type { CodexError, ErrorCode };
@@ -12,10 +12,7 @@ export { ERROR_CODES };
 
 export class CodexErrorService {
   private maxRetries = 3;
-  private retryableErrors = new Set<string>([
-    ERROR_CODES.NETWORK_TIMEOUT,
-    ERROR_CODES.NETWORK_UNKNOWN,
-  ]);
+  private retryableErrors = new Set<string>([ERROR_CODES.NETWORK_TIMEOUT, ERROR_CODES.NETWORK_UNKNOWN]);
 
   createError(code: string, message: string, options?: Partial<CodexError>): CodexError {
     const error = new Error(message) as CodexError;
@@ -52,32 +49,29 @@ export class CodexErrorService {
 }
 
 // Utility functions for creating specific error types
-export function fromNetworkError(
-  originalError: string | Error,
-  options: { source?: string; retryCount?: number } = {},
-): CodexError {
-  const errorMsg = typeof originalError === "string" ? originalError : originalError.message;
+export function fromNetworkError(originalError: string | Error, options: { source?: string; retryCount?: number } = {}): CodexError {
+  const errorMsg = typeof originalError === 'string' ? originalError : originalError.message;
   const lowerMsg = errorMsg.toLowerCase();
 
   let code: string;
   let userMessageKey: string;
 
-  if (lowerMsg.includes("403") && lowerMsg.includes("cloudflare")) {
+  if (lowerMsg.includes('403') && lowerMsg.includes('cloudflare')) {
     code = ERROR_CODES.CLOUDFLARE_BLOCKED;
-    userMessageKey = "codex.network.cloudflare_blocked";
-  } else if (lowerMsg.includes("timeout") || lowerMsg.includes("etimedout")) {
+    userMessageKey = 'codex.network.cloudflare_blocked';
+  } else if (lowerMsg.includes('timeout') || lowerMsg.includes('etimedout')) {
     code = ERROR_CODES.NETWORK_TIMEOUT;
-    userMessageKey = "codex.network.network_timeout";
-  } else if (lowerMsg.includes("connection refused") || lowerMsg.includes("econnrefused")) {
+    userMessageKey = 'codex.network.network_timeout';
+  } else if (lowerMsg.includes('connection refused') || lowerMsg.includes('econnrefused')) {
     code = ERROR_CODES.NETWORK_REFUSED;
-    userMessageKey = "codex.network.connection_refused";
+    userMessageKey = 'codex.network.connection_refused';
   } else {
     code = ERROR_CODES.UNKNOWN_ERROR;
-    userMessageKey = "codex.network.unknown_error";
+    userMessageKey = 'codex.network.unknown_error';
   }
 
   return globalErrorService.createError(code, errorMsg, {
-    originalError: typeof originalError === "string" ? undefined : originalError,
+    originalError: typeof originalError === 'string' ? undefined : originalError,
     userMessage: userMessageKey,
     retryCount: options.retryCount || 0,
     context: options.source,

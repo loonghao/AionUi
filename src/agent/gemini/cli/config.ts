@@ -4,37 +4,19 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type {
-  TelemetryTarget,
-  GeminiCLIExtension,
-  FallbackIntent,
-  SkillDefinition,
-} from "@office-ai/aioncli-core";
-import {
-  ApprovalMode,
-  Config,
-  DEFAULT_GEMINI_EMBEDDING_MODEL,
-  DEFAULT_GEMINI_MODEL,
-  DEFAULT_MEMORY_FILE_FILTERING_OPTIONS,
-  FileDiscoveryService,
-  getCurrentGeminiMdFilename,
-  loadServerHierarchicalMemory,
-  setGeminiMdFilename as setServerGeminiMdFilename,
-  SimpleExtensionLoader,
-  PREVIEW_GEMINI_MODEL_AUTO,
-  loadSkillsFromDir,
-} from "@office-ai/aioncli-core";
-import process from "node:process";
-import path from "node:path";
-import type { Settings } from "./settings";
-import { annotateActiveExtensions } from "./extension";
-import { getCurrentGeminiAgent } from "../index";
+import type { TelemetryTarget, GeminiCLIExtension, FallbackIntent, SkillDefinition } from '@office-ai/aioncli-core';
+import { ApprovalMode, Config, DEFAULT_GEMINI_EMBEDDING_MODEL, DEFAULT_GEMINI_MODEL, DEFAULT_MEMORY_FILE_FILTERING_OPTIONS, FileDiscoveryService, getCurrentGeminiMdFilename, loadServerHierarchicalMemory, setGeminiMdFilename as setServerGeminiMdFilename, SimpleExtensionLoader, PREVIEW_GEMINI_MODEL_AUTO, loadSkillsFromDir } from '@office-ai/aioncli-core';
+import process from 'node:process';
+import path from 'node:path';
+import type { Settings } from './settings';
+import { annotateActiveExtensions } from './extension';
+import { getCurrentGeminiAgent } from '../index';
 
 // Simple console logger for now - replace with actual logger if available
 const logger = {
-  debug: (...args: unknown[]) => console.debug("[DEBUG]", ...args),
-  warn: (...args: unknown[]) => console.warn("[WARN]", ...args),
-  error: (...args: unknown[]) => console.error("[ERROR]", ...args),
+  debug: (...args: unknown[]) => console.debug('[DEBUG]', ...args),
+  warn: (...args: unknown[]) => console.warn('[WARN]', ...args),
+  error: (...args: unknown[]) => console.error('[ERROR]', ...args),
 };
 
 export interface CliArgs {
@@ -67,7 +49,7 @@ export interface CliArgs {
   includeDirectories: string[] | undefined;
 }
 
-import type { ConversationToolConfig } from "./tools/conversation-tool-config";
+import type { ConversationToolConfig } from './tools/conversation-tool-config';
 
 export interface LoadCliConfigOptions {
   workspace: string;
@@ -85,19 +67,7 @@ export interface LoadCliConfigOptions {
   enabledSkills?: string[];
 }
 
-export async function loadCliConfig({
-  workspace,
-  settings,
-  extensions,
-  sessionId,
-  proxy,
-  model,
-  conversationToolConfig,
-  yoloMode,
-  mcpServers,
-  skillsDir,
-  enabledSkills,
-}: LoadCliConfigOptions): Promise<Config> {
+export async function loadCliConfig({ workspace, settings, extensions, sessionId, proxy, model, conversationToolConfig, yoloMode, mcpServers, skillsDir, enabledSkills }: LoadCliConfigOptions): Promise<Config> {
   const argv: Partial<CliArgs> = {
     yolo: yoloMode,
   };
@@ -108,17 +78,13 @@ export async function loadCliConfig({
   // 将 'auto' 映射到正确的 aioncli-core 模型别名
   // aioncli-core 需要 'auto-gemini-3' 或 'auto-gemini-2.5'，而不是纯 'auto'
   // Config 内部会调用 resolveModel(model, getGemini31LaunchedSync()) 解析为 gemini-3.1-pro-preview
-  const resolvedModel = model === "auto" ? PREVIEW_GEMINI_MODEL_AUTO : model;
+  const resolvedModel = model === 'auto' ? PREVIEW_GEMINI_MODEL_AUTO : model;
 
-  const debugMode =
-    argv.debug ||
-    [process.env.DEBUG, process.env.DEBUG_MODE].some((v) => v === "true" || v === "1") ||
-    false;
-  const memoryImportFormat = settings.memoryImportFormat || "tree";
+  const debugMode = argv.debug || [process.env.DEBUG, process.env.DEBUG_MODE].some((v) => v === 'true' || v === '1') || false;
+  const memoryImportFormat = settings.memoryImportFormat || 'tree';
   const ideMode = settings.ideMode ?? false;
 
-  const _ideModeFeature =
-    (argv.ideModeFeature ?? settings.ideModeFeature ?? false) && !process.env.SANDBOX;
+  const _ideModeFeature = (argv.ideModeFeature ?? settings.ideModeFeature ?? false) && !process.env.SANDBOX;
 
   // 加载内置 skills 并创建虚拟 extension
   // Load builtin skills and create a virtual extension
@@ -130,13 +96,13 @@ export async function loadCliConfig({
       // Load skills from both top-level and _builtin/ subdirectory
       // loadSkillsFromDir only scans direct children, so _builtin/cron is not found by default
       const topLevelSkills = await loadSkillsFromDir(skillsDir);
-      const builtinDir = path.join(skillsDir, "_builtin");
+      const builtinDir = path.join(skillsDir, '_builtin');
       let builtinDirSkills: SkillDefinition[] = [];
       try {
         builtinDirSkills = await loadSkillsFromDir(builtinDir);
       } catch (e) {
         // Only ignore "not found" errors; warn on unexpected failures
-        if ((e as NodeJS.ErrnoException).code !== "ENOENT") {
+        if ((e as NodeJS.ErrnoException).code !== 'ENOENT') {
           console.warn(`[Config] Failed to load skills from ${builtinDir}:`, e);
         }
       }
@@ -144,9 +110,7 @@ export async function loadCliConfig({
       const enabledSet = new Set(enabledSkills);
       const originalCount = allSkills.length;
       builtinSkills = allSkills.filter((skill) => enabledSet.has(skill.name));
-      console.log(
-        `[Config] Filtered skills: ${builtinSkills.length}/${originalCount} enabled (${enabledSkills.join(", ")})`,
-      );
+      console.log(`[Config] Filtered skills: ${builtinSkills.length}/${originalCount} enabled (${enabledSkills.join(', ')})`);
     } catch (error) {
       console.warn(`[Config] Failed to load builtin skills from ${skillsDir}:`, error);
     }
@@ -155,19 +119,16 @@ export async function loadCliConfig({
   // 创建虚拟 extension 来承载内置 skills
   // Create a virtual extension to hold builtin skills
   const builtinSkillsExtension: GeminiCLIExtension = {
-    name: "aionui-builtin-skills",
-    version: "1.0.0",
+    name: 'aionui-builtin-skills',
+    version: '1.0.0',
     isActive: true,
-    path: skillsDir || "",
+    path: skillsDir || '',
     contextFiles: [],
-    id: "aionui-builtin-skills",
+    id: 'aionui-builtin-skills',
     skills: builtinSkills,
   };
 
-  const allExtensions = annotateActiveExtensions(
-    [builtinSkillsExtension, ...extensions],
-    argv.extensions || [],
-  );
+  const allExtensions = annotateActiveExtensions([builtinSkillsExtension, ...extensions], argv.extensions || []);
   const activeExtensions = allExtensions.filter((ext) => ext.isActive);
   // Handle OpenAI API key from command line
   if (argv.openaiApiKey) {
@@ -201,44 +162,28 @@ export async function loadCliConfig({
   // Directly use aioncli-core's loadServerHierarchicalMemory with ExtensionLoader
   const extensionLoader = new SimpleExtensionLoader(allExtensions);
   const folderTrust = true; // 默认信任工作区 / Default to trusting the workspace
-  const { memoryContent, fileCount } = await loadServerHierarchicalMemory(
-    workspace,
-    [],
-    debugMode,
-    fileService,
-    extensionLoader,
-    folderTrust,
-    memoryImportFormat,
-    fileFiltering,
-    settings.memoryDiscoveryMaxDirs,
-  );
+  const { memoryContent, fileCount } = await loadServerHierarchicalMemory(workspace, [], debugMode, fileService, extensionLoader, folderTrust, memoryImportFormat, fileFiltering, settings.memoryDiscoveryMaxDirs);
 
   let mcpServersConfig = mergeMcpServers(settings, activeExtensions, mcpServers);
 
   // 使用对话级别的工具配置
   const toolConfig = conversationToolConfig.getConfig();
 
-  const excludeTools = mergeExcludeTools(settings, activeExtensions).concat(
-    toolConfig.excludeTools,
-  );
+  const excludeTools = mergeExcludeTools(settings, activeExtensions).concat(toolConfig.excludeTools);
   const blockedMcpServers: Array<{ name: string; extensionName: string }> = [];
 
   if (!argv.allowedMcpServerNames) {
     if (settings.allowMCPServers) {
       const allowedNames = new Set(settings.allowMCPServers.filter(Boolean));
       if (allowedNames.size > 0) {
-        mcpServersConfig = Object.fromEntries(
-          Object.entries(mcpServersConfig).filter(([key]) => allowedNames.has(key)),
-        );
+        mcpServersConfig = Object.fromEntries(Object.entries(mcpServersConfig).filter(([key]) => allowedNames.has(key)));
       }
     }
 
     if (settings.excludeMCPServers) {
       const excludedNames = new Set(settings.excludeMCPServers.filter(Boolean));
       if (excludedNames.size > 0) {
-        mcpServersConfig = Object.fromEntries(
-          Object.entries(mcpServersConfig).filter(([key]) => !excludedNames.has(key)),
-        );
+        mcpServersConfig = Object.fromEntries(Object.entries(mcpServersConfig).filter(([key]) => !excludedNames.has(key)));
       }
     }
   }
@@ -253,19 +198,19 @@ export async function loadCliConfig({
             // aioncli-core v0.18.4: 使用 server.extension?.name 替代 server.extensionName / use server.extension?.name instead of server.extensionName
             blockedMcpServers.push({
               name: key,
-              extensionName: server.extension?.name || "",
+              extensionName: server.extension?.name || '',
             });
           }
           return isAllowed;
-        }),
+        })
       );
     } else {
       blockedMcpServers.push(
         ...Object.entries(mcpServersConfig).map(([key, server]) => ({
           name: key,
           // aioncli-core v0.18.4: 使用 server.extension?.name 替代 server.extensionName / use server.extension?.name instead of server.extensionName
-          extensionName: server.extension?.name || "",
-        })),
+          extensionName: server.extension?.name || '',
+        }))
       );
       mcpServersConfig = {};
     }
@@ -281,7 +226,7 @@ export async function loadCliConfig({
     targetDir: workspace,
     includeDirectories: argv.includeDirectories,
     debugMode,
-    question: argv.promptInteractive || argv.prompt || "",
+    question: argv.promptInteractive || argv.prompt || '',
     // fullContext 参数在 aioncli-core v0.18.4 中已移除 / parameter was removed in aioncli-core v0.18.4
     coreTools: settings.coreTools || undefined,
     excludeTools,
@@ -295,16 +240,12 @@ export async function loadCliConfig({
     // AionUi 是桌面应用，支持用户交互确认，需要设置 interactive: true
     // AionUi is a desktop app with user interaction support, needs interactive: true
     interactive: true,
-    showMemoryUsage:
-      argv.showMemoryUsage || argv.show_memory_usage || settings.showMemoryUsage || false,
+    showMemoryUsage: argv.showMemoryUsage || argv.show_memory_usage || settings.showMemoryUsage || false,
     accessibility: settings.accessibility,
     telemetry: {
       enabled: argv.telemetry ?? settings.telemetry?.enabled,
       target: (argv.telemetryTarget ?? settings.telemetry?.target) as TelemetryTarget,
-      otlpEndpoint:
-        argv.telemetryOtlpEndpoint ??
-        process.env.OTEL_EXPORTER_OTLP_ENDPOINT ??
-        settings.telemetry?.otlpEndpoint,
+      otlpEndpoint: argv.telemetryOtlpEndpoint ?? process.env.OTEL_EXPORTER_OTLP_ENDPOINT ?? settings.telemetry?.otlpEndpoint,
       logPrompts: argv.telemetryLogPrompts ?? settings.telemetry?.logPrompts,
       outfile: argv.telemetryOutfile ?? settings.telemetry?.outfile,
     },
@@ -355,11 +296,7 @@ export async function loadCliConfig({
   // IMPORTANT: returning 'retry_once' causes aioncli-core to reset retry count and continue
   // 对于 RATE_LIMIT 错误，如果没有其他 API key 可用，应该返回 null 让内置重试机制处理
   // For RATE_LIMIT errors, if no other API keys available, return null to let built-in retry handle it
-  const fallbackModelHandler = async (
-    _currentModel: string,
-    _fallbackModel: string,
-    _error?: unknown,
-  ): Promise<FallbackIntent | null> => {
+  const fallbackModelHandler = async (_currentModel: string, _fallbackModel: string, _error?: unknown): Promise<FallbackIntent | null> => {
     try {
       const agent = getCurrentGeminiAgent();
       const apiKeyManager = agent?.getApiKeyManager();
@@ -369,8 +306,8 @@ export async function loadCliConfig({
         // 避免返回 'retry_once' 导致无限重试循环
         // Single key mode, return 'stop' to stop retrying
         // Avoid returning 'retry_once' which causes infinite retry loop
-        console.log("[FallbackHandler] Single key mode, stopping retry");
-        return "stop";
+        console.log('[FallbackHandler] Single key mode, stopping retry');
+        return 'stop';
       }
 
       // 轮换到下一个可用的 API Key，这会更新 process.env
@@ -380,17 +317,17 @@ export async function loadCliConfig({
       if (hasMoreKeys) {
         // 还有可用的 Key，重试一次
         // More keys available, retry once
-        return "retry_once";
+        return 'retry_once';
       }
 
       // 所有 Key 都已用尽或被 blacklist，停止重试
       // All keys exhausted or blacklisted, stop retrying
-      return "stop";
+      return 'stop';
     } catch (e) {
       console.error(`[FallbackHandler] Handler error:`, e);
       // 发生错误时返回 'stop'，停止重试
       // On error, return 'stop' to stop retrying
-      return "stop";
+      return 'stop';
     }
   };
 
@@ -399,11 +336,7 @@ export async function loadCliConfig({
   return config;
 }
 
-function mergeMcpServers(
-  settings: Settings,
-  extensions: GeminiCLIExtension[],
-  uiMcpServers?: Record<string, unknown>,
-) {
+function mergeMcpServers(settings: Settings, extensions: GeminiCLIExtension[], uiMcpServers?: Record<string, unknown>) {
   const mcpServers = { ...(settings.mcpServers || {}) };
 
   // 添加来自 extensions 的 MCP 服务器
@@ -411,9 +344,7 @@ function mergeMcpServers(
   for (const extension of extensions) {
     Object.entries(extension.mcpServers || {}).forEach(([key, server]) => {
       if (mcpServers[key]) {
-        logger.warn(
-          `Skipping extension MCP config for server with key "${key}" as it already exists.`,
-        );
+        logger.warn(`Skipping extension MCP config for server with key "${key}" as it already exists.`);
         return;
       }
       mcpServers[key] = {
@@ -427,9 +358,7 @@ function mergeMcpServers(
   if (uiMcpServers) {
     Object.entries(uiMcpServers).forEach(([key, server]) => {
       if (mcpServers[key]) {
-        logger.warn(
-          `Overriding existing MCP config for server with key "${key}" with UI configuration.`,
-        );
+        logger.warn(`Overriding existing MCP config for server with key "${key}" with UI configuration.`);
       }
       mcpServers[key] = server;
       console.log(`[MCP] Added UI-configured server: ${key}`);

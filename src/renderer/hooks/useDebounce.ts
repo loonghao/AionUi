@@ -1,5 +1,5 @@
-import type React from "react";
-import { useCallback, useEffect, useRef } from "react";
+import type React from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 
 /**
  * 防抖 Hook
@@ -7,11 +7,7 @@ import { useCallback, useEffect, useRef } from "react";
  * @param delay 防抖延迟时间（毫秒）
  * @returns 防抖后的函数
  */
-function useDebounce<T extends (...args: any[]) => any>(
-  callback: T,
-  delay: number,
-  deps: React.DependencyList,
-): T {
+function useDebounce<T extends (...args: any[]) => any>(callback: T, delay: number, deps: React.DependencyList): T {
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // 清理定时器
@@ -36,7 +32,7 @@ function useDebounce<T extends (...args: any[]) => any>(
         callback(...args);
       }, delay);
     },
-    [delay, clearTimer, ...deps],
+    [delay, clearTimer, ...deps]
   );
 
   return debouncedFunction as T;

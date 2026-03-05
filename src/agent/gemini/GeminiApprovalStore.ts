@@ -4,14 +4,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { BaseApprovalStore, type IApprovalKey } from "@/common/approval";
+import { BaseApprovalStore, type IApprovalKey } from '@/common/approval';
 
 /**
  * Gemini-specific approval key
  * Supports exec, edit, and info action types
  */
 export type GeminiApprovalKey = IApprovalKey & {
-  action: "exec" | "edit" | "info";
+  action: 'exec' | 'edit' | 'info';
   /** For exec type: command name (e.g., 'curl', 'npm') */
   identifier?: string;
 };
@@ -32,7 +32,7 @@ function isValidCommandName(name: string): boolean {
  */
 function parseCommandTypes(commandType: string): string[] {
   return commandType
-    .split(",")
+    .split(',')
     .map((cmd) => cmd.trim())
     .filter(Boolean)
     .filter(isValidCommandName);
@@ -56,20 +56,20 @@ export class GeminiApprovalStore extends BaseApprovalStore<GeminiApprovalKey> {
    * For exec confirmations with multiple commands, returns keys for each command
    */
   static createKeysFromConfirmation(action: string, commandType?: string): GeminiApprovalKey[] {
-    if (action === "exec" && commandType) {
+    if (action === 'exec' && commandType) {
       const commands = parseCommandTypes(commandType);
       return commands.map((cmd) => ({
-        action: "exec" as const,
+        action: 'exec' as const,
         identifier: cmd,
       }));
     }
 
-    if (action === "edit") {
-      return [{ action: "edit" as const }];
+    if (action === 'edit') {
+      return [{ action: 'edit' as const }];
     }
 
-    if (action === "info") {
-      return [{ action: "info" as const }];
+    if (action === 'info') {
+      return [{ action: 'info' as const }];
     }
 
     return [];
@@ -80,7 +80,7 @@ export class GeminiApprovalStore extends BaseApprovalStore<GeminiApprovalKey> {
    */
   static createExecKeys(commands: string[]): GeminiApprovalKey[] {
     return commands.filter(isValidCommandName).map((cmd) => ({
-      action: "exec" as const,
+      action: 'exec' as const,
       identifier: cmd,
     }));
   }

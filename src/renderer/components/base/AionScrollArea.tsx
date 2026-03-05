@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import classNames from "classnames";
-import React from "react";
+import classNames from 'classnames';
+import React from 'react';
 
 /**
  * 自定义滚动区域组件 / Custom scroll area component
@@ -33,38 +33,22 @@ import React from "react";
  */
 interface AionScrollAreaProps extends React.HTMLAttributes<HTMLDivElement> {
   /** 滚动方向：y-垂直，x-水平，both-双向 / Scroll direction: y-vertical, x-horizontal, both-bidirectional */
-  direction?: "y" | "x" | "both";
+  direction?: 'y' | 'x' | 'both';
   /** 是否禁用滚动（用于嵌入式页面展示） */
   disableOverflow?: boolean;
 }
 
-const AionScrollArea: React.FC<AionScrollAreaProps> = ({
-  children,
-  className,
-  direction = "y",
-  disableOverflow = false,
-  ...rest
-}) => {
+const AionScrollArea: React.FC<AionScrollAreaProps> = ({ children, className, direction = 'y', disableOverflow = false, ...rest }) => {
   // 根据方向设置 overflow 类名 / Set overflow class based on direction
-  const overflowClass = disableOverflow
-    ? ""
-    : direction === "both"
-      ? "overflow-auto"
-      : direction === "x"
-        ? "overflow-x-auto overflow-y-hidden"
-        : "overflow-y-auto overflow-x-hidden";
+  const overflowClass = disableOverflow ? '' : direction === 'both' ? 'overflow-auto' : direction === 'x' ? 'overflow-x-auto overflow-y-hidden' : 'overflow-y-auto overflow-x-hidden';
 
   return (
-    <div
-      data-scroll-area=""
-      className={classNames(overflowClass, disableOverflow && "overflow-visible", className)}
-      {...rest}
-    >
+    <div data-scroll-area='' className={classNames(overflowClass, disableOverflow && 'overflow-visible', className)} {...rest}>
       {children}
     </div>
   );
 };
 
-AionScrollArea.displayName = "AionScrollArea";
+AionScrollArea.displayName = 'AionScrollArea';
 
 export default AionScrollArea;

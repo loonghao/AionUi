@@ -4,17 +4,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { channel as channelBridge } from "@/common/ipcBridge";
-import { getDatabase } from "@/process/database";
-import type { SessionManager } from "../core/SessionManager";
-import type { BasePlugin, PluginMessageHandler, PluginConfirmHandler } from "../plugins/BasePlugin";
-import { hasPluginCredentials } from "../types";
-import type {
-  IChannelPluginConfig,
-  IChannelPluginStatus,
-  IUnifiedIncomingMessage,
-  PluginType,
-} from "../types";
+import { channel as channelBridge } from '@/common/ipcBridge';
+import { getDatabase } from '@/process/database';
+import type { SessionManager } from '../core/SessionManager';
+import type { BasePlugin, PluginMessageHandler, PluginConfirmHandler } from '../plugins/BasePlugin';
+import { hasPluginCredentials } from '../types';
+import type { IChannelPluginConfig, IChannelPluginStatus, IUnifiedIncomingMessage, PluginType } from '../types';
 
 // Plugin registry - maps plugin types to their constructors
 // Will be populated when plugins are implemented
@@ -154,7 +149,7 @@ export class PluginManager {
 
       // Update database status to error
       const db = getDatabase();
-      db.updateChannelPluginStatus(id, "error");
+      db.updateChannelPluginStatus(id, 'error');
 
       // Emit status change event with error
       this.emitStatusChangeWithError(id, config, errorMsg);
@@ -166,9 +161,7 @@ export class PluginManager {
     if (this.messageHandler) {
       plugin.onMessage(this.messageHandler);
     } else {
-      console.warn(
-        `[PluginManager] WARNING: No message handler set when starting plugin ${id}! Messages will not be processed.`,
-      );
+      console.warn(`[PluginManager] WARNING: No message handler set when starting plugin ${id}! Messages will not be processed.`);
     }
 
     // Set confirm handler
@@ -188,7 +181,7 @@ export class PluginManager {
 
       // Update database status to error
       const db = getDatabase();
-      db.updateChannelPluginStatus(id, "error");
+      db.updateChannelPluginStatus(id, 'error');
 
       // Emit status change event with error
       this.emitStatusChangeWithError(id, config, errorMsg);
@@ -201,7 +194,7 @@ export class PluginManager {
 
     // Update database status
     const db = getDatabase();
-    db.updateChannelPluginStatus(id, "running", Date.now());
+    db.updateChannelPluginStatus(id, 'running', Date.now());
 
     // Emit status change event
     this.emitStatusChange(id, plugin);
@@ -224,7 +217,7 @@ export class PluginManager {
 
     // Update database status
     const db = getDatabase();
-    db.updateChannelPluginStatus(pluginId, "stopped");
+    db.updateChannelPluginStatus(pluginId, 'stopped');
 
     // Emit status change event
     this.emitStatusChange(pluginId, plugin);
@@ -236,7 +229,7 @@ export class PluginManager {
   async stopAll(): Promise<void> {
     const stopPromises = Array.from(this.plugins.keys()).map((id) => this.stopPlugin(id));
     await Promise.allSettled(stopPromises);
-    console.log("[PluginManager] All plugins stopped");
+    console.log('[PluginManager] All plugins stopped');
   }
 
   /**
@@ -257,7 +250,7 @@ export class PluginManager {
    * Build plugin status object
    */
   private buildPluginStatus(config: IChannelPluginConfig): IChannelPluginStatus {
-    const BUILTIN_TYPES = new Set(["telegram", "lark", "dingtalk", "slack", "discord"]);
+    const BUILTIN_TYPES = new Set(['telegram', 'lark', 'dingtalk', 'slack', 'discord']);
     const plugin = this.plugins.get(config.id);
     const botInfo = plugin?.getBotInfo();
 
@@ -270,7 +263,7 @@ export class PluginManager {
       type: config.type,
       name: config.name,
       enabled: config.enabled,
-      connected: plugin?.status === "running",
+      connected: plugin?.status === 'running',
       status: plugin?.status ?? config.status,
       lastConnected: config.lastConnected,
       error: errorMessage,
@@ -298,18 +291,14 @@ export class PluginManager {
    * Emit status change event with error (when plugin is not yet created)
    * 发送带错误的状态变化事件（当插件尚未创建时）
    */
-  private emitStatusChangeWithError(
-    pluginId: string,
-    config: IChannelPluginConfig,
-    errorMessage: string,
-  ): void {
+  private emitStatusChangeWithError(pluginId: string, config: IChannelPluginConfig, errorMessage: string): void {
     const status: IChannelPluginStatus = {
       id: config.id,
       type: config.type,
       name: config.name,
       enabled: config.enabled,
       connected: false,
-      status: "error",
+      status: 'error',
       lastConnected: config.lastConnected,
       error: errorMessage,
       activeUsers: 0,
@@ -336,11 +325,7 @@ export class PluginManager {
   /**
    * Send a message through a plugin
    */
-  async sendMessage(
-    pluginId: string,
-    chatId: string,
-    message: import("../types").IUnifiedOutgoingMessage,
-  ): Promise<string | null> {
+  async sendMessage(pluginId: string, chatId: string, message: import('../types').IUnifiedOutgoingMessage): Promise<string | null> {
     const plugin = this.plugins.get(pluginId);
     if (!plugin) {
       console.error(`[PluginManager] Plugin ${pluginId} not found`);
@@ -358,12 +343,7 @@ export class PluginManager {
   /**
    * Edit a message through a plugin
    */
-  async editMessage(
-    pluginId: string,
-    chatId: string,
-    messageId: string,
-    message: import("../types").IUnifiedOutgoingMessage,
-  ): Promise<boolean> {
+  async editMessage(pluginId: string, chatId: string, messageId: string, message: import('../types').IUnifiedOutgoingMessage): Promise<boolean> {
     const plugin = this.plugins.get(pluginId);
     if (!plugin) {
       console.error(`[PluginManager] Plugin ${pluginId} not found`);

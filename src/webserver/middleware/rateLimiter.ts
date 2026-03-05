@@ -7,7 +7,7 @@
  * 简单的内存速率限制中间件，无需外部依赖
  */
 
-import type { Request, Response, NextFunction } from "express";
+import type { Request, Response, NextFunction } from 'express';
 
 interface RateLimitConfig {
   windowMs: number; // Time window in milliseconds / 时间窗口（毫秒）
@@ -72,22 +72,11 @@ class RateLimitStore {
  * 创建速率限制中间件
  */
 export function createRateLimiter(config: RateLimitConfig): RateLimitMiddleware {
-  const {
-    windowMs,
-    max,
-    message = "Too many requests, please try again later",
-    keyGenerator = (req: Request) => req.ip || req.socket.remoteAddress || "unknown",
-    skipSuccessfulRequests = false,
-    skip = () => false,
-  } = config;
+  const { windowMs, max, message = 'Too many requests, please try again later', keyGenerator = (req: Request) => req.ip || req.socket.remoteAddress || 'unknown', skipSuccessfulRequests = false, skip = () => false } = config;
 
   const store = new RateLimitStore();
 
-  const middleware: RateLimitMiddleware = (
-    req: Request,
-    res: Response,
-    next: NextFunction,
-  ): void => {
+  const middleware: RateLimitMiddleware = (req: Request, res: Response, next: NextFunction): void => {
     // Skip if configured to skip / 如果配置跳过则跳过
     if (skip(req)) {
       return next();
@@ -111,13 +100,13 @@ export function createRateLimiter(config: RateLimitConfig): RateLimitMiddleware 
     store.set(key, entry);
 
     // Set rate limit headers / 设置速率限制头
-    res.setHeader("X-RateLimit-Limit", max.toString());
-    res.setHeader("X-RateLimit-Remaining", Math.max(0, max - entry.count).toString());
-    res.setHeader("X-RateLimit-Reset", new Date(entry.resetTime).toISOString());
+    res.setHeader('X-RateLimit-Limit', max.toString());
+    res.setHeader('X-RateLimit-Remaining', Math.max(0, max - entry.count).toString());
+    res.setHeader('X-RateLimit-Reset', new Date(entry.resetTime).toISOString());
 
     // Check if limit exceeded / 检查是否超过限制
     if (entry.count > max) {
-      res.setHeader("Retry-After", Math.ceil((entry.resetTime - now) / 1000).toString());
+      res.setHeader('Retry-After', Math.ceil((entry.resetTime - now) / 1000).toString());
       res.status(429).json({
         error: message,
         retryAfter: Math.ceil((entry.resetTime - now) / 1000),
@@ -128,7 +117,7 @@ export function createRateLimiter(config: RateLimitConfig): RateLimitMiddleware 
     // If skipSuccessfulRequests is true, decrement on successful response
     // 如果skipSuccessfulRequests为true，在成功响应时递减
     if (skipSuccessfulRequests) {
-      res.on("finish", () => {
+      res.on('finish', () => {
         if (res.statusCode < 400) {
           const currentEntry = store.get(key);
           if (currentEntry) {
@@ -157,7 +146,7 @@ export function createRateLimiter(config: RateLimitConfig): RateLimitMiddleware 
 export const authRateLimiter = createRateLimiter({
   windowMs: 15 * 60 * 1000, // 15 minutes / 15分钟
   max: 5, // 5 attempts per window / 每个窗口5次尝试
-  message: "Too many authentication attempts, please try again later",
+  message: 'Too many authentication attempts, please try again later',
   skipSuccessfulRequests: true, // Don't count successful logins / 不计算成功登录
 });
 
@@ -165,33 +154,33 @@ export const authRateLimiter = createRateLimiter({
 export const apiRateLimiter = createRateLimiter({
   windowMs: 60 * 1000, // 1 minute / 1分钟
   max: 60, // 60 requests per minute / 每分钟60次请求
-  message: "Too many API requests, please slow down",
+  message: 'Too many API requests, please slow down',
 });
 
 // File operations - moderate limit / 文件操作 - 中等限制
 export const fileOperationLimiter = createRateLimiter({
   windowMs: 60 * 1000, // 1 minute / 1分钟
   max: 30, // 30 operations per minute / 每分钟30次操作
-  message: "Too many file operations, please slow down",
+  message: 'Too many file operations, please slow down',
 });
 
 // WebSocket/Streaming - lenient limit / WebSocket/流式传输 - 宽松限制
 export const streamingLimiter = createRateLimiter({
   windowMs: 60 * 1000, // 1 minute / 1分钟
   max: 120, // 120 requests per minute / 每分钟120次请求
-  message: "Too many streaming requests, please slow down",
+  message: 'Too many streaming requests, please slow down',
 });
 
 // Authenticated user actions - protect sensitive endpoints / 已认证用户操作 - 保护敏感端点
 export const authenticatedActionLimiter = createRateLimiter({
   windowMs: 60 * 1000, // 1 minute / 1分钟
   max: 20, // 20 actions per minute / 每分钟20次操作
-  message: "Too many sensitive actions, please try again later",
+  message: 'Too many sensitive actions, please try again later',
   keyGenerator: (req) => {
     if (req.user?.id) {
       return `user:${req.user.id}`;
     }
-    const ip = req.ip || req.socket.remoteAddress || "unknown";
+    const ip = req.ip || req.socket.remoteAddress || 'unknown';
     return `ip:${ip}`;
   },
 });

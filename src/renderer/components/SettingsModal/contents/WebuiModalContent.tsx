@@ -4,51 +4,46 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { shell, webui, type IWebUIStatus } from "@/common/ipcBridge";
-import AionModal from "@/renderer/components/base/AionModal";
-import AionScrollArea from "@/renderer/components/base/AionScrollArea";
-import ChannelDingTalkLogo from "@/renderer/assets/channel-logos/dingtalk.svg";
-import ChannelDiscordLogo from "@/renderer/assets/channel-logos/discord.svg";
-import ChannelLarkLogo from "@/renderer/assets/channel-logos/lark.svg";
-import ChannelSlackLogo from "@/renderer/assets/channel-logos/slack.svg";
-import ChannelTelegramLogo from "@/renderer/assets/channel-logos/telegram.svg";
-import { isElectronDesktop } from "@/renderer/utils/platform";
-import { Button, Form, Input, Message, Switch, Tabs, Tooltip } from "@arco-design/web-react";
-import { CheckOne, Communication, Copy, Earth, EditTwo, Refresh } from "@icon-park/react";
-import { QRCodeSVG } from "qrcode.react";
-import React, { useCallback, useEffect, useRef, useState } from "react";
-import { useTranslation } from "react-i18next";
-import { useSettingsViewMode } from "../settingsViewContext";
-import ChannelModalContent from "./ChannelModalContent";
+import { shell, webui, type IWebUIStatus } from '@/common/ipcBridge';
+import AionModal from '@/renderer/components/base/AionModal';
+import AionScrollArea from '@/renderer/components/base/AionScrollArea';
+import ChannelDingTalkLogo from '@/renderer/assets/channel-logos/dingtalk.svg';
+import ChannelDiscordLogo from '@/renderer/assets/channel-logos/discord.svg';
+import ChannelLarkLogo from '@/renderer/assets/channel-logos/lark.svg';
+import ChannelSlackLogo from '@/renderer/assets/channel-logos/slack.svg';
+import ChannelTelegramLogo from '@/renderer/assets/channel-logos/telegram.svg';
+import { isElectronDesktop } from '@/renderer/utils/platform';
+import { Button, Form, Input, Message, Switch, Tabs, Tooltip } from '@arco-design/web-react';
+import { CheckOne, Communication, Copy, Earth, EditTwo, Refresh } from '@icon-park/react';
+import { QRCodeSVG } from 'qrcode.react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useSettingsViewMode } from '../settingsViewContext';
+import ChannelModalContent from './ChannelModalContent';
 
 /**
  * 偏好设置行组件
  * Preference row component
  */
-const PreferenceRow: React.FC<{
-  label: string;
-  description?: React.ReactNode;
-  extra?: React.ReactNode;
-  children: React.ReactNode;
-}> = ({ label, description, extra, children }) => (
-  <div className="flex items-center justify-between gap-12px py-12px">
-    <div className="min-w-0 flex-1">
-      <div className="flex items-center gap-8px">
-        <span className="text-14px text-t-primary">{label}</span>
+const PreferenceRow: React.FC<{ label: string; description?: React.ReactNode; extra?: React.ReactNode; children: React.ReactNode }> = ({ label, description, extra, children }) => (
+  <div className='flex items-center justify-between gap-12px py-12px'>
+    <div className='min-w-0 flex-1'>
+      <div className='flex items-center gap-8px'>
+        <span className='text-14px text-t-primary'>{label}</span>
         {extra}
       </div>
-      {description && <div className="text-12px text-t-tertiary mt-2px">{description}</div>}
+      {description && <div className='text-12px text-t-tertiary mt-2px'>{description}</div>}
     </div>
-    <div className="flex items-center shrink-0">{children}</div>
+    <div className='flex items-center shrink-0'>{children}</div>
   </div>
 );
 
 const CHANNEL_LOGOS = [
-  { src: ChannelTelegramLogo, alt: "Telegram" },
-  { src: ChannelLarkLogo, alt: "Lark" },
-  { src: ChannelDingTalkLogo, alt: "DingTalk" },
-  { src: ChannelSlackLogo, alt: "Slack" },
-  { src: ChannelDiscordLogo, alt: "Discord" },
+  { src: ChannelTelegramLogo, alt: 'Telegram' },
+  { src: ChannelLarkLogo, alt: 'Lark' },
+  { src: ChannelDingTalkLogo, alt: 'DingTalk' },
+  { src: ChannelSlackLogo, alt: 'Slack' },
+  { src: ChannelDiscordLogo, alt: 'Discord' },
 ] as const;
 
 /**
@@ -58,8 +53,8 @@ const CHANNEL_LOGOS = [
 const WebuiModalContent: React.FC = () => {
   const { t } = useTranslation();
   const viewMode = useSettingsViewMode();
-  const isPageMode = viewMode === "page";
-  const [activeTab, setActiveTab] = useState<"webui" | "channels">("webui");
+  const isPageMode = viewMode === 'page';
+  const [activeTab, setActiveTab] = useState<'webui' | 'channels'>('webui');
 
   // 检测是否在 Electron 桌面环境 / Check if running in Electron desktop environment
   const isDesktop = isElectronDesktop();
@@ -96,9 +91,7 @@ const WebuiModalContent: React.FC = () => {
         result = await window.electronAPI.webuiGetStatus();
       } else {
         // 后备方案：使用 bridge（减少超时）/ Fallback: use bridge (reduced timeout)
-        const timeoutPromise = new Promise<null>((resolve) =>
-          setTimeout(() => resolve(null), 1500),
-        );
+        const timeoutPromise = new Promise<null>((resolve) => setTimeout(() => resolve(null), 1500));
         result = await Promise.race([webui.getStatus.invoke(), timeoutPromise]);
       }
 
@@ -127,13 +120,13 @@ const WebuiModalContent: React.FC = () => {
               running: false,
               port: 25808,
               allowRemote: false,
-              localUrl: "http://localhost:25808",
-              adminUsername: "admin",
-            },
+              localUrl: 'http://localhost:25808',
+              adminUsername: 'admin',
+            }
         );
       }
     } catch (error) {
-      console.error("[WebuiModal] Failed to load WebUI status:", error);
+      console.error('[WebuiModal] Failed to load WebUI status:', error);
     } finally {
       setLoading(false);
     }
@@ -148,7 +141,7 @@ const WebuiModalContent: React.FC = () => {
     const unsubscribe = webui.statusChanged.on((data) => {
       if (data.running) {
         setStatus((prev) => ({
-          ...(prev || { adminUsername: "admin" }),
+          ...(prev || { adminUsername: 'admin' }),
           running: true,
           port: data.port ?? prev?.port ?? 25808,
           allowRemote: prev?.allowRemote ?? false,
@@ -229,10 +222,7 @@ const WebuiModalContent: React.FC = () => {
         const localUrl = `http://localhost:${port}`;
 
         // 减少启动超时到3秒（服务器启动很快）/ Reduce start timeout to 3s (server starts quickly)
-        const startResult = await Promise.race([
-          webui.start.invoke({ port, allowRemote }),
-          new Promise<null>((resolve) => setTimeout(() => resolve(null), 3000)),
-        ]);
+        const startResult = await Promise.race([webui.start.invoke({ port, allowRemote }), new Promise<null>((resolve) => setTimeout(() => resolve(null), 3000))]);
 
         if (startResult && startResult.success && startResult.data) {
           const responseIP = startResult.data.lanIP || currentIP;
@@ -245,7 +235,7 @@ const WebuiModalContent: React.FC = () => {
           }
 
           setStatus((prev) => ({
-            ...(prev || { adminUsername: "admin" }),
+            ...(prev || { adminUsername: 'admin' }),
             running: true,
             port,
             allowRemote,
@@ -256,7 +246,7 @@ const WebuiModalContent: React.FC = () => {
           }));
         } else {
           setStatus((prev) => ({
-            ...(prev || { adminUsername: "admin" }),
+            ...(prev || { adminUsername: 'admin' }),
             running: true,
             port,
             allowRemote,
@@ -267,18 +257,18 @@ const WebuiModalContent: React.FC = () => {
           }));
         }
 
-        Message.success(t("settings.webui.startSuccess"));
+        Message.success(t('settings.webui.startSuccess'));
         // 启动返回的数据已经足够，不再需要延迟获取状态
         // Start result contains all needed data, no need for delayed status fetch
       } else {
         // 立即更新UI，异步停止服务器 / Update UI immediately, stop server async
         setStatus((prev) => (prev ? { ...prev, running: false } : null));
-        Message.success(t("settings.webui.stopSuccess"));
-        webui.stop.invoke().catch((err) => console.error("WebUI stop error:", err));
+        Message.success(t('settings.webui.stopSuccess'));
+        webui.stop.invoke().catch((err) => console.error('WebUI stop error:', err));
       }
     } catch (error) {
-      console.error("Toggle WebUI error:", error);
-      Message.error(t("settings.webui.operationFailed"));
+      console.error('Toggle WebUI error:', error);
+      Message.error(t('settings.webui.operationFailed'));
     } finally {
       setStartLoading(false);
     }
@@ -296,19 +286,13 @@ const WebuiModalContent: React.FC = () => {
       try {
         // 1. 先停止服务器 / First stop the server
         try {
-          await Promise.race([
-            webui.stop.invoke(),
-            new Promise((resolve) => setTimeout(resolve, 1500)),
-          ]);
+          await Promise.race([webui.stop.invoke(), new Promise((resolve) => setTimeout(resolve, 1500))]);
         } catch (err) {
-          console.error("WebUI stop error:", err);
+          console.error('WebUI stop error:', err);
         }
 
         // 2. 立即重新启动（服务器停止很快）/ Restart immediately (server stops quickly)
-        const startResult = await Promise.race([
-          webui.start.invoke({ port, allowRemote: checked }),
-          new Promise<null>((resolve) => setTimeout(() => resolve(null), 3000)),
-        ]);
+        const startResult = await Promise.race([webui.start.invoke({ port, allowRemote: checked }), new Promise<null>((resolve) => setTimeout(() => resolve(null), 3000))]);
 
         if (startResult && startResult.success && startResult.data) {
           const responseIP = startResult.data.lanIP;
@@ -319,7 +303,7 @@ const WebuiModalContent: React.FC = () => {
 
           setAllowRemote(checked);
           setStatus((prev) => ({
-            ...(prev || { adminUsername: "admin" }),
+            ...(prev || { adminUsername: 'admin' }),
             running: true,
             port,
             allowRemote: checked,
@@ -329,7 +313,7 @@ const WebuiModalContent: React.FC = () => {
             initialPassword: responsePassword || cachedPassword || prev?.initialPassword,
           }));
 
-          Message.success(t("settings.webui.restartSuccess"));
+          Message.success(t('settings.webui.restartSuccess'));
         } else {
           // 响应为空或失败，但服务器可能已启动，检查状态
           // Response is null or failed, but server might have started, check status
@@ -337,10 +321,7 @@ const WebuiModalContent: React.FC = () => {
           if (window.electronAPI?.webuiGetStatus) {
             statusResult = await window.electronAPI.webuiGetStatus();
           } else {
-            statusResult = await Promise.race([
-              webui.getStatus.invoke(),
-              new Promise<null>((resolve) => setTimeout(() => resolve(null), 1500)),
-            ]);
+            statusResult = await Promise.race([webui.getStatus.invoke(), new Promise<null>((resolve) => setTimeout(() => resolve(null), 1500))]);
           }
 
           if (statusResult?.success && statusResult?.data?.running) {
@@ -350,16 +331,16 @@ const WebuiModalContent: React.FC = () => {
 
             setAllowRemote(checked);
             setStatus(statusResult.data);
-            Message.success(t("settings.webui.restartSuccess"));
+            Message.success(t('settings.webui.restartSuccess'));
           } else {
             // 真的启动失败 / Really failed to start
-            Message.error(t("settings.webui.operationFailed"));
+            Message.error(t('settings.webui.operationFailed'));
             setStatus((prev) => (prev ? { ...prev, running: false } : null));
           }
         }
       } catch (error) {
-        console.error("[WebuiModal] Restart error:", error);
-        Message.error(t("settings.webui.operationFailed"));
+        console.error('[WebuiModal] Restart error:', error);
+        Message.error(t('settings.webui.operationFailed'));
       } finally {
         setStartLoading(false);
       }
@@ -390,7 +371,7 @@ const WebuiModalContent: React.FC = () => {
               lanIP: existingIP || prev.lanIP,
               networkUrl: checked && existingIP ? `http://${existingIP}:${port}` : undefined,
             }
-          : null,
+          : null
       );
     }
   };
@@ -398,7 +379,7 @@ const WebuiModalContent: React.FC = () => {
   // 复制内容 / Copy content
   const handleCopy = (text: string) => {
     void navigator.clipboard.writeText(text);
-    Message.success(t("common.copySuccess"));
+    Message.success(t('common.copySuccess'));
   };
 
   // 打开设置新密码弹窗 / Open set new password modal
@@ -426,7 +407,7 @@ const WebuiModalContent: React.FC = () => {
       }
 
       if (result.success) {
-        Message.success(t("settings.webui.passwordChanged"));
+        Message.success(t('settings.webui.passwordChanged'));
         setSetPasswordModalVisible(false);
         form.resetFields();
         // 更新缓存的密码为新密码，不再显示明文 / Update cached password, no longer show plaintext
@@ -434,11 +415,11 @@ const WebuiModalContent: React.FC = () => {
         setCanShowPlainPassword(false);
         setStatus((prev) => (prev ? { ...prev, initialPassword: undefined } : null));
       } else {
-        Message.error(result.msg || t("settings.webui.passwordChangeFailed"));
+        Message.error(result.msg || t('settings.webui.passwordChangeFailed'));
       }
     } catch (error) {
-      console.error("Set new password error:", error);
-      Message.error(t("settings.webui.passwordChangeFailed"));
+      console.error('Set new password error:', error);
+      Message.error(t('settings.webui.passwordChangeFailed'));
     } finally {
       setPasswordLoading(false);
     }
@@ -451,11 +432,7 @@ const WebuiModalContent: React.FC = () => {
     setQrLoading(true);
     try {
       // 优先使用直接 IPC（Electron 环境）/ Prefer direct IPC (Electron environment)
-      let result: {
-        success: boolean;
-        data?: { token: string; expiresAt: number; qrUrl: string };
-        msg?: string;
-      } | null = null;
+      let result: { success: boolean; data?: { token: string; expiresAt: number; qrUrl: string }; msg?: string } | null = null;
 
       if (window.electronAPI?.webuiGenerateQRToken) {
         result = await window.electronAPI.webuiGenerateQRToken();
@@ -477,15 +454,15 @@ const WebuiModalContent: React.FC = () => {
           () => {
             void generateQRCode();
           },
-          4 * 60 * 1000,
+          4 * 60 * 1000
         );
       } else {
-        console.error("Generate QR code failed:", result?.msg);
-        Message.error(t("settings.webui.qrGenerateFailed"));
+        console.error('Generate QR code failed:', result?.msg);
+        Message.error(t('settings.webui.qrGenerateFailed'));
       }
     } catch (error) {
-      console.error("Generate QR code error:", error);
-      Message.error(t("settings.webui.qrGenerateFailed"));
+      console.error('Generate QR code error:', error);
+      Message.error(t('settings.webui.qrGenerateFailed'));
     } finally {
       setQrLoading(false);
     }
@@ -519,7 +496,7 @@ const WebuiModalContent: React.FC = () => {
   // 格式化过期时间 / Format expiration time
   const formatExpiresAt = (timestamp: number) => {
     const date = new Date(timestamp);
-    return date.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
+    return date.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
   };
 
   // 获取实际密码 / Get actual password
@@ -528,21 +505,21 @@ const WebuiModalContent: React.FC = () => {
   // 密码默认显示 ***，只在首次启动时显示明文 / Password shows *** by default, only show plaintext on first startup
   // 重置中显示加载状态 / Show loading state when resetting
   const getDisplayPassword = () => {
-    if (resetLoading) return t("common.loading");
+    if (resetLoading) return t('common.loading');
     // 可以显示明文且有密码时显示明文 / Show plaintext when allowed and has password
     if (canShowPlainPassword && actualPassword) return actualPassword;
     // 否则显示 ****** / Otherwise show ******
-    return t("settings.webui.passwordHidden");
+    return t('settings.webui.passwordHidden');
   };
   const displayPassword = getDisplayPassword();
 
   // 浏览器端只显示 Channels 配置，不显示 WebUI 服务配置 / In browser mode, only show Channels config, not WebUI service config
   if (!isDesktop) {
     return (
-      <div className="flex flex-col h-full w-full">
-        <AionScrollArea className="flex-1 min-h-0 pb-16px" disableOverflow={isPageMode}>
-          <div className="space-y-16px">
-            <h2 className="text-20px font-500 text-t-primary m-0">Channels</h2>
+      <div className='flex flex-col h-full w-full'>
+        <AionScrollArea className='flex-1 min-h-0 pb-16px' disableOverflow={isPageMode}>
+          <div className='space-y-16px'>
+            <h2 className='text-20px font-500 text-t-primary m-0'>Channels</h2>
             <ChannelModalContent />
           </div>
         </AionScrollArea>
@@ -551,28 +528,20 @@ const WebuiModalContent: React.FC = () => {
   }
 
   const webuiPanel = (
-    <AionScrollArea className="flex-1 min-h-0 pb-16px" disableOverflow={isPageMode}>
-      <div className="space-y-12px px-[12px] md:px-[28px]">
+    <AionScrollArea className='flex-1 min-h-0 pb-16px' disableOverflow={isPageMode}>
+      <div className='space-y-12px px-[12px] md:px-[28px]'>
         {/* 标题 / Title */}
-        <h2 className="text-20px font-500 text-t-primary m-0">WebUI</h2>
+        <h2 className='text-20px font-500 text-t-primary m-0'>WebUI</h2>
 
         {/* 描述说明 / Description */}
-        <div className="space-y-6px">
-          <p className="m-0 text-13px text-t-secondary leading-relaxed">
-            {t("settings.webui.description")}
-          </p>
-          <div className="flex flex-wrap gap-x-12px gap-y-6px">
-            {[
-              t("settings.webui.enable", { defaultValue: "Enable WebUI" }),
-              t("settings.webui.accessUrl", { defaultValue: "Access URL" }),
-              t("settings.webui.allowRemote", { defaultValue: "Allow Remote Access" }),
-            ].map((stepLabel, idx) => (
-              <div key={stepLabel} className="inline-flex items-center gap-6px">
-                <span className="inline-flex items-center justify-center w-16px h-16px rd-50% text-10px font-600 bg-[rgba(var(--primary-6),0.12)] text-[rgb(var(--primary-6))]">
-                  {idx + 1}
-                </span>
-                <CheckOne theme="outline" size="12" className="text-[rgb(var(--primary-6))]" />
-                <span className="text-12px text-t-secondary">{stepLabel}</span>
+        <div className='space-y-6px'>
+          <p className='m-0 text-13px text-t-secondary leading-relaxed'>{t('settings.webui.description')}</p>
+          <div className='flex flex-wrap gap-x-12px gap-y-6px'>
+            {[t('settings.webui.enable', { defaultValue: 'Enable WebUI' }), t('settings.webui.accessUrl', { defaultValue: 'Access URL' }), t('settings.webui.allowRemote', { defaultValue: 'Allow Remote Access' })].map((stepLabel, idx) => (
+              <div key={stepLabel} className='inline-flex items-center gap-6px'>
+                <span className='inline-flex items-center justify-center w-16px h-16px rd-50% text-10px font-600 bg-[rgba(var(--primary-6),0.12)] text-[rgb(var(--primary-6))]'>{idx + 1}</span>
+                <CheckOne theme='outline' size='12' className='text-[rgb(var(--primary-6))]' />
+                <span className='text-12px text-t-secondary'>{stepLabel}</span>
               </div>
             ))}
           </div>
@@ -580,76 +549,42 @@ const WebuiModalContent: React.FC = () => {
 
         {/* Messaging 强引导入口 / Messaging primary entry */}
         {false && (
-          <div className="rd-12px border border-line bg-2 px-12px py-10px flex items-center justify-between gap-10px">
-            <div className="min-w-0 flex items-center gap-8px">
-              <Communication
-                theme="outline"
-                size="18"
-                className="text-[rgb(var(--primary-6))] shrink-0"
-              />
-              <div className="min-w-0">
-                <div className="text-13px text-t-primary font-500">
-                  {t("settings.webui.featureChannelsTitle")}
-                </div>
-                <div className="text-12px text-t-secondary truncate">
-                  {t("settings.webui.featureChannelsDesc")}
-                </div>
+          <div className='rd-12px border border-line bg-2 px-12px py-10px flex items-center justify-between gap-10px'>
+            <div className='min-w-0 flex items-center gap-8px'>
+              <Communication theme='outline' size='18' className='text-[rgb(var(--primary-6))] shrink-0' />
+              <div className='min-w-0'>
+                <div className='text-13px text-t-primary font-500'>{t('settings.webui.featureChannelsTitle')}</div>
+                <div className='text-12px text-t-secondary truncate'>{t('settings.webui.featureChannelsDesc')}</div>
               </div>
             </div>
-            <Button
-              type="primary"
-              size="small"
-              className="rd-100px"
-              onClick={() => setActiveTab("channels")}
-            >
-              {t("settings.webui.goToChannels")}
+            <Button type='primary' size='small' className='rd-100px' onClick={() => setActiveTab('channels')}>
+              {t('settings.webui.goToChannels')}
             </Button>
           </div>
         )}
 
         {/* WebUI 服务卡片 / WebUI Service Card */}
-        <div className="px-[12px] md:px-[28px] py-14px bg-2 rd-16px">
+        <div className='px-[12px] md:px-[28px] py-14px bg-2 rd-16px'>
           {/* WebUI 引导提示 / WebUI hint */}
-          <div className="mb-8px rd-10px border border-line bg-fill-1 px-10px py-8px flex items-start gap-6px">
-            <Earth theme="outline" size="16" className="mt-1px text-[rgb(var(--primary-6))]" />
-            <div className="text-12px text-t-secondary leading-relaxed">
-              {t("settings.webui.featureRemoteDesc")}
-            </div>
+          <div className='mb-8px rd-10px border border-line bg-fill-1 px-10px py-8px flex items-start gap-6px'>
+            <Earth theme='outline' size='16' className='mt-1px text-[rgb(var(--primary-6))]' />
+            <div className='text-12px text-t-secondary leading-relaxed'>{t('settings.webui.featureRemoteDesc')}</div>
           </div>
 
           {/* 启用 WebUI / Enable WebUI */}
-          <PreferenceRow
-            label={t("settings.webui.enable")}
-            extra={
-              startLoading ? (
-                <span className="text-12px text-warning">{t("settings.webui.starting")}</span>
-              ) : status?.running ? (
-                <span className="text-12px text-success">✓ {t("settings.webui.running")}</span>
-              ) : null
-            }
-          >
-            <Switch
-              checked={status?.running || startLoading}
-              loading={startLoading}
-              onChange={handleToggle}
-            />
+          <PreferenceRow label={t('settings.webui.enable')} extra={startLoading ? <span className='text-12px text-warning'>{t('settings.webui.starting')}</span> : status?.running ? <span className='text-12px text-success'>✓ {t('settings.webui.running')}</span> : null}>
+            <Switch checked={status?.running || startLoading} loading={startLoading} onChange={handleToggle} />
           </PreferenceRow>
 
           {/* 访问地址（仅运行时显示）/ Access URL (only when running) */}
           {status?.running && (
-            <PreferenceRow label={t("settings.webui.accessUrl")}>
-              <div className="flex items-center gap-8px min-w-0">
-                <button
-                  className="text-14px text-primary font-mono hover:underline cursor-pointer bg-transparent border-none p-0 truncate"
-                  onClick={() => shell.openExternal.invoke(getDisplayUrl()).catch(console.error)}
-                >
+            <PreferenceRow label={t('settings.webui.accessUrl')}>
+              <div className='flex items-center gap-8px min-w-0'>
+                <button className='text-14px text-primary font-mono hover:underline cursor-pointer bg-transparent border-none p-0 truncate' onClick={() => shell.openExternal.invoke(getDisplayUrl()).catch(console.error)}>
                   {getDisplayUrl()}
                 </button>
-                <Tooltip content={t("common.copy")}>
-                  <button
-                    className="p-4px text-t-tertiary hover:text-t-primary cursor-pointer bg-transparent border-none"
-                    onClick={() => handleCopy(getDisplayUrl())}
-                  >
+                <Tooltip content={t('common.copy')}>
+                  <button className='p-4px text-t-tertiary hover:text-t-primary cursor-pointer bg-transparent border-none' onClick={() => handleCopy(getDisplayUrl())}>
                     <Copy size={16} />
                   </button>
                 </Tooltip>
@@ -659,22 +594,13 @@ const WebuiModalContent: React.FC = () => {
 
           {/* 允许局域网访问 / Allow LAN Access */}
           <PreferenceRow
-            label={t("settings.webui.allowRemote")}
+            label={t('settings.webui.allowRemote')}
             description={
-              <span className="text-t-secondary">
-                {t("settings.webui.allowRemoteDesc")}
-                {"  "}
-                <button
-                  className="text-primary hover:underline cursor-pointer bg-transparent border-none p-0 text-12px"
-                  onClick={() =>
-                    shell.openExternal
-                      .invoke(
-                        "https://github.com/iOfficeAI/AionUi/wiki/Remote-Internet-Access-Guide",
-                      )
-                      .catch(console.error)
-                  }
-                >
-                  {t("settings.webui.viewGuide")}
+              <span className='text-t-secondary'>
+                {t('settings.webui.allowRemoteDesc')}
+                {'  '}
+                <button className='text-primary hover:underline cursor-pointer bg-transparent border-none p-0 text-12px' onClick={() => shell.openExternal.invoke('https://github.com/iOfficeAI/AionUi/wiki/Remote-Internet-Access-Guide').catch(console.error)}>
+                  {t('settings.webui.viewGuide')}
                 </button>
               </span>
             }
@@ -684,27 +610,16 @@ const WebuiModalContent: React.FC = () => {
         </div>
 
         {/* 登录信息卡片 / Login Info Card */}
-        <div className="px-[12px] md:px-[28px] py-14px bg-2 rd-16px">
-          <div className="text-14px font-500 mb-8px text-t-primary">
-            {t("settings.webui.loginInfo")}
-          </div>
+        <div className='px-[12px] md:px-[28px] py-14px bg-2 rd-16px'>
+          <div className='text-14px font-500 mb-8px text-t-primary'>{t('settings.webui.loginInfo')}</div>
 
           {/* 账号 / Account */}
-          <div className="flex items-center justify-between gap-12px py-12px">
-            <span className="text-14px text-t-secondary shrink-0">
-              {t("settings.webui.username")}:
-            </span>
-            <div className="inline-flex items-center gap-8px rd-100px border border-line bg-fill-1 px-10px py-4px min-w-0">
-              <span className="text-14px text-t-primary truncate">
-                {status?.adminUsername || "admin"}
-              </span>
-              <Tooltip content={t("common.copy")}>
-                <Button
-                  type="text"
-                  size="mini"
-                  className="rd-100px !px-6px inline-flex items-center !h-24px"
-                  onClick={() => handleCopy(status?.adminUsername || "admin")}
-                >
+          <div className='flex items-center justify-between gap-12px py-12px'>
+            <span className='text-14px text-t-secondary shrink-0'>{t('settings.webui.username')}:</span>
+            <div className='inline-flex items-center gap-8px rd-100px border border-line bg-fill-1 px-10px py-4px min-w-0'>
+              <span className='text-14px text-t-primary truncate'>{status?.adminUsername || 'admin'}</span>
+              <Tooltip content={t('common.copy')}>
+                <Button type='text' size='mini' className='rd-100px !px-6px inline-flex items-center !h-24px' onClick={() => handleCopy(status?.adminUsername || 'admin')}>
                   <Copy size={14} />
                 </Button>
               </Tooltip>
@@ -712,20 +627,12 @@ const WebuiModalContent: React.FC = () => {
           </div>
 
           {/* 密码 / Password */}
-          <div className="flex items-center justify-between gap-12px py-12px">
-            <span className="text-14px text-t-secondary shrink-0">
-              {t("settings.webui.initialPassword")}:
-            </span>
-            <div className="inline-flex items-center gap-8px rd-100px border border-line bg-fill-1 px-10px py-4px min-w-0">
-              <span className="text-14px text-t-primary truncate">{displayPassword}</span>
-              <Tooltip content={t("settings.webui.resetPasswordTooltip")}>
-                <Button
-                  type="text"
-                  size="mini"
-                  className="rd-100px !px-6px inline-flex items-center !h-24px"
-                  onClick={handleResetPassword}
-                  disabled={resetLoading}
-                >
+          <div className='flex items-center justify-between gap-12px py-12px'>
+            <span className='text-14px text-t-secondary shrink-0'>{t('settings.webui.initialPassword')}:</span>
+            <div className='inline-flex items-center gap-8px rd-100px border border-line bg-fill-1 px-10px py-4px min-w-0'>
+              <span className='text-14px text-t-primary truncate'>{displayPassword}</span>
+              <Tooltip content={t('settings.webui.resetPasswordTooltip')}>
+                <Button type='text' size='mini' className='rd-100px !px-6px inline-flex items-center !h-24px' onClick={handleResetPassword} disabled={resetLoading}>
                   <EditTwo size={14} />
                 </Button>
               </Tooltip>
@@ -735,48 +642,34 @@ const WebuiModalContent: React.FC = () => {
           {/* 二维码登录（仅服务器运行且允许远程访问时显示）/ QR Code Login (only when server running and remote access allowed) */}
           {status?.running && allowRemote && (
             <>
-              <div className="border-t border-line my-12px" />
-              <div className="text-14px font-500 mb-4px text-t-primary">
-                {t("settings.webui.qrLogin")}
-              </div>
-              <div className="text-12px text-t-tertiary mb-12px">
-                {t("settings.webui.qrLoginHint")}
-              </div>
+              <div className='border-t border-line my-12px' />
+              <div className='text-14px font-500 mb-4px text-t-primary'>{t('settings.webui.qrLogin')}</div>
+              <div className='text-12px text-t-tertiary mb-12px'>{t('settings.webui.qrLoginHint')}</div>
 
-              <div className="flex flex-col items-center gap-12px">
+              <div className='flex flex-col items-center gap-12px'>
                 {/* 二维码显示区域 / QR Code display area */}
-                <div className="p-12px bg-fill-1 border border-line rd-10px">
+                <div className='p-12px bg-fill-1 border border-line rd-10px'>
                   {qrLoading ? (
-                    <div className="w-140px h-140px flex items-center justify-center">
-                      <span className="text-14px text-t-tertiary">{t("common.loading")}</span>
+                    <div className='w-140px h-140px flex items-center justify-center'>
+                      <span className='text-14px text-t-tertiary'>{t('common.loading')}</span>
                     </div>
                   ) : qrUrl ? (
-                    <div className="p-8px bg-white rd-8px">
-                      <QRCodeSVG value={qrUrl} size={140} level="M" />
+                    <div className='p-8px bg-white rd-8px'>
+                      <QRCodeSVG value={qrUrl} size={140} level='M' />
                     </div>
                   ) : (
-                    <div className="w-140px h-140px flex items-center justify-center">
-                      <span className="text-14px text-t-tertiary">
-                        {t("settings.webui.qrGenerateFailed")}
-                      </span>
+                    <div className='w-140px h-140px flex items-center justify-center'>
+                      <span className='text-14px text-t-tertiary'>{t('settings.webui.qrGenerateFailed')}</span>
                     </div>
                   )}
                 </div>
 
                 {/* 过期时间和刷新按钮 / Expiration time and refresh button */}
-                <div className="flex items-center gap-8px">
-                  {qrExpiresAt && (
-                    <span className="text-12px text-t-tertiary">
-                      {t("settings.webui.qrExpires", { time: formatExpiresAt(qrExpiresAt) })}
-                    </span>
-                  )}
-                  <Tooltip content={t("settings.webui.refreshQr")}>
-                    <button
-                      className="p-4px bg-transparent border-none text-t-tertiary hover:text-t-primary cursor-pointer"
-                      onClick={() => void generateQRCode()}
-                      disabled={qrLoading}
-                    >
-                      <Refresh size={16} className={qrLoading ? "animate-spin" : ""} />
+                <div className='flex items-center gap-8px'>
+                  {qrExpiresAt && <span className='text-12px text-t-tertiary'>{t('settings.webui.qrExpires', { time: formatExpiresAt(qrExpiresAt) })}</span>}
+                  <Tooltip content={t('settings.webui.refreshQr')}>
+                    <button className='p-4px bg-transparent border-none text-t-tertiary hover:text-t-primary cursor-pointer' onClick={() => void generateQRCode()} disabled={qrLoading}>
+                      <Refresh size={16} className={qrLoading ? 'animate-spin' : ''} />
                     </button>
                   </Tooltip>
                 </div>
@@ -789,41 +682,27 @@ const WebuiModalContent: React.FC = () => {
   );
 
   return (
-    <div className="flex flex-col h-full w-full">
-      <Tabs
-        activeTab={activeTab}
-        onChange={(key) => setActiveTab((key as "webui" | "channels") || "webui")}
-        type="line"
-        className="mb-12px settings-remote-tabs"
-      >
+    <div className='flex flex-col h-full w-full'>
+      <Tabs activeTab={activeTab} onChange={(key) => setActiveTab((key as 'webui' | 'channels') || 'webui')} type='line' className='mb-12px settings-remote-tabs'>
         <Tabs.TabPane
-          key="webui"
+          key='webui'
           title={
-            <span
-              className={`inline-flex items-center gap-6px transition-colors ${activeTab === "webui" ? "text-t-primary font-600" : "text-t-secondary"}`}
-            >
-              <Earth theme="outline" size="15" />
+            <span className={`inline-flex items-center gap-6px transition-colors ${activeTab === 'webui' ? 'text-t-primary font-600' : 'text-t-secondary'}`}>
+              <Earth theme='outline' size='15' />
               <span>WebUI</span>
             </span>
           }
         />
         <Tabs.TabPane
-          key="channels"
+          key='channels'
           title={
-            <span
-              className={`inline-flex items-center gap-6px transition-colors ${activeTab === "channels" ? "text-t-primary font-600" : "text-t-secondary"}`}
-            >
-              <Communication theme="outline" size="15" />
+            <span className={`inline-flex items-center gap-6px transition-colors ${activeTab === 'channels' ? 'text-t-primary font-600' : 'text-t-secondary'}`}>
+              <Communication theme='outline' size='15' />
               <span>Channels</span>
-              <span className="inline-flex items-center gap-4px ml-2px">
+              <span className='inline-flex items-center gap-4px ml-2px'>
                 {CHANNEL_LOGOS.map((item) => (
-                  <span
-                    key={item.alt}
-                    className="inline-flex items-center justify-center w-16px h-16px rd-50% border border-line bg-fill-1"
-                    title={item.alt}
-                    aria-label={item.alt}
-                  >
-                    <img src={item.src} alt={item.alt} className="w-14px h-14px object-contain" />
+                  <span key={item.alt} className='inline-flex items-center justify-center w-16px h-16px rd-50% border border-line bg-fill-1' title={item.alt} aria-label={item.alt}>
+                    <img src={item.src} alt={item.alt} className='w-14px h-14px object-contain' />
                   </span>
                 ))}
               </span>
@@ -832,43 +711,36 @@ const WebuiModalContent: React.FC = () => {
         />
       </Tabs>
 
-      {activeTab === "webui" ? (
+      {activeTab === 'webui' ? (
         webuiPanel
       ) : (
-        <div className="flex-1 min-h-0">
+        <div className='flex-1 min-h-0'>
           <ChannelModalContent />
         </div>
       )}
 
       {/* 设置新密码弹窗 / Set New Password Modal */}
-      <AionModal
-        visible={setPasswordModalVisible}
-        onCancel={() => setSetPasswordModalVisible(false)}
-        onOk={handleSetNewPassword}
-        confirmLoading={passwordLoading}
-        title={t("settings.webui.setNewPassword")}
-        size="small"
-      >
-        <Form form={form} layout="vertical" className="pt-16px">
+      <AionModal visible={setPasswordModalVisible} onCancel={() => setSetPasswordModalVisible(false)} onOk={handleSetNewPassword} confirmLoading={passwordLoading} title={t('settings.webui.setNewPassword')} size='small'>
+        <Form form={form} layout='vertical' className='pt-16px'>
           <Form.Item
-            label={t("settings.webui.newPassword")}
-            field="newPassword"
+            label={t('settings.webui.newPassword')}
+            field='newPassword'
             rules={[
-              { required: true, message: t("settings.webui.newPasswordRequired") },
-              { minLength: 8, message: t("settings.webui.passwordMinLength") },
+              { required: true, message: t('settings.webui.newPasswordRequired') },
+              { minLength: 8, message: t('settings.webui.passwordMinLength') },
             ]}
           >
-            <Input.Password placeholder={t("settings.webui.newPasswordPlaceholder")} />
+            <Input.Password placeholder={t('settings.webui.newPasswordPlaceholder')} />
           </Form.Item>
           <Form.Item
-            label={t("settings.webui.confirmPassword")}
-            field="confirmPassword"
+            label={t('settings.webui.confirmPassword')}
+            field='confirmPassword'
             rules={[
-              { required: true, message: t("settings.webui.confirmPasswordRequired") },
+              { required: true, message: t('settings.webui.confirmPasswordRequired') },
               {
                 validator: (value, callback) => {
-                  if (value !== form.getFieldValue("newPassword")) {
-                    callback(t("settings.webui.passwordMismatch"));
+                  if (value !== form.getFieldValue('newPassword')) {
+                    callback(t('settings.webui.passwordMismatch'));
                   } else {
                     callback();
                   }
@@ -876,7 +748,7 @@ const WebuiModalContent: React.FC = () => {
               },
             ]}
           >
-            <Input.Password placeholder={t("settings.webui.confirmPasswordPlaceholder")} />
+            <Input.Password placeholder={t('settings.webui.confirmPasswordPlaceholder')} />
           </Form.Item>
         </Form>
       </AionModal>

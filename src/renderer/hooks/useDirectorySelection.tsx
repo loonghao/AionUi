@@ -4,10 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { bridge } from "@office-ai/platform";
-import React, { useCallback, useEffect, useState } from "react";
-import { SHOW_OPEN_REQUEST_EVENT } from "../../adapter/constant";
-import DirectorySelectionModal from "../components/DirectorySelectionModal";
+import { bridge } from '@office-ai/platform';
+import React, { useCallback, useEffect, useState } from 'react';
+import { SHOW_OPEN_REQUEST_EVENT } from '../../adapter/constant';
+import DirectorySelectionModal from '../components/DirectorySelectionModal';
 
 interface DirectorySelectionRequest {
   id: string;
@@ -32,7 +32,7 @@ export const useDirectorySelection = () => {
       setVisible(false);
       setRequestData(null);
     },
-    [requestData],
+    [requestData]
   );
 
   const handleCancel = useCallback(() => {
@@ -55,8 +55,7 @@ export const useDirectorySelection = () => {
 
       // 从 properties 自动推断
       if (!isFileMode && data.properties) {
-        isFileMode =
-          data.properties.includes("openFile") && !data.properties.includes("openDirectory");
+        isFileMode = data.properties.includes('openFile') && !data.properties.includes('openDirectory');
       }
 
       setRequestData({ ...data, isFileMode });
@@ -71,14 +70,7 @@ export const useDirectorySelection = () => {
     };
   }, []);
 
-  const contextHolder = (
-    <DirectorySelectionModal
-      visible={visible}
-      isFileMode={requestData?.isFileMode}
-      onConfirm={handleConfirm}
-      onCancel={handleCancel}
-    />
-  );
+  const contextHolder = <DirectorySelectionModal visible={visible} isFileMode={requestData?.isFileMode} onConfirm={handleConfirm} onCancel={handleCancel} />;
 
   return { contextHolder };
 };

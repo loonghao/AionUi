@@ -4,25 +4,25 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { acpDetector } from "@/agent/acp/AcpDetector";
-import { AcpConnection } from "@/agent/acp/AcpConnection";
-import { CodexConnection } from "@/agent/codex/connection/CodexConnection";
-import WorkerManage from "@/process/WorkerManage";
-import AcpAgentManager from "@/process/task/AcpAgentManager";
-import CodexAgentManager from "@/process/task/CodexAgentManager";
-import { GeminiAgentManager } from "@/process/task/GeminiAgentManager";
-import { mcpService } from "@/process/services/mcpServices/McpService";
-import { ipcBridge } from "../../common";
-import * as os from "os";
+import { acpDetector } from '@/agent/acp/AcpDetector';
+import { AcpConnection } from '@/agent/acp/AcpConnection';
+import { CodexConnection } from '@/agent/codex/connection/CodexConnection';
+import WorkerManage from '@/process/WorkerManage';
+import AcpAgentManager from '@/process/task/AcpAgentManager';
+import CodexAgentManager from '@/process/task/CodexAgentManager';
+import { GeminiAgentManager } from '@/process/task/GeminiAgentManager';
+import { mcpService } from '@/process/services/mcpServices/McpService';
+import { ipcBridge } from '../../common';
+import * as os from 'os';
 
 export function initAcpConversationBridge(): void {
   // Debug provider to check environment variables
   ipcBridge.acpConversation.checkEnv.provider(() => {
     return Promise.resolve({
       env: {
-        GEMINI_API_KEY: process.env.GEMINI_API_KEY ? "[SET]" : "[NOT SET]",
-        GOOGLE_CLOUD_PROJECT: process.env.GOOGLE_CLOUD_PROJECT ? "[SET]" : "[NOT SET]",
-        NODE_ENV: process.env.NODE_ENV || "[NOT SET]",
+        GEMINI_API_KEY: process.env.GEMINI_API_KEY ? '[SET]' : '[NOT SET]',
+        GOOGLE_CLOUD_PROJECT: process.env.GOOGLE_CLOUD_PROJECT ? '[SET]' : '[NOT SET]',
+        NODE_ENV: process.env.NODE_ENV || '[NOT SET]',
       },
     });
   });
@@ -36,10 +36,7 @@ export function initAcpConversationBridge(): void {
       return Promise.resolve({ success: true, data: { path: agent.cliPath } });
     }
 
-    return Promise.resolve({
-      success: false,
-      msg: `${backend} CLI not found. Please install it and ensure it's accessible.`,
-    });
+    return Promise.resolve({ success: false, msg: `${backend} CLI not found. Please install it and ensure it's accessible.` });
   });
 
   // 新的ACP检测接口 - 基于全局标记位
@@ -55,7 +52,7 @@ export function initAcpConversationBridge(): void {
     } catch (error) {
       return Promise.resolve({
         success: false,
-        msg: error instanceof Error ? error.message : "Unknown error",
+        msg: error instanceof Error ? error.message : 'Unknown error',
       });
     }
   });
@@ -68,7 +65,7 @@ export function initAcpConversationBridge(): void {
     } catch (error) {
       return {
         success: false,
-        msg: error instanceof Error ? error.message : "Unknown error",
+        msg: error instanceof Error ? error.message : 'Unknown error',
       };
     }
   });
@@ -83,29 +80,29 @@ export function initAcpConversationBridge(): void {
     const agent = agents.find((a) => a.backend === backend);
 
     // Skip CLI check for claude/codebuddy (uses npx) and codex (has its own detection)
-    if (!agent?.cliPath && backend !== "claude" && backend !== "codebuddy" && backend !== "codex") {
+    if (!agent?.cliPath && backend !== 'claude' && backend !== 'codebuddy' && backend !== 'codex') {
       return {
         success: false,
         msg: `${backend} CLI not found`,
-        data: { available: false, error: "CLI not installed" },
+        data: { available: false, error: 'CLI not installed' },
       };
     }
 
     const tempDir = os.tmpdir();
 
     // Step 2: Handle Codex separately - it uses MCP protocol, not ACP
-    if (backend === "codex") {
+    if (backend === 'codex') {
       const codexConnection = new CodexConnection();
       try {
         // Start Codex MCP server
-        await codexConnection.start(agent?.cliPath || "codex", tempDir);
+        await codexConnection.start(agent?.cliPath || 'codex', tempDir);
 
         // Wait for server to be ready and ping it
         await codexConnection.waitForServerReady(15000);
         const pingResult = await codexConnection.ping(5000);
 
         if (!pingResult) {
-          throw new Error("Codex server not responding to ping");
+          throw new Error('Codex server not responding to ping');
         }
 
         const latency = Date.now() - startTime;
@@ -125,13 +122,7 @@ export function initAcpConversationBridge(): void {
         const errorMsg = error instanceof Error ? error.message : String(error);
         const lowerError = errorMsg.toLowerCase();
 
-        if (
-          lowerError.includes("auth") ||
-          lowerError.includes("login") ||
-          lowerError.includes("api key") ||
-          lowerError.includes("not found") ||
-          lowerError.includes("command not found")
-        ) {
+        if (lowerError.includes('auth') || lowerError.includes('login') || lowerError.includes('api key') || lowerError.includes('not found') || lowerError.includes('command not found')) {
           return {
             success: false,
             msg: `codex not available`,
@@ -159,7 +150,7 @@ export function initAcpConversationBridge(): void {
 
       // Send a minimal test message - just need to verify we can communicate
       // Using a simple prompt that should get a quick response
-      await connection.sendPrompt("hi");
+      await connection.sendPrompt('hi');
 
       // If we get here, the agent responded successfully
       const latency = Date.now() - startTime;
@@ -183,18 +174,11 @@ export function initAcpConversationBridge(): void {
       const lowerError = errorMsg.toLowerCase();
 
       // Check for authentication-related errors
-      if (
-        lowerError.includes("auth") ||
-        lowerError.includes("login") ||
-        lowerError.includes("credential") ||
-        lowerError.includes("api key") ||
-        lowerError.includes("unauthorized") ||
-        lowerError.includes("forbidden")
-      ) {
+      if (lowerError.includes('auth') || lowerError.includes('login') || lowerError.includes('credential') || lowerError.includes('api key') || lowerError.includes('unauthorized') || lowerError.includes('forbidden')) {
         return {
           success: false,
           msg: `${backend} not authenticated`,
-          data: { available: false, error: "Not authenticated" },
+          data: { available: false, error: 'Not authenticated' },
         };
       }
 
@@ -211,19 +195,12 @@ export function initAcpConversationBridge(): void {
   ipcBridge.acpConversation.getMode.provider(async ({ conversationId }) => {
     try {
       const task = await WorkerManage.getTaskByIdRollbackBuild(conversationId);
-      if (
-        !task ||
-        !(
-          task instanceof AcpAgentManager ||
-          task instanceof GeminiAgentManager ||
-          task instanceof CodexAgentManager
-        )
-      ) {
-        return { success: true, data: { mode: "default", initialized: false } };
+      if (!task || !(task instanceof AcpAgentManager || task instanceof GeminiAgentManager || task instanceof CodexAgentManager)) {
+        return { success: true, data: { mode: 'default', initialized: false } };
       }
       return { success: true, data: task.getMode() };
     } catch {
-      return { success: true, data: { mode: "default", initialized: false } };
+      return { success: true, data: { mode: 'default', initialized: false } };
     }
   });
 
@@ -247,7 +224,7 @@ export function initAcpConversationBridge(): void {
     try {
       const task = await WorkerManage.getTaskByIdRollbackBuild(conversationId);
       if (!task || !(task instanceof AcpAgentManager)) {
-        return { success: false, msg: "Conversation not found or not an ACP agent" };
+        return { success: false, msg: 'Conversation not found or not an ACP agent' };
       }
       return { success: true, data: { modelInfo: await task.setModel(modelId) } };
     } catch (error) {
@@ -262,16 +239,10 @@ export function initAcpConversationBridge(): void {
     try {
       const task = await WorkerManage.getTaskByIdRollbackBuild(conversationId);
       if (!task) {
-        return { success: false, msg: "Conversation not found" };
+        return { success: false, msg: 'Conversation not found' };
       }
-      if (
-        !(
-          task instanceof AcpAgentManager ||
-          task instanceof GeminiAgentManager ||
-          task instanceof CodexAgentManager
-        )
-      ) {
-        return { success: false, msg: "Mode switching not supported for this agent type" };
+      if (!(task instanceof AcpAgentManager || task instanceof GeminiAgentManager || task instanceof CodexAgentManager)) {
+        return { success: false, msg: 'Mode switching not supported for this agent type' };
       }
       return await task.setMode(mode);
     } catch (error) {

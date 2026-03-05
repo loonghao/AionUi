@@ -18,14 +18,14 @@ export const OPENCLAW_PROTOCOL_VERSION = 3 as const;
 // ========== Base Frame Types ==========
 
 export interface RequestFrame {
-  type: "req";
+  type: 'req';
   id: string;
   method: string;
   params?: unknown;
 }
 
 export interface ResponseFrame {
-  type: "res";
+  type: 'res';
   id: string;
   ok: boolean;
   payload?: unknown;
@@ -33,7 +33,7 @@ export interface ResponseFrame {
 }
 
 export interface EventFrame {
-  type: "event";
+  type: 'event';
   event: string;
   payload?: unknown;
   seq?: number;
@@ -92,7 +92,7 @@ export interface ConnectParams {
 }
 
 export interface HelloOk {
-  type: "hello-ok";
+  type: 'hello-ok';
   protocol: number;
   server: {
     version: string;
@@ -160,7 +160,7 @@ export interface ChatEvent {
   runId: string;
   sessionKey: string;
   seq: number;
-  state: "delta" | "final" | "aborted" | "error";
+  state: 'delta' | 'final' | 'aborted' | 'error';
   message?: unknown;
   errorMessage?: string;
   usage?: unknown;
@@ -225,9 +225,9 @@ export interface ShutdownEvent {
 // ========== Gateway Client Modes ==========
 
 export const GATEWAY_CLIENT_MODES = {
-  BACKEND: "backend",
-  FRONTEND: "frontend",
-  PROBE: "probe",
+  BACKEND: 'backend',
+  FRONTEND: 'frontend',
+  PROBE: 'probe',
 } as const;
 
 export type GatewayClientMode = (typeof GATEWAY_CLIENT_MODES)[keyof typeof GATEWAY_CLIENT_MODES];
@@ -235,18 +235,18 @@ export type GatewayClientMode = (typeof GATEWAY_CLIENT_MODES)[keyof typeof GATEW
 // ========== Gateway Client IDs (must match OpenClaw's allowed values) ==========
 
 export const GATEWAY_CLIENT_IDS = {
-  WEBCHAT_UI: "webchat-ui",
-  CONTROL_UI: "openclaw-control-ui",
-  WEBCHAT: "webchat",
-  CLI: "cli",
-  GATEWAY_CLIENT: "gateway-client",
-  MACOS_APP: "openclaw-macos",
-  IOS_APP: "openclaw-ios",
-  ANDROID_APP: "openclaw-android",
-  NODE_HOST: "node-host",
-  TEST: "test",
-  FINGERPRINT: "fingerprint",
-  PROBE: "openclaw-probe",
+  WEBCHAT_UI: 'webchat-ui',
+  CONTROL_UI: 'openclaw-control-ui',
+  WEBCHAT: 'webchat',
+  CLI: 'cli',
+  GATEWAY_CLIENT: 'gateway-client',
+  MACOS_APP: 'openclaw-macos',
+  IOS_APP: 'openclaw-ios',
+  ANDROID_APP: 'openclaw-android',
+  NODE_HOST: 'node-host',
+  TEST: 'test',
+  FINGERPRINT: 'fingerprint',
+  PROBE: 'openclaw-probe',
 } as const;
 
 export type GatewayClientId = (typeof GATEWAY_CLIENT_IDS)[keyof typeof GATEWAY_CLIENT_IDS];
@@ -297,8 +297,8 @@ export interface OpenClawGatewayClientOptions {
 // ========== Gateway Close Code Hints ==========
 
 export const GATEWAY_CLOSE_CODE_HINTS: Readonly<Record<number, string>> = {
-  1000: "normal closure",
-  1006: "abnormal closure (no close frame)",
-  1008: "policy violation",
-  1012: "service restart",
+  1000: 'normal closure',
+  1006: 'abnormal closure (no close frame)',
+  1008: 'policy violation',
+  1012: 'service restart',
 };

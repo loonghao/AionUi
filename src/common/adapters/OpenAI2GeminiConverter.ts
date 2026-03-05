@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { ProtocolConverter, ConverterConfig } from "./ProtocolConverter";
+import type { ProtocolConverter, ConverterConfig } from './ProtocolConverter';
 
 // OpenAI types - compatible with actual OpenAI SDK types
 export interface OpenAIChatCompletionParams {
@@ -20,14 +20,14 @@ export interface OpenAIChatCompletionParams {
         }>;
   }>;
   tools?: Array<{
-    type: "function";
+    type: 'function';
     function: {
       name: string;
       description?: string;
       parameters?: any;
     };
   }>;
-  tool_choice?: "auto" | "none" | { type: "function"; function: { name: string } };
+  tool_choice?: 'auto' | 'none' | { type: 'function'; function: { name: string } };
 }
 
 export interface OpenAIChatCompletionResponse {
@@ -41,7 +41,7 @@ export interface OpenAIChatCompletionResponse {
       role: string;
       content: string;
       images?: Array<{
-        type: "image_url";
+        type: 'image_url';
         image_url: { url: string };
       }>;
     };
@@ -84,16 +84,12 @@ export interface GeminiRequest {
 /**
  * Converter for transforming OpenAI chat completion format to/from Gemini format
  */
-export class OpenAI2GeminiConverter implements ProtocolConverter<
-  OpenAIChatCompletionParams,
-  GeminiRequest,
-  OpenAIChatCompletionResponse
-> {
+export class OpenAI2GeminiConverter implements ProtocolConverter<OpenAIChatCompletionParams, GeminiRequest, OpenAIChatCompletionResponse> {
   private readonly config: ConverterConfig;
 
   constructor(config: ConverterConfig = {}) {
     this.config = {
-      defaultModel: "gemini-1.5-flash",
+      defaultModel: 'gemini-1.5-flash',
       ...config,
     };
   }
@@ -104,25 +100,25 @@ export class OpenAI2GeminiConverter implements ProtocolConverter<
   convertRequest(params: OpenAIChatCompletionParams): GeminiRequest {
     const message = params.messages[0];
     if (!message || !message.content) {
-      throw new Error("Invalid message format for Gemini conversion");
+      throw new Error('Invalid message format for Gemini conversion');
     }
 
     const parts: Array<{ text?: string; inlineData?: { mimeType: string; data: string } }> = [];
 
     // Handle both string content and array content
-    if (typeof message.content === "string") {
+    if (typeof message.content === 'string') {
       parts.push({ text: message.content });
     } else {
       for (const part of message.content) {
-        if (part.type === "text" && part.text) {
+        if (part.type === 'text' && part.text) {
           parts.push({ text: part.text });
-        } else if (part.type === "image_url" && part.image_url?.url) {
+        } else if (part.type === 'image_url' && part.image_url?.url) {
           const imageUrl = part.image_url.url;
 
-          if (imageUrl.startsWith("data:")) {
+          if (imageUrl.startsWith('data:')) {
             // Handle base64 data URLs
-            const [mimeInfo, base64Data] = imageUrl.split(",");
-            const mimeType = mimeInfo.match(/data:(.*?);base64/)?.[1] || "image/png";
+            const [mimeInfo, base64Data] = imageUrl.split(',');
+            const mimeType = mimeInfo.match(/data:(.*?);base64/)?.[1] || 'image/png';
 
             parts.push({
               inlineData: {
@@ -130,12 +126,10 @@ export class OpenAI2GeminiConverter implements ProtocolConverter<
                 data: base64Data,
               },
             });
-          } else if (imageUrl.startsWith("http")) {
+          } else if (imageUrl.startsWith('http')) {
             // For HTTP URLs, we need to fetch and convert to base64
             // Gemini prefers inlineData over fileData for better reliability
-            throw new Error(
-              "HTTP image URLs not yet supported in Gemini integration. Please use base64 data URLs.",
-            );
+            throw new Error('HTTP image URLs not yet supported in Gemini integration. Please use base64 data URLs.');
           }
         }
       }
@@ -143,33 +137,24 @@ export class OpenAI2GeminiConverter implements ProtocolConverter<
 
     // Check if request seems to be for image generation
     // 检查请求是否为图片生成
-    const isImageGeneration = parts.some(
-      (part) =>
-        part.text &&
-        (part.text.toLowerCase().includes("generate image") ||
-          part.text.toLowerCase().includes("create image") ||
-          part.text.toLowerCase().includes("draw") ||
-          part.text.toLowerCase().includes("make image")),
-    );
+    const isImageGeneration = parts.some((part) => part.text && (part.text.toLowerCase().includes('generate image') || part.text.toLowerCase().includes('create image') || part.text.toLowerCase().includes('draw') || part.text.toLowerCase().includes('make image')));
 
     // Use the model passed in params, don't override with hardcoded model
     // 使用传入的模型，不要硬编码覆盖
-    const model = params.model || this.config.defaultModel || "gemini-1.5-flash";
+    const model = params.model || this.config.defaultModel || 'gemini-1.5-flash';
 
     const request: GeminiRequest = {
       model,
-      contents: [{ role: "user", parts }],
+      contents: [{ role: 'user', parts }],
     };
 
     // For image generation, add responseModalities to request image output
     // 对于图片生成，添加 responseModalities 以请求图片输出
     if (isImageGeneration) {
       request.generationConfig = {
-        responseModalities: ["IMAGE", "TEXT"],
+        responseModalities: ['IMAGE', 'TEXT'],
       };
-      console.log(
-        `[OpenAI2GeminiConverter] Image generation detected, adding responseModalities: ["IMAGE", "TEXT"]`,
-      );
+      console.log(`[OpenAI2GeminiConverter] Image generation detected, adding responseModalities: ["IMAGE", "TEXT"]`);
     }
 
     // Add tools if present in OpenAI request
@@ -198,7 +183,7 @@ export class OpenAI2GeminiConverter implements ProtocolConverter<
     if (!candidate) {
       return {
         id: `gemini-${Date.now()}`,
-        object: "chat.completion",
+        object: 'chat.completion',
         created: Math.floor(Date.now() / 1000),
         model: requestedModel,
         choices: [],
@@ -206,8 +191,8 @@ export class OpenAI2GeminiConverter implements ProtocolConverter<
       };
     }
 
-    let content = "";
-    const images: Array<{ type: "image_url"; image_url: { url: string } }> = [];
+    let content = '';
+    const images: Array<{ type: 'image_url'; image_url: { url: string } }> = [];
 
     // Process all parts in the response
     if (candidate.content?.parts) {
@@ -217,7 +202,7 @@ export class OpenAI2GeminiConverter implements ProtocolConverter<
         }
         if (part.inlineData) {
           images.push({
-            type: "image_url",
+            type: 'image_url',
             image_url: {
               url: `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`,
             },
@@ -230,8 +215,8 @@ export class OpenAI2GeminiConverter implements ProtocolConverter<
     const choice: any = {
       index: 0,
       message: {
-        role: "assistant",
-        content: content || "Image generated successfully.",
+        role: 'assistant',
+        content: content || 'Image generated successfully.',
       },
       finish_reason: this.mapFinishReason(candidate.finishReason),
     };
@@ -243,7 +228,7 @@ export class OpenAI2GeminiConverter implements ProtocolConverter<
 
     return {
       id: `gemini-${Date.now()}`,
-      object: "chat.completion",
+      object: 'chat.completion',
       created: Math.floor(Date.now() / 1000),
       model: requestedModel,
       choices: [choice],
@@ -260,16 +245,16 @@ export class OpenAI2GeminiConverter implements ProtocolConverter<
    */
   private mapFinishReason(geminiReason?: string): string {
     switch (geminiReason) {
-      case "STOP":
-        return "stop";
-      case "MAX_TOKENS":
-        return "length";
-      case "SAFETY":
-        return "content_filter";
-      case "RECITATION":
-        return "content_filter";
+      case 'STOP':
+        return 'stop';
+      case 'MAX_TOKENS':
+        return 'length';
+      case 'SAFETY':
+        return 'content_filter';
+      case 'RECITATION':
+        return 'content_filter';
       default:
-        return "stop";
+        return 'stop';
     }
   }
 }

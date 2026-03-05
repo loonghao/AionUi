@@ -14,7 +14,7 @@
  *   zsh: suspended (tty output)  npm start
  */
 
-import { spawn } from "child_process";
+import { spawn } from 'child_process';
 
 type ExecResult = { stdout: string; stderr: string };
 
@@ -29,20 +29,20 @@ interface SafeExecOptions {
  */
 export function safeExec(command: string, options: SafeExecOptions = {}): Promise<ExecResult> {
   return new Promise((resolve, reject) => {
-    const child = spawn("sh", ["-c", command], {
+    const child = spawn('sh', ['-c', command], {
       detached: true,
-      stdio: ["ignore", "pipe", "pipe"],
+      stdio: ['ignore', 'pipe', 'pipe'],
       env: options.env,
     });
 
-    let stdout = "";
-    let stderr = "";
+    let stdout = '';
+    let stderr = '';
     let settled = false;
 
-    child.stdout.on("data", (chunk: Buffer) => {
+    child.stdout.on('data', (chunk: Buffer) => {
       stdout += chunk.toString();
     });
-    child.stderr.on("data", (chunk: Buffer) => {
+    child.stderr.on('data', (chunk: Buffer) => {
       stderr += chunk.toString();
     });
 
@@ -52,22 +52,16 @@ export function safeExec(command: string, options: SafeExecOptions = {}): Promis
             settled = true;
             // Kill the entire process group (negative PID)
             try {
-              process.kill(-child.pid!, "SIGTERM");
+              process.kill(-child.pid!, 'SIGTERM');
             } catch {
               /* already exited */
             }
-            reject(
-              Object.assign(new Error(`Command timed out after ${options.timeout}ms`), {
-                stdout,
-                stderr,
-                killed: true,
-              }),
-            );
+            reject(Object.assign(new Error(`Command timed out after ${options.timeout}ms`), { stdout, stderr, killed: true }));
           }
         }, options.timeout)
       : null;
 
-    child.on("error", (err) => {
+    child.on('error', (err) => {
       if (!settled) {
         settled = true;
         if (timer) clearTimeout(timer);
@@ -75,20 +69,14 @@ export function safeExec(command: string, options: SafeExecOptions = {}): Promis
       }
     });
 
-    child.on("close", (code) => {
+    child.on('close', (code) => {
       if (!settled) {
         settled = true;
         if (timer) clearTimeout(timer);
         if (code === 0) {
           resolve({ stdout, stderr });
         } else {
-          reject(
-            Object.assign(new Error(`Command failed with exit code ${code}`), {
-              stdout,
-              stderr,
-              code,
-            }),
-          );
+          reject(Object.assign(new Error(`Command failed with exit code ${code}`), { stdout, stderr, code }));
         }
       }
     });
@@ -102,26 +90,22 @@ export function safeExec(command: string, options: SafeExecOptions = {}): Promis
  * Direct executable invocation (replacement for `child_process.execFile`).
  * Does NOT use a shell — safer against injection.
  */
-export function safeExecFile(
-  file: string,
-  args: string[],
-  options: SafeExecOptions = {},
-): Promise<ExecResult> {
+export function safeExecFile(file: string, args: string[], options: SafeExecOptions = {}): Promise<ExecResult> {
   return new Promise((resolve, reject) => {
     const child = spawn(file, args, {
       detached: true,
-      stdio: ["ignore", "pipe", "pipe"],
+      stdio: ['ignore', 'pipe', 'pipe'],
       env: options.env,
     });
 
-    let stdout = "";
-    let stderr = "";
+    let stdout = '';
+    let stderr = '';
     let settled = false;
 
-    child.stdout.on("data", (chunk: Buffer) => {
+    child.stdout.on('data', (chunk: Buffer) => {
       stdout += chunk.toString();
     });
-    child.stderr.on("data", (chunk: Buffer) => {
+    child.stderr.on('data', (chunk: Buffer) => {
       stderr += chunk.toString();
     });
 
@@ -130,22 +114,16 @@ export function safeExecFile(
           if (!settled) {
             settled = true;
             try {
-              process.kill(-child.pid!, "SIGTERM");
+              process.kill(-child.pid!, 'SIGTERM');
             } catch {
               /* already exited */
             }
-            reject(
-              Object.assign(new Error(`Command timed out after ${options.timeout}ms`), {
-                stdout,
-                stderr,
-                killed: true,
-              }),
-            );
+            reject(Object.assign(new Error(`Command timed out after ${options.timeout}ms`), { stdout, stderr, killed: true }));
           }
         }, options.timeout)
       : null;
 
-    child.on("error", (err) => {
+    child.on('error', (err) => {
       if (!settled) {
         settled = true;
         if (timer) clearTimeout(timer);
@@ -153,20 +131,14 @@ export function safeExecFile(
       }
     });
 
-    child.on("close", (code) => {
+    child.on('close', (code) => {
       if (!settled) {
         settled = true;
         if (timer) clearTimeout(timer);
         if (code === 0) {
           resolve({ stdout, stderr });
         } else {
-          reject(
-            Object.assign(new Error(`Command failed with exit code ${code}`), {
-              stdout,
-              stderr,
-              code,
-            }),
-          );
+          reject(Object.assign(new Error(`Command failed with exit code ${code}`), { stdout, stderr, code }));
         }
       }
     });

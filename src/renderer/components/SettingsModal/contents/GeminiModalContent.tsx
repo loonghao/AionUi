@@ -4,30 +4,25 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { ipcBridge } from "@/common";
-import { ConfigStorage } from "@/common/storage";
-import AionScrollArea from "@/renderer/components/base/AionScrollArea";
-import { useThemeContext } from "@/renderer/context/ThemeContext";
-import { Button, Divider, Form, Input, Message } from "@arco-design/web-react";
-import React, { useCallback, useEffect, useRef, useState } from "react";
-import { useTranslation } from "react-i18next";
-import classNames from "classnames";
-import { useSettingsViewMode } from "../settingsViewContext";
+import { ipcBridge } from '@/common';
+import { ConfigStorage } from '@/common/storage';
+import AionScrollArea from '@/renderer/components/base/AionScrollArea';
+import { useThemeContext } from '@/renderer/context/ThemeContext';
+import { Button, Divider, Form, Input, Message } from '@arco-design/web-react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import classNames from 'classnames';
+import { useSettingsViewMode } from '../settingsViewContext';
 
-type GeminiConfig = Parameters<typeof ConfigStorage.set<"gemini.config">>[1];
+type GeminiConfig = Parameters<typeof ConfigStorage.set<'gemini.config'>>[1];
 
-const toGeminiConfig = (
-  config: Record<string, unknown>,
-  accountProjects?: Record<string, string>,
-): GeminiConfig => ({
-  authType: typeof config.authType === "string" ? config.authType : "",
-  proxy: typeof config.proxy === "string" ? config.proxy : "",
-  GOOGLE_GEMINI_BASE_URL:
-    typeof config.GOOGLE_GEMINI_BASE_URL === "string" ? config.GOOGLE_GEMINI_BASE_URL : undefined,
-  accountProjects:
-    accountProjects && Object.keys(accountProjects).length > 0 ? accountProjects : undefined,
-  yoloMode: typeof config.yoloMode === "boolean" ? config.yoloMode : undefined,
-  preferredMode: typeof config.preferredMode === "string" ? config.preferredMode : undefined,
+const toGeminiConfig = (config: Record<string, unknown>, accountProjects?: Record<string, string>): GeminiConfig => ({
+  authType: typeof config.authType === 'string' ? config.authType : '',
+  proxy: typeof config.proxy === 'string' ? config.proxy : '',
+  GOOGLE_GEMINI_BASE_URL: typeof config.GOOGLE_GEMINI_BASE_URL === 'string' ? config.GOOGLE_GEMINI_BASE_URL : undefined,
+  accountProjects: accountProjects && Object.keys(accountProjects).length > 0 ? accountProjects : undefined,
+  yoloMode: typeof config.yoloMode === 'boolean' ? config.yoloMode : undefined,
+  preferredMode: typeof config.preferredMode === 'string' ? config.preferredMode : undefined,
 });
 
 const GeminiModalContent: React.FC = () => {
@@ -39,7 +34,7 @@ const GeminiModalContent: React.FC = () => {
   const [currentAccountEmail, setCurrentAccountEmail] = useState<string | null>(null);
   const [message, messageContext] = Message.useMessage();
   const viewMode = useSettingsViewMode();
-  const isPageMode = viewMode === "page";
+  const isPageMode = viewMode === 'page';
 
   /**
    * 加载当前账号对应的 GOOGLE_CLOUD_PROJECT
@@ -53,10 +48,10 @@ const GeminiModalContent: React.FC = () => {
     // Clean up old global config (don't auto-migrate, it might belong to another account)
     if (geminiConfig?.GOOGLE_CLOUD_PROJECT) {
       const { GOOGLE_CLOUD_PROJECT: _, ...restConfig } = geminiConfig;
-      await ConfigStorage.set("gemini.config", toGeminiConfig(restConfig, accountProjects));
+      await ConfigStorage.set('gemini.config', toGeminiConfig(restConfig, accountProjects));
     }
 
-    form.setFieldValue("GOOGLE_CLOUD_PROJECT", projectId || "");
+    form.setFieldValue('GOOGLE_CLOUD_PROJECT', projectId || '');
   };
 
   const loadGoogleAuthStatus = (proxy?: string, geminiConfig?: Record<string, unknown>) => {
@@ -66,7 +61,7 @@ const GeminiModalContent: React.FC = () => {
       .then((data) => {
         if (data.success && data.data?.account) {
           const email = data.data.account;
-          form.setFieldValue("googleAccount", email);
+          form.setFieldValue('googleAccount', email);
           setCurrentAccountEmail(email);
           setUserLoggedOut(false);
           // 加载该账号的项目配置 / Load project config for this account
@@ -74,12 +69,12 @@ const GeminiModalContent: React.FC = () => {
             void loadAccountProject(email, geminiConfig);
           }
         } else if (data.success === false && (!data.msg || userLoggedOut)) {
-          form.setFieldValue("googleAccount", "");
+          form.setFieldValue('googleAccount', '');
           setCurrentAccountEmail(null);
         }
       })
       .catch((error) => {
-        console.warn("Failed to check Google auth status:", error);
+        console.warn('Failed to check Google auth status:', error);
       })
       .finally(() => {
         setGoogleAccountLoading(false);
@@ -95,10 +90,7 @@ const GeminiModalContent: React.FC = () => {
       const values = form.getFieldsValue();
       const { googleAccount: _googleAccount, GOOGLE_CLOUD_PROJECT, ...restConfig } = values;
 
-      const existingConfig = ((await ConfigStorage.get("gemini.config")) || {}) as Record<
-        string,
-        unknown
-      >;
+      const existingConfig = ((await ConfigStorage.get('gemini.config')) || {}) as Record<string, unknown>;
       const accountProjects = (existingConfig.accountProjects as Record<string, string>) || {};
 
       if (currentAccountEmail && GOOGLE_CLOUD_PROJECT) {
@@ -109,9 +101,9 @@ const GeminiModalContent: React.FC = () => {
 
       const geminiConfig = toGeminiConfig(restConfig, accountProjects);
 
-      await ConfigStorage.set("gemini.config", geminiConfig);
+      await ConfigStorage.set('gemini.config', geminiConfig);
     } catch (error: unknown) {
-      console.error("[GeminiSettings] Auto-save failed:", error);
+      console.error('[GeminiSettings] Auto-save failed:', error);
     }
   }, [currentAccountEmail, form]);
 
@@ -134,144 +126,109 @@ const GeminiModalContent: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    Promise.all([ConfigStorage.get("gemini.config")])
+    Promise.all([ConfigStorage.get('gemini.config')])
       .then(([geminiConfig]) => {
         const formData = {
           ...geminiConfig,
           // 先不设置 GOOGLE_CLOUD_PROJECT，等账号加载完再设置
           // Don't set GOOGLE_CLOUD_PROJECT yet, wait for account to load
-          GOOGLE_CLOUD_PROJECT: "",
+          GOOGLE_CLOUD_PROJECT: '',
         };
         form.setFieldsValue(formData);
         readyRef.current = true;
         loadGoogleAuthStatus(geminiConfig?.proxy, geminiConfig);
       })
       .catch((error) => {
-        console.error("Failed to load configuration:", error);
+        console.error('Failed to load configuration:', error);
       });
   }, []);
 
   return (
-    <div className="flex flex-col h-full w-full">
+    <div className='flex flex-col h-full w-full'>
       {messageContext}
 
       {/* Content Area */}
-      <AionScrollArea className="flex-1 min-h-0" disableOverflow={isPageMode}>
-        <div className="space-y-16px">
-          <div className="px-[12px] py-[24px] md:px-[32px] bg-2 rd-12px md:rd-16px border border-border-2">
-            <Form
-              form={form}
-              layout="horizontal"
-              labelCol={{ flex: "140px" }}
-              labelAlign="left"
-              wrapperCol={{ flex: "1" }}
-              onValuesChange={debouncedSave}
-            >
-              <Form.Item
-                label={t("settings.personalAuth")}
-                field="googleAccount"
-                layout="horizontal"
-              >
+      <AionScrollArea className='flex-1 min-h-0' disableOverflow={isPageMode}>
+        <div className='space-y-16px'>
+          <div className='px-[12px] py-[24px] md:px-[32px] bg-2 rd-12px md:rd-16px border border-border-2'>
+            <Form form={form} layout='horizontal' labelCol={{ flex: '140px' }} labelAlign='left' wrapperCol={{ flex: '1' }} onValuesChange={debouncedSave}>
+              <Form.Item label={t('settings.personalAuth')} field='googleAccount' layout='horizontal'>
                 {(props) => (
                   <div
-                    className={classNames("flex flex-wrap items-center justify-end gap-12px", {
-                      "mt-12px w-full justify-start md:mt-0 md:w-auto md:justify-end": isPageMode,
+                    className={classNames('flex flex-wrap items-center justify-end gap-12px', {
+                      'mt-12px w-full justify-start md:mt-0 md:w-auto md:justify-end': isPageMode,
                     })}
                   >
                     {props.googleAccount ? (
                       <>
-                        <span className="text-14px text-t-primary">{props.googleAccount}</span>
+                        <span className='text-14px text-t-primary'>{props.googleAccount}</span>
                         <Button
-                          size="small"
-                          className="rd-100px border-1 border-[#86909C]"
-                          shape="round"
-                          type="outline"
+                          size='small'
+                          className='rd-100px border-1 border-[#86909C]'
+                          shape='round'
+                          type='outline'
                           onClick={() => {
                             setUserLoggedOut(true);
                             ipcBridge.googleAuth.logout
                               .invoke({})
                               .then(() => {
-                                form.setFieldValue("googleAccount", "");
+                                form.setFieldValue('googleAccount', '');
                               })
                               .catch((error) => {
-                                console.error("Failed to logout from Google:", error);
+                                console.error('Failed to logout from Google:', error);
                               });
                           }}
                         >
-                          {t("settings.googleLogout")}
+                          {t('settings.googleLogout')}
                         </Button>
                       </>
                     ) : (
                       <Button
-                        type="primary"
+                        type='primary'
                         loading={googleAccountLoading}
-                        className="rd-100px"
+                        className='rd-100px'
                         onClick={() => {
                           setGoogleAccountLoading(true);
                           ipcBridge.googleAuth.login
-                            .invoke({ proxy: form.getFieldValue("proxy") })
+                            .invoke({ proxy: form.getFieldValue('proxy') })
                             .then((result) => {
                               if (result.success) {
-                                loadGoogleAuthStatus(form.getFieldValue("proxy"));
+                                loadGoogleAuthStatus(form.getFieldValue('proxy'));
                                 if (result.data?.account) {
-                                  message.success(
-                                    t("settings.googleLoginSuccess", {
-                                      defaultValue: "Successfully logged in",
-                                    }),
-                                  );
+                                  message.success(t('settings.googleLoginSuccess', { defaultValue: 'Successfully logged in' }));
                                 }
                               } else {
                                 // 登录失败，显示错误消息
                                 // Login failed, show error message
-                                const errorMsg =
-                                  result.msg ||
-                                  t("settings.googleLoginFailed", {
-                                    defaultValue: "Login failed. Please try again.",
-                                  });
+                                const errorMsg = result.msg || t('settings.googleLoginFailed', { defaultValue: 'Login failed. Please try again.' });
                                 message.error(errorMsg);
-                                console.error("[GoogleAuth] Login failed:", result.msg);
+                                console.error('[GoogleAuth] Login failed:', result.msg);
                               }
                             })
                             .catch((error) => {
-                              message.error(
-                                t("settings.googleLoginFailed", {
-                                  defaultValue: "Login failed. Please try again.",
-                                }),
-                              );
-                              console.error("Failed to login to Google:", error);
+                              message.error(t('settings.googleLoginFailed', { defaultValue: 'Login failed. Please try again.' }));
+                              console.error('Failed to login to Google:', error);
                             })
                             .finally(() => {
                               setGoogleAccountLoading(false);
                             });
                         }}
                       >
-                        {t("settings.googleLogin")}
+                        {t('settings.googleLogin')}
                       </Button>
                     )}
                   </div>
                 )}
               </Form.Item>
-              <Divider className="mt-0px mb-20px" />
+              <Divider className='mt-0px mb-20px' />
 
-              <Form.Item
-                label={t("settings.proxyConfig")}
-                field="proxy"
-                layout="vertical"
-                rules={[{ match: /^https?:\/\/.+$/, message: t("settings.proxyHttpOnly") }]}
-              >
-                <Input className="aion-input" placeholder={t("settings.proxyHttpOnly")} />
+              <Form.Item label={t('settings.proxyConfig')} field='proxy' layout='vertical' rules={[{ match: /^https?:\/\/.+$/, message: t('settings.proxyHttpOnly') }]}>
+                <Input className='aion-input' placeholder={t('settings.proxyHttpOnly')} />
               </Form.Item>
-              <Divider className="mt-0px mb-20px" />
+              <Divider className='mt-0px mb-20px' />
 
-              <Form.Item
-                label="GOOGLE_CLOUD_PROJECT"
-                field="GOOGLE_CLOUD_PROJECT"
-                layout="vertical"
-              >
-                <Input
-                  className="aion-input"
-                  placeholder={t("settings.googleCloudProjectPlaceholder")}
-                />
+              <Form.Item label='GOOGLE_CLOUD_PROJECT' field='GOOGLE_CLOUD_PROJECT' layout='vertical'>
+                <Input className='aion-input' placeholder={t('settings.googleCloudProjectPlaceholder')} />
               </Form.Item>
             </Form>
           </div>

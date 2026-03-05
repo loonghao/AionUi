@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 type StartOptions = {
   onStart?: (botInfo: { username: string }) => void;
@@ -27,12 +27,12 @@ let latestBotStopSpy: ReturnType<typeof vi.fn> | null = null;
 function createConfig() {
   const now = Date.now();
   return {
-    id: "telegram-1",
-    type: "telegram" as const,
-    name: "Telegram",
+    id: 'telegram-1',
+    type: 'telegram' as const,
+    name: 'Telegram',
     enabled: true,
-    credentials: { token: "test-token" },
-    status: "created" as const,
+    credentials: { token: 'test-token' },
+    status: 'created' as const,
     createdAt: now,
     updatedAt: now,
   };
@@ -41,7 +41,7 @@ function createConfig() {
 async function loadPluginClass() {
   vi.resetModules();
 
-  vi.doMock("grammy", () => {
+  vi.doMock('grammy', () => {
     class MockGrammyError extends Error {
       description?: string;
       error_code?: number;
@@ -53,8 +53,8 @@ async function loadPluginClass() {
       public api = {
         getMe: vi.fn(async () => ({
           id: 123,
-          username: "mock_bot",
-          first_name: "Mock Bot",
+          username: 'mock_bot',
+          first_name: 'Mock Bot',
         })),
         sendMessage: vi.fn(),
         editMessageText: vi.fn(),
@@ -66,7 +66,7 @@ async function loadPluginClass() {
 
       public start = vi.fn((options: StartOptions) => {
         if (mockControl.autoTriggerOnStart) {
-          options?.onStart?.({ username: "mock_bot" });
+          options?.onStart?.({ username: 'mock_bot' });
         }
         return mockControl.startPromiseFactory();
       });
@@ -85,11 +85,11 @@ async function loadPluginClass() {
     };
   });
 
-  const mod = await import("@/channels/plugins/telegram/TelegramPlugin");
+  const mod = await import('@/channels/plugins/telegram/TelegramPlugin');
   return mod.TelegramPlugin;
 }
 
-describe("TelegramPlugin polling lifecycle", () => {
+describe('TelegramPlugin polling lifecycle', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.useRealTimers();
@@ -100,7 +100,7 @@ describe("TelegramPlugin polling lifecycle", () => {
     mockControl.stopPromiseFactory = () => Promise.resolve();
   });
 
-  it("在 stop 时应等待 pollingPromise 完成后再结束", async () => {
+  it('在 stop 时应等待 pollingPromise 完成后再结束', async () => {
     let resolvePolling!: () => void;
     const pollingPromise = new Promise<void>((resolve) => {
       resolvePolling = resolve;
@@ -128,10 +128,10 @@ describe("TelegramPlugin polling lifecycle", () => {
 
     await stopPromise;
 
-    expect(plugin.status).toBe("stopped");
+    expect(plugin.status).toBe('stopped');
   });
 
-  it("当 stop 卡住超时时应回收轮询状态，避免残留 active 标记", async () => {
+  it('当 stop 卡住超时时应回收轮询状态，避免残留 active 标记', async () => {
     vi.useFakeTimers();
 
     mockControl.startPromiseFactory = () => new Promise<void>(() => {});
@@ -147,7 +147,7 @@ describe("TelegramPlugin polling lifecycle", () => {
     await vi.advanceTimersByTimeAsync(5000);
     await stopPromise;
 
-    expect(plugin.status).toBe("stopped");
+    expect(plugin.status).toBe('stopped');
     expect((plugin as any).isPollingActive).toBe(false);
     expect((plugin as any).pollingPromise).toBeNull();
   });

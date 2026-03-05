@@ -4,11 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { BrowserWindow } from "electron";
-import { ipcMain } from "electron";
+import type { BrowserWindow } from 'electron';
+import { ipcMain } from 'electron';
 
-import { bridge } from "@office-ai/platform";
-import { ADAPTER_BRIDGE_EVENT_KEY } from "./constant";
+import { bridge } from '@office-ai/platform';
+import { ADAPTER_BRIDGE_EVENT_KEY } from './constant';
 
 /**
  * Bridge event data structure for IPC communication
@@ -80,7 +80,7 @@ bridge.adapter({
       try {
         broadcast(name, data);
       } catch (error) {
-        console.error("[MainAdapter] WebSocket broadcast error:", error);
+        console.error('[MainAdapter] WebSocket broadcast error:', error);
       }
     }
   },
@@ -101,6 +101,6 @@ export const initMainAdapterWithWindow = (win: BrowserWindow) => {
     const index = adapterWindowList.indexOf(win);
     if (index > -1) adapterWindowList.splice(index, 1);
   };
-  win.on("closed", off);
+  win.on('closed', off);
   return off;
 };

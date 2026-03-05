@@ -1,11 +1,11 @@
-import { ipcBridge } from "@/common";
-import { joinPath } from "@/common/chatLib";
-import { LoadingTwo } from "@icon-park/react";
-import React, { useEffect, useMemo, useState } from "react";
-import { createContext } from "../utils/createContext";
-import { iconColors } from "@/renderer/theme/colors";
+import { ipcBridge } from '@/common';
+import { joinPath } from '@/common/chatLib';
+import { LoadingTwo } from '@icon-park/react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { createContext } from '../utils/createContext';
+import { iconColors } from '@/renderer/theme/colors';
 
-const [useLocalImage, LocalImageProvider, useUpdateLocalImage] = createContext({ root: "" });
+const [useLocalImage, LocalImageProvider, useUpdateLocalImage] = createContext({ root: '' });
 
 const LocalImageView: React.FC<{
   src: string;
@@ -21,14 +21,7 @@ const LocalImageView: React.FC<{
 
   const absolutePath = useMemo(() => {
     if (!root) return src;
-    if (
-      src.startsWith("http") ||
-      src.startsWith("data:") ||
-      src.startsWith("/") ||
-      src.startsWith("file:") ||
-      src.startsWith("\\") ||
-      /^[A-Za-z]:/.test(src)
-    ) {
+    if (src.startsWith('http') || src.startsWith('data:') || src.startsWith('/') || src.startsWith('file:') || src.startsWith('\\') || /^[A-Za-z]:/.test(src)) {
       return src;
     }
     return joinPath(root, src);
@@ -43,7 +36,7 @@ const LocalImageView: React.FC<{
         setLoading(false);
       })
       .catch((error) => {
-        console.error("[LocalImageView] Failed to load image:", {
+        console.error('[LocalImageView] Failed to load image:', {
           path: absolutePath,
           error,
         });
@@ -52,15 +45,8 @@ const LocalImageView: React.FC<{
   }, [absolutePath]);
   if (loading)
     return (
-      <span style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-        <LoadingTwo
-          className="loading"
-          style={{ display: "flex" }}
-          theme="outline"
-          size="14"
-          fill={iconColors.primary}
-          strokeWidth={2}
-        />
+      <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+        <LoadingTwo className='loading' style={{ display: 'flex' }} theme='outline' size='14' fill={iconColors.primary} strokeWidth={2} />
         <span>{alt}</span>
       </span>
     );

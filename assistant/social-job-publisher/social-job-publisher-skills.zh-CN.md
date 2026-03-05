@@ -55,7 +55,6 @@ triggers: xiaohongshu, redbook, rednote, xhs, publish to xiaohongshu, 小红书,
    - 保存为 `post_content.txt`
 
 4. **自动化发布**：
-
    ```bash
    python3 scripts/publish_xiaohongshu.py "标题" "post_content.txt" "cover.png" "jd_details.png"
    ```
@@ -112,7 +111,6 @@ triggers: x, twitter, publish to x, publish to twitter, post on x, 发布到推�
    - 简洁、清晰，包含核心职责和投递方式
 
 4. **自动化发布**：
-
    ```bash
    python3 scripts/publish_x.py "post_content.txt" "cover.png" "jd_details.png"
    ```

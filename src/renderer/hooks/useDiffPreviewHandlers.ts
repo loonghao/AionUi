@@ -4,11 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { FileChangeItem } from "@/renderer/components/base/FileChangesPanel";
-import { usePreviewLauncher } from "@/renderer/hooks/usePreviewLauncher";
-import { extractContentFromDiff } from "@/renderer/utils/diffUtils";
-import { getFileTypeInfo } from "@/renderer/utils/fileType";
-import { useCallback } from "react";
+import type { FileChangeItem } from '@/renderer/components/base/FileChangesPanel';
+import { usePreviewLauncher } from '@/renderer/hooks/usePreviewLauncher';
+import { extractContentFromDiff } from '@/renderer/utils/diffUtils';
+import { getFileTypeInfo } from '@/renderer/utils/fileType';
+import { useCallback } from 'react';
 
 interface DiffPreviewHandlersOptions {
   /** Diff text content */
@@ -27,12 +27,7 @@ interface DiffPreviewHandlersOptions {
  * Used by components that display FileChangesPanel and need
  * handleFileClick (open file preview) and handleDiffClick (open diff view)
  */
-export const useDiffPreviewHandlers = ({
-  diffText,
-  displayName,
-  filePath,
-  title,
-}: DiffPreviewHandlersOptions) => {
+export const useDiffPreviewHandlers = ({ diffText, displayName, filePath, title }: DiffPreviewHandlersOptions) => {
   const { launchPreview } = usePreviewLauncher();
 
   const handleFileClick = useCallback(
@@ -49,7 +44,7 @@ export const useDiffPreviewHandlers = ({
         diffContent: diffText,
       });
     },
-    [diffText, displayName, filePath, title, launchPreview],
+    [diffText, displayName, filePath, title, launchPreview]
   );
 
   const handleDiffClick = useCallback(
@@ -57,13 +52,13 @@ export const useDiffPreviewHandlers = ({
       void launchPreview({
         fileName: displayName,
         title,
-        contentType: "diff",
+        contentType: 'diff',
         editable: false,
-        language: "diff",
+        language: 'diff',
         diffContent: diffText,
       });
     },
-    [diffText, displayName, title, launchPreview],
+    [diffText, displayName, title, launchPreview]
   );
 
   return { handleFileClick, handleDiffClick };

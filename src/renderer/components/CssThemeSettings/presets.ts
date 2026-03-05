@@ -4,22 +4,17 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { ICssTheme } from "@/common/storage";
+import type { ICssTheme } from '@/common/storage';
 
 // 导入预设主题封面图片 base64 数据 / Import preset theme cover images as base64 data
 // 注意: webpack 存在 UTF-8 编码问题会损坏二进制文件，因此使用预生成的 base64 数据
-import {
-  defaultThemeCover,
-  misakaMikotoCover,
-  helloKittyCover,
-  retroWindowsCover,
-} from "./themeCovers";
+import { defaultThemeCover, misakaMikotoCover, helloKittyCover, retroWindowsCover } from './themeCovers';
 
 /**
  * 默认主题 ID / Default theme ID
  * 用于标识默认主题（无自定义 CSS）/ Used to identify the default theme (no custom CSS)
  */
-export const DEFAULT_THEME_ID = "default-theme";
+export const DEFAULT_THEME_ID = 'default-theme';
 
 /**
  * 预设 CSS 主题列表 / Preset CSS themes list
@@ -28,7 +23,7 @@ export const DEFAULT_THEME_ID = "default-theme";
 export const PRESET_THEMES: ICssTheme[] = [
   {
     id: DEFAULT_THEME_ID,
-    name: "Default",
+    name: 'Default',
     isPreset: true,
     cover: defaultThemeCover, // 仅用于预览展示 / Only for preview display
     css: `/* Default Theme - AOU Purple Theme / 默认主题 */
@@ -213,8 +208,8 @@ export const PRESET_THEMES: ICssTheme[] = [
     updatedAt: Date.now(),
   },
   {
-    id: "misaka-mikoto-theme",
-    name: "Misaka Mikoto Theme",
+    id: 'misaka-mikoto-theme',
+    name: 'Misaka Mikoto Theme',
     isPreset: true,
     cover: misakaMikotoCover,
     css: `
@@ -1065,8 +1060,8 @@ a:hover:not([class*="button"]):not([class*="btn"]) {
     updatedAt: Date.now(),
   },
   {
-    id: "hello-kitty",
-    name: "Hello Kitty",
+    id: 'hello-kitty',
+    name: 'Hello Kitty',
     isPreset: true,
     cover: helloKittyCover,
     css: `
@@ -1855,8 +1850,8 @@ a:hover {
     updatedAt: Date.now(),
   },
   {
-    id: "retro-windows",
-    name: "Retro Windows",
+    id: 'retro-windows',
+    name: 'Retro Windows',
     isPreset: true,
     cover: retroWindowsCover,
     css: `/* ========================================

@@ -4,28 +4,16 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { DEFAULT_IMAGE_EXTENSION, MIME_TO_EXT_MAP } from "@/common/constants";
-import type {
-  CompletedToolCall,
-  Config,
-  GeminiClient,
-  ServerGeminiStreamEvent,
-  ToolCallRequestInfo,
-} from "@office-ai/aioncli-core";
-import { GeminiEventType as ServerGeminiEventType } from "@office-ai/aioncli-core";
+import { DEFAULT_IMAGE_EXTENSION, MIME_TO_EXT_MAP } from '@/common/constants';
+import type { CompletedToolCall, Config, GeminiClient, ServerGeminiStreamEvent, ToolCallRequestInfo } from '@office-ai/aioncli-core';
+import { GeminiEventType as ServerGeminiEventType } from '@office-ai/aioncli-core';
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore - executeToolCall is not re-exported from main entry but exists in subpath
-import { executeToolCall } from "@office-ai/aioncli-core/dist/src/core/nonInteractiveToolExecutor.js";
-import * as fs from "fs";
-import * as path from "path";
-import { parseAndFormatApiError } from "./cli/errorParsing";
-import {
-  DEFAULT_STREAM_RESILIENCE_CONFIG,
-  globalToolCallGuard,
-  StreamMonitor,
-  type StreamConnectionEvent,
-  type StreamResilienceConfig,
-} from "./cli/streamResilience";
+import { executeToolCall } from '@office-ai/aioncli-core/dist/src/core/nonInteractiveToolExecutor.js';
+import * as fs from 'fs';
+import * as path from 'path';
+import { parseAndFormatApiError } from './cli/errorParsing';
+import { DEFAULT_STREAM_RESILIENCE_CONFIG, globalToolCallGuard, StreamMonitor, type StreamConnectionEvent, type StreamResilienceConfig } from './cli/streamResilience';
 
 enum StreamProcessingStatus {
   Completed,
@@ -47,7 +35,7 @@ export interface StreamMonitorOptions {
  */
 function getExtensionFromMimeType(mimeType: string): string {
   // Extract subtype from MIME type (e.g., 'image/png' -> 'png')
-  const subtype = mimeType.split("/")[1]?.toLowerCase();
+  const subtype = mimeType.split('/')[1]?.toLowerCase();
   if (subtype && MIME_TO_EXT_MAP[subtype]) {
     return MIME_TO_EXT_MAP[subtype];
   }
@@ -58,17 +46,13 @@ function getExtensionFromMimeType(mimeType: string): string {
  * Save inline image data to a file and return the file path
  * 将内联图片数据保存到文件并返回文件路径
  */
-async function saveInlineImage(
-  mimeType: string,
-  base64Data: string,
-  workingDir: string,
-): Promise<string> {
+async function saveInlineImage(mimeType: string, base64Data: string, workingDir: string): Promise<string> {
   const ext = getExtensionFromMimeType(mimeType);
   const uniqueSuffix = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
   const fileName = `gemini-img-${uniqueSuffix}${ext}`;
   const filePath = path.join(workingDir, fileName);
 
-  const imageBuffer = Buffer.from(base64Data, "base64");
+  const imageBuffer = Buffer.from(base64Data, 'base64');
   await fs.promises.writeFile(filePath, imageBuffer);
 
   return filePath;
@@ -83,22 +67,15 @@ async function saveInlineImage(
  * @param onStreamEvent - 事件回调
  * @param monitorOptions - 流监控选项（可选）
  */
-export const processGeminiStreamEvents = async (
-  stream: AsyncIterable<ServerGeminiStreamEvent>,
-  config: Config,
-  onStreamEvent: (event: { type: ServerGeminiStreamEvent["type"]; data: unknown }) => void,
-  monitorOptions?: StreamMonitorOptions,
-): Promise<StreamProcessingStatus> => {
+export const processGeminiStreamEvents = async (stream: AsyncIterable<ServerGeminiStreamEvent>, config: Config, onStreamEvent: (event: { type: ServerGeminiStreamEvent['type']; data: unknown }) => void, monitorOptions?: StreamMonitorOptions): Promise<StreamProcessingStatus> => {
   // 创建流监控器
   const monitorConfig = { ...DEFAULT_STREAM_RESILIENCE_CONFIG, ...monitorOptions?.config };
   const monitor = new StreamMonitor(monitorConfig, (event) => {
     // 处理连接状态变化
-    if (event.type === "state_change") {
-      console.debug(`[StreamMonitor] State changed to: ${event.state}`, event.reason || "");
-    } else if (event.type === "heartbeat_timeout") {
-      console.warn(
-        `[StreamMonitor] Heartbeat timeout detected, last event: ${event.lastEventTime}`,
-      );
+    if (event.type === 'state_change') {
+      console.debug(`[StreamMonitor] State changed to: ${event.state}`, event.reason || '');
+    } else if (event.type === 'heartbeat_timeout') {
+      console.warn(`[StreamMonitor] Heartbeat timeout detected, last event: ${event.lastEventTime}`);
     }
     // 传递给外部监听器
     monitorOptions?.onConnectionEvent?.(event);
@@ -113,7 +90,7 @@ export const processGeminiStreamEvents = async (
 
       // 检查是否心跳超时（长时间无数据）
       if (monitor.isHeartbeatTimeout()) {
-        console.warn("[StreamMonitor] Stream heartbeat timeout, connection may be stale");
+        console.warn('[StreamMonitor] Stream heartbeat timeout, connection may be stale');
         // 不立即中断，让上层处理决定
       }
 
@@ -125,7 +102,7 @@ export const processGeminiStreamEvents = async (
           {
             // Extract content value
             const contentValue = (event as unknown as { value: unknown }).value;
-            const contentText = typeof contentValue === "string" ? contentValue : "";
+            const contentText = typeof contentValue === 'string' ? contentValue : '';
 
             // Check if content contains <think> or <thinking> tags (common in proxy services like newapi)
             // Also detect orphaned closing tags from models like MiniMax M2.5 that omit opening <think>
@@ -157,11 +134,11 @@ export const processGeminiStreamEvents = async (
               // 流式模式下，前面 chunk 的思考内容（无标签）已被前端累积。
               // 保留 </think> 让前端在累积内容中检测到它，从而正确过滤所有思考内容。
               const cleanedContent = contentText
-                .replace(/<think(?:ing)?>([\s\S]*?)<\/think(?:ing)?>/gi, "")
+                .replace(/<think(?:ing)?>([\s\S]*?)<\/think(?:ing)?>/gi, '')
                 // Keep orphaned </think> for frontend accumulated content filtering
                 // Also remove unclosed opening tags at the end
-                .replace(/<think(?:ing)?>[\s\S]*$/gi, "")
-                .replace(/\n{3,}/g, "\n\n")
+                .replace(/<think(?:ing)?>[\s\S]*$/gi, '')
+                .replace(/\n{3,}/g, '\n\n')
                 .trim();
 
               if (cleanedContent) {
@@ -176,18 +153,13 @@ export const processGeminiStreamEvents = async (
           break;
         // InlineData: Handle inline image data from image generation models (e.g., gemini-3-pro-image)
         // 处理来自图片生成模型的内联图片数据（使用字符串字面量以兼容旧版本 aioncli-core）
-        case "inline_data" as ServerGeminiEventType:
+        case 'inline_data' as ServerGeminiEventType:
           {
-            const inlineData = (event as unknown as { value: { mimeType: string; data: string } })
-              .value;
+            const inlineData = (event as unknown as { value: { mimeType: string; data: string } }).value;
             if (inlineData?.mimeType && inlineData?.data) {
               try {
                 const workingDir = config.getWorkingDir();
-                const imagePath = await saveInlineImage(
-                  inlineData.mimeType,
-                  inlineData.data,
-                  workingDir,
-                );
+                const imagePath = await saveInlineImage(inlineData.mimeType, inlineData.data, workingDir);
                 const relativePath = path.relative(workingDir, imagePath);
                 // Emit as content with markdown image format for display
                 onStreamEvent({
@@ -195,7 +167,7 @@ export const processGeminiStreamEvents = async (
                   data: `![Generated Image](${relativePath})`,
                 });
               } catch (error) {
-                console.error("[InlineData] Failed to save image:", error);
+                console.error('[InlineData] Failed to save image:', error);
                 onStreamEvent({
                   type: ServerGeminiEventType.Error,
                   data: `Failed to save generated image: ${error instanceof Error ? error.message : String(error)}`,
@@ -212,10 +184,7 @@ export const processGeminiStreamEvents = async (
           {
             // Safely extract error value - event.value may be string, object with .error, or undefined
             const errorEvent = event as unknown as { value?: { error?: unknown } | unknown };
-            const errorValue =
-              (errorEvent.value as { error?: unknown })?.error ??
-              errorEvent.value ??
-              "Unknown error occurred";
+            const errorValue = (errorEvent.value as { error?: unknown })?.error ?? errorEvent.value ?? 'Unknown error occurred';
             onStreamEvent({
               type: event.type,
               data: parseAndFormatApiError(errorValue, config.getContentGeneratorConfig().authType),
@@ -225,10 +194,7 @@ export const processGeminiStreamEvents = async (
         case ServerGeminiEventType.Finished:
           {
             // 传递 Finished 事件，包含 token 使用统计
-            onStreamEvent({
-              type: event.type,
-              data: (event as unknown as { value: unknown }).value,
-            });
+            onStreamEvent({ type: event.type, data: (event as unknown as { value: unknown }).value });
           }
           break;
         case ServerGeminiEventType.ContextWindowWillOverflow:
@@ -253,7 +219,7 @@ export const processGeminiStreamEvents = async (
           const reason = (event as { value?: { reason?: string } }).value?.reason;
           onStreamEvent({
             type: ServerGeminiEventType.Error,
-            data: `Agent execution stopped${reason ? `: ${reason}` : ""}.`,
+            data: `Agent execution stopped${reason ? `: ${reason}` : ''}.`,
           });
           break;
         }
@@ -261,14 +227,14 @@ export const processGeminiStreamEvents = async (
           const reason = (event as { value?: { reason?: string } }).value?.reason;
           onStreamEvent({
             type: ServerGeminiEventType.Error,
-            data: `Agent execution blocked${reason ? `: ${reason}` : ""}.`,
+            data: `Agent execution blocked${reason ? `: ${reason}` : ''}.`,
           });
           break;
         }
         case ServerGeminiEventType.Retry:
           onStreamEvent({
             type: ServerGeminiEventType.Error,
-            data: "Request is being retried after a temporary failure. Please wait…",
+            data: 'Request is being retried after a temporary failure. Please wait…',
           });
           break;
         case ServerGeminiEventType.InvalidStream:
@@ -277,9 +243,9 @@ export const processGeminiStreamEvents = async (
           // InvalidStream 表示模型返回了无效内容（空响应、无结束原因等）
           // 这通常是临时问题 - 我们发出特殊事件类型，以便调用方可以实现重试
           onStreamEvent({
-            type: "invalid_stream" as ServerGeminiEventType,
+            type: 'invalid_stream' as ServerGeminiEventType,
             data: {
-              message: "Invalid response stream detected. Retrying...",
+              message: 'Invalid response stream detected. Retrying...',
               retryable: true,
             },
           });
@@ -298,7 +264,7 @@ export const processGeminiStreamEvents = async (
           // Some event types may not be handled yet
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const _unhandled: any = event;
-          console.warn("Unhandled event type:", _unhandled);
+          console.warn('Unhandled event type:', _unhandled);
           break;
         }
       }
@@ -313,14 +279,8 @@ export const processGeminiStreamEvents = async (
     monitor.markFailed(errorMessage);
 
     // 检查是否是连接相关错误
-    if (
-      errorMessage.includes("fetch failed") ||
-      errorMessage.includes("network") ||
-      errorMessage.includes("timeout") ||
-      errorMessage.includes("ECONNRESET") ||
-      errorMessage.includes("socket hang up")
-    ) {
-      console.error("[StreamMonitor] Connection error detected:", errorMessage);
+    if (errorMessage.includes('fetch failed') || errorMessage.includes('network') || errorMessage.includes('timeout') || errorMessage.includes('ECONNRESET') || errorMessage.includes('socket hang up')) {
+      console.error('[StreamMonitor] Connection error detected:', errorMessage);
       return StreamProcessingStatus.ConnectionLost;
     }
 
@@ -337,54 +297,36 @@ export const processGeminiStreamEvents = async (
  * 某些模型可能返回不同的参数名称，需要映射到工具期望的标准名称
  * Normalize tool parameter names - some models may return different param names
  */
-const normalizeToolParams = (
-  toolName: string,
-  args: Record<string, unknown>,
-): Record<string, unknown> => {
+const normalizeToolParams = (toolName: string, args: Record<string, unknown>): Record<string, unknown> => {
   const normalized = { ...args };
 
   // Strip leading "@" for file references (users often write @file.ext)
-  if (typeof normalized.file_path === "string" && normalized.file_path.startsWith("@")) {
+  if (typeof normalized.file_path === 'string' && normalized.file_path.startsWith('@')) {
     normalized.file_path = normalized.file_path.slice(1);
   }
-  if (typeof normalized.path === "string" && normalized.path.startsWith("@")) {
+  if (typeof normalized.path === 'string' && normalized.path.startsWith('@')) {
     normalized.path = normalized.path.slice(1);
   }
 
   // 文件操作工具：将 path 映射到 file_path
   // File operation tools: map 'path' to 'file_path'
-  const fileTools = [
-    "ReadFileTool",
-    "WriteFileTool",
-    "EditTool",
-    "read_file",
-    "write_file",
-    "edit",
-  ];
-  if (fileTools.includes(toolName) && "path" in normalized && !("file_path" in normalized)) {
+  const fileTools = ['ReadFileTool', 'WriteFileTool', 'EditTool', 'read_file', 'write_file', 'edit'];
+  if (fileTools.includes(toolName) && 'path' in normalized && !('file_path' in normalized)) {
     normalized.file_path = normalized.path;
     delete normalized.path;
   }
 
   // 目录操作相关工具：兼容旧版本模型输出的 path/directory 字段
   // Directory-related tools: normalize legacy keys (path/directory) to dir_path
-  const dirPathTools = ["list_directory", "glob", "search_file_content", "run_shell_command"];
+  const dirPathTools = ['list_directory', 'glob', 'search_file_content', 'run_shell_command'];
   if (dirPathTools.includes(toolName)) {
-    const dirLikeKeys = [
-      "dir_path",
-      "path",
-      "directory_path",
-      "directory",
-      "dir",
-      "folder_path",
-      "folder",
-    ];
+    const dirLikeKeys = ['dir_path', 'path', 'directory_path', 'directory', 'dir', 'folder_path', 'folder'];
     for (const key of dirLikeKeys) {
-      if (key in normalized && typeof normalized[key] === "string" && normalized[key]) {
-        if (!("dir_path" in normalized) && key !== "dir_path") {
+      if (key in normalized && typeof normalized[key] === 'string' && normalized[key]) {
+        if (!('dir_path' in normalized) && key !== 'dir_path') {
           normalized.dir_path = normalized[key];
         }
-        if (key !== "dir_path") {
+        if (key !== 'dir_path') {
           delete normalized[key];
         }
       }
@@ -392,25 +334,15 @@ const normalizeToolParams = (
 
     // 新版 core 要求 list_directory 必填 dir_path，这里缺省时默认当前目录
     // aioncli-core now requires dir_path; default to workspace root when missing
-    if (
-      toolName === "list_directory" &&
-      (typeof normalized.dir_path !== "string" || normalized.dir_path.length === 0)
-    ) {
-      normalized.dir_path = ".";
+    if (toolName === 'list_directory' && (typeof normalized.dir_path !== 'string' || normalized.dir_path.length === 0)) {
+      normalized.dir_path = '.';
     }
   }
 
   return normalized;
 };
 
-export const processGeminiFunctionCalls = async (
-  config: Config,
-  functionCalls: ToolCallRequestInfo[],
-  onProgress: (event: {
-    type: "tool_call_request" | "tool_call_response" | "tool_call_error" | "tool_call_finish";
-    data: unknown;
-  }) => Promise<void>,
-) => {
+export const processGeminiFunctionCalls = async (config: Config, functionCalls: ToolCallRequestInfo[], onProgress: (event: { type: 'tool_call_request' | 'tool_call_response' | 'tool_call_error' | 'tool_call_finish'; data: unknown }) => Promise<void>) => {
   const toolResponseParts = [];
 
   for (const fc of functionCalls) {
@@ -425,7 +357,7 @@ export const processGeminiFunctionCalls = async (
       prompt_id: fc.prompt_id,
     };
     await onProgress({
-      type: "tool_call_request",
+      type: 'tool_call_request',
       data: requestInfo,
     });
     const abortController = new AbortController();
@@ -433,27 +365,25 @@ export const processGeminiFunctionCalls = async (
     const toolResponse = await executeToolCall(config, requestInfo, abortController.signal);
     if (toolResponse?.response?.error) {
       await onProgress({
-        type: "tool_call_error",
+        type: 'tool_call_error',
         data: Object.assign({}, requestInfo, {
-          status: "error",
+          status: 'error',
           error: `Error executing tool ${fc.name}: ${toolResponse.response.resultDisplay || toolResponse.response.error.message}`,
         }),
       });
       return;
     }
     await onProgress({
-      type: "tool_call_finish",
+      type: 'tool_call_finish',
       data: Object.assign({}, requestInfo, {
-        status: "success",
+        status: 'success',
       }),
     });
 
     if (toolResponse.response?.responseParts) {
-      const parts = Array.isArray(toolResponse.response.responseParts)
-        ? toolResponse.response.responseParts
-        : [toolResponse.response.responseParts];
+      const parts = Array.isArray(toolResponse.response.responseParts) ? toolResponse.response.responseParts : [toolResponse.response.responseParts];
       for (const part of parts) {
-        if (typeof part === "string") {
+        if (typeof part === 'string') {
           toolResponseParts.push({ text: part });
         } else if (part) {
           toolResponseParts.push(part);
@@ -462,7 +392,7 @@ export const processGeminiFunctionCalls = async (
     }
   }
   await onProgress({
-    type: "tool_call_finish",
+    type: 'tool_call_finish',
     data: toolResponseParts,
   });
 };
@@ -476,19 +406,14 @@ export const processGeminiFunctionCalls = async (
  * 2. 受保护的工具调用不会被误判为 cancelled
  * 3. 工具完成后自动移除保护
  */
-export const handleCompletedTools = (
-  completedToolCallsFromScheduler: CompletedToolCall[],
-  geminiClient: GeminiClient | null,
-  performMemoryRefresh: () => void,
-) => {
+export const handleCompletedTools = (completedToolCallsFromScheduler: CompletedToolCall[], geminiClient: GeminiClient | null, performMemoryRefresh: () => void) => {
   const completedAndReadyToSubmitTools = completedToolCallsFromScheduler.filter((tc) => {
-    const isTerminalState =
-      tc.status === "success" || tc.status === "error" || tc.status === "cancelled";
+    const isTerminalState = tc.status === 'success' || tc.status === 'error' || tc.status === 'cancelled';
     if (isTerminalState) {
       const completedOrCancelledCall = tc;
       // 标记工具完成，移除保护
       // Mark tool as complete, remove protection
-      if (tc.status === "success" || tc.status === "error") {
+      if (tc.status === 'success' || tc.status === 'error') {
         globalToolCallGuard.complete(tc.request.callId);
       }
       return completedOrCancelledCall.response?.responseParts !== undefined;
@@ -502,7 +427,7 @@ export const handleCompletedTools = (
   }
   // Identify new, successful save_memory calls that we haven't processed yet.
   const newSuccessfulMemorySaves = completedAndReadyToSubmitTools.filter(
-    (t) => t.request.name === "save_memory" && t.status === "success",
+    (t) => t.request.name === 'save_memory' && t.status === 'success'
     // !processedMemoryToolsRef.current.has(t.request.callId)
   );
   if (newSuccessfulMemorySaves.length > 0) {
@@ -524,12 +449,10 @@ export const handleCompletedTools = (
     // 如果工具仍在保护中，不认为是被取消
     // If tool is still protected, don't consider it cancelled
     if (globalToolCallGuard.isProtected(tc.request.callId)) {
-      console.debug(
-        `[ToolCallGuard] Tool ${tc.request.callId} is protected, not treating as cancelled`,
-      );
+      console.debug(`[ToolCallGuard] Tool ${tc.request.callId} is protected, not treating as cancelled`);
       return false;
     }
-    return tc.status === "cancelled";
+    return tc.status === 'cancelled';
   });
   if (allToolsCancelled) {
     if (geminiClient) {
@@ -540,13 +463,13 @@ export const handleCompletedTools = (
         let parts;
         if (Array.isArray(response)) {
           parts = response;
-        } else if (typeof response === "string") {
+        } else if (typeof response === 'string') {
           parts = [{ text: response }];
         } else {
           parts = [response];
         }
         void geminiClient.addHistory({
-          role: "user",
+          role: 'user',
           parts,
         });
       }
@@ -604,21 +527,21 @@ export function compactToolResponsesInHistory(geminiClient: GeminiClient): void 
   let modified = false;
 
   for (const content of history) {
-    if (content.role !== "user" || !content.parts) continue;
+    if (content.role !== 'user' || !content.parts) continue;
 
     for (let i = 0; i < content.parts.length; i++) {
       const part = content.parts[i] as Record<string, unknown>;
-      if (!("functionResponse" in part) || !part.functionResponse) continue;
+      if (!('functionResponse' in part) || !part.functionResponse) continue;
 
       const fnResp = part.functionResponse as Record<string, unknown>;
       const resp = fnResp.response as Record<string, unknown> | string | undefined;
       if (!resp) continue;
 
       // Case 1: response itself contains inlineData (image/pdf/audio base64)
-      if (typeof resp === "object" && resp !== null) {
-        if ("inlineData" in resp) {
+      if (typeof resp === 'object' && resp !== null) {
+        if ('inlineData' in resp) {
           const inlineData = resp.inlineData as { mimeType?: string };
-          const mimeType = inlineData?.mimeType || "unknown";
+          const mimeType = inlineData?.mimeType || 'unknown';
           fnResp.response = {
             output: `[File content was read: ${mimeType}. Binary data removed from history to save context. Use read_file tool to re-read if needed.]`,
           };
@@ -627,25 +550,17 @@ export function compactToolResponsesInHistory(geminiClient: GeminiClient): void 
         }
 
         // Case 2: response.output is a very long string
-        if (
-          "output" in resp &&
-          typeof resp.output === "string" &&
-          resp.output.length > COMPACT_TEXT_THRESHOLD
-        ) {
-          resp.output =
-            resp.output.slice(0, COMPACT_TEXT_KEEP) +
-            `\n\n... [${resp.output.length - COMPACT_TEXT_KEEP} characters truncated from history. Use read_file tool to re-read if needed.]`;
+        if ('output' in resp && typeof resp.output === 'string' && resp.output.length > COMPACT_TEXT_THRESHOLD) {
+          resp.output = resp.output.slice(0, COMPACT_TEXT_KEEP) + `\n\n... [${resp.output.length - COMPACT_TEXT_KEEP} characters truncated from history. Use read_file tool to re-read if needed.]`;
           modified = true;
           continue;
         }
       }
 
       // Case 3: response is a raw string (some tool results)
-      if (typeof resp === "string" && resp.length > COMPACT_TEXT_THRESHOLD) {
+      if (typeof resp === 'string' && resp.length > COMPACT_TEXT_THRESHOLD) {
         fnResp.response = {
-          output:
-            resp.slice(0, COMPACT_TEXT_KEEP) +
-            `\n\n... [${resp.length - COMPACT_TEXT_KEEP} characters truncated from history. Use read_file tool to re-read if needed.]`,
+          output: resp.slice(0, COMPACT_TEXT_KEEP) + `\n\n... [${resp.length - COMPACT_TEXT_KEEP} characters truncated from history. Use read_file tool to re-read if needed.]`,
         };
         modified = true;
         continue;
@@ -653,32 +568,28 @@ export function compactToolResponsesInHistory(geminiClient: GeminiClient): void 
 
       // Case 4: response contains an array (llmContent from read_many_files etc.)
       // Walk nested parts looking for inlineData or long strings
-      if (typeof resp === "object" && resp !== null) {
+      if (typeof resp === 'object' && resp !== null) {
         for (const [key, value] of Object.entries(resp)) {
           if (Array.isArray(value)) {
             for (let j = 0; j < value.length; j++) {
               const item = value[j];
               // Nested inlineData
-              if (item && typeof item === "object" && "inlineData" in item) {
-                const mimeType = (item.inlineData as { mimeType?: string })?.mimeType || "unknown";
+              if (item && typeof item === 'object' && 'inlineData' in item) {
+                const mimeType = (item.inlineData as { mimeType?: string })?.mimeType || 'unknown';
                 value[j] = {
                   text: `[File content was read: ${mimeType}. Binary data removed from history to save context.]`,
                 };
                 modified = true;
               }
               // Nested long string
-              if (typeof item === "string" && item.length > COMPACT_TEXT_THRESHOLD) {
-                value[j] =
-                  item.slice(0, COMPACT_TEXT_KEEP) +
-                  `\n\n... [${item.length - COMPACT_TEXT_KEEP} characters truncated from history.]`;
+              if (typeof item === 'string' && item.length > COMPACT_TEXT_THRESHOLD) {
+                value[j] = item.slice(0, COMPACT_TEXT_KEEP) + `\n\n... [${item.length - COMPACT_TEXT_KEEP} characters truncated from history.]`;
                 modified = true;
               }
             }
             // Also check if the array-valued field itself is a large string
-          } else if (typeof value === "string" && value.length > COMPACT_TEXT_THRESHOLD) {
-            (resp as Record<string, unknown>)[key] =
-              value.slice(0, COMPACT_TEXT_KEEP) +
-              `\n\n... [${value.length - COMPACT_TEXT_KEEP} characters truncated from history.]`;
+          } else if (typeof value === 'string' && value.length > COMPACT_TEXT_THRESHOLD) {
+            (resp as Record<string, unknown>)[key] = value.slice(0, COMPACT_TEXT_KEEP) + `\n\n... [${value.length - COMPACT_TEXT_KEEP} characters truncated from history.]`;
             modified = true;
           }
         }
@@ -688,9 +599,7 @@ export function compactToolResponsesInHistory(geminiClient: GeminiClient): void 
 
   if (modified) {
     geminiClient.setHistory(history);
-    console.log(
-      "[GeminiAgent] Compacted large tool responses in history to reduce context window usage",
-    );
+    console.log('[GeminiAgent] Compacted large tool responses in history to reduce context window usage');
   }
 }
 

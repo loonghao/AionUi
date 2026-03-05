@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useEffect, useCallback, useRef } from "react";
+import { useEffect, useCallback, useRef } from 'react';
 
 /**
  * 监听外部滚动同步请求的 Hook
@@ -16,21 +16,15 @@ import { useEffect, useCallback, useRef } from "react";
  * @param containerRef - 容器引用 / Container ref
  * @param onTargetScroll - 目标滚动百分比回调 / Target scroll percentage callback
  */
-export const useScrollSyncTarget = (
-  containerRef: React.RefObject<HTMLElement> | undefined,
-  onTargetScroll: (targetPercent: number) => void,
-): void => {
+export const useScrollSyncTarget = (containerRef: React.RefObject<HTMLElement> | undefined, onTargetScroll: (targetPercent: number) => void): void => {
   useEffect(() => {
     const container = containerRef?.current;
     if (!container) return;
 
     const observer = new MutationObserver((mutations) => {
       for (const mutation of mutations) {
-        if (
-          mutation.type === "attributes" &&
-          mutation.attributeName === "data-target-scroll-percent"
-        ) {
-          const targetPercent = parseFloat(container.dataset.targetScrollPercent || "0");
+        if (mutation.type === 'attributes' && mutation.attributeName === 'data-target-scroll-percent') {
+          const targetPercent = parseFloat(container.dataset.targetScrollPercent || '0');
           if (!isNaN(targetPercent)) {
             onTargetScroll(targetPercent);
           }
@@ -38,10 +32,7 @@ export const useScrollSyncTarget = (
       }
     });
 
-    observer.observe(container, {
-      attributes: true,
-      attributeFilter: ["data-target-scroll-percent"],
-    });
+    observer.observe(container, { attributes: true, attributeFilter: ['data-target-scroll-percent'] });
     return () => observer.disconnect();
   }, [containerRef, onTargetScroll]);
 };
@@ -57,10 +48,7 @@ export const useScrollSyncTarget = (
  * @param onScroll - 滚动回调 / Scroll callback
  * @returns setScrollPercent - 设置滚动百分比的函数 / Function to set scroll percentage
  */
-export const useCodeMirrorScroll = (
-  wrapperRef: React.RefObject<HTMLDivElement>,
-  onScroll?: (scrollTop: number, scrollHeight: number, clientHeight: number) => void,
-): { setScrollPercent: (percent: number) => void } => {
+export const useCodeMirrorScroll = (wrapperRef: React.RefObject<HTMLDivElement>, onScroll?: (scrollTop: number, scrollHeight: number, clientHeight: number) => void): { setScrollPercent: (percent: number) => void } => {
   // 监听 CodeMirror 内部滚动容器的滚动事件
   // Listen to CodeMirror's internal scroller scroll events
   useEffect(() => {
@@ -74,9 +62,9 @@ export const useCodeMirrorScroll = (
 
       // CodeMirror 的滚动容器是 .cm-scroller 元素
       // CodeMirror's scroll container is the .cm-scroller element
-      const scroller = wrapper.querySelector(".cm-scroller") as HTMLElement;
+      const scroller = wrapper.querySelector('.cm-scroller') as HTMLElement;
       if (!scroller) {
-        console.warn("[useCodeMirrorScroll] Could not find .cm-scroller element");
+        console.warn('[useCodeMirrorScroll] Could not find .cm-scroller element');
         return;
       }
 
@@ -84,21 +72,18 @@ export const useCodeMirrorScroll = (
         onScroll(scroller.scrollTop, scroller.scrollHeight, scroller.clientHeight);
       };
 
-      scroller.addEventListener("scroll", handleScroll, { passive: true });
+      scroller.addEventListener('scroll', handleScroll, { passive: true });
 
       // 存储清理函数以便在 effect 清理时调用
       // Store cleanup function for effect cleanup
-      (wrapperRef.current as HTMLDivElement & { __scrollCleanup?: () => void }).__scrollCleanup =
-        () => {
-          scroller.removeEventListener("scroll", handleScroll);
-        };
+      (wrapperRef.current as HTMLDivElement & { __scrollCleanup?: () => void }).__scrollCleanup = () => {
+        scroller.removeEventListener('scroll', handleScroll);
+      };
     }, 100);
 
     return () => {
       clearTimeout(timer);
-      const wrapper = wrapperRef.current as
-        | (HTMLDivElement & { __scrollCleanup?: () => void })
-        | null;
+      const wrapper = wrapperRef.current as (HTMLDivElement & { __scrollCleanup?: () => void }) | null;
       wrapper?.__scrollCleanup?.();
     };
   }, [onScroll, wrapperRef]);
@@ -110,13 +95,13 @@ export const useCodeMirrorScroll = (
       const wrapper = wrapperRef.current;
       if (!wrapper) return;
 
-      const scroller = wrapper.querySelector(".cm-scroller") as HTMLElement;
+      const scroller = wrapper.querySelector('.cm-scroller') as HTMLElement;
       if (scroller) {
         const targetScroll = percent * (scroller.scrollHeight - scroller.clientHeight);
         scroller.scrollTop = targetScroll;
       }
     },
-    [wrapperRef],
+    [wrapperRef]
   );
 
   return { setScrollPercent };
@@ -129,10 +114,7 @@ export const useCodeMirrorScroll = (
  * @param containerRef - 容器引用 / Container ref
  * @param onScroll - 滚动回调 / Scroll callback
  */
-export const useContainerScroll = (
-  containerRef: React.RefObject<HTMLElement>,
-  onScroll?: (scrollTop: number, scrollHeight: number, clientHeight: number) => void,
-): void => {
+export const useContainerScroll = (containerRef: React.RefObject<HTMLElement>, onScroll?: (scrollTop: number, scrollHeight: number, clientHeight: number) => void): void => {
   useEffect(() => {
     const container = containerRef.current;
     if (!container || !onScroll) return;
@@ -141,8 +123,8 @@ export const useContainerScroll = (
       onScroll(container.scrollTop, container.scrollHeight, container.clientHeight);
     };
 
-    container.addEventListener("scroll", handleScroll, { passive: true });
-    return () => container.removeEventListener("scroll", handleScroll);
+    container.addEventListener('scroll', handleScroll, { passive: true });
+    return () => container.removeEventListener('scroll', handleScroll);
   }, [containerRef, onScroll]);
 };
 
@@ -161,7 +143,7 @@ export const useContainerScrollTarget = (containerRef: React.RefObject<HTMLEleme
         container.scrollTop = targetScroll;
       }
     },
-    [containerRef],
+    [containerRef]
   );
 
   useScrollSyncTarget(containerRef, handleTargetScroll);

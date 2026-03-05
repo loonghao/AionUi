@@ -4,33 +4,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import WebSocket from "ws";
-import { randomUUID } from "crypto";
-import type {
-  ChatAbortParams,
-  ChatSendParams,
-  ConnectParams,
-  EventFrame,
-  HelloOk,
-  OpenClawGatewayClientOptions,
-  RequestFrame,
-  ResponseFrame,
-  SessionsResolveParams,
-} from "./types";
-import {
-  GATEWAY_CLIENT_IDS,
-  GATEWAY_CLIENT_MODES,
-  GATEWAY_CLOSE_CODE_HINTS,
-  OPENCLAW_PROTOCOL_VERSION,
-} from "./types";
-import {
-  buildDeviceAuthPayload,
-  type DeviceIdentity,
-  loadOrCreateDeviceIdentity,
-  publicKeyRawBase64UrlFromPem,
-  signDevicePayload,
-} from "./deviceIdentity";
-import { clearDeviceAuthToken, loadDeviceAuthToken, storeDeviceAuthToken } from "./deviceAuthStore";
+import WebSocket from 'ws';
+import { randomUUID } from 'crypto';
+import type { ChatAbortParams, ChatSendParams, ConnectParams, EventFrame, HelloOk, OpenClawGatewayClientOptions, RequestFrame, ResponseFrame, SessionsResolveParams } from './types';
+import { GATEWAY_CLIENT_IDS, GATEWAY_CLIENT_MODES, GATEWAY_CLOSE_CODE_HINTS, OPENCLAW_PROTOCOL_VERSION } from './types';
+import { buildDeviceAuthPayload, type DeviceIdentity, loadOrCreateDeviceIdentity, publicKeyRawBase64UrlFromPem, signDevicePayload } from './deviceIdentity';
+import { clearDeviceAuthToken, loadDeviceAuthToken, storeDeviceAuthToken } from './deviceAuthStore';
 
 interface PendingRequest {
   resolve: (value: unknown) => void;
@@ -89,11 +68,11 @@ export class OpenClawGatewayConnection {
       minProtocol: OPENCLAW_PROTOCOL_VERSION,
       maxProtocol: OPENCLAW_PROTOCOL_VERSION,
       clientName: GATEWAY_CLIENT_IDS.GATEWAY_CLIENT,
-      clientVersion: "1.0.0",
+      clientVersion: '1.0.0',
       platform: process.platform,
       mode: GATEWAY_CLIENT_MODES.BACKEND,
-      role: "operator",
-      scopes: ["operator.admin"],
+      role: 'operator',
+      scopes: ['operator.admin'],
       ...opts,
     };
   }
@@ -106,19 +85,19 @@ export class OpenClawGatewayConnection {
       return;
     }
 
-    const url = this.opts.url ?? "ws://127.0.0.1:18789";
+    const url = this.opts.url ?? 'ws://127.0.0.1:18789';
     this.ws = new WebSocket(url, {
       maxPayload: 25 * 1024 * 1024, // Allow large responses
     });
 
-    this.ws.on("open", () => {
-      console.log("[OpenClawGateway] WebSocket connected, waiting for challenge...");
+    this.ws.on('open', () => {
+      console.log('[OpenClawGateway] WebSocket connected, waiting for challenge...');
       this.queueConnect();
     });
 
-    this.ws.on("message", (data) => this.handleMessage(this.rawDataToString(data)));
+    this.ws.on('message', (data) => this.handleMessage(this.rawDataToString(data)));
 
-    this.ws.on("close", (code, reason) => {
+    this.ws.on('close', (code, reason) => {
       const reasonText = this.rawDataToString(reason);
       console.log(`[OpenClawGateway] WebSocket closed: ${code} ${reasonText}`);
       this.ws = null;
@@ -128,8 +107,8 @@ export class OpenClawGatewayConnection {
       this.opts.onClose?.(code, reasonText);
     });
 
-    this.ws.on("error", (err) => {
-      console.error("[OpenClawGateway] WebSocket error:", err);
+    this.ws.on('error', (err) => {
+      console.error('[OpenClawGateway] WebSocket error:', err);
       if (!this.connectSent) {
         this.opts.onConnectError?.(err instanceof Error ? err : new Error(String(err)));
       }
@@ -157,23 +136,19 @@ export class OpenClawGatewayConnection {
     this.ws = null;
     this._isConnected = false;
     this._sessionKey = null;
-    this.flushPendingErrors(new Error("Gateway client stopped"));
+    this.flushPendingErrors(new Error('Gateway client stopped'));
   }
 
   /**
    * Send request to Gateway and wait for response
    */
-  async request<T = unknown>(
-    method: string,
-    params?: unknown,
-    opts?: { expectFinal?: boolean },
-  ): Promise<T> {
+  async request<T = unknown>(method: string, params?: unknown, opts?: { expectFinal?: boolean }): Promise<T> {
     if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
-      throw new Error("Gateway not connected");
+      throw new Error('Gateway not connected');
     }
 
     const id = randomUUID();
-    const frame: RequestFrame = { type: "req", id, method, params };
+    const frame: RequestFrame = { type: 'req', id, method, params };
     const expectFinal = opts?.expectFinal === true;
 
     const promise = new Promise<T>((resolve, reject) => {
@@ -193,26 +168,26 @@ export class OpenClawGatewayConnection {
   /**
    * Send a chat message
    */
-  async chatSend(params: Omit<ChatSendParams, "idempotencyKey">): Promise<unknown> {
+  async chatSend(params: Omit<ChatSendParams, 'idempotencyKey'>): Promise<unknown> {
     const fullParams: ChatSendParams = {
       ...params,
       idempotencyKey: randomUUID(),
     };
-    return this.request("chat.send", fullParams, { expectFinal: true });
+    return this.request('chat.send', fullParams, { expectFinal: true });
   }
 
   /**
    * Abort current chat
    */
   async chatAbort(params: ChatAbortParams): Promise<unknown> {
-    return this.request("chat.abort", params);
+    return this.request('chat.abort', params);
   }
 
   /**
    * Get chat history
    */
   async chatHistory(sessionKey: string, limit?: number): Promise<unknown> {
-    return this.request("chat.history", { sessionKey, limit });
+    return this.request('chat.history', { sessionKey, limit });
   }
 
   // ========== Session Methods ==========
@@ -220,13 +195,8 @@ export class OpenClawGatewayConnection {
   /**
    * Resolve or create a session
    */
-  async sessionsResolve(
-    params: SessionsResolveParams,
-  ): Promise<{ key: string; sessionId: string }> {
-    const result = await this.request<{ key: string; sessionId: string }>(
-      "sessions.resolve",
-      params,
-    );
+  async sessionsResolve(params: SessionsResolveParams): Promise<{ key: string; sessionId: string }> {
+    const result = await this.request<{ key: string; sessionId: string }>('sessions.resolve', params);
     this._sessionKey = result.key;
     return result;
   }
@@ -235,7 +205,7 @@ export class OpenClawGatewayConnection {
    * List sessions
    */
   async sessionsList(params?: { limit?: number; activeMinutes?: number }): Promise<unknown> {
-    return this.request("sessions.list", params);
+    return this.request('sessions.list', params);
   }
 
   // ========== Private Methods ==========
@@ -251,16 +221,13 @@ export class OpenClawGatewayConnection {
       this.connectTimer = null;
     }
 
-    const role = this.opts.role ?? "operator";
-    const scopes = this.opts.scopes ?? ["operator.admin"];
+    const role = this.opts.role ?? 'operator';
+    const scopes = this.opts.scopes ?? ['operator.admin'];
     const signedAtMs = Date.now();
     const nonce = this.connectNonce ?? undefined;
 
     // Load stored device token first, fall back to opts.token
-    const storedToken = loadDeviceAuthToken({
-      deviceId: this.deviceIdentity.deviceId,
-      role,
-    })?.token;
+    const storedToken = loadDeviceAuthToken({ deviceId: this.deviceIdentity.deviceId, role })?.token;
     const authToken = storedToken ?? this.opts.token ?? undefined;
     const canFallbackToShared = Boolean(storedToken && this.opts.token);
 
@@ -294,8 +261,8 @@ export class OpenClawGatewayConnection {
       maxProtocol: this.opts.maxProtocol ?? OPENCLAW_PROTOCOL_VERSION,
       client: {
         id: this.opts.clientName ?? GATEWAY_CLIENT_IDS.GATEWAY_CLIENT,
-        displayName: this.opts.clientDisplayName ?? "AionUI",
-        version: this.opts.clientVersion ?? "1.0.0",
+        displayName: this.opts.clientDisplayName ?? 'AionUI',
+        version: this.opts.clientVersion ?? '1.0.0',
         platform: this.opts.platform ?? process.platform,
         mode: this.opts.mode ?? GATEWAY_CLIENT_MODES.BACKEND,
         instanceId: this.opts.instanceId,
@@ -306,9 +273,9 @@ export class OpenClawGatewayConnection {
       device,
     };
 
-    this.request<HelloOk>("connect", params)
+    this.request<HelloOk>('connect', params)
       .then((helloOk) => {
-        console.log("[OpenClawGateway] Connected successfully:", helloOk.server.version);
+        console.log('[OpenClawGateway] Connected successfully:', helloOk.server.version);
 
         // Store device token if returned
         const authInfo = helloOk?.auth;
@@ -319,23 +286,20 @@ export class OpenClawGatewayConnection {
             token: authInfo.deviceToken,
             scopes: authInfo.scopes ?? [],
           });
-          console.log("[OpenClawGateway] Device token stored for role:", authInfo.role ?? role);
+          console.log('[OpenClawGateway] Device token stored for role:', authInfo.role ?? role);
         }
 
         this._isConnected = true;
         this._helloOk = helloOk;
         this.backoffMs = 1000;
         this.reconnectAttempts = 0;
-        this.tickIntervalMs =
-          typeof helloOk.policy?.tickIntervalMs === "number"
-            ? helloOk.policy.tickIntervalMs
-            : 30_000;
+        this.tickIntervalMs = typeof helloOk.policy?.tickIntervalMs === 'number' ? helloOk.policy.tickIntervalMs : 30_000;
         this.lastTick = Date.now();
         this.startTickWatch();
         this.opts.onHelloOk?.(helloOk);
       })
       .catch((err) => {
-        console.error("[OpenClawGateway] Connect failed:", err);
+        console.error('[OpenClawGateway] Connect failed:', err);
 
         // Clear stored token if it was invalid and we can fall back to shared token
         if (canFallbackToShared) {
@@ -343,11 +307,11 @@ export class OpenClawGatewayConnection {
             deviceId: this.deviceIdentity.deviceId,
             role,
           });
-          console.log("[OpenClawGateway] Cleared invalid device token");
+          console.log('[OpenClawGateway] Cleared invalid device token');
         }
 
         this.opts.onConnectError?.(err instanceof Error ? err : new Error(String(err)));
-        this.ws?.close(1008, "connect failed");
+        this.ws?.close(1008, 'connect failed');
       });
   }
 
@@ -356,11 +320,11 @@ export class OpenClawGatewayConnection {
       const parsed = JSON.parse(raw);
 
       // Handle EVENT frame
-      if (parsed.type === "event") {
+      if (parsed.type === 'event') {
         const evt = parsed as EventFrame;
 
         // Handle connect challenge
-        if (evt.event === "connect.challenge") {
+        if (evt.event === 'connect.challenge') {
           const payload = evt.payload as { nonce?: string } | undefined;
           const nonce = payload?.nonce;
           if (nonce) {
@@ -371,7 +335,7 @@ export class OpenClawGatewayConnection {
         }
 
         // Track sequence for gap detection
-        const seq = typeof evt.seq === "number" ? evt.seq : null;
+        const seq = typeof evt.seq === 'number' ? evt.seq : null;
         if (seq !== null) {
           if (this.lastSeq !== null && seq > this.lastSeq + 1) {
             console.warn(`[OpenClawGateway] Event gap: expected ${this.lastSeq + 1}, got ${seq}`);
@@ -380,7 +344,7 @@ export class OpenClawGatewayConnection {
         }
 
         // Handle tick event
-        if (evt.event === "tick") {
+        if (evt.event === 'tick') {
           this.lastTick = Date.now();
         }
 
@@ -390,7 +354,7 @@ export class OpenClawGatewayConnection {
       }
 
       // Handle RESPONSE frame
-      if (parsed.type === "res") {
+      if (parsed.type === 'res') {
         const res = parsed as ResponseFrame;
         const pending = this.pending.get(res.id);
         if (!pending) {
@@ -399,7 +363,7 @@ export class OpenClawGatewayConnection {
 
         // If expecting final and got ack, keep waiting
         const payload = res.payload as { status?: string } | undefined;
-        if (pending.expectFinal && payload?.status === "accepted") {
+        if (pending.expectFinal && payload?.status === 'accepted') {
           return;
         }
 
@@ -407,11 +371,11 @@ export class OpenClawGatewayConnection {
         if (res.ok) {
           pending.resolve(res.payload);
         } else {
-          pending.reject(new Error(res.error?.message ?? "Unknown error"));
+          pending.reject(new Error(res.error?.message ?? 'Unknown error'));
         }
       }
     } catch (err) {
-      console.error("[OpenClawGateway] Parse error:", err);
+      console.error('[OpenClawGateway] Parse error:', err);
     }
   }
 
@@ -433,12 +397,8 @@ export class OpenClawGatewayConnection {
     }
     this.reconnectAttempts++;
     if (this.reconnectAttempts > this.maxReconnectAttempts) {
-      console.error(
-        `[OpenClawGateway] Max reconnect attempts (${this.maxReconnectAttempts}) reached, giving up`,
-      );
-      this.opts.onConnectError?.(
-        new Error(`Max reconnect attempts (${this.maxReconnectAttempts}) reached`),
-      );
+      console.error(`[OpenClawGateway] Max reconnect attempts (${this.maxReconnectAttempts}) reached, giving up`);
+      this.opts.onConnectError?.(new Error(`Max reconnect attempts (${this.maxReconnectAttempts}) reached`));
       return;
     }
     if (this.tickTimer) {
@@ -474,24 +434,24 @@ export class OpenClawGatewayConnection {
       }
       const gap = Date.now() - this.lastTick;
       if (gap > this.tickIntervalMs * 2) {
-        console.warn("[OpenClawGateway] Tick timeout, closing connection");
-        this.ws?.close(4000, "tick timeout");
+        console.warn('[OpenClawGateway] Tick timeout, closing connection');
+        this.ws?.close(4000, 'tick timeout');
       }
     }, interval);
   }
 
   private rawDataToString(data: unknown): string {
-    if (typeof data === "string") {
+    if (typeof data === 'string') {
       return data;
     }
     if (Buffer.isBuffer(data)) {
-      return data.toString("utf-8");
+      return data.toString('utf-8');
     }
     if (data instanceof ArrayBuffer) {
-      return Buffer.from(data).toString("utf-8");
+      return Buffer.from(data).toString('utf-8');
     }
     if (Array.isArray(data)) {
-      return Buffer.concat(data.map((b) => Buffer.from(b))).toString("utf-8");
+      return Buffer.concat(data.map((b) => Buffer.from(b))).toString('utf-8');
     }
     return String(data);
   }

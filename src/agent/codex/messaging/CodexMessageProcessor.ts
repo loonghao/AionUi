@@ -4,41 +4,41 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { uuid } from "@/common/utils";
-import type { TMessage } from "@/common/chatLib";
-import type { CodexEventMsg } from "@/common/codex/types";
-import type { ICodexMessageEmitter } from "@/agent/codex/messaging/CodexMessageEmitter";
-import { ERROR_CODES, globalErrorService } from "@/agent/codex/core/ErrorService";
-import { hasCronCommands } from "@process/task/CronCommandDetector";
-import { processCronInMessage } from "@process/task/MessageMiddleware";
-import { cronBusyGuard } from "@process/services/cron/CronBusyGuard";
-import { ipcBridge } from "@/common";
+import { uuid } from '@/common/utils';
+import type { TMessage } from '@/common/chatLib';
+import type { CodexEventMsg } from '@/common/codex/types';
+import type { ICodexMessageEmitter } from '@/agent/codex/messaging/CodexMessageEmitter';
+import { ERROR_CODES, globalErrorService } from '@/agent/codex/core/ErrorService';
+import { hasCronCommands } from '@process/task/CronCommandDetector';
+import { processCronInMessage } from '@process/task/MessageMiddleware';
+import { cronBusyGuard } from '@process/services/cron/CronBusyGuard';
+import { ipcBridge } from '@/common';
 
 export class CodexMessageProcessor {
   private currentLoadingId: string | null = null;
   private deltaTimeout: NodeJS.Timeout | null = null;
   private reasoningMsgId: string | null = null;
-  private currentReason: string = "";
+  private currentReason: string = '';
 
   constructor(
     private conversation_id: string,
-    private messageEmitter: ICodexMessageEmitter,
+    private messageEmitter: ICodexMessageEmitter
   ) {}
 
   processTaskStart() {
     this.currentLoadingId = uuid();
     this.reasoningMsgId = uuid();
-    this.currentReason = "";
+    this.currentReason = '';
   }
 
   processReasonSectionBreak() {
-    this.currentReason = "";
+    this.currentReason = '';
   }
 
   processTaskComplete() {
     this.currentLoadingId = null;
     this.reasoningMsgId = null;
-    this.currentReason = "";
+    this.currentReason = '';
 
     // Mark conversation as no longer processing
     // This is the reliable completion point for Codex message flow
@@ -46,48 +46,43 @@ export class CodexMessageProcessor {
 
     this.messageEmitter.emitAndPersistMessage(
       {
-        type: "finish",
+        type: 'finish',
         msg_id: uuid(),
         conversation_id: this.conversation_id,
         data: null,
       },
-      false,
+      false
     );
   }
 
-  handleReasoningMessage(
-    msg:
-      | Extract<CodexEventMsg, { type: "agent_reasoning_delta" }>
-      | Extract<CodexEventMsg, { type: "agent_reasoning" }>
-      | Extract<CodexEventMsg, { type: "agent_reasoning_section_break" }>,
-  ) {
+  handleReasoningMessage(msg: Extract<CodexEventMsg, { type: 'agent_reasoning_delta' }> | Extract<CodexEventMsg, { type: 'agent_reasoning' }> | Extract<CodexEventMsg, { type: 'agent_reasoning_section_break' }>) {
     // 根据事件类型处理不同的数据结构 - TypeScript 自动类型缩窄
-    let deltaText = "";
-    if (msg.type === "agent_reasoning_delta") {
-      deltaText = msg.delta ?? "";
-    } else if (msg.type === "agent_reasoning") {
-      deltaText = msg.text ?? "";
+    let deltaText = '';
+    if (msg.type === 'agent_reasoning_delta') {
+      deltaText = msg.delta ?? '';
+    } else if (msg.type === 'agent_reasoning') {
+      deltaText = msg.text ?? '';
     }
     // AGENT_REASONING_SECTION_BREAK 不添加内容，只是重置当前reasoning
     this.currentReason = this.currentReason + deltaText;
     this.messageEmitter.emitAndPersistMessage(
       {
-        type: "thought",
+        type: 'thought',
         msg_id: this.reasoningMsgId, // 使用固定的msg_id确保消息合并
         conversation_id: this.conversation_id,
         data: {
           description: this.currentReason,
-          subject: "Thinking",
+          subject: 'Thinking',
         },
       },
-      false,
+      false
     );
   }
 
-  processMessageDelta(msg: Extract<CodexEventMsg, { type: "agent_message_delta" }>) {
+  processMessageDelta(msg: Extract<CodexEventMsg, { type: 'agent_message_delta' }>) {
     const rawDelta = msg.delta;
     const deltaMessage = {
-      type: "content" as const,
+      type: 'content' as const,
       conversation_id: this.conversation_id,
       msg_id: this.currentLoadingId,
       data: rawDelta,
@@ -97,18 +92,18 @@ export class CodexMessageProcessor {
     this.messageEmitter.emitAndPersistMessage(deltaMessage, false);
   }
 
-  processFinalMessage(msg: Extract<CodexEventMsg, { type: "agent_message" }>) {
+  processFinalMessage(msg: Extract<CodexEventMsg, { type: 'agent_message' }>) {
     // Final message: only persist to database, do NOT emit to frontend
     // Frontend has already shown the content via deltas
 
     const transformedMessage: TMessage = {
       id: this.currentLoadingId || uuid(),
       msg_id: this.currentLoadingId,
-      type: "text" as const,
-      position: "left" as const,
+      type: 'text' as const,
+      position: 'left' as const,
       conversation_id: this.conversation_id,
       content: { content: msg.message },
-      status: "finish", // Mark as finished for cron detection
+      status: 'finish', // Mark as finished for cron detection
       createdAt: Date.now(),
     };
 
@@ -117,16 +112,16 @@ export class CodexMessageProcessor {
 
     // Process cron commands in final message
     // This is the reliable point to detect cron commands since we have the complete message text
-    const messageText = msg.message || "";
+    const messageText = msg.message || '';
 
     if (hasCronCommands(messageText)) {
       // Collect system responses to send back to AI
       const collectedResponses: string[] = [];
-      void processCronInMessage(this.conversation_id, "codex", transformedMessage, (sysMsg) => {
+      void processCronInMessage(this.conversation_id, 'codex', transformedMessage, (sysMsg) => {
         collectedResponses.push(sysMsg);
         // Also emit to frontend for display
         ipcBridge.codexConversation.responseStream.emit({
-          type: "system",
+          type: 'system',
           conversation_id: this.conversation_id,
           msg_id: uuid(),
           data: sysMsg,
@@ -134,7 +129,7 @@ export class CodexMessageProcessor {
       }).then(() => {
         // Send collected responses back to AI agent so it can continue
         if (collectedResponses.length > 0 && this.messageEmitter.sendMessageToAgent) {
-          const feedbackMessage = `[System Response]\n${collectedResponses.join("\n")}`;
+          const feedbackMessage = `[System Response]\n${collectedResponses.join('\n')}`;
           void this.messageEmitter.sendMessageToAgent(feedbackMessage);
         }
       });
@@ -144,10 +139,10 @@ export class CodexMessageProcessor {
   processStreamError(message: string) {
     // Use error service to create standardized error
     const codexError = globalErrorService.createError(ERROR_CODES.NETWORK_UNKNOWN, message, {
-      context: "CodexMessageProcessor.processStreamError",
+      context: 'CodexMessageProcessor.processStreamError',
       technicalDetails: {
         originalMessage: message,
-        eventType: "STREAM_ERROR",
+        eventType: 'STREAM_ERROR',
       },
     });
 
@@ -157,8 +152,8 @@ export class CodexMessageProcessor {
     const errorHash = this.generateErrorHash(message);
 
     // 检测消息类型：重试消息 vs 最终错误消息
-    const isRetryMessage = message.includes("retrying");
-    const isFinalError = !isRetryMessage && message.includes("error sending request");
+    const isRetryMessage = message.includes('retrying');
+    const isFinalError = !isRetryMessage && message.includes('error sending request');
 
     let msgId: string;
     if (isRetryMessage) {
@@ -174,12 +169,10 @@ export class CodexMessageProcessor {
 
     // Use error code for structured error handling
     // The data will contain error code info that can be translated on frontend
-    const errorData = processedError.code
-      ? `ERROR_${processedError.code}: ${message}`
-      : processedError.userMessage || message;
+    const errorData = processedError.code ? `ERROR_${processedError.code}: ${message}` : processedError.userMessage || message;
 
     const errMsg = {
-      type: "error" as const,
+      type: 'error' as const,
       conversation_id: this.conversation_id,
       msg_id: msgId,
       data: errorData,
@@ -187,14 +180,14 @@ export class CodexMessageProcessor {
     this.messageEmitter.emitAndPersistMessage(errMsg);
   }
 
-  processGenericError(evt: { type: "error"; data: { message?: string } | string }) {
-    const message = typeof evt.data === "string" ? evt.data : evt.data.message || "Unknown error";
+  processGenericError(evt: { type: 'error'; data: { message?: string } | string }) {
+    const message = typeof evt.data === 'string' ? evt.data : evt.data.message || 'Unknown error';
 
     // 为相同的错误消息生成一致的msg_id以避免重复显示
     const errorHash = this.generateErrorHash(message);
 
     const errMsg = {
-      type: "error" as const,
+      type: 'error' as const,
       conversation_id: this.conversation_id,
       msg_id: `error_${errorHash}`,
       data: message,
@@ -219,9 +212,9 @@ export class CodexMessageProcessor {
 
   private normalizeRetryMessage(message: string): string {
     // 如果是重试消息，提取核心错误信息，忽略重试次数和延迟时间
-    if (message.includes("retrying")) {
+    if (message.includes('retrying')) {
       // 匹配 "retrying X/Y in Zms..." 模式并移除它
-      return message.replace(/;\s*retrying\s+\d+\/\d+\s+in\s+[\d.]+[ms]+[^;]*$/i, "");
+      return message.replace(/;\s*retrying\s+\d+\/\d+\s+in\s+[\d.]+[ms]+[^;]*$/i, '');
     }
 
     // 其他类型的错误消息直接返回

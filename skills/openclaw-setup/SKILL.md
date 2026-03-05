@@ -1,6 +1,6 @@
 ---
 name: openclaw-setup
-description: "OpenClaw usage expert: Helps you install, deploy, configure, and use OpenClaw personal AI assistant. Can diagnose issues, create bots, execute automated tasks, etc. Use when users need to install OpenClaw, configure Gateway, set up Channels, create Agents, troubleshoot issues, or perform OpenClaw-related operations."
+description: 'OpenClaw usage expert: Helps you install, deploy, configure, and use OpenClaw personal AI assistant. Can diagnose issues, create bots, execute automated tasks, etc. Use when users need to install OpenClaw, configure Gateway, set up Channels, create Agents, troubleshoot issues, or perform OpenClaw-related operations.'
 ---
 
 # OpenClaw 使用专家
@@ -31,7 +31,6 @@ npm root -g && npm bin -g
 ```
 
 **诊断结果解读：**
-
 - ✅ `openclaw` 找到了 → 环境正常，继续正常操作
 - ❌ `openclaw NOT found in PATH` → 环境问题，按以下步骤排查：
   1. 先确认 `openclaw` 已安装：`npm list -g openclaw`

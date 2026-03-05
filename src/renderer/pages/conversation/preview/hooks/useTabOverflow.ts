@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useCallback, useEffect, useRef, useState } from "react";
-import { TAB_OVERFLOW_THRESHOLD } from "../constants";
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { TAB_OVERFLOW_THRESHOLD } from '../constants';
 
 /**
  * Tab 渐变状态
@@ -80,19 +80,19 @@ export const useTabOverflow = (deps: unknown[] = []) => {
     if (!container) return;
 
     const handleScroll = () => updateTabOverflow();
-    container.addEventListener("scroll", handleScroll, { passive: true });
-    window.addEventListener("resize", updateTabOverflow);
+    container.addEventListener('scroll', handleScroll, { passive: true });
+    window.addEventListener('resize', updateTabOverflow);
 
     // 使用 ResizeObserver 监听容器大小变化 / Use ResizeObserver to monitor container size changes
     let resizeObserver: ResizeObserver | null = null;
-    if (typeof ResizeObserver !== "undefined") {
+    if (typeof ResizeObserver !== 'undefined') {
       resizeObserver = new ResizeObserver(() => updateTabOverflow());
       resizeObserver.observe(container);
     }
 
     return () => {
-      container.removeEventListener("scroll", handleScroll);
-      window.removeEventListener("resize", updateTabOverflow);
+      container.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('resize', updateTabOverflow);
       if (resizeObserver) {
         resizeObserver.disconnect();
       }

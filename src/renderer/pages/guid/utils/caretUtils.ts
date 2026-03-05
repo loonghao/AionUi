@@ -12,7 +12,7 @@
  */
 export const measureCaretTop = (textarea: HTMLTextAreaElement, position: number): number => {
   const textBefore = textarea.value.slice(0, position);
-  const measure = document.createElement("div");
+  const measure = document.createElement('div');
   const style = getComputedStyle(textarea);
   measure.style.cssText = `
     position: absolute;

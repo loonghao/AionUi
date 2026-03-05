@@ -4,9 +4,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
-describe("applicationBridge CDP functionality", () => {
+describe('applicationBridge CDP functionality', () => {
   const originalEnv = { ...process.env };
 
   beforeEach(async () => {
@@ -14,12 +14,12 @@ describe("applicationBridge CDP functionality", () => {
     vi.clearAllMocks();
 
     // Mock electron
-    vi.doMock("electron", () => ({
+    vi.doMock('electron', () => ({
       app: {
         isPackaged: false,
         getPath: vi.fn((name: string) => {
-          if (name === "userData") return "/mock/userData";
-          return "/mock/path";
+          if (name === 'userData') return '/mock/userData';
+          return '/mock/path';
         }),
         commandLine: {
           appendSwitch: vi.fn(),
@@ -30,37 +30,37 @@ describe("applicationBridge CDP functionality", () => {
     }));
 
     // Mock fs
-    vi.doMock("fs", () => ({
+    vi.doMock('fs', () => ({
       existsSync: vi.fn(() => false),
-      readFileSync: vi.fn(() => "{}"),
+      readFileSync: vi.fn(() => '{}'),
       writeFileSync: vi.fn(),
     }));
 
     // Mock http
-    vi.doMock("http", () => ({
+    vi.doMock('http', () => ({
       default: { get: vi.fn() },
     }));
 
     // Mock WorkerManage
-    vi.doMock("@/process/WorkerManage", () => ({
+    vi.doMock('@/process/WorkerManage', () => ({
       default: {
         clear: vi.fn(),
       },
     }));
 
     // Mock zoom utilities
-    vi.doMock("@/process/utils/zoom", () => ({
+    vi.doMock('@/process/utils/zoom', () => ({
       getZoomFactor: vi.fn(() => 1),
       setZoomFactor: vi.fn(() => 1),
     }));
 
     // Mock initStorage
-    vi.doMock("@/process/initStorage", () => ({
+    vi.doMock('@/process/initStorage', () => ({
       getSystemDir: vi.fn(() => ({
-        cacheDir: "/mock/cache",
-        workDir: "/mock/work",
-        platform: "win32",
-        arch: "x64",
+        cacheDir: '/mock/cache',
+        workDir: '/mock/work',
+        platform: 'win32',
+        arch: 'x64',
       })),
       ProcessEnv: {
         set: vi.fn(),
@@ -68,7 +68,7 @@ describe("applicationBridge CDP functionality", () => {
     }));
 
     // Mock utils
-    vi.doMock("@/process/utils", () => ({
+    vi.doMock('@/process/utils', () => ({
       copyDirectoryRecursively: vi.fn(),
     }));
   });
@@ -76,32 +76,32 @@ describe("applicationBridge CDP functionality", () => {
   afterEach(() => {
     process.env = originalEnv;
     vi.clearAllMocks();
-    vi.doUnmock("electron");
-    vi.doUnmock("fs");
-    vi.doUnmock("http");
-    vi.doUnmock("@/process/WorkerManage");
-    vi.doUnmock("@/process/utils/zoom");
-    vi.doUnmock("@/process/initStorage");
-    vi.doUnmock("@/process/utils");
+    vi.doUnmock('electron');
+    vi.doUnmock('fs');
+    vi.doUnmock('http');
+    vi.doUnmock('@/process/WorkerManage');
+    vi.doUnmock('@/process/utils/zoom');
+    vi.doUnmock('@/process/initStorage');
+    vi.doUnmock('@/process/utils');
   });
 
-  describe("initApplicationBridge", () => {
-    it("should initialize without errors", async () => {
-      const { initApplicationBridge } = await import("@/process/bridge/applicationBridge");
+  describe('initApplicationBridge', () => {
+    it('should initialize without errors', async () => {
+      const { initApplicationBridge } = await import('@/process/bridge/applicationBridge');
 
       expect(() => initApplicationBridge()).not.toThrow();
     });
   });
 
-  describe("CDP IPC handlers", () => {
-    it("should register getCdpStatus handler", async () => {
-      const mod = await import("@/process/bridge/applicationBridge");
-      expect(mod.initApplicationBridge).toBeTypeOf("function");
+  describe('CDP IPC handlers', () => {
+    it('should register getCdpStatus handler', async () => {
+      const mod = await import('@/process/bridge/applicationBridge');
+      expect(mod.initApplicationBridge).toBeTypeOf('function');
     });
   });
 });
 
-describe("CDP configuration functions", () => {
+describe('CDP configuration functions', () => {
   const originalEnv = { ...process.env };
 
   beforeEach(() => {
@@ -115,112 +115,112 @@ describe("CDP configuration functions", () => {
     process.env = originalEnv;
   });
 
-  it("should provide getCdpStatus function", async () => {
-    vi.doMock("electron", () => ({
+  it('should provide getCdpStatus function', async () => {
+    vi.doMock('electron', () => ({
       app: {
         isPackaged: false,
-        getPath: vi.fn(() => "/mock/userData"),
+        getPath: vi.fn(() => '/mock/userData'),
         commandLine: { appendSwitch: vi.fn() },
       },
     }));
 
-    vi.doMock("fs", () => ({
+    vi.doMock('fs', () => ({
       existsSync: vi.fn(() => false),
-      readFileSync: vi.fn(() => "{}"),
+      readFileSync: vi.fn(() => '{}'),
       writeFileSync: vi.fn(),
     }));
 
-    vi.doMock("http", () => ({
+    vi.doMock('http', () => ({
       default: { get: vi.fn() },
     }));
 
-    const { getCdpStatus } = await import("@/utils/configureChromium");
+    const { getCdpStatus } = await import('@/utils/configureChromium');
 
     const status = getCdpStatus();
 
-    expect(status).toHaveProperty("enabled");
-    expect(status).toHaveProperty("port");
-    expect(status).toHaveProperty("startupEnabled");
-    expect(status).toHaveProperty("instances");
-    expect(status).toHaveProperty("isDevMode");
+    expect(status).toHaveProperty('enabled');
+    expect(status).toHaveProperty('port');
+    expect(status).toHaveProperty('startupEnabled');
+    expect(status).toHaveProperty('instances');
+    expect(status).toHaveProperty('isDevMode');
     expect(Array.isArray(status.instances)).toBe(true);
   });
 
-  it("should provide updateCdpConfig function", async () => {
-    vi.doMock("electron", () => ({
+  it('should provide updateCdpConfig function', async () => {
+    vi.doMock('electron', () => ({
       app: {
         isPackaged: false,
-        getPath: vi.fn(() => "/mock/userData"),
+        getPath: vi.fn(() => '/mock/userData'),
         commandLine: { appendSwitch: vi.fn() },
       },
     }));
 
-    vi.doMock("fs", () => ({
+    vi.doMock('fs', () => ({
       existsSync: vi.fn(() => false),
-      readFileSync: vi.fn(() => "{}"),
+      readFileSync: vi.fn(() => '{}'),
       writeFileSync: vi.fn(),
     }));
 
-    vi.doMock("http", () => ({
+    vi.doMock('http', () => ({
       default: { get: vi.fn() },
     }));
 
-    const { updateCdpConfig } = await import("@/utils/configureChromium");
+    const { updateCdpConfig } = await import('@/utils/configureChromium');
 
     const result = updateCdpConfig({ enabled: true, port: 9225 });
 
-    expect(result).toHaveProperty("enabled", true);
-    expect(result).toHaveProperty("port", 9225);
+    expect(result).toHaveProperty('enabled', true);
+    expect(result).toHaveProperty('port', 9225);
   });
 
-  it("should provide saveCdpConfig function", async () => {
+  it('should provide saveCdpConfig function', async () => {
     const mockWriteFileSync = vi.fn();
 
-    vi.doMock("electron", () => ({
+    vi.doMock('electron', () => ({
       app: {
         isPackaged: false,
-        getPath: vi.fn(() => "/mock/userData"),
+        getPath: vi.fn(() => '/mock/userData'),
         commandLine: { appendSwitch: vi.fn() },
       },
     }));
 
-    vi.doMock("fs", () => ({
+    vi.doMock('fs', () => ({
       existsSync: vi.fn(() => false),
-      readFileSync: vi.fn(() => "{}"),
+      readFileSync: vi.fn(() => '{}'),
       writeFileSync: mockWriteFileSync,
     }));
 
-    vi.doMock("http", () => ({
+    vi.doMock('http', () => ({
       default: { get: vi.fn() },
     }));
 
-    const { saveCdpConfig } = await import("@/utils/configureChromium");
+    const { saveCdpConfig } = await import('@/utils/configureChromium');
 
     saveCdpConfig({ enabled: false });
 
     expect(mockWriteFileSync).toHaveBeenCalled();
   });
 
-  it("should provide unregisterInstance function", async () => {
-    vi.doMock("electron", () => ({
+  it('should provide unregisterInstance function', async () => {
+    vi.doMock('electron', () => ({
       app: {
         isPackaged: false,
-        getPath: vi.fn(() => "/mock/userData"),
+        getPath: vi.fn(() => '/mock/userData'),
         commandLine: { appendSwitch: vi.fn() },
       },
     }));
 
-    vi.doMock("fs", () => ({
+    vi.doMock('fs', () => ({
       existsSync: vi.fn(() => false),
-      readFileSync: vi.fn(() => "{}"),
+      readFileSync: vi.fn(() => '{}'),
       writeFileSync: vi.fn(),
     }));
 
-    vi.doMock("http", () => ({
+    vi.doMock('http', () => ({
       default: { get: vi.fn() },
     }));
 
-    const { unregisterInstance } = await import("@/utils/configureChromium");
+    const { unregisterInstance } = await import('@/utils/configureChromium');
 
     // Should not throw
     expect(() => unregisterInstance()).not.toThrow();

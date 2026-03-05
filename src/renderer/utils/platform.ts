@@ -14,7 +14,7 @@
  * 检测是否运行在 Electron 桌面环境
  */
 export const isElectronDesktop = (): boolean => {
-  return typeof window !== "undefined" && Boolean(window.electronAPI);
+  return typeof window !== 'undefined' && Boolean(window.electronAPI);
 };
 
 /**
@@ -22,7 +22,7 @@ export const isElectronDesktop = (): boolean => {
  * 检测是否运行在 macOS
  */
 export const isMacOS = (): boolean => {
-  return typeof navigator !== "undefined" && /mac/i.test(navigator.userAgent);
+  return typeof navigator !== 'undefined' && /mac/i.test(navigator.userAgent);
 };
 
 /**
@@ -30,7 +30,7 @@ export const isMacOS = (): boolean => {
  * 检测是否运行在 Windows
  */
 export const isWindows = (): boolean => {
-  return typeof navigator !== "undefined" && /win/i.test(navigator.userAgent);
+  return typeof navigator !== 'undefined' && /win/i.test(navigator.userAgent);
 };
 
 /**
@@ -38,7 +38,7 @@ export const isWindows = (): boolean => {
  * 检测是否运行在 Linux
  */
 export const isLinux = (): boolean => {
-  return typeof navigator !== "undefined" && /linux/i.test(navigator.userAgent);
+  return typeof navigator !== 'undefined' && /linux/i.test(navigator.userAgent);
 };
 
 /**
@@ -56,14 +56,14 @@ export const resolveExtensionAssetUrl = (url: string | undefined): string | unde
   if (isElectronDesktop()) return url;
 
   // WebUI: aion-asset://asset/{absPath} -> /api/ext-asset
-  if (url.startsWith("aion-asset://asset/")) {
-    const absPath = url.slice("aion-asset://asset/".length);
+  if (url.startsWith('aion-asset://asset/')) {
+    const absPath = url.slice('aion-asset://asset/'.length);
     return `/api/ext-asset?path=${encodeURIComponent(absPath)}`;
   }
 
   // WebUI: file:///{absPath} -> /api/ext-asset
-  if (url.startsWith("file://")) {
-    let filePath = decodeURIComponent(url.replace(/^file:\/\/\/?/, ""));
+  if (url.startsWith('file://')) {
+    let filePath = decodeURIComponent(url.replace(/^file:\/\/\/?/, ''));
     // On Windows, file:///C:/path → C:/path (strip leading / before drive letter)
     if (/^\/[A-Za-z]:/.test(filePath)) {
       filePath = filePath.slice(1);
@@ -87,9 +87,9 @@ export const openExternalUrl = async (url: string): Promise<void> => {
   if (!url) return;
 
   if (isElectronDesktop()) {
-    const { ipcBridge } = await import("@/common");
+    const { ipcBridge } = await import('@/common');
     await ipcBridge.shell.openExternal.invoke(url);
   } else {
-    window.open(url, "_blank", "noopener,noreferrer");
+    window.open(url, '_blank', 'noopener,noreferrer');
   }
 };

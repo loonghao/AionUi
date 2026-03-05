@@ -199,6 +199,7 @@ _あなたの 24/7 AI アシスタント — あらゆるデバイス、どこ�
 
 <p align="center"><em>リモートでエージェントを監視・操作 — Claude、Gemini、Codex。ブラウザやスマホから、Claude Code remote のように使えます。</em></p>
 
+
 > [リモートインターネットアクセスのチュートリアル](https://github.com/iOfficeAI/AionUi/wiki/Remote-Internet-Access-Guide-Chinese)
 
 ## ✨ Cowork の実演
@@ -623,7 +624,6 @@ prek run --from-ref origin/main --to-ref HEAD
 ```
 
 #### ビルドシステム
-
 AionUi は **electron-vite** を使用して高速なバンドルを行います：
 
 - **メインプロセス**: Vite でバンドル（ESM）

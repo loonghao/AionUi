@@ -4,10 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { FunctionDeclaration, PartListUnion } from "@google/genai";
-import { ToolErrorType } from "@office-ai/aioncli-core";
-import type { DiffUpdateResult } from "../ide/ideContext";
-import { SchemaValidator } from "../utils/schemaValidator";
+import type { FunctionDeclaration, PartListUnion } from '@google/genai';
+import { ToolErrorType } from '@office-ai/aioncli-core';
+import type { DiffUpdateResult } from '../ide/ideContext';
+import { SchemaValidator } from '../utils/schemaValidator';
 
 /**
  * Represents a validated and ready-to-execute tool call.
@@ -49,10 +49,7 @@ export interface ToolInvocation<TParams extends object, TResult extends ToolResu
 /**
  * A convenience base class for ToolInvocation.
  */
-export abstract class BaseToolInvocation<
-  TParams extends object,
-  TResult extends ToolResult,
-> implements ToolInvocation<TParams, TResult> {
+export abstract class BaseToolInvocation<TParams extends object, TResult extends ToolResult> implements ToolInvocation<TParams, TResult> {
   constructor(readonly params: TParams) {}
 
   abstract getDescription(): string;
@@ -124,10 +121,7 @@ export interface ToolBuilder<TParams extends object, TResult extends ToolResult>
  * New base class for tools that separates validation from execution.
  * New tools should extend this class.
  */
-export abstract class DeclarativeTool<
-  TParams extends object,
-  TResult extends ToolResult,
-> implements ToolBuilder<TParams, TResult> {
+export abstract class DeclarativeTool<TParams extends object, TResult extends ToolResult> implements ToolBuilder<TParams, TResult> {
   constructor(
     readonly name: string,
     readonly displayName: string,
@@ -135,7 +129,7 @@ export abstract class DeclarativeTool<
     readonly kind: Kind,
     readonly parameterSchema: unknown,
     readonly isOutputMarkdown: boolean = true,
-    readonly canUpdateOutput: boolean = false,
+    readonly canUpdateOutput: boolean = false
   ) {}
 
   get schema(): FunctionDeclaration {
@@ -175,11 +169,7 @@ export abstract class DeclarativeTool<
    * @param updateOutput Optional callback to stream output.
    * @returns The result of the tool execution.
    */
-  async buildAndExecute(
-    params: TParams,
-    signal: AbortSignal,
-    updateOutput?: (output: string) => void,
-  ): Promise<TResult> {
+  async buildAndExecute(params: TParams, signal: AbortSignal, updateOutput?: (output: string) => void): Promise<TResult> {
     const invocation = this.build(params);
     return invocation.execute(signal, updateOutput);
   }
@@ -243,10 +233,7 @@ export abstract class DeclarativeTool<
  * validates parameters before deferring to a `createInvocation` method for
  * the final `ToolInvocation` object instantiation.
  */
-export abstract class BaseDeclarativeTool<
-  TParams extends object,
-  TResult extends ToolResult,
-> extends DeclarativeTool<TParams, TResult> {
+export abstract class BaseDeclarativeTool<TParams extends object, TResult extends ToolResult> extends DeclarativeTool<TParams, TResult> {
   build(params: TParams): ToolInvocation<TParams, TResult> {
     const validationError = this.validateToolParams(params);
     if (validationError) {
@@ -314,17 +301,13 @@ export interface ToolResult {
  */
 export function hasCycleInSchema(schema: object): boolean {
   function resolveRef(ref: string): object | null {
-    if (!ref.startsWith("#/")) {
+    if (!ref.startsWith('#/')) {
       return null;
     }
-    const path = ref.substring(2).split("/");
+    const path = ref.substring(2).split('/');
     let current: unknown = schema;
     for (const segment of path) {
-      if (
-        typeof current !== "object" ||
-        current === null ||
-        !Object.prototype.hasOwnProperty.call(current, segment)
-      ) {
+      if (typeof current !== 'object' || current === null || !Object.prototype.hasOwnProperty.call(current, segment)) {
         return null;
       }
       current = (current as Record<string, unknown>)[segment];
@@ -333,7 +316,7 @@ export function hasCycleInSchema(schema: object): boolean {
   }
 
   function traverse(node: unknown, visitedRefs: Set<string>, pathRefs: Set<string>): boolean {
-    if (typeof node !== "object" || node === null) {
+    if (typeof node !== 'object' || node === null) {
       return false;
     }
 
@@ -346,9 +329,9 @@ export function hasCycleInSchema(schema: object): boolean {
       return false;
     }
 
-    if ("$ref" in node && typeof node.$ref === "string") {
+    if ('$ref' in node && typeof node.$ref === 'string') {
       const ref = node.$ref;
-      if (ref === "#/" || pathRefs.has(ref)) {
+      if (ref === '#/' || pathRefs.has(ref)) {
         // A ref to just '#/' is always a cycle.
         return true; // Cycle detected!
       }
@@ -400,7 +383,7 @@ export interface DiffStat {
 }
 
 export interface ToolEditConfirmationDetails {
-  type: "edit";
+  type: 'edit';
   title: string;
   onConfirm: (outcome: ToolConfirmationOutcome, payload?: ToolConfirmationPayload) => Promise<void>;
   fileName: string;
@@ -419,7 +402,7 @@ export interface ToolConfirmationPayload {
 }
 
 export interface ToolExecuteConfirmationDetails {
-  type: "exec";
+  type: 'exec';
   title: string;
   onConfirm: (outcome: ToolConfirmationOutcome) => Promise<void>;
   command: string;
@@ -427,7 +410,7 @@ export interface ToolExecuteConfirmationDetails {
 }
 
 export interface ToolMcpConfirmationDetails {
-  type: "mcp";
+  type: 'mcp';
   title: string;
   serverName: string;
   toolName: string;
@@ -436,38 +419,34 @@ export interface ToolMcpConfirmationDetails {
 }
 
 export interface ToolInfoConfirmationDetails {
-  type: "info";
+  type: 'info';
   title: string;
   onConfirm: (outcome: ToolConfirmationOutcome) => Promise<void>;
   prompt: string;
   urls?: string[];
 }
 
-export type ToolCallConfirmationDetails =
-  | ToolEditConfirmationDetails
-  | ToolExecuteConfirmationDetails
-  | ToolMcpConfirmationDetails
-  | ToolInfoConfirmationDetails;
+export type ToolCallConfirmationDetails = ToolEditConfirmationDetails | ToolExecuteConfirmationDetails | ToolMcpConfirmationDetails | ToolInfoConfirmationDetails;
 
 export enum ToolConfirmationOutcome {
-  ProceedOnce = "proceed_once",
-  ProceedAlways = "proceed_always",
-  ProceedAlwaysServer = "proceed_always_server",
-  ProceedAlwaysTool = "proceed_always_tool",
-  ModifyWithEditor = "modify_with_editor",
-  Cancel = "cancel",
+  ProceedOnce = 'proceed_once',
+  ProceedAlways = 'proceed_always',
+  ProceedAlwaysServer = 'proceed_always_server',
+  ProceedAlwaysTool = 'proceed_always_tool',
+  ModifyWithEditor = 'modify_with_editor',
+  Cancel = 'cancel',
 }
 
 export enum Kind {
-  Read = "read",
-  Edit = "edit",
-  Delete = "delete",
-  Move = "move",
-  Search = "search",
-  Execute = "execute",
-  Think = "think",
-  Fetch = "fetch",
-  Other = "other",
+  Read = 'read',
+  Edit = 'edit',
+  Delete = 'delete',
+  Move = 'move',
+  Search = 'search',
+  Execute = 'execute',
+  Think = 'think',
+  Fetch = 'fetch',
+  Other = 'other',
 }
 
 export interface ToolLocation {

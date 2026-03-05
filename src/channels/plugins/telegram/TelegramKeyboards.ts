@@ -4,9 +4,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { InlineKeyboard, Keyboard } from "grammy";
+import { InlineKeyboard, Keyboard } from 'grammy';
 
-import type { ChannelAgentType } from "../../types";
+import type { ChannelAgentType } from '../../types';
 
 /**
  * Telegram Keyboards for Personal Assistant
@@ -23,21 +23,14 @@ import type { ChannelAgentType } from "../../types";
  * Displayed persistently below the message input
  */
 export function createMainMenuKeyboard(): Keyboard {
-  return new Keyboard()
-    .text("🆕 New Chat")
-    .text("🔄 Agent")
-    .row()
-    .text("📊 Status")
-    .text("❓ Help")
-    .resized()
-    .persistent();
+  return new Keyboard().text('🆕 New Chat').text('🔄 Agent').row().text('📊 Status').text('❓ Help').resized().persistent();
 }
 
 /**
  * Pairing keyboard shown during pairing process
  */
 export function createPairingKeyboard(): Keyboard {
-  return new Keyboard().text("🔄 Refresh Status").text("❓ Help").resized().persistent();
+  return new Keyboard().text('🔄 Refresh Status').text('❓ Help').resized().persistent();
 }
 
 // ==================== Inline Keyboards ====================
@@ -57,19 +50,13 @@ export interface AgentDisplayInfo {
  * @param availableAgents - List of available agents to display
  * @param currentAgent - Currently selected agent type
  */
-export function createAgentSelectionKeyboard(
-  availableAgents: AgentDisplayInfo[],
-  currentAgent?: ChannelAgentType,
-): InlineKeyboard {
+export function createAgentSelectionKeyboard(availableAgents: AgentDisplayInfo[], currentAgent?: ChannelAgentType): InlineKeyboard {
   const keyboard = new InlineKeyboard();
 
   // Add agents in rows of 2
   for (let i = 0; i < availableAgents.length; i++) {
     const agent = availableAgents[i];
-    const label =
-      currentAgent === agent.type
-        ? `✓ ${agent.emoji} ${agent.name}`
-        : `${agent.emoji} ${agent.name}`;
+    const label = currentAgent === agent.type ? `✓ ${agent.emoji} ${agent.name}` : `${agent.emoji} ${agent.name}`;
 
     keyboard.text(label, `agent:${agent.type}`);
 
@@ -86,67 +73,49 @@ export function createAgentSelectionKeyboard(
  * Action buttons for AI response messages
  */
 export function createResponseActionsKeyboard(): InlineKeyboard {
-  return new InlineKeyboard()
-    .text("📋 Copy", "action:copy")
-    .text("🔄 Regenerate", "action:regenerate")
-    .row()
-    .text("💬 Continue", "action:continue");
+  return new InlineKeyboard().text('📋 Copy', 'action:copy').text('🔄 Regenerate', 'action:regenerate').row().text('💬 Continue', 'action:continue');
 }
 
 /**
  * Pairing code display with refresh option
  */
 export function createPairingCodeKeyboard(): InlineKeyboard {
-  return new InlineKeyboard()
-    .text("🔄 Refresh Code", "pairing:refresh")
-    .row()
-    .text("❓ Pairing Help", "pairing:help");
+  return new InlineKeyboard().text('🔄 Refresh Code', 'pairing:refresh').row().text('❓ Pairing Help', 'pairing:help');
 }
 
 /**
  * Pairing status check keyboard
  */
 export function createPairingStatusKeyboard(): InlineKeyboard {
-  return new InlineKeyboard()
-    .text("🔄 Check Status", "pairing:check")
-    .text("🔄 Get New Code", "pairing:refresh");
+  return new InlineKeyboard().text('🔄 Check Status', 'pairing:check').text('🔄 Get New Code', 'pairing:refresh');
 }
 
 /**
  * Confirmation keyboard (generic)
  */
-export function createConfirmationKeyboard(
-  confirmAction: string,
-  cancelAction: string,
-): InlineKeyboard {
-  return new InlineKeyboard().text("✅ Confirm", confirmAction).text("❌ Cancel", cancelAction);
+export function createConfirmationKeyboard(confirmAction: string, cancelAction: string): InlineKeyboard {
+  return new InlineKeyboard().text('✅ Confirm', confirmAction).text('❌ Cancel', cancelAction);
 }
 
 /**
  * Session control keyboard
  */
 export function createSessionControlKeyboard(): InlineKeyboard {
-  return new InlineKeyboard()
-    .text("🆕 New Session", "session:new")
-    .text("📊 Session Status", "session:status");
+  return new InlineKeyboard().text('🆕 New Session', 'session:new').text('📊 Session Status', 'session:status');
 }
 
 /**
  * Help menu keyboard
  */
 export function createHelpKeyboard(): InlineKeyboard {
-  return new InlineKeyboard()
-    .text("🤖 Features", "help:features")
-    .text("🔗 Pairing Guide", "help:pairing")
-    .row()
-    .text("💬 Tips", "help:tips");
+  return new InlineKeyboard().text('🤖 Features', 'help:features').text('🔗 Pairing Guide', 'help:pairing').row().text('💬 Tips', 'help:tips');
 }
 
 /**
  * Error recovery keyboard
  */
 export function createErrorRecoveryKeyboard(): InlineKeyboard {
-  return new InlineKeyboard().text("🔄 Retry", "error:retry").text("🆕 New Session", "session:new");
+  return new InlineKeyboard().text('🔄 Retry', 'error:retry').text('🆕 New Session', 'session:new');
 }
 
 /**
@@ -154,10 +123,7 @@ export function createErrorRecoveryKeyboard(): InlineKeyboard {
  * @param callId - The tool call ID for tracking
  * @param options - Array of { label, value } options
  */
-export function createToolConfirmationKeyboard(
-  callId: string,
-  options: Array<{ label: string; value: string }>,
-): InlineKeyboard {
+export function createToolConfirmationKeyboard(callId: string, options: Array<{ label: string; value: string }>): InlineKeyboard {
   const keyboard = new InlineKeyboard();
   // 每行最多显示 2 个按钮
   // Show at most 2 buttons per row
@@ -193,7 +159,7 @@ export function matchAction(callbackData: string, actionPrefix: string): boolean
  * e.g., "action:copy" -> "copy"
  */
 export function extractAction(callbackData: string): string {
-  const parts = callbackData.split(":");
+  const parts = callbackData.split(':');
   return parts.length > 1 ? parts[1] : callbackData;
 }
 
@@ -202,6 +168,6 @@ export function extractAction(callbackData: string): string {
  * e.g., "action:copy" -> "action"
  */
 export function extractCategory(callbackData: string): string {
-  const parts = callbackData.split(":");
+  const parts = callbackData.split(':');
   return parts[0];
 }

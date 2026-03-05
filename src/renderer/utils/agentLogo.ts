@@ -10,22 +10,22 @@
  * All places that need to display agent icons should use this utility instead of maintaining separate lists
  */
 
-import AuggieLogo from "@/renderer/assets/logos/auggie.svg";
-import ClaudeLogo from "@/renderer/assets/logos/claude.svg";
-import CodeBuddyLogo from "@/renderer/assets/logos/codebuddy.svg";
-import CodexLogo from "@/renderer/assets/logos/codex.svg";
-import DroidLogo from "@/renderer/assets/logos/droid.svg";
-import GeminiLogo from "@/renderer/assets/logos/gemini.svg";
-import GitHubLogo from "@/renderer/assets/logos/github.svg";
-import GooseLogo from "@/renderer/assets/logos/goose.svg";
-import IflowLogo from "@/renderer/assets/logos/iflow.svg";
-import KimiLogo from "@/renderer/assets/logos/kimi.svg";
-import MistralLogo from "@/renderer/assets/logos/mistral.svg";
-import NanobotLogo from "@/renderer/assets/logos/nanobot.svg";
-import OpenClawLogo from "@/renderer/assets/logos/openclaw.svg";
-import OpenCodeLogo from "@/renderer/assets/logos/opencode.svg";
-import QoderLogo from "@/renderer/assets/logos/qoder.png";
-import QwenLogo from "@/renderer/assets/logos/qwen.svg";
+import AuggieLogo from '@/renderer/assets/logos/auggie.svg';
+import ClaudeLogo from '@/renderer/assets/logos/claude.svg';
+import CodeBuddyLogo from '@/renderer/assets/logos/codebuddy.svg';
+import CodexLogo from '@/renderer/assets/logos/codex.svg';
+import DroidLogo from '@/renderer/assets/logos/droid.svg';
+import GeminiLogo from '@/renderer/assets/logos/gemini.svg';
+import GitHubLogo from '@/renderer/assets/logos/github.svg';
+import GooseLogo from '@/renderer/assets/logos/goose.svg';
+import IflowLogo from '@/renderer/assets/logos/iflow.svg';
+import KimiLogo from '@/renderer/assets/logos/kimi.svg';
+import MistralLogo from '@/renderer/assets/logos/mistral.svg';
+import NanobotLogo from '@/renderer/assets/logos/nanobot.svg';
+import OpenClawLogo from '@/renderer/assets/logos/openclaw.svg';
+import OpenCodeLogo from '@/renderer/assets/logos/opencode.svg';
+import QoderLogo from '@/renderer/assets/logos/qoder.png';
+import QwenLogo from '@/renderer/assets/logos/qwen.svg';
 
 /**
  * Agent Logo 映射表
@@ -48,7 +48,7 @@ const AGENT_LOGO_MAP = {
   opencode: OpenCodeLogo,
   copilot: GitHubLogo,
   openclaw: OpenClawLogo,
-  "openclaw-gateway": OpenClawLogo,
+  'openclaw-gateway': OpenClawLogo,
   vibe: MistralLogo,
   nanobot: NanobotLogo,
   qoder: QoderLogo,

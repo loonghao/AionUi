@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { IDirOrFile } from "@/common/ipcBridge";
-import type { NodeInstance } from "@arco-design/web-react/es/Tree/interface";
+import type { IDirOrFile } from '@/common/ipcBridge';
+import type { NodeInstance } from '@arco-design/web-react/es/Tree/interface';
 
 /**
  * 从 Tree 节点中提取数据引用
@@ -36,7 +36,7 @@ export function extractNodeKey(node: NodeInstance | null | undefined): string | 
  * Detect correct path separator by platform based on path
  */
 export function getPathSeparator(targetPath: string): string {
-  return targetPath.includes("\\") ? "\\" : "/";
+  return targetPath.includes('\\') ? '\\' : '/';
 }
 
 /**
@@ -59,10 +59,10 @@ export function findNodeByKey(list: IDirOrFile[], key: string): IDirOrFile | nul
  * Get first level node keys (for initial expansion)
  */
 export function getFirstLevelKeys(nodes: IDirOrFile[]): string[] {
-  if (nodes.length > 0 && nodes[0].relativePath === "") {
+  if (nodes.length > 0 && nodes[0].relativePath === '') {
     // 如果第一个节点是根节点（relativePath 为空），展开它
     // If first node is root (empty relativePath), expand it
-    return [""];
+    return [''];
   }
   return [];
 }
@@ -74,7 +74,7 @@ export function getFirstLevelKeys(nodes: IDirOrFile[]): string[] {
 export function replacePathInList(keys: string[], oldPath: string, newPath: string): string[] {
   return keys.map((key) => {
     if (key === oldPath) return newPath;
-    if (key.startsWith(oldPath + "/")) {
+    if (key.startsWith(oldPath + '/')) {
       return newPath + key.slice(oldPath.length);
     }
     return key;
@@ -85,13 +85,7 @@ export function replacePathInList(keys: string[], oldPath: string, newPath: stri
  * 递归更新子节点路径（用于重命名后更新整棵树）
  * Recursively update children paths (for tree update after rename)
  */
-export function updateChildrenPaths(
-  children: IDirOrFile[] | undefined,
-  oldFullPrefix: string,
-  newFullPrefix: string,
-  oldRelativePrefix: string,
-  newRelativePrefix: string,
-): IDirOrFile[] | undefined {
+export function updateChildrenPaths(children: IDirOrFile[] | undefined, oldFullPrefix: string, newFullPrefix: string, oldRelativePrefix: string, newRelativePrefix: string): IDirOrFile[] | undefined {
   if (!children) return undefined;
 
   return children.map((child) => {
@@ -104,19 +98,12 @@ export function updateChildrenPaths(
 
     // 更新 relativePath / Update relativePath
     if (child.relativePath && child.relativePath.startsWith(oldRelativePrefix)) {
-      updatedChild.relativePath =
-        newRelativePrefix + child.relativePath.slice(oldRelativePrefix.length);
+      updatedChild.relativePath = newRelativePrefix + child.relativePath.slice(oldRelativePrefix.length);
     }
 
     // 递归更新子节点 / Recursively update children
     if (child.children) {
-      updatedChild.children = updateChildrenPaths(
-        child.children,
-        oldFullPrefix,
-        newFullPrefix,
-        oldRelativePrefix,
-        newRelativePrefix,
-      );
+      updatedChild.children = updateChildrenPaths(child.children, oldFullPrefix, newFullPrefix, oldRelativePrefix, newRelativePrefix);
     }
 
     return updatedChild;
@@ -127,17 +114,12 @@ export function updateChildrenPaths(
  * 递归更新树中的节点（用于重命名）
  * Recursively update node in tree (for rename)
  */
-export function updateTreeForRename(
-  list: IDirOrFile[],
-  oldKey: string,
-  newName: string,
-  newFullPath: string,
-): IDirOrFile[] {
+export function updateTreeForRename(list: IDirOrFile[], oldKey: string, newName: string, newFullPath: string): IDirOrFile[] {
   return list.map((node) => {
     if (node.relativePath === oldKey) {
       // 找到目标节点，更新它的信息 / Found target node, update its info
       const oldFullPath = node.fullPath;
-      const oldRelativePath = node.relativePath || "";
+      const oldRelativePath = node.relativePath || '';
       const newRelativePath = oldRelativePath.replace(/[^/]+$/, newName);
 
       const updatedNode: IDirOrFile = {
@@ -152,16 +134,10 @@ export function updateTreeForRename(
         const separator = getPathSeparator(oldFullPath);
         const oldFullPrefix = oldFullPath + separator;
         const newFullPrefix = newFullPath + separator;
-        const oldRelativePrefix = oldRelativePath + "/";
-        const newRelativePrefix = newRelativePath + "/";
+        const oldRelativePrefix = oldRelativePath + '/';
+        const newRelativePrefix = newRelativePath + '/';
 
-        updatedNode.children = updateChildrenPaths(
-          node.children,
-          oldFullPrefix,
-          newFullPrefix,
-          oldRelativePrefix,
-          newRelativePrefix,
-        );
+        updatedNode.children = updateChildrenPaths(node.children, oldFullPrefix, newFullPrefix, oldRelativePrefix, newRelativePrefix);
       }
 
       return updatedNode;
@@ -183,12 +159,7 @@ export function updateTreeForRename(
  * 获取目标文件夹路径（从 selectedNodeRef 或 selected keys）
  * Get target folder path from selectedNodeRef or selected keys
  */
-export function getTargetFolderPath(
-  selectedNodeRef: { relativePath: string; fullPath: string } | null,
-  selected: string[],
-  files: IDirOrFile[],
-  workspace: string,
-): { fullPath: string; relativePath: string | null } {
+export function getTargetFolderPath(selectedNodeRef: { relativePath: string; fullPath: string } | null, selected: string[], files: IDirOrFile[], workspace: string): { fullPath: string; relativePath: string | null } {
   // 优先使用 selectedNodeRef / Prioritize selectedNodeRef
   if (selectedNodeRef) {
     return {
@@ -210,8 +181,8 @@ export function getTargetFolderPath(
     if (folderNodes.length > 0) {
       // 按最深的相对路径排序（路径段越多越深） / Sort by deepest relativePath (more path segments)
       folderNodes.sort((a, b) => {
-        const aDepth = (a.relativePath || "").split("/").length;
-        const bDepth = (b.relativePath || "").split("/").length;
+        const aDepth = (a.relativePath || '').split('/').length;
+        const bDepth = (b.relativePath || '').split('/').length;
         return bDepth - aDepth;
       });
       return {

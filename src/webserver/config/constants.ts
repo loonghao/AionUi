@@ -6,8 +6,8 @@
 
 // CSRF token cookie/header identifiers (shared by server & WebUI)
 // CSRF Token 的 Cookie / Header 名称（服务端与 WebUI 共享）
-export const CSRF_COOKIE_NAME = "aionui-csrf-token";
-export const CSRF_HEADER_NAME = "x-csrf-token";
+export const CSRF_COOKIE_NAME = 'aionui-csrf-token';
+export const CSRF_HEADER_NAME = 'x-csrf-token';
 /**
  * 集中配置管理
  * Centralized configuration management
@@ -18,10 +18,10 @@ export const AUTH_CONFIG = {
   // TOKEN 配置（Token configuration）
   TOKEN: {
     // 会话 JWT 过期时间（Session JWT expiry duration）
-    SESSION_EXPIRY: "24h" as const,
+    SESSION_EXPIRY: '24h' as const,
     // WebSocket Token 过期时间 - 当前 WebSocket 复用 Web 登录 token，此配置保留用于未来可能的独立方案
     // WebSocket token expiry - Currently WebSocket reuses web login token, reserved for future independent token scheme
-    WEBSOCKET_EXPIRY: "5m" as const,
+    WEBSOCKET_EXPIRY: '5m' as const,
     // Cookie 最大存活时间（Cookie max-age in milliseconds）
     COOKIE_MAX_AGE: 30 * 24 * 60 * 60 * 1000,
     // WebSocket Token 最大存活时间 - 当前未使用，保留用于未来可能的独立方案
@@ -42,20 +42,20 @@ export const AUTH_CONFIG = {
   // 默认用户配置（Default user configuration）
   DEFAULT_USER: {
     // 默认管理员用户名（Default admin username）
-    USERNAME: "admin" as const,
+    USERNAME: 'admin' as const,
   },
 
   // Cookie 配置（Cookie configuration）
   COOKIE: {
     // Cookie 名称（Cookie name）
-    NAME: "aionui-session" as const,
+    NAME: 'aionui-session' as const,
     OPTIONS: {
       // 仅允许 HTTP 访问 Cookie（httpOnly flag）
       httpOnly: true,
       // 生产环境下建议开启（secure flag, enable under HTTPS）
       secure: false,
       // 同站策略（SameSite strategy）
-      sameSite: "strict" as const,
+      sameSite: 'strict' as const,
     },
   },
 } as const;
@@ -77,20 +77,20 @@ export const WEBSOCKET_CONFIG = {
 // 服务器配置
 export const SERVER_CONFIG = {
   // 默认监听地址（Default listen host）
-  DEFAULT_HOST: "127.0.0.1" as const,
+  DEFAULT_HOST: '127.0.0.1' as const,
   // 远程模式监听地址（Remote mode listen host）
-  REMOTE_HOST: "0.0.0.0" as const,
+  REMOTE_HOST: '0.0.0.0' as const,
   // 默认端口（Default port）
   DEFAULT_PORT: 25808,
   // 请求体大小限制（Request body size limit）
-  BODY_LIMIT: "10mb" as const,
+  BODY_LIMIT: '10mb' as const,
 
   /**
    * 内部状态：当前服务器配置
    * Internal state: Current server configuration
    */
   _currentConfig: {
-    host: "127.0.0.1" as string,
+    host: '127.0.0.1' as string,
     port: 25808 as number,
     allowRemote: false as boolean,
   },
@@ -101,7 +101,7 @@ export const SERVER_CONFIG = {
    */
   setServerConfig(port: number, allowRemote: boolean): void {
     this._currentConfig.port = port;
-    this._currentConfig.host = allowRemote ? "0.0.0.0" : "127.0.0.1";
+    this._currentConfig.host = allowRemote ? '0.0.0.0' : '127.0.0.1';
     this._currentConfig.allowRemote = allowRemote;
   },
 
@@ -124,7 +124,7 @@ export const SERVER_CONFIG = {
       return process.env.SERVER_BASE_URL;
     }
 
-    const host = this._currentConfig.host === "0.0.0.0" ? "127.0.0.1" : this._currentConfig.host;
+    const host = this._currentConfig.host === '0.0.0.0' ? '127.0.0.1' : this._currentConfig.host;
     return `http://${host}:${this._currentConfig.port}`;
   },
 } as const;
@@ -144,14 +144,12 @@ export const SERVER_CONFIG = {
 export function getCookieOptions(): {
   httpOnly: boolean;
   secure: boolean;
-  sameSite: "strict" | "lax" | "none";
+  sameSite: 'strict' | 'lax' | 'none';
   maxAge?: number;
 } {
   // 只有当明确配置 HTTPS 时才启用 secure 标志
   // Only enable secure flag when HTTPS is explicitly configured
-  const isHttps =
-    process.env.AIONUI_HTTPS === "true" ||
-    (process.env.NODE_ENV === "production" && process.env.HTTPS === "true");
+  const isHttps = process.env.AIONUI_HTTPS === 'true' || (process.env.NODE_ENV === 'production' && process.env.HTTPS === 'true');
 
   return {
     httpOnly: AUTH_CONFIG.COOKIE.OPTIONS.httpOnly,
@@ -160,7 +158,7 @@ export function getCookieOptions(): {
     secure: isHttps,
     // 远程 HTTP 模式需要 lax 以支持跨站请求（从不同 IP 访问）
     // Remote HTTP mode needs 'lax' to support cross-site requests (access from different IPs)
-    sameSite: SERVER_CONFIG.isRemoteMode && !isHttps ? "lax" : AUTH_CONFIG.COOKIE.OPTIONS.sameSite,
+    sameSite: SERVER_CONFIG.isRemoteMode && !isHttps ? 'lax' : AUTH_CONFIG.COOKIE.OPTIONS.sameSite,
   };
 }
 
@@ -168,19 +166,17 @@ export function getCookieOptions(): {
 export const SECURITY_CONFIG = {
   HEADERS: {
     // 防点击劫持策略（Clickjacking protection）
-    FRAME_OPTIONS: "DENY",
+    FRAME_OPTIONS: 'DENY',
     // 禁止 MIME 嗅探（No MIME sniffing）
-    CONTENT_TYPE_OPTIONS: "nosniff",
+    CONTENT_TYPE_OPTIONS: 'nosniff',
     // XSS 保护策略（XSS protection header）
-    XSS_PROTECTION: "1; mode=block",
+    XSS_PROTECTION: '1; mode=block',
     // Referrer 策略（Referrer policy）
-    REFERRER_POLICY: "strict-origin-when-cross-origin",
+    REFERRER_POLICY: 'strict-origin-when-cross-origin',
     // 开发环境 CSP（Content-Security-Policy for development）
-    CSP_DEV:
-      "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self'; connect-src 'self' ws: wss: blob:; media-src 'self' blob:;",
+    CSP_DEV: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self'; connect-src 'self' ws: wss: blob:; media-src 'self' blob:;",
     // 生产环境 CSP（Content-Security-Policy for production）
-    CSP_PROD:
-      "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self'; connect-src 'self' ws: wss: blob:; media-src 'self' blob:;",
+    CSP_PROD: "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self'; connect-src 'self' ws: wss: blob:; media-src 'self' blob:;",
   },
   CSRF: {
     COOKIE_NAME: CSRF_COOKIE_NAME,
@@ -188,9 +184,9 @@ export const SECURITY_CONFIG = {
     TOKEN_LENGTH: 32,
     COOKIE_OPTIONS: {
       httpOnly: false,
-      sameSite: "strict" as const,
+      sameSite: 'strict' as const,
       secure: false,
-      path: "/",
+      path: '/',
     },
   },
 } as const;

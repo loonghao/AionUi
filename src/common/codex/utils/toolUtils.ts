@@ -5,17 +5,9 @@
  */
 
 // Import values (enums) and types separately
-import { CodexAgentEventType } from "../types/eventTypes";
-import { ToolCategory, OutputFormat, RendererType } from "../types/toolTypes";
-import type {
-  EventDataMap,
-  McpInvocation,
-  McpToolInfo,
-  ToolAvailability,
-  ToolCapabilities,
-  ToolDefinition,
-  ToolRenderer,
-} from "../types";
+import { CodexAgentEventType } from '../types/eventTypes';
+import { ToolCategory, OutputFormat, RendererType } from '../types/toolTypes';
+import type { EventDataMap, McpInvocation, McpToolInfo, ToolAvailability, ToolCapabilities, ToolDefinition, ToolRenderer } from '../types';
 
 /** Translation function type, injected by the consumer (e.g. renderer) to avoid coupling common layer to renderer i18n */
 export type TranslateFn = (key: string, params?: Record<string, string>) => string;
@@ -23,15 +15,7 @@ export type TranslateFn = (key: string, params?: Record<string, string>) => stri
 // Re-export enums (values) - these can be re-exported
 export { ToolCategory, OutputFormat, RendererType };
 // Re-export types for backward compatibility
-export type {
-  EventDataMap,
-  McpInvocation,
-  McpToolInfo,
-  ToolAvailability,
-  ToolCapabilities,
-  ToolDefinition,
-  ToolRenderer,
-};
+export type { EventDataMap, McpInvocation, McpToolInfo, ToolAvailability, ToolCapabilities, ToolDefinition, ToolRenderer };
 
 /**
  * 工具注册表 - 负责管理所有工具的注册、发现和解析
@@ -51,13 +35,13 @@ export class ToolRegistry {
   private initializeBuiltinTools() {
     // Shell执行工具
     this.registerBuiltinTool({
-      id: "shell_exec",
-      name: "Shell",
-      displayNameKey: "tools.shell.displayName",
+      id: 'shell_exec',
+      name: 'Shell',
+      displayNameKey: 'tools.shell.displayName',
       category: ToolCategory.EXECUTION,
       priority: 10,
       availability: {
-        platforms: ["darwin", "linux", "win32"],
+        platforms: ['darwin', 'linux', 'win32'],
       },
       capabilities: {
         supportsStreaming: true,
@@ -71,19 +55,19 @@ export class ToolRegistry {
         type: RendererType.STANDARD,
         config: { showTimestamp: true },
       },
-      icon: "🔧",
-      descriptionKey: "tools.shell.description",
+      icon: '🔧',
+      descriptionKey: 'tools.shell.description',
     });
 
     // 文件操作工具
     this.registerBuiltinTool({
-      id: "file_operations",
-      name: "FileOps",
-      displayNameKey: "tools.fileOps.displayName",
+      id: 'file_operations',
+      name: 'FileOps',
+      displayNameKey: 'tools.fileOps.displayName',
       category: ToolCategory.FILE_OPS,
       priority: 20,
       availability: {
-        platforms: ["darwin", "linux", "win32"],
+        platforms: ['darwin', 'linux', 'win32'],
       },
       capabilities: {
         supportsStreaming: false,
@@ -95,21 +79,21 @@ export class ToolRegistry {
       },
       renderer: {
         type: RendererType.CODE,
-        config: { language: "diff" },
+        config: { language: 'diff' },
       },
-      icon: "📝",
-      descriptionKey: "tools.fileOps.description",
+      icon: '📝',
+      descriptionKey: 'tools.fileOps.description',
     });
 
     // 网页搜索工具
     this.registerBuiltinTool({
-      id: "web_search",
-      name: "WebSearch",
-      displayNameKey: "tools.webSearch.displayName",
+      id: 'web_search',
+      name: 'WebSearch',
+      displayNameKey: 'tools.webSearch.displayName',
       category: ToolCategory.SEARCH,
       priority: 30,
       availability: {
-        platforms: ["darwin", "linux", "win32"],
+        platforms: ['darwin', 'linux', 'win32'],
       },
       capabilities: {
         supportsStreaming: false,
@@ -123,21 +107,19 @@ export class ToolRegistry {
         type: RendererType.MARKDOWN,
         config: { showSources: true },
       },
-      icon: "🔍",
-      descriptionKey: "tools.webSearch.description",
+      icon: '🔍',
+      descriptionKey: 'tools.webSearch.description',
     });
 
     // 设置事件类型映射
-    this.eventTypeMapping.set(CodexAgentEventType.EXEC_COMMAND_BEGIN, ["shell_exec"]);
-    this.eventTypeMapping.set(CodexAgentEventType.EXEC_COMMAND_OUTPUT_DELTA, ["shell_exec"]);
-    this.eventTypeMapping.set(CodexAgentEventType.EXEC_COMMAND_END, ["shell_exec"]);
-    this.eventTypeMapping.set(CodexAgentEventType.APPLY_PATCH_APPROVAL_REQUEST, [
-      "file_operations",
-    ]);
-    this.eventTypeMapping.set(CodexAgentEventType.PATCH_APPLY_BEGIN, ["file_operations"]);
-    this.eventTypeMapping.set(CodexAgentEventType.PATCH_APPLY_END, ["file_operations"]);
-    this.eventTypeMapping.set(CodexAgentEventType.WEB_SEARCH_BEGIN, ["web_search"]);
-    this.eventTypeMapping.set(CodexAgentEventType.WEB_SEARCH_END, ["web_search"]);
+    this.eventTypeMapping.set(CodexAgentEventType.EXEC_COMMAND_BEGIN, ['shell_exec']);
+    this.eventTypeMapping.set(CodexAgentEventType.EXEC_COMMAND_OUTPUT_DELTA, ['shell_exec']);
+    this.eventTypeMapping.set(CodexAgentEventType.EXEC_COMMAND_END, ['shell_exec']);
+    this.eventTypeMapping.set(CodexAgentEventType.APPLY_PATCH_APPROVAL_REQUEST, ['file_operations']);
+    this.eventTypeMapping.set(CodexAgentEventType.PATCH_APPLY_BEGIN, ['file_operations']);
+    this.eventTypeMapping.set(CodexAgentEventType.PATCH_APPLY_END, ['file_operations']);
+    this.eventTypeMapping.set(CodexAgentEventType.WEB_SEARCH_BEGIN, ['web_search']);
+    this.eventTypeMapping.set(CodexAgentEventType.WEB_SEARCH_END, ['web_search']);
   }
 
   /**
@@ -168,7 +150,7 @@ export class ToolRegistry {
       category: this.inferCategory(mcpTool),
       priority: 100, // MCP工具优先级较低
       availability: {
-        platforms: ["darwin", "linux", "win32"],
+        platforms: ['darwin', 'linux', 'win32'],
         experimental: true,
       },
       capabilities: this.inferCapabilities(mcpTool.inputSchema),
@@ -184,46 +166,21 @@ export class ToolRegistry {
    */
   private inferCategory(mcpTool: McpToolInfo): ToolCategory {
     const name = mcpTool.name.toLowerCase();
-    const description = mcpTool.description?.toLowerCase() || "";
+    const description = mcpTool.description?.toLowerCase() || '';
 
-    if (
-      name.includes("search") ||
-      name.includes("find") ||
-      name.includes("query") ||
-      description.includes("search")
-    ) {
+    if (name.includes('search') || name.includes('find') || name.includes('query') || description.includes('search')) {
       return ToolCategory.SEARCH;
     }
-    if (
-      name.includes("file") ||
-      name.includes("read") ||
-      name.includes("write") ||
-      name.includes("edit")
-    ) {
+    if (name.includes('file') || name.includes('read') || name.includes('write') || name.includes('edit')) {
       return ToolCategory.FILE_OPS;
     }
-    if (
-      name.includes("exec") ||
-      name.includes("run") ||
-      name.includes("command") ||
-      name.includes("shell")
-    ) {
+    if (name.includes('exec') || name.includes('run') || name.includes('command') || name.includes('shell')) {
       return ToolCategory.EXECUTION;
     }
-    if (
-      name.includes("chart") ||
-      name.includes("plot") ||
-      name.includes("analyze") ||
-      name.includes("graph")
-    ) {
+    if (name.includes('chart') || name.includes('plot') || name.includes('analyze') || name.includes('graph')) {
       return ToolCategory.ANALYSIS;
     }
-    if (
-      name.includes("http") ||
-      name.includes("api") ||
-      name.includes("request") ||
-      name.includes("fetch")
-    ) {
+    if (name.includes('http') || name.includes('api') || name.includes('request') || name.includes('fetch')) {
       return ToolCategory.COMMUNICATION;
     }
 
@@ -273,34 +230,28 @@ export class ToolRegistry {
   private getIconForCategory(category: ToolCategory): string {
     switch (category) {
       case ToolCategory.EXECUTION:
-        return "🔧";
+        return '🔧';
       case ToolCategory.FILE_OPS:
-        return "📝";
+        return '📝';
       case ToolCategory.SEARCH:
-        return "🔍";
+        return '🔍';
       case ToolCategory.ANALYSIS:
-        return "📊";
+        return '📊';
       case ToolCategory.COMMUNICATION:
-        return "🌐";
+        return '🌐';
       case ToolCategory.CUSTOM:
-        return "🔌";
+        return '🔌';
       default:
-        return "❓";
+        return '❓';
     }
   }
 
   /**
    * 根据事件类型和数据解析对应的工具
    */
-  resolveToolForEvent(
-    eventType: CodexAgentEventType,
-    eventData?: EventDataMap[keyof EventDataMap],
-  ): ToolDefinition | null {
+  resolveToolForEvent(eventType: CodexAgentEventType, eventData?: EventDataMap[keyof EventDataMap]): ToolDefinition | null {
     // 1. 特殊处理MCP工具调用
-    if (
-      eventType === CodexAgentEventType.MCP_TOOL_CALL_BEGIN ||
-      eventType === CodexAgentEventType.MCP_TOOL_CALL_END
-    ) {
+    if (eventType === CodexAgentEventType.MCP_TOOL_CALL_BEGIN || eventType === CodexAgentEventType.MCP_TOOL_CALL_END) {
       const mcpData = eventData as EventDataMap[CodexAgentEventType.MCP_TOOL_CALL_BEGIN];
       if (mcpData?.invocation) {
         const toolId = this.inferMcpToolId(mcpData.invocation);
@@ -331,7 +282,7 @@ export class ToolRegistry {
   private inferMcpToolId(invocation: McpInvocation): string {
     // 尝试从invocation中提取方法名
     const method = this.extractMethodFromInvocation(invocation);
-    if (!method) return "";
+    if (!method) return '';
 
     // 尝试匹配已注册的MCP工具
     for (const [toolId, tool] of this.mcpTools) {
@@ -340,7 +291,7 @@ export class ToolRegistry {
       }
     }
 
-    return "";
+    return '';
   }
 
   /**
@@ -349,31 +300,29 @@ export class ToolRegistry {
   private extractMethodFromInvocation(invocation: McpInvocation): string {
     // 根据实际的McpInvocation类型结构来提取方法名
     // 这里需要根据具体的类型定义来实现
-    if ("method" in invocation && typeof invocation.method === "string") {
+    if ('method' in invocation && typeof invocation.method === 'string') {
       return invocation.method;
     }
-    if ("name" in invocation && typeof invocation.name === "string") {
+    if ('name' in invocation && typeof invocation.name === 'string') {
       return invocation.name;
     }
-    return "";
+    return '';
   }
 
   /**
    * 创建通用MCP工具定义
    */
   private createGenericMcpTool(invocation?: McpInvocation): ToolDefinition {
-    const method = invocation
-      ? this.extractMethodFromInvocation(invocation) || "McpTool"
-      : "McpTool";
+    const method = invocation ? this.extractMethodFromInvocation(invocation) || 'McpTool' : 'McpTool';
 
     return {
       id: `generic_mcp_${method}`,
       name: method,
-      displayNameKey: "tools.mcp.generic.displayName",
+      displayNameKey: 'tools.mcp.generic.displayName',
       category: ToolCategory.CUSTOM,
       priority: 200,
       availability: {
-        platforms: ["darwin", "linux", "win32"],
+        platforms: ['darwin', 'linux', 'win32'],
         experimental: true,
       },
       capabilities: {
@@ -388,8 +337,8 @@ export class ToolRegistry {
         type: RendererType.STANDARD,
         config: {},
       },
-      icon: "🔌",
-      descriptionKey: "tools.mcp.generic.description",
+      icon: '🔌',
+      descriptionKey: 'tools.mcp.generic.description',
     };
   }
 
@@ -406,13 +355,13 @@ export class ToolRegistry {
    */
   private getDefaultTool(eventType: CodexAgentEventType): ToolDefinition {
     return {
-      id: "unknown",
-      name: "Unknown",
-      displayNameKey: "tools.unknown.displayName",
+      id: 'unknown',
+      name: 'Unknown',
+      displayNameKey: 'tools.unknown.displayName',
       category: ToolCategory.CUSTOM,
       priority: 999,
       availability: {
-        platforms: ["darwin", "linux", "win32"],
+        platforms: ['darwin', 'linux', 'win32'],
       },
       capabilities: {
         supportsStreaming: false,
@@ -426,8 +375,8 @@ export class ToolRegistry {
         type: RendererType.STANDARD,
         config: {},
       },
-      icon: "❓",
-      descriptionKey: "tools.unknown.description",
+      icon: '❓',
+      descriptionKey: 'tools.unknown.description',
     };
   }
 
@@ -457,11 +406,7 @@ export class ToolRegistry {
    * Pass a `t` function (e.g. from i18next) to enable translation;
    * omit it to fall back to the raw tool name.
    */
-  getToolDisplayName(
-    tool: ToolDefinition,
-    fallbackParams?: Record<string, string>,
-    t?: TranslateFn,
-  ): string {
+  getToolDisplayName(tool: ToolDefinition, fallbackParams?: Record<string, string>, t?: TranslateFn): string {
     if (t) {
       try {
         return t(tool.displayNameKey, fallbackParams || {});
@@ -477,11 +422,7 @@ export class ToolRegistry {
    * Pass a `t` function (e.g. from i18next) to enable translation;
    * omit it to fall back to a generic description.
    */
-  getToolDescription(
-    tool: ToolDefinition,
-    fallbackParams?: Record<string, string>,
-    t?: TranslateFn,
-  ): string {
+  getToolDescription(tool: ToolDefinition, fallbackParams?: Record<string, string>, t?: TranslateFn): string {
     if (t) {
       try {
         return t(tool.descriptionKey, fallbackParams || {});
@@ -496,8 +437,8 @@ export class ToolRegistry {
    * 为MCP工具生成本地化参数
    */
   getMcpToolI18nParams(tool: ToolDefinition): Record<string, string> {
-    if (tool.id.includes("/")) {
-      const [serverName, toolName] = tool.id.split("/");
+    if (tool.id.includes('/')) {
+      const [serverName, toolName] = tool.id.split('/');
       return { toolName, serverName };
     }
     return { toolName: tool.name };

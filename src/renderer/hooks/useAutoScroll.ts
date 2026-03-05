@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useEffect } from "react";
+import { useEffect } from 'react';
 
 interface UseAutoScrollOptions {
   containerRef: React.RefObject<HTMLDivElement>; // 容器引用 / Container ref
@@ -32,13 +32,7 @@ interface UseAutoScrollOptions {
  * });
  * ```
  */
-export const useAutoScroll = ({
-  containerRef,
-  content,
-  enabled = true,
-  threshold = 200,
-  behavior = "smooth",
-}: UseAutoScrollOptions) => {
+export const useAutoScroll = ({ containerRef, content, enabled = true, threshold = 200, behavior = 'smooth' }: UseAutoScrollOptions) => {
   useEffect(() => {
     if (!enabled) return;
 

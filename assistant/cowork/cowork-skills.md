@@ -101,29 +101,29 @@ triggers: Excel, spreadsheet, .xlsx, data table, budget, financial model, chart,
 
 ```javascript
 // Use exceljs for Node.js
-const ExcelJS = require("exceljs");
+const ExcelJS = require('exceljs');
 const workbook = new ExcelJS.Workbook();
-const sheet = workbook.addWorksheet("Sheet1");
+const sheet = workbook.addWorksheet('Sheet1');
 
 // Set column headers with styling
 sheet.columns = [
-  { header: "Name", key: "name", width: 20 },
-  { header: "Value", key: "value", width: 15 },
+  { header: 'Name', key: 'name', width: 20 },
+  { header: 'Value', key: 'value', width: 15 },
 ];
 
 // Add data rows
-sheet.addRow({ name: "Item 1", value: 100 });
+sheet.addRow({ name: 'Item 1', value: 100 });
 
 // Apply formatting
 sheet.getRow(1).font = { bold: true };
 sheet.getRow(1).fill = {
-  type: "pattern",
-  pattern: "solid",
-  fgColor: { argb: "FF4472C4" },
+  type: 'pattern',
+  pattern: 'solid',
+  fgColor: { argb: 'FF4472C4' },
 };
 
 // Save workbook
-await workbook.xlsx.writeFile("output.xlsx");
+await workbook.xlsx.writeFile('output.xlsx');
 ```
 
 ### XLSX Scripts Workflow
@@ -190,50 +190,50 @@ triggers: PowerPoint, presentation, .pptx, slides, slide deck, pitch deck, ppt, 
 
 ```javascript
 // Use pptxgenjs for Node.js
-const pptxgen = require("pptxgenjs");
+const pptxgen = require('pptxgenjs');
 const pptx = new pptxgen();
 
 // Set presentation properties
-pptx.author = "Cowork";
-pptx.title = "Presentation Title";
-pptx.subject = "Subject";
+pptx.author = 'Cowork';
+pptx.title = 'Presentation Title';
+pptx.subject = 'Subject';
 
 // Define master slide
 pptx.defineSlideMaster({
-  title: "MASTER_SLIDE",
-  background: { color: "FFFFFF" },
-  objects: [{ text: { text: "Company Name", options: { x: 0.5, y: 7.0, fontSize: 10 } } }],
+  title: 'MASTER_SLIDE',
+  background: { color: 'FFFFFF' },
+  objects: [{ text: { text: 'Company Name', options: { x: 0.5, y: 7.0, fontSize: 10 } } }],
 });
 
 // Create title slide
 let slide = pptx.addSlide();
-slide.addText("Presentation Title", {
+slide.addText('Presentation Title', {
   x: 0.5,
   y: 2.5,
-  w: "90%",
+  w: '90%',
   fontSize: 44,
   bold: true,
-  color: "363636",
-  align: "center",
+  color: '363636',
+  align: 'center',
 });
 
 // Create content slide
 slide = pptx.addSlide();
-slide.addText("Section Title", { x: 0.5, y: 0.5, fontSize: 28, bold: true });
+slide.addText('Section Title', { x: 0.5, y: 0.5, fontSize: 28, bold: true });
 slide.addText(
   [
-    { text: "Bullet point 1", options: { bullet: true } },
-    { text: "Bullet point 2", options: { bullet: true } },
-    { text: "Bullet point 3", options: { bullet: true } },
+    { text: 'Bullet point 1', options: { bullet: true } },
+    { text: 'Bullet point 2', options: { bullet: true } },
+    { text: 'Bullet point 3', options: { bullet: true } },
   ],
-  { x: 0.5, y: 1.5, w: "90%", fontSize: 18 },
+  { x: 0.5, y: 1.5, w: '90%', fontSize: 18 }
 );
 
 // Add chart
 slide.addChart(pptx.ChartType.bar, chartData, { x: 0.5, y: 3, w: 6, h: 3 });
 
 // Save presentation
-await pptx.writeFile("presentation.pptx");
+await pptx.writeFile('presentation.pptx');
 ```
 
 ### PPTX Scripts Workflow
@@ -455,19 +455,7 @@ triggers: Word, document, .docx, report, letter, memo, manuscript, essay, paper,
 
 ```javascript
 // Use docx package for Node.js
-const {
-  Document,
-  Packer,
-  Paragraph,
-  TextRun,
-  HeadingLevel,
-  Table,
-  TableRow,
-  TableCell,
-  Header,
-  Footer,
-  PageNumber,
-} = require("docx");
+const { Document, Packer, Paragraph, TextRun, HeadingLevel, Table, TableRow, TableCell, Header, Footer, PageNumber } = require('docx');
 
 const doc = new Document({
   sections: [
@@ -475,14 +463,14 @@ const doc = new Document({
       properties: {},
       headers: {
         default: new Header({
-          children: [new Paragraph({ text: "Document Header" })],
+          children: [new Paragraph({ text: 'Document Header' })],
         }),
       },
       footers: {
         default: new Footer({
           children: [
             new Paragraph({
-              children: [new TextRun("Page "), new PageNumber()],
+              children: [new TextRun('Page '), new PageNumber()],
             }),
           ],
         }),
@@ -490,30 +478,24 @@ const doc = new Document({
       children: [
         // Title
         new Paragraph({
-          text: "Document Title",
+          text: 'Document Title',
           heading: HeadingLevel.TITLE,
         }),
 
         // Heading
         new Paragraph({
-          text: "Section 1",
+          text: 'Section 1',
           heading: HeadingLevel.HEADING_1,
         }),
 
         // Body text
         new Paragraph({
-          children: [
-            new TextRun({ text: "This is ", bold: false }),
-            new TextRun({ text: "bold", bold: true }),
-            new TextRun({ text: " and " }),
-            new TextRun({ text: "italic", italics: true }),
-            new TextRun({ text: " text." }),
-          ],
+          children: [new TextRun({ text: 'This is ', bold: false }), new TextRun({ text: 'bold', bold: true }), new TextRun({ text: ' and ' }), new TextRun({ text: 'italic', italics: true }), new TextRun({ text: ' text.' })],
         }),
 
         // Bullet list
         new Paragraph({
-          text: "First bullet point",
+          text: 'First bullet point',
           bullet: { level: 0 },
         }),
 
@@ -521,16 +503,10 @@ const doc = new Document({
         new Table({
           rows: [
             new TableRow({
-              children: [
-                new TableCell({ children: [new Paragraph("Header 1")] }),
-                new TableCell({ children: [new Paragraph("Header 2")] }),
-              ],
+              children: [new TableCell({ children: [new Paragraph('Header 1')] }), new TableCell({ children: [new Paragraph('Header 2')] })],
             }),
             new TableRow({
-              children: [
-                new TableCell({ children: [new Paragraph("Cell 1")] }),
-                new TableCell({ children: [new Paragraph("Cell 2")] }),
-              ],
+              children: [new TableCell({ children: [new Paragraph('Cell 1')] }), new TableCell({ children: [new Paragraph('Cell 2')] })],
             }),
           ],
         }),
@@ -541,7 +517,7 @@ const doc = new Document({
 
 // Save document
 const buffer = await Packer.toBuffer(doc);
-await fs.writeFile("document.docx", buffer);
+await fs.writeFile('document.docx', buffer);
 ```
 
 ### DOCX Scripts Workflow

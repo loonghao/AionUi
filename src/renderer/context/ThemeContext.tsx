@@ -5,13 +5,13 @@
  */
 
 // context/ThemeContext.tsx - Unified Theme Management Context 统一主题管理上下文
-import type { PropsWithChildren } from "react";
-import React, { createContext, useContext } from "react";
-import type { Theme } from "../hooks/useTheme";
-import useTheme from "../hooks/useTheme";
-import type { ColorScheme } from "../hooks/useColorScheme";
-import useColorScheme from "../hooks/useColorScheme";
-import useFontScale from "../hooks/useFontScale";
+import type { PropsWithChildren } from 'react';
+import React, { createContext, useContext } from 'react';
+import type { Theme } from '../hooks/useTheme';
+import useTheme from '../hooks/useTheme';
+import type { ColorScheme } from '../hooks/useColorScheme';
+import useColorScheme from '../hooks/useColorScheme';
+import useFontScale from '../hooks/useFontScale';
 
 /**
  * Theme context value interface 主题上下文值接口
@@ -42,13 +42,7 @@ export const ThemeProvider: React.FC<PropsWithChildren> = ({ children }) => {
   const [colorScheme, setColorScheme] = useColorScheme();
   const [fontScale, setFontScale] = useFontScale();
 
-  return (
-    <ThemeContext.Provider
-      value={{ theme, setTheme, colorScheme, setColorScheme, fontScale, setFontScale }}
-    >
-      {children}
-    </ThemeContext.Provider>
-  );
+  return <ThemeContext.Provider value={{ theme, setTheme, colorScheme, setColorScheme, fontScale, setFontScale }}>{children}</ThemeContext.Provider>;
 };
 
 /**
@@ -58,7 +52,7 @@ export const ThemeProvider: React.FC<PropsWithChildren> = ({ children }) => {
 export const useThemeContext = () => {
   const context = useContext(ThemeContext);
   if (!context) {
-    throw new Error("useThemeContext must be used within ThemeProvider");
+    throw new Error('useThemeContext must be used within ThemeProvider');
   }
   return context;
 };

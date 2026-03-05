@@ -22,7 +22,7 @@ class ExtFeishuChannelPlugin {
 
   async start() {
     this.running = true;
-    return { ok: true, plugin: "ext-feishu" };
+    return { ok: true, plugin: 'ext-feishu' };
   }
 
   async stop() {
@@ -39,18 +39,18 @@ class ExtFeishuChannelPlugin {
   }
 
   getBotInfo() {
-    return { displayName: "ext-飞书 Bot (Example)" };
+    return { displayName: 'ext-飞书 Bot (Example)' };
   }
 
   async sendMessage(chatId, message) {
-    if (!this.running) throw new Error("ext-feishu plugin is not running");
+    if (!this.running) throw new Error('ext-feishu plugin is not running');
     this.metrics.sent += 1;
     this.metrics.lastEventAt = Date.now();
     return `ext-feishu-msg-${Date.now()}`;
   }
 
   async editMessage(chatId, messageId, message) {
-    if (!this.running) throw new Error("ext-feishu plugin is not running");
+    if (!this.running) throw new Error('ext-feishu plugin is not running');
     this.metrics.lastEventAt = Date.now();
   }
 
@@ -58,8 +58,8 @@ class ExtFeishuChannelPlugin {
    * 模拟接收入站事件（供示例/测试）
    */
   async ingestIncomingEvent(event) {
-    const eventId = event && event.eventId ? String(event.eventId) : "";
-    if (!eventId) return { ok: false, reason: "missing-event-id" };
+    const eventId = event && event.eventId ? String(event.eventId) : '';
+    if (!eventId) return { ok: false, reason: 'missing-event-id' };
 
     this.cleanupExpiredEvents();
 
@@ -72,7 +72,7 @@ class ExtFeishuChannelPlugin {
     this.metrics.received += 1;
     this.metrics.lastEventAt = Date.now();
 
-    const userId = event && event.userId ? String(event.userId) : "";
+    const userId = event && event.userId ? String(event.userId) : '';
     if (userId) this.activeUsers.add(userId);
 
     return { ok: true, deduped: false };

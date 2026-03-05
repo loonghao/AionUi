@@ -4,9 +4,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useRef, useEffect } from "react";
-import { useTranslation } from "react-i18next";
-import type { PreviewTab } from "./PreviewTabs";
+import React, { useRef, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
+import type { PreviewTab } from './PreviewTabs';
 
 /**
  * 上下文菜单状态
@@ -59,7 +59,7 @@ interface PreviewContextMenuProps {
    * 当前主题
    * Current theme
    */
-  currentTheme: "light" | "dark";
+  currentTheme: 'light' | 'dark';
 
   /**
    * 关闭菜单回调
@@ -99,16 +99,7 @@ interface PreviewContextMenuProps {
  * 提供关闭左侧/右侧/其他/所有 Tab 的功能
  * Provides functions to close left/right/other/all tabs
  */
-const PreviewContextMenu: React.FC<PreviewContextMenuProps> = ({
-  contextMenu,
-  tabs,
-  currentTheme,
-  onClose,
-  onCloseLeft,
-  onCloseRight,
-  onCloseOthers,
-  onCloseAll,
-}) => {
+const PreviewContextMenu: React.FC<PreviewContextMenuProps> = ({ contextMenu, tabs, currentTheme, onClose, onCloseLeft, onCloseRight, onCloseOthers, onCloseAll }) => {
   const { t } = useTranslation();
   const contextMenuRef = useRef<HTMLDivElement>(null);
 
@@ -125,10 +116,10 @@ const PreviewContextMenu: React.FC<PreviewContextMenuProps> = ({
 
     // 使用 mousedown 而不是 click,避免与右键菜单的 onClick 冲突
     // Use mousedown instead of click to avoid conflicts with context menu onClick
-    document.addEventListener("mousedown", handleClickOutside, { passive: true });
+    document.addEventListener('mousedown', handleClickOutside, { passive: true });
 
     return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [contextMenu.show, onClose]);
 
@@ -144,48 +135,36 @@ const PreviewContextMenu: React.FC<PreviewContextMenuProps> = ({
   return (
     <div
       ref={contextMenuRef}
-      className="fixed shadow-lg rd-8px py-4px z-9999"
+      className='fixed shadow-lg rd-8px py-4px z-9999'
       style={{
         left: `${contextMenu.x}px`,
         top: `${contextMenu.y}px`,
-        backgroundColor: currentTheme === "dark" ? "#1d1d1f" : "#ffffff",
-        border: "1px solid var(--border-base, #e5e6eb)",
-        minWidth: "140px",
+        backgroundColor: currentTheme === 'dark' ? '#1d1d1f' : '#ffffff',
+        border: '1px solid var(--border-base, #e5e6eb)',
+        minWidth: '140px',
       }}
     >
       {/* 关闭左侧 / Close tabs to the left */}
-      <div
-        className={`px-12px py-8px text-12px transition-colors ${hasLeftTabs ? "cursor-pointer text-t-primary hover:bg-bg-3" : "opacity-50 cursor-not-allowed text-t-tertiary"}`}
-        onClick={() => hasLeftTabs && onCloseLeft(contextMenu.tabId!)}
-      >
-        {t("preview.closeLeft")}
+      <div className={`px-12px py-8px text-12px transition-colors ${hasLeftTabs ? 'cursor-pointer text-t-primary hover:bg-bg-3' : 'opacity-50 cursor-not-allowed text-t-tertiary'}`} onClick={() => hasLeftTabs && onCloseLeft(contextMenu.tabId!)}>
+        {t('preview.closeLeft')}
       </div>
 
       {/* 关闭右侧 / Close tabs to the right */}
-      <div
-        className={`px-12px py-8px text-12px transition-colors ${hasRightTabs ? "cursor-pointer text-t-primary hover:bg-bg-3" : "opacity-50 cursor-not-allowed text-t-tertiary"}`}
-        onClick={() => hasRightTabs && onCloseRight(contextMenu.tabId!)}
-      >
-        {t("preview.closeRight")}
+      <div className={`px-12px py-8px text-12px transition-colors ${hasRightTabs ? 'cursor-pointer text-t-primary hover:bg-bg-3' : 'opacity-50 cursor-not-allowed text-t-tertiary'}`} onClick={() => hasRightTabs && onCloseRight(contextMenu.tabId!)}>
+        {t('preview.closeRight')}
       </div>
 
       {/* 关闭其他 / Close other tabs */}
-      <div
-        className={`px-12px py-8px text-12px transition-colors ${hasOtherTabs ? "cursor-pointer text-t-primary hover:bg-bg-3" : "opacity-50 cursor-not-allowed text-t-tertiary"}`}
-        onClick={() => hasOtherTabs && onCloseOthers(contextMenu.tabId!)}
-      >
-        {t("preview.closeOthers")}
+      <div className={`px-12px py-8px text-12px transition-colors ${hasOtherTabs ? 'cursor-pointer text-t-primary hover:bg-bg-3' : 'opacity-50 cursor-not-allowed text-t-tertiary'}`} onClick={() => hasOtherTabs && onCloseOthers(contextMenu.tabId!)}>
+        {t('preview.closeOthers')}
       </div>
 
       {/* 分隔线 / Divider */}
-      <div className="h-1px bg-border-1 my-4px mx-8px" />
+      <div className='h-1px bg-border-1 my-4px mx-8px' />
 
       {/* 全部关闭 / Close all tabs */}
-      <div
-        className="px-12px py-8px text-12px text-t-primary cursor-pointer hover:bg-bg-3 transition-colors"
-        onClick={onCloseAll}
-      >
-        {t("preview.closeAll")}
+      <div className='px-12px py-8px text-12px text-t-primary cursor-pointer hover:bg-bg-3 transition-colors' onClick={onCloseAll}>
+        {t('preview.closeAll')}
       </div>
     </div>
   );

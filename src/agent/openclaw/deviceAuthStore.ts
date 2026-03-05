@@ -13,9 +13,9 @@
  * Storage location: ~/.openclaw/identity/device-auth.json
  */
 
-import fs from "node:fs";
-import os from "node:os";
-import path from "node:path";
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 
 export interface DeviceAuthEntry {
   token: string;
@@ -31,13 +31,13 @@ interface DeviceAuthStore {
 }
 
 // OpenClaw uses ~/.openclaw/identity/device-auth.json
-const DEFAULT_STATE_DIR = path.join(os.homedir(), ".openclaw");
-const DEVICE_AUTH_FILE = "device-auth.json";
+const DEFAULT_STATE_DIR = path.join(os.homedir(), '.openclaw');
+const DEVICE_AUTH_FILE = 'device-auth.json';
 
 function resolveDeviceAuthPath(): string {
   // Check for OPENCLAW_STATE_DIR override
   const stateDir = process.env.OPENCLAW_STATE_DIR?.trim() || DEFAULT_STATE_DIR;
-  return path.join(stateDir, "identity", DEVICE_AUTH_FILE);
+  return path.join(stateDir, 'identity', DEVICE_AUTH_FILE);
 }
 
 function normalizeRole(role: string): string {
@@ -63,12 +63,12 @@ function readStore(filePath: string): DeviceAuthStore | null {
     if (!fs.existsSync(filePath)) {
       return null;
     }
-    const raw = fs.readFileSync(filePath, "utf8");
+    const raw = fs.readFileSync(filePath, 'utf8');
     const parsed = JSON.parse(raw) as DeviceAuthStore;
-    if (parsed?.version !== 1 || typeof parsed.deviceId !== "string") {
+    if (parsed?.version !== 1 || typeof parsed.deviceId !== 'string') {
       return null;
     }
-    if (!parsed.tokens || typeof parsed.tokens !== "object") {
+    if (!parsed.tokens || typeof parsed.tokens !== 'object') {
       return null;
     }
     return parsed;
@@ -90,10 +90,7 @@ function writeStore(filePath: string, store: DeviceAuthStore): void {
 /**
  * Load device auth token for a specific device and role
  */
-export function loadDeviceAuthToken(params: {
-  deviceId: string;
-  role: string;
-}): DeviceAuthEntry | null {
+export function loadDeviceAuthToken(params: { deviceId: string; role: string }): DeviceAuthEntry | null {
   const filePath = resolveDeviceAuthPath();
   const store = readStore(filePath);
   if (!store) {
@@ -104,7 +101,7 @@ export function loadDeviceAuthToken(params: {
   }
   const role = normalizeRole(params.role);
   const entry = store.tokens[role];
-  if (!entry || typeof entry.token !== "string") {
+  if (!entry || typeof entry.token !== 'string') {
     return null;
   }
   return entry;
@@ -113,22 +110,14 @@ export function loadDeviceAuthToken(params: {
 /**
  * Store device auth token for a specific device and role
  */
-export function storeDeviceAuthToken(params: {
-  deviceId: string;
-  role: string;
-  token: string;
-  scopes?: string[];
-}): DeviceAuthEntry {
+export function storeDeviceAuthToken(params: { deviceId: string; role: string; token: string; scopes?: string[] }): DeviceAuthEntry {
   const filePath = resolveDeviceAuthPath();
   const existing = readStore(filePath);
   const role = normalizeRole(params.role);
   const next: DeviceAuthStore = {
     version: 1,
     deviceId: params.deviceId,
-    tokens:
-      existing && existing.deviceId === params.deviceId && existing.tokens
-        ? { ...existing.tokens }
-        : {},
+    tokens: existing && existing.deviceId === params.deviceId && existing.tokens ? { ...existing.tokens } : {},
   };
   const entry: DeviceAuthEntry = {
     token: params.token,

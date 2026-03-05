@@ -4,12 +4,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { spawn, type ChildProcess } from "child_process";
-import { EventEmitter } from "events";
-import { getEnhancedEnv } from "@process/utils/shellEnv";
-import fs from "node:fs";
-import path from "node:path";
-import { execFileSync } from "node:child_process";
+import { spawn, type ChildProcess } from 'child_process';
+import { EventEmitter } from 'events';
+import { getEnhancedEnv } from '@process/utils/shellEnv';
+import fs from 'node:fs';
+import path from 'node:path';
+import { execFileSync } from 'node:child_process';
 
 interface GatewayManagerConfig {
   /** Path to openclaw CLI (default: 'openclaw') */
@@ -51,16 +51,16 @@ export class OpenClawGatewayManager extends EventEmitter {
 
   constructor(config: GatewayManagerConfig = {}) {
     super();
-    this.cliPath = config.cliPath || "openclaw";
+    this.cliPath = config.cliPath || 'openclaw';
     this.port = config.port || 18789;
     this.customEnv = config.customEnv;
   }
 
   private resolveCommandPath(cmd: string, envPath?: string): string {
     // Absolute/relative paths: use as-is.
-    if (cmd.includes("/") || cmd.includes("\\")) return cmd;
-    const p = envPath || process.env.PATH || "";
-    const sep = process.platform === "win32" ? ";" : ":";
+    if (cmd.includes('/') || cmd.includes('\\')) return cmd;
+    const p = envPath || process.env.PATH || '';
+    const sep = process.platform === 'win32' ? ';' : ':';
     for (const dir of p.split(sep)) {
       if (!dir) continue;
       const candidate = path.join(dir, cmd);
@@ -80,10 +80,7 @@ export class OpenClawGatewayManager extends EventEmitter {
     return { major: Number(m[1]), minor: Number(m[2]), patch: Number(m[3]) };
   }
 
-  private isNodeVersionAtLeast(
-    a: { major: number; minor: number; patch: number } | null,
-    b: { major: number; minor: number; patch: number },
-  ): boolean {
+  private isNodeVersionAtLeast(a: { major: number; minor: number; patch: number } | null, b: { major: number; minor: number; patch: number }): boolean {
     if (!a) return false;
     if (a.major !== b.major) return a.major > b.major;
     if (a.minor !== b.minor) return a.minor > b.minor;
@@ -91,9 +88,9 @@ export class OpenClawGatewayManager extends EventEmitter {
   }
 
   private findBestNodeBinary(env: Record<string, string>): string | null {
-    const envPath = env.PATH || "";
-    const sep = process.platform === "win32" ? ";" : ":";
-    const nodeName = process.platform === "win32" ? "node.exe" : "node";
+    const envPath = env.PATH || '';
+    const sep = process.platform === 'win32' ? ';' : ':';
+    const nodeName = process.platform === 'win32' ? 'node.exe' : 'node';
 
     let best: { file: string; ver: { major: number; minor: number; patch: number } } | null = null;
     for (const dir of envPath.split(sep)) {
@@ -105,7 +102,7 @@ export class OpenClawGatewayManager extends EventEmitter {
         continue;
       }
       try {
-        const versionRaw = execFileSync(candidate, ["-v"], { encoding: "utf8", env });
+        const versionRaw = execFileSync(candidate, ['-v'], { encoding: 'utf8', env });
         const ver = this.parseNodeVersion(versionRaw);
         if (!this.isNodeVersionAtLeast(ver, OpenClawGatewayManager.MIN_NODE)) continue;
         if (!best || this.isNodeVersionAtLeast(ver, best.ver)) {
@@ -121,12 +118,12 @@ export class OpenClawGatewayManager extends EventEmitter {
   private shouldRunCliViaNode(resolvedCliPath: string): boolean {
     if (/\.(mjs|cjs|js)$/i.test(resolvedCliPath)) return true;
     try {
-      const fd = fs.openSync(resolvedCliPath, "r");
+      const fd = fs.openSync(resolvedCliPath, 'r');
       const buf = Buffer.alloc(128);
       const n = fs.readSync(fd, buf, 0, buf.length, 0);
       fs.closeSync(fd);
-      const head = buf.slice(0, n).toString("utf8");
-      return head.startsWith("#!") && head.includes("node");
+      const head = buf.slice(0, n).toString('utf8');
+      return head.startsWith('#!') && head.includes('node');
     } catch {
       return false;
     }
@@ -135,24 +132,15 @@ export class OpenClawGatewayManager extends EventEmitter {
   /**
    * Type-safe event emitter
    */
-  override emit<K extends keyof GatewayManagerEvents>(
-    event: K,
-    ...args: Parameters<GatewayManagerEvents[K]>
-  ): boolean {
+  override emit<K extends keyof GatewayManagerEvents>(event: K, ...args: Parameters<GatewayManagerEvents[K]>): boolean {
     return super.emit(event, ...args);
   }
 
-  override on<K extends keyof GatewayManagerEvents>(
-    event: K,
-    listener: GatewayManagerEvents[K],
-  ): this {
+  override on<K extends keyof GatewayManagerEvents>(event: K, listener: GatewayManagerEvents[K]): this {
     return super.on(event, listener);
   }
 
-  override once<K extends keyof GatewayManagerEvents>(
-    event: K,
-    listener: GatewayManagerEvents[K],
-  ): this {
+  override once<K extends keyof GatewayManagerEvents>(event: K, listener: GatewayManagerEvents[K]): this {
     return super.once(event, listener);
   }
 
@@ -184,12 +172,12 @@ export class OpenClawGatewayManager extends EventEmitter {
 
   private async doStart(): Promise<number> {
     return new Promise((resolve, reject) => {
-      const args = ["gateway", "--port", String(this.port)];
+      const args = ['gateway', '--port', String(this.port)];
 
       // Use enhanced env with shell variables
       const env = getEnhancedEnv(this.customEnv);
 
-      const isWindows = process.platform === "win32";
+      const isWindows = process.platform === 'win32';
 
       const resolvedCli = this.resolveCommandPath(this.cliPath, env.PATH);
       const bestNode = this.findBestNodeBinary(env);
@@ -198,73 +186,59 @@ export class OpenClawGatewayManager extends EventEmitter {
       const spawnCommand = runViaNode ? bestNode! : resolvedCli;
       const spawnArgs = runViaNode ? [resolvedCli, ...args] : args;
 
-      console.log(`[OpenClawGatewayManager] Starting: ${spawnCommand} ${spawnArgs.join(" ")}`);
+      console.log(`[OpenClawGatewayManager] Starting: ${spawnCommand} ${spawnArgs.join(' ')}`);
 
       this.process = spawn(spawnCommand, spawnArgs, {
-        stdio: ["pipe", "pipe", "pipe"],
+        stdio: ['pipe', 'pipe', 'pipe'],
         env,
         shell: isWindows,
       });
 
       let hasResolved = false;
-      let stdoutBuffer = "";
-      let stderrBuffer = "";
+      let stdoutBuffer = '';
+      let stderrBuffer = '';
 
       // Look for ready signal in stdout
-      this.process.stdout?.on("data", (data: Buffer) => {
+      this.process.stdout?.on('data', (data: Buffer) => {
         const output = data.toString();
         stdoutBuffer += output;
-        this.emit("stdout", output);
+        this.emit('stdout', output);
 
         // Look for gateway ready signals
-        if (
-          !hasResolved &&
-          (output.includes("Gateway listening") ||
-            output.includes(`port ${this.port}`) ||
-            output.includes("WebSocket server started") ||
-            output.includes("gateway ready") ||
-            output.includes("listening on"))
-        ) {
+        if (!hasResolved && (output.includes('Gateway listening') || output.includes(`port ${this.port}`) || output.includes('WebSocket server started') || output.includes('gateway ready') || output.includes('listening on'))) {
           hasResolved = true;
           console.log(`[OpenClawGatewayManager] Gateway ready on port ${this.port}`);
-          this.emit("ready", this.port);
+          this.emit('ready', this.port);
           resolve(this.port);
         }
       });
 
       // Capture stderr
-      this.process.stderr?.on("data", (data: Buffer) => {
+      this.process.stderr?.on('data', (data: Buffer) => {
         const output = data.toString();
         stderrBuffer += output;
-        this.emit("stderr", output);
+        this.emit('stderr', output);
 
         // Some CLIs output ready message to stderr
-        if (
-          !hasResolved &&
-          (output.includes("Gateway listening") ||
-            output.includes(`port ${this.port}`) ||
-            output.includes("WebSocket server started") ||
-            output.includes("gateway ready") ||
-            output.includes("listening on"))
-        ) {
+        if (!hasResolved && (output.includes('Gateway listening') || output.includes(`port ${this.port}`) || output.includes('WebSocket server started') || output.includes('gateway ready') || output.includes('listening on'))) {
           hasResolved = true;
           console.log(`[OpenClawGatewayManager] Gateway ready on port ${this.port}`);
-          this.emit("ready", this.port);
+          this.emit('ready', this.port);
           resolve(this.port);
         }
       });
 
-      this.process.on("error", (error) => {
-        console.error("[OpenClawGatewayManager] Process error:", error);
+      this.process.on('error', (error) => {
+        console.error('[OpenClawGatewayManager] Process error:', error);
         if (!hasResolved) {
           reject(error);
         }
-        this.emit("error", error);
+        this.emit('error', error);
       });
 
-      this.process.on("exit", (code, signal) => {
+      this.process.on('exit', (code, signal) => {
         console.log(`[OpenClawGatewayManager] Process exited: code=${code}, signal=${signal}`);
-        this.emit("exit", { code, signal });
+        this.emit('exit', { code, signal });
         this.process = null;
 
         if (!hasResolved) {
@@ -278,10 +252,8 @@ export class OpenClawGatewayManager extends EventEmitter {
       setTimeout(() => {
         if (!hasResolved && this.process && !this.process.killed) {
           hasResolved = true;
-          console.log(
-            `[OpenClawGatewayManager] Gateway assumed ready (timeout fallback) on port ${this.port}`,
-          );
-          this.emit("ready", this.port);
+          console.log(`[OpenClawGatewayManager] Gateway assumed ready (timeout fallback) on port ${this.port}`);
+          this.emit('ready', this.port);
           resolve(this.port);
         }
       }, 5000);
@@ -296,16 +268,16 @@ export class OpenClawGatewayManager extends EventEmitter {
       return;
     }
 
-    console.log("[OpenClawGatewayManager] Stopping gateway...");
+    console.log('[OpenClawGatewayManager] Stopping gateway...');
 
     // Send SIGTERM first
-    this.process.kill("SIGTERM");
+    this.process.kill('SIGTERM');
 
     // Force kill after timeout
     const forceKillTimeout = setTimeout(() => {
       if (this.process && !this.process.killed) {
-        console.log("[OpenClawGatewayManager] Force killing gateway...");
-        this.process.kill("SIGKILL");
+        console.log('[OpenClawGatewayManager] Force killing gateway...');
+        this.process.kill('SIGKILL');
       }
     }, 5000);
 
@@ -316,14 +288,14 @@ export class OpenClawGatewayManager extends EventEmitter {
         return;
       }
 
-      this.process.once("exit", () => {
+      this.process.once('exit', () => {
         clearTimeout(forceKillTimeout);
         resolve();
       });
     });
 
     this.process = null;
-    console.log("[OpenClawGatewayManager] Gateway stopped");
+    console.log('[OpenClawGatewayManager] Gateway stopped');
   }
 
   /**

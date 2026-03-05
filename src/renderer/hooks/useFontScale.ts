@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { ipcBridge } from "@/common";
-import { useCallback, useEffect, useState } from "react";
+import { ipcBridge } from '@/common';
+import { useCallback, useEffect, useState } from 'react';
 
 const UI_SCALE_DEFAULT = 1;
 const UI_SCALE_MIN = 0.8;
@@ -32,11 +32,11 @@ const useFontScale = (): [number, (scale: number) => Promise<void>] => {
   const fetchZoomFactor = useCallback(async () => {
     try {
       const currentFactor = await ipcBridge.application.getZoomFactor.invoke();
-      if (typeof currentFactor === "number") {
+      if (typeof currentFactor === 'number') {
         setFontScaleState(clampFontScale(currentFactor));
       }
     } catch (error) {
-      console.error("Failed to fetch zoom factor:", error);
+      console.error('Failed to fetch zoom factor:', error);
     }
   }, []);
 
@@ -51,15 +51,15 @@ const useFontScale = (): [number, (scale: number) => Promise<void>] => {
       setFontScaleState(clamped);
       try {
         const updatedFactor = await ipcBridge.application.setZoomFactor.invoke({ factor: clamped });
-        if (typeof updatedFactor === "number" && updatedFactor !== clamped) {
+        if (typeof updatedFactor === 'number' && updatedFactor !== clamped) {
           setFontScaleState(clampFontScale(updatedFactor));
         }
       } catch (error) {
-        console.error("Failed to set zoom factor:", error);
+        console.error('Failed to set zoom factor:', error);
         void fetchZoomFactor();
       }
     },
-    [fetchZoomFactor],
+    [fetchZoomFactor]
   );
 
   return [fontScale, setFontScale];

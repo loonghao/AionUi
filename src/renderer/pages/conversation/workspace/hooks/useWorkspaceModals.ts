@@ -4,13 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useCallback, useState } from "react";
-import type {
-  ContextMenuState,
-  RenameModalState,
-  DeleteModalState,
-  PasteConfirmState,
-} from "../types";
+import { useCallback, useState } from 'react';
+import type { ContextMenuState, RenameModalState, DeleteModalState, PasteConfirmState } from '../types';
 
 /**
  * useWorkspaceModals - 管理所有模态框和菜单状态
@@ -28,7 +23,7 @@ export function useWorkspaceModals() {
   // Rename modal state (重命名弹窗状态)
   const [renameModal, setRenameModal] = useState<RenameModalState>({
     visible: false,
-    value: "",
+    value: '',
     target: null,
   });
   const [renameLoading, setRenameLoading] = useState(false);
@@ -43,7 +38,7 @@ export function useWorkspaceModals() {
   // Paste confirmation modal state (粘贴确认弹窗状态)
   const [pasteConfirm, setPasteConfirm] = useState<PasteConfirmState>({
     visible: false,
-    fileName: "",
+    fileName: '',
     filesToPaste: [],
     doNotAsk: false,
     targetFolder: null,
@@ -70,7 +65,7 @@ export function useWorkspaceModals() {
    * Close rename modal
    */
   const closeRenameModal = useCallback(() => {
-    setRenameModal({ visible: false, value: "", target: null });
+    setRenameModal({ visible: false, value: '', target: null });
     setRenameLoading(false);
   }, []);
 
@@ -89,7 +84,7 @@ export function useWorkspaceModals() {
   const closePasteConfirm = useCallback(() => {
     setPasteConfirm({
       visible: false,
-      fileName: "",
+      fileName: '',
       filesToPaste: [],
       doNotAsk: false,
       targetFolder: null,

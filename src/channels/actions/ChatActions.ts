@@ -4,13 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { IRegisteredAction, ActionHandler } from "./types";
-import { ChatActionNames, createSuccessResponse, createErrorResponse } from "./types";
-import {
-  createResponseActionsKeyboard,
-  createErrorRecoveryKeyboard,
-} from "../plugins/telegram/TelegramKeyboards";
-import { getChannelMessageService } from "../agent/ChannelMessageService";
+import type { IRegisteredAction, ActionHandler } from './types';
+import { ChatActionNames, createSuccessResponse, createErrorResponse } from './types';
+import { createResponseActionsKeyboard, createErrorRecoveryKeyboard } from '../plugins/telegram/TelegramKeyboards';
+import { getChannelMessageService } from '../agent/ChannelMessageService';
 
 /**
  * ChatActions - Handlers for chat/AI-related actions
@@ -30,9 +27,9 @@ export const handleChatSend: ActionHandler = async (context) => {
   // This handler is a placeholder for the action registration
 
   return createSuccessResponse({
-    type: "text",
-    text: "⏳ Thinking...",
-    parseMode: "HTML",
+    type: 'text',
+    text: '⏳ Thinking...',
+    parseMode: 'HTML',
   });
 };
 
@@ -43,15 +40,15 @@ export const handleChatRegenerate: ActionHandler = async (context, params) => {
   const originalMessageId = params?.originalMessageId;
 
   if (!originalMessageId) {
-    return createErrorResponse("Cannot find original message");
+    return createErrorResponse('Cannot find original message');
   }
 
   // This will trigger a regeneration
   // The ActionExecutor will handle the actual AI call
   return createSuccessResponse({
-    type: "text",
-    text: "🔄 Regenerating...",
-    parseMode: "HTML",
+    type: 'text',
+    text: '🔄 Regenerating...',
+    parseMode: 'HTML',
   });
 };
 
@@ -62,9 +59,9 @@ export const handleChatContinue: ActionHandler = async (context, params) => {
   // This will trigger a continuation
   // The ActionExecutor will handle the actual AI call
   return createSuccessResponse({
-    type: "text",
-    text: "💬 Continuing...",
-    parseMode: "HTML",
+    type: 'text',
+    text: '💬 Continuing...',
+    parseMode: 'HTML',
   });
 };
 
@@ -78,9 +75,9 @@ export const handleCopy: ActionHandler = async (context, params) => {
   return {
     success: true,
     message: {
-      type: "text",
-      text: "💡 Long press the message text to copy",
-      parseMode: "HTML",
+      type: 'text',
+      text: '💡 Long press the message text to copy',
+      parseMode: 'HTML',
     },
   };
 };
@@ -95,10 +92,8 @@ export const handleToolConfirm: ActionHandler = async (context, params) => {
   const conversationId = context.conversationId;
 
   if (!callId || !value || !conversationId) {
-    console.error(
-      `[ChatActions] Missing params - callId: ${callId}, value: ${value}, conversationId: ${conversationId}`,
-    );
-    return createErrorResponse("Missing confirmation parameters");
+    console.error(`[ChatActions] Missing params - callId: ${callId}, value: ${value}, conversationId: ${conversationId}`);
+    return createErrorResponse('Missing confirmation parameters');
   }
 
   try {
@@ -110,7 +105,7 @@ export const handleToolConfirm: ActionHandler = async (context, params) => {
     // Return success without message, agent will continue and update via stream callback
     return { success: true };
   } catch (error: any) {
-    console.error("[ChatActions] Tool confirmation failed:", error);
+    console.error('[ChatActions] Tool confirmation failed:', error);
     return createErrorResponse(`Confirmation failed: ${error.message}`);
   }
 };
@@ -121,32 +116,32 @@ export const handleToolConfirm: ActionHandler = async (context, params) => {
 export const chatActions: IRegisteredAction[] = [
   {
     name: ChatActionNames.SEND,
-    category: "chat",
-    description: "Send a message to AI",
+    category: 'chat',
+    description: 'Send a message to AI',
     handler: handleChatSend,
   },
   {
     name: ChatActionNames.REGENERATE,
-    category: "chat",
-    description: "Regenerate the last AI response",
+    category: 'chat',
+    description: 'Regenerate the last AI response',
     handler: handleChatRegenerate,
   },
   {
     name: ChatActionNames.CONTINUE,
-    category: "chat",
-    description: "Continue the AI response",
+    category: 'chat',
+    description: 'Continue the AI response',
     handler: handleChatContinue,
   },
   {
     name: ChatActionNames.COPY,
-    category: "chat",
-    description: "Copy response content",
+    category: 'chat',
+    description: 'Copy response content',
     handler: handleCopy,
   },
   {
     name: ChatActionNames.TOOL_CONFIRM,
-    category: "chat",
-    description: "Confirm tool execution",
+    category: 'chat',
+    description: 'Confirm tool execution',
     handler: handleToolConfirm,
   },
 ];
@@ -156,15 +151,15 @@ export const chatActions: IRegisteredAction[] = [
  */
 export function buildChatResponse(
   text: string,
-  isComplete: boolean = true,
+  isComplete: boolean = true
 ): {
   text: string;
-  parseMode: "HTML" | "MarkdownV2" | "Markdown";
+  parseMode: 'HTML' | 'MarkdownV2' | 'Markdown';
   replyMarkup?: unknown;
 } {
   return {
     text,
-    parseMode: "HTML",
+    parseMode: 'HTML',
     replyMarkup: isComplete ? createResponseActionsKeyboard() : undefined,
   };
 }
@@ -174,12 +169,12 @@ export function buildChatResponse(
  */
 export function buildChatErrorResponse(error: string): {
   text: string;
-  parseMode: "HTML" | "MarkdownV2" | "Markdown";
+  parseMode: 'HTML' | 'MarkdownV2' | 'Markdown';
   replyMarkup?: unknown;
 } {
   return {
     text: `❌ <b>Processing Failed</b>\n\n${error}\n\nPlease retry or start a new conversation.`,
-    parseMode: "HTML",
+    parseMode: 'HTML',
     replyMarkup: createErrorRecoveryKeyboard(),
   };
 }
@@ -189,10 +184,10 @@ export function buildChatErrorResponse(error: string): {
  */
 export function buildStreamingIndicator(partialText: string): {
   text: string;
-  parseMode: "HTML" | "MarkdownV2" | "Markdown";
+  parseMode: 'HTML' | 'MarkdownV2' | 'Markdown';
 } {
   return {
-    text: partialText + " ⏳",
-    parseMode: "HTML",
+    text: partialText + ' ⏳',
+    parseMode: 'HTML',
   };
 }

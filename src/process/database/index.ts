@@ -4,37 +4,19 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { ensureDirectory, getDataPath } from "@process/utils";
-import type Database from "better-sqlite3";
-import BetterSqlite3 from "better-sqlite3";
-import fs from "fs";
-import path from "path";
-import { runMigrations as executeMigrations } from "./migrations";
-import { CURRENT_DB_VERSION, getDatabaseVersion, initSchema, setDatabaseVersion } from "./schema";
-import type {
-  IConversationRow,
-  IMessageRow,
-  IPaginatedResult,
-  IQueryResult,
-  IUser,
-  TChatConversation,
-  TMessage,
-} from "./types";
-import { conversationToRow, messageToRow, rowToConversation, rowToMessage } from "./types";
-import type {
-  IChannelPluginConfig,
-  IChannelUser,
-  IChannelSession,
-  IChannelPairingRequest,
-  IChannelUserRow,
-  IChannelSessionRow,
-  IChannelPairingCodeRow,
-  PluginType,
-  PluginStatus,
-} from "@/channels/types";
-import type { TProviderWithModel } from "@/common/storage";
-import { rowToChannelUser, rowToChannelSession, rowToPairingRequest } from "@/channels/types";
-import { encryptCredentials, decryptCredentials } from "@/channels/utils/credentialCrypto";
+import { ensureDirectory, getDataPath } from '@process/utils';
+import type Database from 'better-sqlite3';
+import BetterSqlite3 from 'better-sqlite3';
+import fs from 'fs';
+import path from 'path';
+import { runMigrations as executeMigrations } from './migrations';
+import { CURRENT_DB_VERSION, getDatabaseVersion, initSchema, setDatabaseVersion } from './schema';
+import type { IConversationRow, IMessageRow, IPaginatedResult, IQueryResult, IUser, TChatConversation, TMessage } from './types';
+import { conversationToRow, messageToRow, rowToConversation, rowToMessage } from './types';
+import type { IChannelPluginConfig, IChannelUser, IChannelSession, IChannelPairingRequest, IChannelUserRow, IChannelSessionRow, IChannelPairingCodeRow, PluginType, PluginStatus } from '@/channels/types';
+import type { TProviderWithModel } from '@/common/storage';
+import { rowToChannelUser, rowToChannelSession, rowToPairingRequest } from '@/channels/types';
+import { encryptCredentials, decryptCredentials } from '@/channels/utils/credentialCrypto';
 
 /**
  * Main database class for AionUi
@@ -42,11 +24,11 @@ import { encryptCredentials, decryptCredentials } from "@/channels/utils/credent
  */
 export class AionUIDatabase {
   private db: Database.Database;
-  private readonly defaultUserId = "system_default_user";
-  private readonly systemPasswordPlaceholder = "";
+  private readonly defaultUserId = 'system_default_user';
+  private readonly systemPasswordPlaceholder = '';
 
   constructor() {
-    const finalPath = path.join(getDataPath(), "aionui.db");
+    const finalPath = path.join(getDataPath(), 'aionui.db');
     console.log(`[Database] Initializing database at: ${finalPath}`);
 
     const dir = path.dirname(finalPath);
@@ -56,7 +38,7 @@ export class AionUIDatabase {
       this.db = new BetterSqlite3(finalPath);
       this.initialize();
     } catch (error) {
-      console.error("[Database] Failed to initialize, attempting recovery...", error);
+      console.error('[Database] Failed to initialize, attempting recovery...', error);
       // 尝试恢复：关闭并重新创建数据库
       // Try to recover by closing and recreating database
       try {
@@ -76,17 +58,15 @@ export class AionUIDatabase {
           fs.renameSync(finalPath, backupPath);
           console.log(`[Database] Backed up corrupted database to: ${backupPath}`);
         } catch (e) {
-          console.error("[Database] Failed to backup corrupted database:", e);
+          console.error('[Database] Failed to backup corrupted database:', e);
           // 备份失败则尝试直接删除
           // If backup fails, try to delete instead
           try {
             fs.unlinkSync(finalPath);
             console.log(`[Database] Deleted corrupted database file`);
           } catch (e2) {
-            console.error("[Database] Failed to delete corrupted database:", e2);
-            throw new Error(
-              "Database is corrupted and cannot be recovered. Please manually delete: " + finalPath,
-            );
+            console.error('[Database] Failed to delete corrupted database:', e2);
+            throw new Error('Database is corrupted and cannot be recovered. Please manually delete: ' + finalPath);
           }
         }
       }
@@ -111,7 +91,7 @@ export class AionUIDatabase {
 
       this.ensureSystemUser();
     } catch (error) {
-      console.error("[Database] Initialization failed:", error);
+      console.error('[Database] Initialization failed:', error);
       throw error;
     }
   }
@@ -125,15 +105,13 @@ export class AionUIDatabase {
     this.db
       .prepare(
         `INSERT OR IGNORE INTO users (id, username, email, password_hash, avatar_path, created_at, updated_at, last_login, jwt_secret)
-         VALUES (?, ?, NULL, ?, NULL, ?, ?, NULL, NULL)`,
+         VALUES (?, ?, NULL, ?, NULL, ?, ?, NULL, NULL)`
       )
       .run(this.defaultUserId, this.defaultUserId, this.systemPasswordPlaceholder, now, now);
   }
 
   getSystemUser(): IUser | null {
-    const user = this.db.prepare("SELECT * FROM users WHERE id = ?").get(this.defaultUserId) as
-      | IUser
-      | undefined;
+    const user = this.db.prepare('SELECT * FROM users WHERE id = ?').get(this.defaultUserId) as IUser | undefined;
     return user ?? null;
   }
 
@@ -143,7 +121,7 @@ export class AionUIDatabase {
       .prepare(
         `UPDATE users
          SET username = ?, password_hash = ?, updated_at = ?, created_at = COALESCE(created_at, ?)
-         WHERE id = ?`,
+         WHERE id = ?`
       )
       .run(username, passwordHash, now, now, this.defaultUserId);
   }
@@ -170,11 +148,7 @@ export class AionUIDatabase {
    * @param passwordHash - Hashed password (use bcrypt)
    * @returns Query result with created user data
    */
-  createUser(
-    username: string,
-    email: string | undefined,
-    passwordHash: string,
-  ): IQueryResult<IUser> {
+  createUser(username: string, email: string | undefined, passwordHash: string): IQueryResult<IUser> {
     try {
       const userId = `user_${Date.now()}`;
       const now = Date.now();
@@ -215,14 +189,12 @@ export class AionUIDatabase {
    */
   getUser(userId: string): IQueryResult<IUser> {
     try {
-      const user = this.db.prepare("SELECT * FROM users WHERE id = ?").get(userId) as
-        | IUser
-        | undefined;
+      const user = this.db.prepare('SELECT * FROM users WHERE id = ?').get(userId) as IUser | undefined;
 
       if (!user) {
         return {
           success: false,
-          error: "User not found",
+          error: 'User not found',
         };
       }
 
@@ -247,9 +219,7 @@ export class AionUIDatabase {
    */
   getUserByUsername(username: string): IQueryResult<IUser | null> {
     try {
-      const user = this.db.prepare("SELECT * FROM users WHERE username = ?").get(username) as
-        | IUser
-        | undefined;
+      const user = this.db.prepare('SELECT * FROM users WHERE username = ?').get(username) as IUser | undefined;
 
       return {
         success: true,
@@ -272,7 +242,7 @@ export class AionUIDatabase {
    */
   getAllUsers(): IQueryResult<IUser[]> {
     try {
-      const stmt = this.db.prepare("SELECT * FROM users ORDER BY created_at ASC");
+      const stmt = this.db.prepare('SELECT * FROM users ORDER BY created_at ASC');
       const rows = stmt.all() as IUser[];
 
       return {
@@ -296,7 +266,7 @@ export class AionUIDatabase {
    */
   getUserCount(): IQueryResult<number> {
     try {
-      const stmt = this.db.prepare("SELECT COUNT(*) as count FROM users");
+      const stmt = this.db.prepare('SELECT COUNT(*) as count FROM users');
       const row = stmt.get() as { count: number };
 
       return {
@@ -322,9 +292,7 @@ export class AionUIDatabase {
     try {
       // 只统计已设置密码的账户，排除尚未完成初始化的占位行
       // Count only accounts with a non-empty password to ignore placeholder entries
-      const stmt = this.db.prepare(
-        `SELECT COUNT(*) as count FROM users WHERE password_hash IS NOT NULL AND TRIM(password_hash) != ''`,
-      );
+      const stmt = this.db.prepare(`SELECT COUNT(*) as count FROM users WHERE password_hash IS NOT NULL AND TRIM(password_hash) != ''`);
       const row = stmt.get() as { count: number };
       return {
         success: true,
@@ -348,9 +316,7 @@ export class AionUIDatabase {
   updateUserLastLogin(userId: string): IQueryResult<boolean> {
     try {
       const now = Date.now();
-      this.db
-        .prepare("UPDATE users SET last_login = ?, updated_at = ? WHERE id = ?")
-        .run(now, now, userId);
+      this.db.prepare('UPDATE users SET last_login = ?, updated_at = ? WHERE id = ?').run(now, now, userId);
       return {
         success: true,
         data: true,
@@ -375,9 +341,7 @@ export class AionUIDatabase {
   updateUserPassword(userId: string, newPasswordHash: string): IQueryResult<boolean> {
     try {
       const now = Date.now();
-      this.db
-        .prepare("UPDATE users SET password_hash = ?, updated_at = ? WHERE id = ?")
-        .run(newPasswordHash, now, userId);
+      this.db.prepare('UPDATE users SET password_hash = ?, updated_at = ? WHERE id = ?').run(newPasswordHash, now, userId);
       return {
         success: true,
         data: true,
@@ -398,9 +362,7 @@ export class AionUIDatabase {
   updateUserJwtSecret(userId: string, jwtSecret: string): IQueryResult<boolean> {
     try {
       const now = Date.now();
-      this.db
-        .prepare("UPDATE users SET jwt_secret = ?, updated_at = ? WHERE id = ?")
-        .run(jwtSecret, now, userId);
+      this.db.prepare('UPDATE users SET jwt_secret = ?, updated_at = ? WHERE id = ?').run(jwtSecret, now, userId);
       return {
         success: true,
         data: true,
@@ -420,10 +382,7 @@ export class AionUIDatabase {
    * ==================
    */
 
-  createConversation(
-    conversation: TChatConversation,
-    userId?: string,
-  ): IQueryResult<TChatConversation> {
+  createConversation(conversation: TChatConversation, userId?: string): IQueryResult<TChatConversation> {
     try {
       const row = conversationToRow(conversation, userId || this.defaultUserId);
 
@@ -432,19 +391,7 @@ export class AionUIDatabase {
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `);
 
-      stmt.run(
-        row.id,
-        row.user_id,
-        row.name,
-        row.type,
-        row.extra,
-        row.model,
-        row.status,
-        row.source,
-        row.channel_chat_id ?? null,
-        row.created_at,
-        row.updated_at,
-      );
+      stmt.run(row.id, row.user_id, row.name, row.type, row.extra, row.model, row.status, row.source, row.channel_chat_id ?? null, row.created_at, row.updated_at);
 
       return {
         success: true,
@@ -460,14 +407,12 @@ export class AionUIDatabase {
 
   getConversation(conversationId: string): IQueryResult<TChatConversation> {
     try {
-      const row = this.db.prepare("SELECT * FROM conversations WHERE id = ?").get(conversationId) as
-        | IConversationRow
-        | undefined;
+      const row = this.db.prepare('SELECT * FROM conversations WHERE id = ?').get(conversationId) as IConversationRow | undefined;
 
       if (!row) {
         return {
           success: false,
-          error: "Conversation not found",
+          error: 'Conversation not found',
         };
       }
 
@@ -490,13 +435,7 @@ export class AionUIDatabase {
    * For ACP conversations, `backend` distinguishes between claude, iflow, codebuddy, etc.
    * (stored in `extra.backend` JSON field).
    */
-  findChannelConversation(
-    source: "aionui" | "telegram" | "lark" | "dingtalk",
-    channelChatId: string,
-    type: string,
-    backend?: string,
-    userId?: string,
-  ): IQueryResult<TChatConversation | null> {
+  findChannelConversation(source: 'aionui' | 'telegram' | 'lark' | 'dingtalk', channelChatId: string, type: string, backend?: string, userId?: string): IQueryResult<TChatConversation | null> {
     try {
       const finalUserId = userId || this.defaultUserId;
 
@@ -510,7 +449,7 @@ export class AionUIDatabase {
               AND json_extract(extra, '$.backend') = ?
             ORDER BY updated_at DESC
             LIMIT 1
-          `,
+          `
           )
           .get(finalUserId, source, channelChatId, type, backend) as IConversationRow | undefined;
       } else {
@@ -521,7 +460,7 @@ export class AionUIDatabase {
             WHERE user_id = ? AND source = ? AND channel_chat_id = ? AND type = ?
             ORDER BY updated_at DESC
             LIMIT 1
-          `,
+          `
           )
           .get(finalUserId, source, channelChatId, type) as IConversationRow | undefined;
       }
@@ -542,12 +481,7 @@ export class AionUIDatabase {
    * Batch-update the model field on channel conversations matching source + type.
    * Used when channel settings change to propagate new model to existing conversations.
    */
-  updateChannelConversationModel(
-    source: "telegram" | "lark" | "dingtalk",
-    type: string,
-    model: TProviderWithModel,
-    userId?: string,
-  ): IQueryResult<number> {
+  updateChannelConversationModel(source: 'telegram' | 'lark' | 'dingtalk', type: string, model: TProviderWithModel, userId?: string): IQueryResult<number> {
     try {
       const finalUserId = userId || this.defaultUserId;
       const modelJson = JSON.stringify(model);
@@ -563,17 +497,11 @@ export class AionUIDatabase {
     }
   }
 
-  getUserConversations(
-    userId?: string,
-    page = 0,
-    pageSize = 50,
-  ): IPaginatedResult<TChatConversation> {
+  getUserConversations(userId?: string, page = 0, pageSize = 50): IPaginatedResult<TChatConversation> {
     try {
       const finalUserId = userId || this.defaultUserId;
 
-      const countResult = this.db
-        .prepare("SELECT COUNT(*) as count FROM conversations WHERE user_id = ?")
-        .get(finalUserId) as {
+      const countResult = this.db.prepare('SELECT COUNT(*) as count FROM conversations WHERE user_id = ?').get(finalUserId) as {
         count: number;
       };
 
@@ -585,7 +513,7 @@ export class AionUIDatabase {
             WHERE user_id = ?
             ORDER BY updated_at DESC LIMIT ?
             OFFSET ?
-          `,
+          `
         )
         .all(finalUserId, pageSize, page * pageSize) as IConversationRow[];
 
@@ -597,7 +525,7 @@ export class AionUIDatabase {
         hasMore: (page + 1) * pageSize < countResult.count,
       };
     } catch (error: any) {
-      console.error("[Database] Get conversations error:", error);
+      console.error('[Database] Get conversations error:', error);
       return {
         data: [],
         total: 0,
@@ -608,16 +536,13 @@ export class AionUIDatabase {
     }
   }
 
-  updateConversation(
-    conversationId: string,
-    updates: Partial<TChatConversation>,
-  ): IQueryResult<boolean> {
+  updateConversation(conversationId: string, updates: Partial<TChatConversation>): IQueryResult<boolean> {
     try {
       const existing = this.getConversation(conversationId);
       if (!existing.success || !existing.data) {
         return {
           success: false,
-          error: "Conversation not found",
+          error: 'Conversation not found',
         };
       }
 
@@ -654,7 +579,7 @@ export class AionUIDatabase {
 
   deleteConversation(conversationId: string): IQueryResult<boolean> {
     try {
-      const stmt = this.db.prepare("DELETE FROM conversations WHERE id = ?");
+      const stmt = this.db.prepare('DELETE FROM conversations WHERE id = ?');
       const result = stmt.run(conversationId);
 
       return {
@@ -684,16 +609,7 @@ export class AionUIDatabase {
         VALUES (?, ?, ?, ?, ?, ?, ?, ?)
       `);
 
-      stmt.run(
-        row.id,
-        row.conversation_id,
-        row.msg_id,
-        row.type,
-        row.content,
-        row.position,
-        row.status,
-        row.created_at,
-      );
+      stmt.run(row.id, row.conversation_id, row.msg_id, row.type, row.content, row.position, row.status, row.created_at);
 
       return {
         success: true,
@@ -707,16 +623,9 @@ export class AionUIDatabase {
     }
   }
 
-  getConversationMessages(
-    conversationId: string,
-    page = 0,
-    pageSize = 100,
-    order = "ASC",
-  ): IPaginatedResult<TMessage> {
+  getConversationMessages(conversationId: string, page = 0, pageSize = 100, order = 'ASC'): IPaginatedResult<TMessage> {
     try {
-      const countResult = this.db
-        .prepare("SELECT COUNT(*) as count FROM messages WHERE conversation_id = ?")
-        .get(conversationId) as {
+      const countResult = this.db.prepare('SELECT COUNT(*) as count FROM messages WHERE conversation_id = ?').get(conversationId) as {
         count: number;
       };
 
@@ -728,7 +637,7 @@ export class AionUIDatabase {
             WHERE conversation_id = ?
             ORDER BY created_at ${order} LIMIT ?
             OFFSET ?
-          `,
+          `
         )
         .all(conversationId, pageSize, page * pageSize) as IMessageRow[];
 
@@ -740,7 +649,7 @@ export class AionUIDatabase {
         hasMore: (page + 1) * pageSize < countResult.count,
       };
     } catch (error: any) {
-      console.error("[Database] Get messages error:", error);
+      console.error('[Database] Get messages error:', error);
       return {
         data: [],
         total: 0,
@@ -785,7 +694,7 @@ export class AionUIDatabase {
 
   deleteMessage(messageId: string): IQueryResult<boolean> {
     try {
-      const stmt = this.db.prepare("DELETE FROM messages WHERE id = ?");
+      const stmt = this.db.prepare('DELETE FROM messages WHERE id = ?');
       const result = stmt.run(messageId);
 
       return {
@@ -802,7 +711,7 @@ export class AionUIDatabase {
 
   deleteConversationMessages(conversationId: string): IQueryResult<number> {
     try {
-      const stmt = this.db.prepare("DELETE FROM messages WHERE conversation_id = ?");
+      const stmt = this.db.prepare('DELETE FROM messages WHERE conversation_id = ?');
       const result = stmt.run(conversationId);
 
       return {
@@ -821,11 +730,7 @@ export class AionUIDatabase {
    * Get message by msg_id and conversation_id
    * Used for finding existing messages to update (e.g., streaming text accumulation)
    */
-  getMessageByMsgId(
-    conversationId: string,
-    msgId: string,
-    type: TMessage["type"],
-  ): IQueryResult<TMessage | null> {
+  getMessageByMsgId(conversationId: string, msgId: string, type: TMessage['type']): IQueryResult<TMessage | null> {
     try {
       const stmt = this.db.prepare(`
         SELECT *
@@ -862,9 +767,7 @@ export class AionUIDatabase {
    */
   getChannelPlugins(): IQueryResult<IChannelPluginConfig[]> {
     try {
-      const rows = this.db
-        .prepare("SELECT * FROM assistant_plugins ORDER BY created_at ASC")
-        .all() as Array<{
+      const rows = this.db.prepare('SELECT * FROM assistant_plugins ORDER BY created_at ASC').all() as Array<{
         id: string;
         type: string;
         name: string;
@@ -877,7 +780,7 @@ export class AionUIDatabase {
       }>;
 
       const plugins: IChannelPluginConfig[] = rows.map((row) => {
-        const storedConfig = JSON.parse(row.config || "{}");
+        const storedConfig = JSON.parse(row.config || '{}');
         // Decrypt credentials when loading
         const decryptedCredentials = decryptCredentials(storedConfig.credentials);
 
@@ -888,7 +791,7 @@ export class AionUIDatabase {
           enabled: row.enabled === 1,
           credentials: decryptedCredentials,
           config: storedConfig.config,
-          status: (row.status as PluginStatus) || "stopped",
+          status: (row.status as PluginStatus) || 'stopped',
           lastConnected: row.last_connected ?? undefined,
           createdAt: row.created_at,
           updatedAt: row.updated_at,
@@ -906,7 +809,7 @@ export class AionUIDatabase {
    */
   getChannelPlugin(pluginId: string): IQueryResult<IChannelPluginConfig | null> {
     try {
-      const row = this.db.prepare("SELECT * FROM assistant_plugins WHERE id = ?").get(pluginId) as
+      const row = this.db.prepare('SELECT * FROM assistant_plugins WHERE id = ?').get(pluginId) as
         | {
             id: string;
             type: string;
@@ -924,7 +827,7 @@ export class AionUIDatabase {
         return { success: true, data: null };
       }
 
-      const storedConfig = JSON.parse(row.config || "{}");
+      const storedConfig = JSON.parse(row.config || '{}');
       // Decrypt credentials when loading
       const decryptedCredentials = decryptCredentials(storedConfig.credentials);
 
@@ -935,7 +838,7 @@ export class AionUIDatabase {
         enabled: row.enabled === 1,
         credentials: decryptedCredentials,
         config: storedConfig.config,
-        status: (row.status as PluginStatus) || "stopped",
+        status: (row.status as PluginStatus) || 'stopped',
         lastConnected: row.last_connected ?? undefined,
         createdAt: row.created_at,
         updatedAt: row.updated_at,
@@ -974,17 +877,7 @@ export class AionUIDatabase {
         config: plugin.config,
       };
 
-      stmt.run(
-        plugin.id,
-        plugin.type,
-        plugin.name,
-        plugin.enabled ? 1 : 0,
-        JSON.stringify(storedConfig),
-        plugin.status,
-        plugin.lastConnected ?? null,
-        plugin.createdAt || now,
-        now,
-      );
+      stmt.run(plugin.id, plugin.type, plugin.name, plugin.enabled ? 1 : 0, JSON.stringify(storedConfig), plugin.status, plugin.lastConnected ?? null, plugin.createdAt || now, now);
 
       return { success: true, data: true };
     } catch (error: any) {
@@ -995,18 +888,10 @@ export class AionUIDatabase {
   /**
    * Update assistant plugin status
    */
-  updateChannelPluginStatus(
-    pluginId: string,
-    status: PluginStatus,
-    lastConnected?: number,
-  ): IQueryResult<boolean> {
+  updateChannelPluginStatus(pluginId: string, status: PluginStatus, lastConnected?: number): IQueryResult<boolean> {
     try {
       const now = Date.now();
-      this.db
-        .prepare(
-          "UPDATE assistant_plugins SET status = ?, last_connected = COALESCE(?, last_connected), updated_at = ? WHERE id = ?",
-        )
-        .run(status, lastConnected ?? null, now, pluginId);
+      this.db.prepare('UPDATE assistant_plugins SET status = ?, last_connected = COALESCE(?, last_connected), updated_at = ? WHERE id = ?').run(status, lastConnected ?? null, now, pluginId);
       return { success: true, data: true };
     } catch (error: any) {
       return { success: false, error: error.message };
@@ -1018,7 +903,7 @@ export class AionUIDatabase {
    */
   deleteChannelPlugin(pluginId: string): IQueryResult<boolean> {
     try {
-      const result = this.db.prepare("DELETE FROM assistant_plugins WHERE id = ?").run(pluginId);
+      const result = this.db.prepare('DELETE FROM assistant_plugins WHERE id = ?').run(pluginId);
       return { success: true, data: result.changes > 0 };
     } catch (error: any) {
       return { success: false, error: error.message };
@@ -1037,9 +922,7 @@ export class AionUIDatabase {
    */
   getChannelUsers(): IQueryResult<IChannelUser[]> {
     try {
-      const rows = this.db
-        .prepare("SELECT * FROM assistant_users ORDER BY authorized_at DESC")
-        .all() as IChannelUserRow[];
+      const rows = this.db.prepare('SELECT * FROM assistant_users ORDER BY authorized_at DESC').all() as IChannelUserRow[];
       return { success: true, data: rows.map(rowToChannelUser) };
     } catch (error: any) {
       return { success: false, error: error.message, data: [] };
@@ -1049,14 +932,9 @@ export class AionUIDatabase {
   /**
    * Get assistant user by platform user ID
    */
-  getChannelUserByPlatform(
-    platformUserId: string,
-    platformType: PluginType,
-  ): IQueryResult<IChannelUser | null> {
+  getChannelUserByPlatform(platformUserId: string, platformType: PluginType): IQueryResult<IChannelUser | null> {
     try {
-      const row = this.db
-        .prepare("SELECT * FROM assistant_users WHERE platform_user_id = ? AND platform_type = ?")
-        .get(platformUserId, platformType) as IChannelUserRow | undefined;
+      const row = this.db.prepare('SELECT * FROM assistant_users WHERE platform_user_id = ? AND platform_type = ?').get(platformUserId, platformType) as IChannelUserRow | undefined;
 
       return { success: true, data: row ? rowToChannelUser(row) : null };
     } catch (error: any) {
@@ -1074,15 +952,7 @@ export class AionUIDatabase {
         VALUES (?, ?, ?, ?, ?, ?, ?)
       `);
 
-      stmt.run(
-        user.id,
-        user.platformUserId,
-        user.platformType,
-        user.displayName ?? null,
-        user.authorizedAt,
-        user.lastActive ?? null,
-        user.sessionId ?? null,
-      );
+      stmt.run(user.id, user.platformUserId, user.platformType, user.displayName ?? null, user.authorizedAt, user.lastActive ?? null, user.sessionId ?? null);
 
       return { success: true, data: user };
     } catch (error: any) {
@@ -1096,7 +966,7 @@ export class AionUIDatabase {
   updateChannelUserActivity(userId: string): IQueryResult<boolean> {
     try {
       const now = Date.now();
-      this.db.prepare("UPDATE assistant_users SET last_active = ? WHERE id = ?").run(now, userId);
+      this.db.prepare('UPDATE assistant_users SET last_active = ? WHERE id = ?').run(now, userId);
       return { success: true, data: true };
     } catch (error: any) {
       return { success: false, error: error.message };
@@ -1108,7 +978,7 @@ export class AionUIDatabase {
    */
   deleteChannelUser(userId: string): IQueryResult<boolean> {
     try {
-      const result = this.db.prepare("DELETE FROM assistant_users WHERE id = ?").run(userId);
+      const result = this.db.prepare('DELETE FROM assistant_users WHERE id = ?').run(userId);
       return { success: true, data: result.changes > 0 };
     } catch (error: any) {
       return { success: false, error: error.message };
@@ -1127,9 +997,7 @@ export class AionUIDatabase {
    */
   getChannelSessions(): IQueryResult<IChannelSession[]> {
     try {
-      const rows = this.db
-        .prepare("SELECT * FROM assistant_sessions ORDER BY last_activity DESC")
-        .all() as IChannelSessionRow[];
+      const rows = this.db.prepare('SELECT * FROM assistant_sessions ORDER BY last_activity DESC').all() as IChannelSessionRow[];
       return { success: true, data: rows.map(rowToChannelSession) };
     } catch (error: any) {
       return { success: false, error: error.message, data: [] };
@@ -1141,9 +1009,7 @@ export class AionUIDatabase {
    */
   getChannelSessionByUser(userId: string): IQueryResult<IChannelSession | null> {
     try {
-      const row = this.db
-        .prepare("SELECT * FROM assistant_sessions WHERE user_id = ?")
-        .get(userId) as IChannelSessionRow | undefined;
+      const row = this.db.prepare('SELECT * FROM assistant_sessions WHERE user_id = ?').get(userId) as IChannelSessionRow | undefined;
       return { success: true, data: row ? rowToChannelSession(row) : null };
     } catch (error: any) {
       return { success: false, error: error.message };
@@ -1167,16 +1033,7 @@ export class AionUIDatabase {
           last_activity = excluded.last_activity
       `);
 
-      stmt.run(
-        session.id,
-        session.userId,
-        session.agentType,
-        session.conversationId ?? null,
-        session.workspace ?? null,
-        session.chatId ?? null,
-        session.createdAt || now,
-        session.lastActivity || now,
-      );
+      stmt.run(session.id, session.userId, session.agentType, session.conversationId ?? null, session.workspace ?? null, session.chatId ?? null, session.createdAt || now, session.lastActivity || now);
 
       return { success: true, data: true };
     } catch (error: any) {
@@ -1189,7 +1046,7 @@ export class AionUIDatabase {
    */
   deleteChannelSession(sessionId: string): IQueryResult<boolean> {
     try {
-      const result = this.db.prepare("DELETE FROM assistant_sessions WHERE id = ?").run(sessionId);
+      const result = this.db.prepare('DELETE FROM assistant_sessions WHERE id = ?').run(sessionId);
       return { success: true, data: result.changes > 0 };
     } catch (error: any) {
       return { success: false, error: error.message };
@@ -1209,11 +1066,7 @@ export class AionUIDatabase {
   getPendingPairingRequests(): IQueryResult<IChannelPairingRequest[]> {
     try {
       const now = Date.now();
-      const rows = this.db
-        .prepare(
-          "SELECT * FROM assistant_pairing_codes WHERE status = 'pending' AND expires_at > ? ORDER BY requested_at DESC",
-        )
-        .all(now) as IChannelPairingCodeRow[];
+      const rows = this.db.prepare("SELECT * FROM assistant_pairing_codes WHERE status = 'pending' AND expires_at > ? ORDER BY requested_at DESC").all(now) as IChannelPairingCodeRow[];
       return { success: true, data: rows.map(rowToPairingRequest) };
     } catch (error: any) {
       return { success: false, error: error.message, data: [] };
@@ -1225,9 +1078,7 @@ export class AionUIDatabase {
    */
   getPairingRequestByCode(code: string): IQueryResult<IChannelPairingRequest | null> {
     try {
-      const row = this.db
-        .prepare("SELECT * FROM assistant_pairing_codes WHERE code = ?")
-        .get(code) as IChannelPairingCodeRow | undefined;
+      const row = this.db.prepare('SELECT * FROM assistant_pairing_codes WHERE code = ?').get(code) as IChannelPairingCodeRow | undefined;
       return { success: true, data: row ? rowToPairingRequest(row) : null };
     } catch (error: any) {
       return { success: false, error: error.message };
@@ -1244,15 +1095,7 @@ export class AionUIDatabase {
         VALUES (?, ?, ?, ?, ?, ?, ?)
       `);
 
-      stmt.run(
-        request.code,
-        request.platformUserId,
-        request.platformType,
-        request.displayName ?? null,
-        request.requestedAt,
-        request.expiresAt,
-        request.status,
-      );
+      stmt.run(request.code, request.platformUserId, request.platformType, request.displayName ?? null, request.requestedAt, request.expiresAt, request.status);
 
       return { success: true, data: request };
     } catch (error: any) {
@@ -1263,14 +1106,9 @@ export class AionUIDatabase {
   /**
    * Update pairing request status
    */
-  updatePairingRequestStatus(
-    code: string,
-    status: IChannelPairingRequest["status"],
-  ): IQueryResult<boolean> {
+  updatePairingRequestStatus(code: string, status: IChannelPairingRequest['status']): IQueryResult<boolean> {
     try {
-      const result = this.db
-        .prepare("UPDATE assistant_pairing_codes SET status = ? WHERE code = ?")
-        .run(status, code);
+      const result = this.db.prepare('UPDATE assistant_pairing_codes SET status = ? WHERE code = ?').run(status, code);
       return { success: true, data: result.changes > 0 };
     } catch (error: any) {
       return { success: false, error: error.message };
@@ -1283,9 +1121,7 @@ export class AionUIDatabase {
   cleanupExpiredPairingRequests(): IQueryResult<number> {
     try {
       const now = Date.now();
-      const result = this.db
-        .prepare("DELETE FROM assistant_pairing_codes WHERE expires_at < ? OR status != 'pending'")
-        .run(now);
+      const result = this.db.prepare("DELETE FROM assistant_pairing_codes WHERE expires_at < ? OR status != 'pending'").run(now);
       return { success: true, data: result.changes };
     } catch (error: any) {
       return { success: false, error: error.message, data: 0 };
@@ -1296,8 +1132,8 @@ export class AionUIDatabase {
    * Vacuum database to reclaim space
    */
   vacuum(): void {
-    this.db.exec("VACUUM");
-    console.log("[Database] Vacuum completed");
+    this.db.exec('VACUUM');
+    console.log('[Database] Vacuum completed');
   }
 }
 

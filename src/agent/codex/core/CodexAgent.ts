@@ -4,20 +4,16 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { NetworkError, CodexEventEnvelope } from "@/agent/codex/connection/CodexConnection";
-import { CodexConnection } from "@/agent/codex/connection/CodexConnection";
-import type { FileChange, CodexEventParams, CodexJsonRpcEvent } from "@/common/codex/types";
-import type { CodexEventHandler } from "@/agent/codex/handlers/CodexEventHandler";
-import type { CodexSessionManager } from "@/agent/codex/handlers/CodexSessionManager";
-import type { CodexFileOperationHandler } from "@/agent/codex/handlers/CodexFileOperationHandler";
-import { ApprovalStore, createExecApprovalKey, createPatchApprovalKey } from "./ApprovalStore";
-import type { ReviewDecision } from "./ApprovalStore";
-import {
-  getConfiguredAppClientName,
-  getConfiguredAppClientVersion,
-  getConfiguredCodexMcpProtocolVersion,
-} from "../../../common/utils/appConfig";
-import { lt } from "semver";
+import type { NetworkError, CodexEventEnvelope } from '@/agent/codex/connection/CodexConnection';
+import { CodexConnection } from '@/agent/codex/connection/CodexConnection';
+import type { FileChange, CodexEventParams, CodexJsonRpcEvent } from '@/common/codex/types';
+import type { CodexEventHandler } from '@/agent/codex/handlers/CodexEventHandler';
+import type { CodexSessionManager } from '@/agent/codex/handlers/CodexSessionManager';
+import type { CodexFileOperationHandler } from '@/agent/codex/handlers/CodexFileOperationHandler';
+import { ApprovalStore, createExecApprovalKey, createPatchApprovalKey } from './ApprovalStore';
+import type { ReviewDecision } from './ApprovalStore';
+import { getConfiguredAppClientName, getConfiguredAppClientVersion, getConfiguredCodexMcpProtocolVersion } from '../../../common/utils/appConfig';
+import { lt } from 'semver';
 
 interface LegacyNetworkErrorDetails {
   networkErrorType?: string;
@@ -37,7 +33,7 @@ export interface CodexAgentConfig {
   sessionManager: CodexSessionManager;
   fileOperationHandler: CodexFileOperationHandler;
   onNetworkError?: (error: NetworkError) => void;
-  sandboxMode?: "read-only" | "workspace-write" | "danger-full-access"; // Filesystem sandbox mode
+  sandboxMode?: 'read-only' | 'workspace-write' | 'danger-full-access'; // Filesystem sandbox mode
   /** Yolo mode: skip confirmation prompts while keeping sandbox protection (for cron jobs) */
   yoloMode?: boolean;
 }
@@ -54,7 +50,7 @@ export class CodexAgent {
   private readonly sessionManager: CodexSessionManager;
   private readonly fileOperationHandler: CodexFileOperationHandler;
   private readonly onNetworkError?: (error: NetworkError) => void;
-  private readonly sandboxMode: "read-only" | "workspace-write" | "danger-full-access";
+  private readonly sandboxMode: 'read-only' | 'workspace-write' | 'danger-full-access';
   private readonly yoloMode: boolean;
   private conn: CodexConnection | null = null;
   private conversationId: string | null = null;
@@ -73,7 +69,7 @@ export class CodexAgent {
     this.sessionManager = cfg.sessionManager;
     this.fileOperationHandler = cfg.fileOperationHandler;
     this.onNetworkError = cfg.onNetworkError;
-    this.sandboxMode = cfg.sandboxMode || "workspace-write"; // Default to workspace-write for file operations
+    this.sandboxMode = cfg.sandboxMode || 'workspace-write'; // Default to workspace-write for file operations
     this.yoloMode = cfg.yoloMode || false;
   }
 
@@ -85,9 +81,7 @@ export class CodexAgent {
     try {
       // 让 CodexConnection 根据版本自动检测合适的命令 / Let CodexConnection auto-detect the appropriate command based on version
       // Pass yoloMode option for cron jobs to enable automatic execution
-      await this.conn.start(this.cliPath || "codex", this.workingDir, [], {
-        yoloMode: this.yoloMode,
-      });
+      await this.conn.start(this.cliPath || 'codex', this.workingDir, [], { yoloMode: this.yoloMode });
 
       // Wait for MCP server to be fully ready
       await this.conn.waitForServerReady(30000);
@@ -97,43 +91,31 @@ export class CodexAgent {
       // Try different initialization approaches
       try {
         await this.conn.request(
-          "initialize",
+          'initialize',
           {
             protocolVersion: CODEX_MCP_PROTOCOL_VERSION,
             capabilities: {},
             clientInfo: { name: APP_CLIENT_NAME, version: APP_CLIENT_VERSION },
           },
-          15000,
+          15000
         ); // Shorter timeout for faster fallback
       } catch (initError) {
         try {
           // Try without initialize - maybe Codex doesn't need it
-          await this.conn.request("tools/list", {}, 10000);
+          await this.conn.request('tools/list', {}, 10000);
         } catch (testError) {
-          throw new Error(
-            `Codex MCP initialization failed: ${initError}. Tools list also failed: ${testError}`,
-          );
+          throw new Error(`Codex MCP initialization failed: ${initError}. Tools list also failed: ${testError}`);
         }
       }
     } catch (error) {
       // Provide more specific error messages
       if (error instanceof Error) {
-        if (error.message.includes("timed out")) {
-          throw new Error(
-            "Codex initialization timed out. This may indicate:\n" +
-              "1. Codex CLI is not responding\n" +
-              "2. Network connectivity issues\n" +
-              "3. Authentication problems\n" +
-              "Please check: codex auth status, network connection, and try again.",
-          );
-        } else if (error.message.includes("command not found")) {
-          throw new Error(
-            "Codex CLI not found. Please install Codex CLI and ensure it's in your PATH.",
-          );
-        } else if (error.message.includes("authentication")) {
-          throw new Error(
-            'Codex authentication required. Please run "codex auth" to authenticate.',
-          );
+        if (error.message.includes('timed out')) {
+          throw new Error('Codex initialization timed out. This may indicate:\n' + '1. Codex CLI is not responding\n' + '2. Network connectivity issues\n' + '3. Authentication problems\n' + 'Please check: codex auth status, network connection, and try again.');
+        } else if (error.message.includes('command not found')) {
+          throw new Error("Codex CLI not found. Please install Codex CLI and ensure it's in your PATH.");
+        } else if (error.message.includes('authentication')) {
+          throw new Error('Codex authentication required. Please run "codex auth" to authenticate.');
         }
       }
 
@@ -155,11 +137,11 @@ export class CodexAgent {
   private isFatalError(errorMessage: string): boolean {
     const fatalErrorPatterns = [
       "You've hit your usage limit", // 使用限制错误
-      "authentication failed", // 认证失败
-      "unauthorized", // 未授权
-      "forbidden", // 禁止访问
-      "invalid api key", // API key无效
-      "account suspended", // 账户被暂停
+      'authentication failed', // 认证失败
+      'unauthorized', // 未授权
+      'forbidden', // 禁止访问
+      'invalid api key', // API key无效
+      'account suspended', // 账户被暂停
     ];
 
     const lowerErrorMsg = errorMessage.toLowerCase();
@@ -173,11 +155,7 @@ export class CodexAgent {
     return false;
   }
 
-  async newSession(
-    cwd?: string,
-    initialPrompt?: string,
-    model?: string,
-  ): Promise<{ sessionId: string }> {
+  async newSession(cwd?: string, initialPrompt?: string, model?: string): Promise<{ sessionId: string }> {
     // Establish Codex conversation via MCP tool call; we will keep the generated ID locally
     const convId = this.conversationId || this.generateConversationId();
     this.conversationId = convId;
@@ -190,7 +168,7 @@ export class CodexAgent {
     // Sending sandbox: 'workspace-write' causes CLI to auto-approve within workspace,
     // preventing approval requests needed for mode switching (default/autoEdit)
     const args: Record<string, unknown> = {
-      prompt: initialPrompt || "",
+      prompt: initialPrompt || '',
       cwd: cwd || this.workingDir,
     };
     if (model) {
@@ -200,7 +178,7 @@ export class CodexAgent {
     // Restore web_search_request for older versions (< 0.40.0)
     // Codex CLI 0.40.0+ (mcp-server) handles web_search configuration internally and errors on duplicate field
     const currentVersion = this.conn?.getVersion();
-    if (currentVersion && lt(currentVersion, "0.40.0")) {
+    if (currentVersion && lt(currentVersion, '0.40.0')) {
       args.config = {
         tools: {
           web_search_request: true,
@@ -211,13 +189,13 @@ export class CodexAgent {
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
         await this.conn?.request(
-          "tools/call",
+          'tools/call',
           {
-            name: "codex",
+            name: 'codex',
             arguments: args,
             config: { conversationId: convId },
           },
-          600000,
+          600000
         ); // 10分钟超时
         return { sessionId: convId };
       } catch (error) {
@@ -253,18 +231,18 @@ export class CodexAgent {
 
     try {
       await this.conn?.request(
-        "tools/call",
+        'tools/call',
         {
-          name: "codex-reply",
+          name: 'codex-reply',
           arguments: { prompt, conversationId: convId },
         },
-        600000, // 10分钟超时，避免长任务中断
+        600000 // 10分钟超时，避免长任务中断
       );
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error);
 
       // 检查是否是超时错误
-      if (errorMsg.includes("timed out")) {
+      if (errorMsg.includes('timed out')) {
         // 不抛出错误，因为从日志看到 reasoning_delta 事件仍在正常到达
         return;
       }
@@ -281,12 +259,8 @@ export class CodexAgent {
     }
   }
 
-  async sendApprovalResponse(
-    callId: string,
-    approved: boolean,
-    changes: Record<string, FileChange>,
-  ): Promise<void> {
-    await this.conn?.request("apply_patch_approval_response", {
+  async sendApprovalResponse(callId: string, approved: boolean, changes: Record<string, FileChange>): Promise<void> {
+    await this.conn?.request('apply_patch_approval_response', {
       call_id: callId,
       approved,
       changes,
@@ -297,16 +271,13 @@ export class CodexAgent {
     this.conn?.resolvePermission(callId, approved);
   }
 
-  respondElicitation(
-    callId: string,
-    decision: "approved" | "approved_for_session" | "denied" | "abort",
-  ): void {
+  respondElicitation(callId: string, decision: 'approved' | 'approved_for_session' | 'denied' | 'abort'): void {
     this.conn?.respondElicitation(callId, decision);
   }
 
   private processCodexEvent(env: CodexEventEnvelope): void {
     // Handle codex/event messages (wrapped messages)
-    if (env.method === "codex/event") {
+    if (env.method === 'codex/event') {
       const params = (env.params || {}) as CodexEventParams;
       const msg = params?.msg;
       if (!msg) {
@@ -320,21 +291,17 @@ export class CodexAgent {
         // Event handling failed, continue processing
       }
 
-      if (msg.type === "session_configured" && msg.session_id) {
+      if (msg.type === 'session_configured' && msg.session_id) {
         this.conversationId = String(msg.session_id);
       }
       return;
     }
   }
 
-  private handleError(error: {
-    message: string;
-    type?: "network" | "stream" | "timeout" | "process";
-    details?: unknown;
-  }): void {
+  private handleError(error: { message: string; type?: 'network' | 'stream' | 'timeout' | 'process'; details?: unknown }): void {
     // 统一错误处理，直接调用 MessageProcessor 的错误处理方法
     try {
-      if (error.type === "network") {
+      if (error.type === 'network') {
         // 网络错误特殊处理，如果有外部处理器则优先使用
         if (this.onNetworkError) {
           const networkError = this.convertToLegacyNetworkError(error);
@@ -353,30 +320,26 @@ export class CodexAgent {
     }
   }
 
-  private convertToLegacyNetworkError(error: {
-    message: string;
-    type?: string;
-    details?: LegacyNetworkErrorDetails;
-  }): NetworkError {
+  private convertToLegacyNetworkError(error: { message: string; type?: string; details?: LegacyNetworkErrorDetails }): NetworkError {
     const details = error.details || {};
     return {
-      type: this.mapNetworkErrorType(details.networkErrorType || "unknown"),
+      type: this.mapNetworkErrorType(details.networkErrorType || 'unknown'),
       originalError: details.originalError || error.message,
       retryCount: details.retryCount || 0,
       suggestedAction: error.message,
     };
   }
 
-  private mapNetworkErrorType(type: string): NetworkError["type"] {
+  private mapNetworkErrorType(type: string): NetworkError['type'] {
     switch (type) {
-      case "cloudflare_blocked":
-        return "cloudflare_blocked";
-      case "network_timeout":
-        return "network_timeout";
-      case "connection_refused":
-        return "connection_refused";
+      case 'cloudflare_blocked':
+        return 'cloudflare_blocked';
+      case 'network_timeout':
+        return 'network_timeout';
+      case 'connection_refused':
+        return 'connection_refused';
       default:
-        return "unknown";
+        return 'unknown';
     }
   }
 
@@ -393,22 +356,22 @@ export class CodexAgent {
   private generateConversationId(): string {
     try {
       // eslint-disable-next-line @typescript-eslint/no-var-requires
-      const crypto = require("crypto");
-      if (typeof crypto.randomUUID === "function") {
+      const crypto = require('crypto');
+      if (typeof crypto.randomUUID === 'function') {
         return crypto.randomUUID();
       }
-      const buf = crypto.randomBytes(8).toString("hex");
+      const buf = crypto.randomBytes(8).toString('hex');
       return `conv-${Date.now()}-${buf}`;
     } catch {
       // Final fallback without insecure randomness; keep it monotonic & unique-enough for session scoping
       const ts = Date.now().toString(36);
-      const pid = typeof process !== "undefined" && process.pid ? process.pid.toString(36) : "p";
+      const pid = typeof process !== 'undefined' && process.pid ? process.pid.toString(36) : 'p';
       return `conv-${ts}-${pid}`;
     }
   }
 
   // Expose connection diagnostics for UI/manager without leaking internals
-  public getDiagnostics(): ReturnType<CodexConnection["getDiagnostics"]> {
+  public getDiagnostics(): ReturnType<CodexConnection['getDiagnostics']> {
     const diagnostics = this.conn?.getDiagnostics();
     if (diagnostics) return diagnostics;
     return {
@@ -444,7 +407,7 @@ export class CodexAgent {
   public checkExecApproval(command: string | string[], cwd?: string): boolean {
     const key = createExecApprovalKey(command, cwd);
     const decision = this.approvalStore.get(key);
-    return decision === "approved_for_session";
+    return decision === 'approved_for_session';
   }
 
   /**
@@ -454,7 +417,7 @@ export class CodexAgent {
   public checkPatchApproval(files: string[]): boolean {
     const key = createPatchApprovalKey(files);
     const decision = this.approvalStore.get(key);
-    return decision === "approved_for_session";
+    return decision === 'approved_for_session';
   }
 
   /**
@@ -478,11 +441,7 @@ export class CodexAgent {
   /**
    * Store exec approval decision in cache
    */
-  public storeExecApproval(
-    command: string | string[],
-    cwd: string | undefined,
-    decision: ReviewDecision,
-  ): void {
+  public storeExecApproval(command: string | string[], cwd: string | undefined, decision: ReviewDecision): void {
     const key = createExecApprovalKey(command, cwd);
     this.approvalStore.put(key, decision);
   }

@@ -7,8 +7,8 @@
 type ParsedVersion = { major: number; minor: number; patch: number };
 
 function parseVersion(version: string): ParsedVersion | null {
-  const clean = version.replace(/^[\^~]/, "");
-  const parts = clean.split(".").map((p) => parseInt(p, 10));
+  const clean = version.replace(/^[\^~]/, '');
+  const parts = clean.split('.').map((p) => parseInt(p, 10));
   if (parts.length !== 3 || parts.some(isNaN)) {
     return null;
   }
@@ -21,14 +21,14 @@ function satisfiesVersion(version: string, range: string): boolean {
   if (!parsedVersion || !parsedRange) return false;
   if (range === version) return true;
 
-  if (range.startsWith("^")) {
+  if (range.startsWith('^')) {
     return (
       parsedVersion.major === parsedRange.major &&
       (parsedVersion.minor > parsedRange.minor ||
         (parsedVersion.minor === parsedRange.minor && parsedVersion.patch >= parsedRange.patch))
     );
   }
-  if (range.startsWith("~")) {
+  if (range.startsWith('~')) {
     return (
       parsedVersion.major === parsedRange.major &&
       parsedVersion.minor === parsedRange.minor &&
@@ -51,7 +51,7 @@ type ExtensionMeta = {
 };
 
 type DependencyIssue = {
-  type: "missing" | "version_mismatch" | "circular";
+  type: 'missing' | 'version_mismatch' | 'circular';
   extensionName: string;
   dependencyName: string;
   requiredVersion?: string;
@@ -63,7 +63,7 @@ function detectCircularDependencies(
   graph: Map<string, Set<string>>,
   start: string,
   visited: Set<string>,
-  currentPath: Set<string>,
+  currentPath: Set<string>
 ): [string, string] | null {
   visited.add(start);
   currentPath.add(start);
@@ -102,11 +102,9 @@ function topologicalSort(graph: Map<string, Set<string>>, nodes: string[]): stri
   return result;
 }
 
-export function validateDependencies(extensions: ExtensionMeta[]): {
-  valid: boolean;
-  issues: DependencyIssue[];
-  loadOrder: string[];
-} {
+export function validateDependencies(
+  extensions: ExtensionMeta[]
+): { valid: boolean; issues: DependencyIssue[]; loadOrder: string[] } {
   const issues: DependencyIssue[] = [];
   const extensionMap = new Map<string, ExtensionMeta>();
   const dependencyGraph = new Map<string, Set<string>>();
@@ -127,7 +125,7 @@ export function validateDependencies(extensions: ExtensionMeta[]): {
       const dep = extensionMap.get(depName);
       if (!dep) {
         issues.push({
-          type: "missing",
+          type: 'missing',
           extensionName: ext.name,
           dependencyName: depName,
           requiredVersion,
@@ -137,7 +135,7 @@ export function validateDependencies(extensions: ExtensionMeta[]): {
         const installedVersion = dep.version;
         if (!satisfiesVersion(installedVersion, requiredVersion)) {
           issues.push({
-            type: "version_mismatch",
+            type: 'version_mismatch',
             extensionName: ext.name,
             dependencyName: depName,
             requiredVersion,
@@ -155,7 +153,7 @@ export function validateDependencies(extensions: ExtensionMeta[]): {
       const cycle = detectCircularDependencies(dependencyGraph, ext.name, visited, new Set());
       if (cycle) {
         issues.push({
-          type: "circular",
+          type: 'circular',
           extensionName: cycle[1],
           dependencyName: cycle[0],
           message: `Circular dependency detected: ${cycle[0]} -> ${cycle[1]}`,
@@ -166,7 +164,7 @@ export function validateDependencies(extensions: ExtensionMeta[]): {
 
   const loadOrder = topologicalSort(
     dependencyGraph,
-    extensions.map((e) => e.name),
+    extensions.map((e) => e.name)
   );
 
   return {
@@ -178,7 +176,7 @@ export function validateDependencies(extensions: ExtensionMeta[]): {
 
 export function sortByDependencyOrder(
   extensions: ExtensionMeta[],
-  loadOrder: string[],
+  loadOrder: string[]
 ): ExtensionMeta[] {
   const orderMap = new Map(loadOrder.map((name, idx) => [name, idx]));
   return [...extensions].sort((a, b) => {

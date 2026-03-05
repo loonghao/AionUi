@@ -1,4 +1,4 @@
-name: "🔨 Manual Build"
+name: '🔨 Manual Build'
 
 permissions:
   contents: write
@@ -8,12 +8,12 @@ on:
   workflow_dispatch:
     inputs:
       branch:
-        description: "Branch to build from"
+        description: 'Branch to build from'
         required: true
-        default: "main"
+        default: 'main'
         type: string
       platform:
-        description: "Platform to build"
+        description: 'Platform to build'
         required: true
         type: choice
         options:
@@ -23,15 +23,15 @@ on:
           - windows-arm64
           - linux
           - all
-        default: "macos-arm64"
+        default: 'macos-arm64'
       skip_code_quality:
-        description: "Skip code quality checks (faster builds for debugging)"
+        description: 'Skip code quality checks (faster builds for debugging)'
         required: false
         type: boolean
         default: false
 
 env:
-  BUN_INSTALL_REGISTRY: "https://registry.npmjs.org/"
+  BUN_INSTALL_REGISTRY: 'https://registry.npmjs.org/'
 
 jobs:
   prepare-matrix:

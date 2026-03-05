@@ -131,12 +131,12 @@ src/renderer/i18n/locales/ko-KR.json   # Korean
 ### Step 3: Use in Component
 
 ```tsx
-import { useTranslation } from "react-i18next";
+import { useTranslation } from 'react-i18next';
 
 function MyComponent() {
   const { t } = useTranslation();
 
-  return <button>{t("module.feature.action")}</button>;
+  return <button>{t('module.feature.action')}</button>;
 }
 ```
 
@@ -193,7 +193,7 @@ Comments and internal logs are allowed:
 
 ```tsx
 // This is a comment, Chinese is OK
-console.log("Debug info"); // OK for logs
+console.log('Debug info'); // OK for logs
 ```
 
 ## zh-TW Maintenance
@@ -229,8 +229,8 @@ Some terms need manual review:
 ```
 
 ```tsx
-t("greeting", { name: "User" });
-t("itemCount", { count: 5 });
+t('greeting', { name: 'User' });
+t('itemCount', { count: 5 });
 ```
 
 ### HTML in Translations
@@ -238,9 +238,9 @@ t("itemCount", { count: 5 });
 Use Trans component for complex markup:
 
 ```tsx
-import { Trans } from "react-i18next";
+import { Trans } from 'react-i18next';
 
-<Trans i18nKey="cron.countdown">
+<Trans i18nKey='cron.countdown'>
   Task <strong>{{ taskName }}</strong> in <span>{{ countdown }}</span>
 </Trans>;
 ```

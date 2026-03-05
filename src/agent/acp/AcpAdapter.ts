@@ -4,17 +4,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { IMessageAcpToolCall, IMessagePlan, IMessageText, TMessage } from "@/common/chatLib";
-import { uuid } from "@/common/utils";
-import type {
-  AcpBackend,
-  AcpSessionUpdate,
-  AgentMessageChunkUpdate,
-  AgentThoughtChunkUpdate,
-  PlanUpdate,
-  ToolCallUpdate,
-  ToolCallUpdateStatus,
-} from "@/types/acpTypes";
+import type { IMessageAcpToolCall, IMessagePlan, IMessageText, TMessage } from '@/common/chatLib';
+import { uuid } from '@/common/utils';
+import type { AcpBackend, AcpSessionUpdate, AgentMessageChunkUpdate, AgentThoughtChunkUpdate, PlanUpdate, ToolCallUpdate, ToolCallUpdateStatus } from '@/types/acpTypes';
 
 /**
  * Adapter class to convert ACP messages to AionUI message format
@@ -57,7 +49,7 @@ export class AcpAdapter {
     const update = sessionUpdate.update;
 
     switch (update.sessionUpdate) {
-      case "agent_message_chunk": {
+      case 'agent_message_chunk': {
         if (update.content) {
           const message = this.convertSessionUpdateChunk(update);
           if (message) {
@@ -67,7 +59,7 @@ export class AcpAdapter {
         break;
       }
 
-      case "agent_thought_chunk": {
+      case 'agent_thought_chunk': {
         if (update.content) {
           const message = this.convertThoughtChunk(update);
           if (message) {
@@ -79,7 +71,7 @@ export class AcpAdapter {
         break;
       }
 
-      case "tool_call": {
+      case 'tool_call': {
         const toolCallMessage = this.createOrUpdateAcpToolCall(sessionUpdate as ToolCallUpdate);
         if (toolCallMessage) {
           messages.push(toolCallMessage);
@@ -89,7 +81,7 @@ export class AcpAdapter {
         break;
       }
 
-      case "tool_call_update": {
+      case 'tool_call_update': {
         const toolCallUpdateMessage = this.updateAcpToolCall(sessionUpdate as ToolCallUpdateStatus);
         if (toolCallUpdateMessage) {
           messages.push(toolCallUpdateMessage);
@@ -99,7 +91,7 @@ export class AcpAdapter {
         break;
       }
 
-      case "plan": {
+      case 'plan': {
         const planMessage = this.convertPlanUpdate(sessionUpdate as PlanUpdate);
         if (planMessage) {
           messages.push(planMessage);
@@ -111,11 +103,11 @@ export class AcpAdapter {
 
       // Config option updates (e.g., model switch) are handled by AcpConnection
       // directly in handleIncomingRequest; no chat message conversion needed.
-      case "config_option_update":
+      case 'config_option_update':
         break;
 
       // Disabled: available_commands messages are too noisy and distracting in the chat UI
-      case "available_commands_update":
+      case 'available_commands_update':
         // Still reset message tracking so next agent_message_chunk gets new msg_id
         this.resetMessageTracking();
         break;
@@ -123,7 +115,7 @@ export class AcpAdapter {
       default: {
         // Handle unexpected session update types
         const unknownUpdate = update as { sessionUpdate?: string };
-        console.warn("Unknown session update type:", unknownUpdate.sessionUpdate);
+        console.warn('Unknown session update type:', unknownUpdate.sessionUpdate);
         break;
       }
     }
@@ -134,20 +126,20 @@ export class AcpAdapter {
   /**
    * Convert ACP session update chunk to AionUI message
    */
-  private convertSessionUpdateChunk(update: AgentMessageChunkUpdate["update"]): TMessage | null {
+  private convertSessionUpdateChunk(update: AgentMessageChunkUpdate['update']): TMessage | null {
     const msgId = this.getCurrentMessageId(); // Use consistent msg_id for streaming chunks
     const baseMessage = {
       id: uuid(), // Each chunk still gets unique id (for deduplication in composeMessage)
       msg_id: msgId, // But shares msg_id to enable accumulation
       conversation_id: this.conversationId,
       createdAt: Date.now(),
-      position: "left" as const,
+      position: 'left' as const,
     };
 
     if (update.content && update.content.text) {
       return {
         ...baseMessage,
-        type: "text",
+        type: 'text',
         content: {
           content: update.content.text,
         },
@@ -160,21 +152,21 @@ export class AcpAdapter {
   /**
    * Convert ACP thought chunk to AionUI message
    */
-  private convertThoughtChunk(update: AgentThoughtChunkUpdate["update"]): TMessage | null {
+  private convertThoughtChunk(update: AgentThoughtChunkUpdate['update']): TMessage | null {
     const baseMessage = {
       id: uuid(),
       conversation_id: this.conversationId,
       createdAt: Date.now(),
-      position: "center" as const,
+      position: 'center' as const,
     };
 
     if (update.content && update.content.text) {
       return {
         ...baseMessage,
-        type: "tips",
+        type: 'tips',
         content: {
           content: update.content.text,
-          type: "warning",
+          type: 'warning',
         },
       };
     }
@@ -191,12 +183,12 @@ export class AcpAdapter {
       msg_id: toolCallId, // 关键：使用 toolCallId 作为 msg_id
       conversation_id: this.conversationId,
       createdAt: Date.now(),
-      position: "left" as const,
+      position: 'left' as const,
     };
 
     const acpToolCallMessage: IMessageAcpToolCall = {
       ...baseMessage,
-      type: "acp_tool_call",
+      type: 'acp_tool_call',
       content: update, // 直接使用 ToolCallUpdate 作为 content
     };
 
@@ -245,7 +237,7 @@ export class AcpAdapter {
     this.activeToolCalls.set(toolCallId, updatedMessage);
 
     // Clean up completed/failed tool calls after a delay to prevent memory leaks
-    if (toolCallData.status === "completed" || toolCallData.status === "failed") {
+    if (toolCallData.status === 'completed' || toolCallData.status === 'failed') {
       setTimeout(() => {
         this.activeToolCalls.delete(toolCallId);
       }, 60000); // Clean up after 1 minute
@@ -264,14 +256,14 @@ export class AcpAdapter {
       msg_id: uuid(), // 生成独立的 msg_id，避免与其他消息合并
       conversation_id: this.conversationId,
       createdAt: Date.now(),
-      position: "left" as const,
+      position: 'left' as const,
     };
 
     const planData = update.update;
     if (planData.entries && planData.entries.length > 0) {
       return {
         ...baseMessage,
-        type: "plan",
+        type: 'plan',
         content: {
           sessionId: update.sessionId,
           entries: planData.entries,

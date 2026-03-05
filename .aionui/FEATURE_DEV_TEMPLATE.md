@@ -195,14 +195,14 @@ src/
 
 ```typescript
 // src/process/bridge/[功能]Bridge.ts
-import { bridge } from "@anthropic/platform";
+import { bridge } from '@anthropic/platform';
 
 export const [功能名] = {
   // Provider 模式: 请求-响应 (类似 HTTP 请求)
-  [方法名]: bridge.buildProvider<TResponse, TParams>("[通道名]"),
+  [方法名]: bridge.buildProvider<TResponse, TParams>('[通道名]'),
 
   // Emitter 模式: 事件流 (用于流式数据)
-  [事件名]: bridge.buildEmitter<TData>("[通道名].stream"),
+  [事件名]: bridge.buildEmitter<TData>('[通道名].stream'),
 };
 
 // 使用示例:

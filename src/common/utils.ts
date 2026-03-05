@@ -7,34 +7,29 @@
 export const uuid = (length = 8) => {
   try {
     // Prefer Web Crypto API for browser compatibility
-    if (
-      typeof window !== "undefined" &&
-      window.crypto &&
-      window.crypto.randomUUID &&
-      length >= 36
-    ) {
+    if (typeof window !== 'undefined' && window.crypto && window.crypto.randomUUID && length >= 36) {
       return window.crypto.randomUUID();
     }
 
     // Use Web Crypto getRandomValues for browser environment
-    if (typeof window !== "undefined" && window.crypto && window.crypto.getRandomValues) {
+    if (typeof window !== 'undefined' && window.crypto && window.crypto.getRandomValues) {
       const bytes = new Uint8Array(Math.ceil(length / 2));
       window.crypto.getRandomValues(bytes);
-      return Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0"))
-        .join("")
+      return Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0'))
+        .join('')
         .slice(0, length);
     }
 
     // Node.js environment - use dynamic import to avoid webpack bundling
-    if (typeof process !== "undefined" && process.versions && process.versions.node) {
+    if (typeof process !== 'undefined' && process.versions && process.versions.node) {
       try {
         // Dynamic require to avoid webpack bundling issues
-        const cryptoModule = eval("require")("crypto");
-        if (typeof cryptoModule.randomUUID === "function" && length >= 36) {
+        const cryptoModule = eval('require')('crypto');
+        if (typeof cryptoModule.randomUUID === 'function' && length >= 36) {
           return cryptoModule.randomUUID();
         }
         const bytes = cryptoModule.randomBytes(Math.ceil(length / 2));
-        return bytes.toString("hex").slice(0, length);
+        return bytes.toString('hex').slice(0, length);
       } catch {
         // Fall through to fallback
       }
@@ -49,13 +44,13 @@ export const uuid = (length = 8) => {
 };
 
 export const parseError = (error: unknown): string => {
-  if (typeof error === "string") return error;
+  if (typeof error === 'string') return error;
   if (error instanceof Error) return error.message;
 
-  if (typeof error === "object" && error !== null) {
+  if (typeof error === 'object' && error !== null) {
     const err = error as { msg?: unknown; message?: unknown };
-    if (typeof err.msg === "string") return err.msg;
-    if (typeof err.message === "string") return err.message;
+    if (typeof err.msg === 'string') return err.msg;
+    if (typeof err.message === 'string') return err.message;
   }
 
   try {
@@ -69,14 +64,12 @@ export const parseError = (error: unknown): string => {
  * 根据语言代码解析为标准化的区域键
  * Resolve language code to standardized locale key
  */
-export const resolveLocaleKey = (
-  language: string,
-): "zh-CN" | "en-US" | "ja-JP" | "zh-TW" | "ko-KR" | "tr-TR" => {
+export const resolveLocaleKey = (language: string): 'zh-CN' | 'en-US' | 'ja-JP' | 'zh-TW' | 'ko-KR' | 'tr-TR' => {
   const lang = language.toLowerCase();
-  if (lang.startsWith("zh-tw")) return "zh-TW";
-  if (lang.startsWith("zh")) return "zh-CN";
-  if (lang.startsWith("ja")) return "ja-JP";
-  if (lang.startsWith("ko")) return "ko-KR";
-  if (lang.startsWith("tr")) return "tr-TR";
-  return "en-US";
+  if (lang.startsWith('zh-tw')) return 'zh-TW';
+  if (lang.startsWith('zh')) return 'zh-CN';
+  if (lang.startsWith('ja')) return 'ja-JP';
+  if (lang.startsWith('ko')) return 'ko-KR';
+  if (lang.startsWith('tr')) return 'tr-TR';
+  return 'en-US';
 };

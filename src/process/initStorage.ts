@@ -4,45 +4,31 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { mkdirSync as _mkdirSync, existsSync, readdirSync, readFileSync } from "fs";
-import fs from "fs/promises";
-import path from "path";
-import { app } from "electron";
-import { application } from "../common/ipcBridge";
-import type { TMessage } from "@/common/chatLib";
-import { ASSISTANT_PRESETS } from "@/common/presets/assistantPresets";
-import type {
-  IChatConversationRefer,
-  IConfigStorageRefer,
-  IEnvStorageRefer,
-  IMcpServer,
-  TChatConversation,
-  TProviderWithModel,
-} from "../common/storage";
-import { ChatMessageStorage, ChatStorage, ConfigStorage, EnvStorage } from "../common/storage";
-import {
-  copyDirectoryRecursively,
-  ensureDirectory,
-  getConfigPath,
-  getDataPath,
-  getTempPath,
-  verifyDirectoryFiles,
-} from "./utils";
-import { getDatabase } from "./database/export";
-import type { AcpBackendConfig } from "@/types/acpTypes";
+import { mkdirSync as _mkdirSync, existsSync, readdirSync, readFileSync } from 'fs';
+import fs from 'fs/promises';
+import path from 'path';
+import { app } from 'electron';
+import { application } from '../common/ipcBridge';
+import type { TMessage } from '@/common/chatLib';
+import { ASSISTANT_PRESETS } from '@/common/presets/assistantPresets';
+import type { IChatConversationRefer, IConfigStorageRefer, IEnvStorageRefer, IMcpServer, TChatConversation, TProviderWithModel } from '../common/storage';
+import { ChatMessageStorage, ChatStorage, ConfigStorage, EnvStorage } from '../common/storage';
+import { copyDirectoryRecursively, ensureDirectory, getConfigPath, getDataPath, getTempPath, verifyDirectoryFiles } from './utils';
+import { getDatabase } from './database/export';
+import type { AcpBackendConfig } from '@/types/acpTypes';
 // Platform and architecture types (moved from deleted updateConfig)
-type PlatformType = "win32" | "darwin" | "linux";
-type ArchitectureType = "x64" | "arm64" | "ia32" | "arm";
+type PlatformType = 'win32' | 'darwin' | 'linux';
+type ArchitectureType = 'x64' | 'arm64' | 'ia32' | 'arm';
 
 const nodePath = path;
 
 const STORAGE_PATH = {
-  config: "aionui-config.txt",
-  chatMessage: "aionui-chat-message.txt",
-  chat: "aionui-chat.txt",
-  env: ".aionui-env",
-  assistants: "assistants",
-  skills: "skills",
+  config: 'aionui-config.txt',
+  chatMessage: 'aionui-chat-message.txt',
+  chat: 'aionui-chat.txt',
+  env: '.aionui-env',
+  assistants: 'assistants',
+  skills: 'skills',
 };
 
 const getHomePage = getConfigPath;
@@ -66,10 +52,7 @@ const migrateLegacyData = async () => {
         try {
           return existsSync(newDir) && readdirSync(newDir).length === 0;
         } catch (error) {
-          console.warn(
-            "[AionUi] Warning: Could not read new directory during migration check:",
-            error,
-          );
+          console.warn('[AionUi] Warning: Could not read new directory during migration check:', error);
           return false; // 假设非空以避免迁移覆盖
         }
       })();
@@ -90,7 +73,7 @@ const migrateLegacyData = async () => {
           try {
             await fs.rm(oldDir, { recursive: true });
           } catch (cleanupError) {
-            console.warn("[AionUi] 原目录清理失败，请手动删除:", oldDir, cleanupError);
+            console.warn('[AionUi] 原目录清理失败，请手动删除:', oldDir, cleanupError);
           }
         }
       }
@@ -98,7 +81,7 @@ const migrateLegacyData = async () => {
       return true;
     }
   } catch (error) {
-    console.error("[AionUi] 数据迁移失败:", error);
+    console.error('[AionUi] 数据迁移失败:', error);
   }
 
   return false;
@@ -148,7 +131,7 @@ const FileBuilder = (file: string) => {
       return pushStack(() =>
         ReadFile(file).then((data) => {
           return data.toString();
-        }),
+        })
       );
     },
     copy(dist: string) {
@@ -176,13 +159,13 @@ const JsonFileBuilder = <S extends object = Record<string, unknown>>(path: strin
       if (!result) return {} as S;
 
       // 验证文件内容不为空且不是损坏的base64
-      if (result.trim() === "") {
+      if (result.trim() === '') {
         console.warn(`[Storage] Empty file detected: ${path}`);
         return {} as S;
       }
 
       const decoded = decode(result);
-      if (!decoded || decoded.trim() === "") {
+      if (!decoded || decoded.trim() === '') {
         console.warn(`[Storage] Empty or corrupted content after decode: ${path}`);
         return {} as S;
       }
@@ -190,7 +173,7 @@ const JsonFileBuilder = <S extends object = Record<string, unknown>>(path: strin
       const parsed = JSON.parse(decoded) as S;
 
       // 额外验证：如果是聊天历史文件且解析结果为空对象，警告用户
-      if (path.includes("chat.txt") && Object.keys(parsed).length === 0) {
+      if (path.includes('chat.txt') && Object.keys(parsed).length === 0) {
         console.warn(`[Storage] Chat history file appears to be empty: ${path}`);
       }
 
@@ -264,23 +247,19 @@ const JsonFileBuilder = <S extends object = Record<string, unknown>>(path: strin
 
 const envFile = JsonFileBuilder<IEnvStorageRefer>(path.join(getHomePage(), STORAGE_PATH.env));
 
-const dirConfig = envFile.getSync("aionui.dir");
+const dirConfig = envFile.getSync('aionui.dir');
 
 const cacheDir = dirConfig?.cacheDir || getHomePage();
 
 const configFile = JsonFileBuilder<IConfigStorageRefer>(path.join(cacheDir, STORAGE_PATH.config));
 type ConversationHistoryData = Record<string, TMessage[]>;
 
-const _chatMessageFile = JsonFileBuilder<ConversationHistoryData>(
-  path.join(cacheDir, STORAGE_PATH.chatMessage),
-);
+const _chatMessageFile = JsonFileBuilder<ConversationHistoryData>(path.join(cacheDir, STORAGE_PATH.chatMessage));
 const _chatFile = JsonFileBuilder<IChatConversationRefer>(path.join(cacheDir, STORAGE_PATH.chat));
 
 // 创建带字段迁移的聊天历史代理
-const isGeminiConversation = (
-  conversation: TChatConversation,
-): conversation is Extract<TChatConversation, { type: "gemini" }> => {
-  return conversation.type === "gemini";
+const isGeminiConversation = (conversation: TChatConversation): conversation is Extract<TChatConversation, { type: 'gemini' }> => {
+  return conversation.type === 'gemini';
 };
 
 const chatFile = {
@@ -289,16 +268,16 @@ const chatFile = {
     const data = await _chatFile.get(key);
 
     // 特别处理 chat.history 的字段迁移
-    if (key === "chat.history" && Array.isArray(data)) {
-      const history = data as IChatConversationRefer["chat.history"];
+    if (key === 'chat.history' && Array.isArray(data)) {
+      const history = data as IChatConversationRefer['chat.history'];
       return history.map((conversation: TChatConversation) => {
         // 只有 Gemini 会话带有 model 字段，需要将旧格式 selectedModel 迁移为 useModel
         if (isGeminiConversation(conversation) && conversation.model) {
           // 使用 Record 类型处理旧格式迁移
           const modelRecord = conversation.model as unknown as Record<string, unknown>;
-          if ("selectedModel" in modelRecord && !("useModel" in modelRecord)) {
-            modelRecord["useModel"] = modelRecord["selectedModel"];
-            delete modelRecord["selectedModel"];
+          if ('selectedModel' in modelRecord && !('useModel' in modelRecord)) {
+            modelRecord['useModel'] = modelRecord['selectedModel'];
+            delete modelRecord['selectedModel'];
             conversation.model = modelRecord as TProviderWithModel;
           }
         }
@@ -308,22 +287,17 @@ const chatFile = {
 
     return data;
   },
-  async set<K extends keyof IChatConversationRefer>(
-    key: K,
-    value: IChatConversationRefer[K],
-  ): Promise<IChatConversationRefer[K]> {
+  async set<K extends keyof IChatConversationRefer>(key: K, value: IChatConversationRefer[K]): Promise<IChatConversationRefer[K]> {
     return await _chatFile.set(key, value);
   },
 };
 
 const buildMessageListStorage = (conversation_id: string, dir: string) => {
-  const fullName = path.join(dir, "aionui-chat-history", conversation_id + ".txt");
+  const fullName = path.join(dir, 'aionui-chat-history', conversation_id + '.txt');
   if (!existsSync(fullName)) {
-    mkdirSync(path.join(dir, "aionui-chat-history"));
+    mkdirSync(path.join(dir, 'aionui-chat-history'));
   }
-  return JsonFileBuilder<TMessage[]>(
-    path.join(dir, "aionui-chat-history", conversation_id + ".txt"),
-  );
+  return JsonFileBuilder<TMessage[]>(path.join(dir, 'aionui-chat-history', conversation_id + '.txt'));
 };
 
 const conversationHistoryProxy = (options: typeof _chatMessageFile, dir: string) => {
@@ -343,14 +317,7 @@ const conversationHistoryProxy = (options: typeof _chatMessageFile, dir: string)
     },
     backup(conversation_id: string) {
       const storage = buildMessageListStorage(conversation_id, dir);
-      return storage.backup(
-        path.join(
-          dir,
-          "aionui-chat-history",
-          "backup",
-          conversation_id + "_" + Date.now() + ".txt",
-        ),
-      );
+      return storage.backup(path.join(dir, 'aionui-chat-history', 'backup', conversation_id + '_' + Date.now() + '.txt'));
     },
   };
 };
@@ -379,7 +346,7 @@ const getSkillsDir = () => {
  * Skills in this directory are automatically injected for ALL agents and scenarios
  */
 const getBuiltinSkillsDir = () => {
-  return path.join(getSkillsDir(), "_builtin");
+  return path.join(getSkillsDir(), '_builtin');
 };
 
 /**
@@ -399,19 +366,13 @@ const initBuiltinAssistantRules = async (): Promise<void> => {
     if (app.isPackaged) {
       // asarUnpack extracts files to app.asar.unpacked directory
       // asarUnpack 会将文件解压到 app.asar.unpacked 目录
-      const unpackedPath = appPath.replace("app.asar", "app.asar.unpacked");
+      const unpackedPath = appPath.replace('app.asar', 'app.asar.unpacked');
       candidates = [
         path.join(unpackedPath, dirPath), // Unpacked location (preferred)
         path.join(appPath, dirPath), // Fallback to asar path
       ];
     } else {
-      candidates = [
-        path.join(appPath, dirPath),
-        path.join(appPath, "..", dirPath),
-        path.join(appPath, "..", "..", dirPath),
-        path.join(appPath, "..", "..", "..", dirPath),
-        path.join(process.cwd(), dirPath),
-      ];
+      candidates = [path.join(appPath, dirPath), path.join(appPath, '..', dirPath), path.join(appPath, '..', '..', dirPath), path.join(appPath, '..', '..', '..', dirPath), path.join(process.cwd(), dirPath)];
     }
 
     for (const candidate of candidates) {
@@ -424,8 +385,8 @@ const initBuiltinAssistantRules = async (): Promise<void> => {
     return candidates[0];
   };
 
-  const rulesDir = resolveBuiltinDir("rules");
-  const builtinSkillsDir = resolveBuiltinDir("skills");
+  const rulesDir = resolveBuiltinDir('rules');
+  const builtinSkillsDir = resolveBuiltinDir('skills');
   const userSkillsDir = getSkillsDir();
 
   // 复制技能脚本目录到用户配置目录
@@ -454,9 +415,7 @@ const initBuiltinAssistantRules = async (): Promise<void> => {
     // 如果设置了 resourceDir，使用该目录；否则使用默认的 rules/ 目录
     // If resourceDir is set, use that directory; otherwise use default rules/ directory
     const presetRulesDir = preset.resourceDir ? resolveBuiltinDir(preset.resourceDir) : rulesDir;
-    const presetSkillsDir = preset.resourceDir
-      ? resolveBuiltinDir(preset.resourceDir)
-      : builtinSkillsDir;
+    const presetSkillsDir = preset.resourceDir ? resolveBuiltinDir(preset.resourceDir) : builtinSkillsDir;
 
     // 复制规则文件 / Copy rule files
     const hasRuleFiles = Object.keys(preset.ruleFiles).length > 0;
@@ -477,11 +436,11 @@ const initBuiltinAssistantRules = async (): Promise<void> => {
 
           // 内置助手规则文件始终强制覆盖，确保用户获得最新版本
           // Always overwrite builtin assistant rule files to ensure users get the latest version
-          let content = await fs.readFile(sourceRulesPath, "utf-8");
+          let content = await fs.readFile(sourceRulesPath, 'utf-8');
           // 替换相对路径为绝对路径，确保 AI 能找到正确的脚本位置
           // Replace relative paths with absolute paths so AI can find scripts correctly
-          content = content.replace(/skills\//g, userSkillsDir + "/");
-          await fs.writeFile(targetPath, content, "utf-8");
+          content = content.replace(/skills\//g, userSkillsDir + '/');
+          await fs.writeFile(targetPath, content, 'utf-8');
         } catch (error) {
           // 忽略缺失的语言文件 / Ignore missing locale files
           console.warn(`[AionUi] Failed to copy rule file ${ruleFile}:`, error);
@@ -522,11 +481,11 @@ const initBuiltinAssistantRules = async (): Promise<void> => {
 
           // 内置助手技能文件始终强制覆盖，确保用户获得最新版本
           // Always overwrite builtin assistant skill files to ensure users get the latest version
-          let content = await fs.readFile(sourceSkillsPath, "utf-8");
+          let content = await fs.readFile(sourceSkillsPath, 'utf-8');
           // 替换相对路径为绝对路径，确保 AI 能找到正确的脚本位置
           // Replace relative paths with absolute paths so AI can find scripts correctly
-          content = content.replace(/skills\//g, userSkillsDir + "/");
-          await fs.writeFile(targetPath, content, "utf-8");
+          content = content.replace(/skills\//g, userSkillsDir + '/');
+          await fs.writeFile(targetPath, content, 'utf-8');
         } catch (error) {
           // 忽略缺失的技能文件 / Ignore missing skill files
           console.warn(`[AionUi] Failed to copy skill file ${skillFile}:`, error);
@@ -564,18 +523,13 @@ const getBuiltinAssistants = (): AcpBackendConfig[] => {
     // 从预设配置中读取默认启用的技能列表（不包含 cron，因为它是内置 skill，自动注入）
     // Read default enabled skills from preset config (excluding cron, which is builtin and auto-injected)
     const defaultEnabledSkills = preset.defaultEnabledSkills;
-    const enabledByDefault =
-      preset.id === "cowork" ||
-      preset.id === "openclaw-setup" ||
-      preset.id === "story-roleplay" ||
-      preset.id === "moltbook" ||
-      preset.id === "beautiful-mermaid";
+    const enabledByDefault = preset.id === 'cowork' || preset.id === 'openclaw-setup' || preset.id === 'story-roleplay' || preset.id === 'moltbook' || preset.id === 'beautiful-mermaid';
 
     assistants.push({
       id: `builtin-${preset.id}`,
-      name: preset.nameI18n["en-US"],
+      name: preset.nameI18n['en-US'],
       nameI18n: preset.nameI18n,
-      description: preset.descriptionI18n["en-US"],
+      description: preset.descriptionI18n['en-US'],
       descriptionI18n: preset.descriptionI18n,
       avatar: preset.avatar,
       // context 不再存储在配置中，而是从文件读取
@@ -584,7 +538,7 @@ const getBuiltinAssistants = (): AcpBackendConfig[] => {
       enabled: enabledByDefault,
       isPreset: true,
       isBuiltin: true,
-      presetAgentType: preset.presetAgentType || "gemini",
+      presetAgentType: preset.presetAgentType || 'gemini',
       // Cowork 默认启用所有内置技能 / Cowork enables all builtin skills by default
       enabledSkills: defaultEnabledSkills,
       // 复制快捷提示词 / Copy quick prompts
@@ -602,9 +556,9 @@ const getDefaultMcpServers = (): IMcpServer[] => {
   const now = Date.now();
   const defaultConfig = {
     mcpServers: {
-      "chrome-devtools": {
-        command: "npx",
-        args: ["-y", "chrome-devtools-mcp@latest"],
+      'chrome-devtools': {
+        command: 'npx',
+        args: ['-y', 'chrome-devtools-mcp@latest'],
       },
     },
   };
@@ -615,7 +569,7 @@ const getDefaultMcpServers = (): IMcpServer[] => {
     description: `Default MCP server: ${name}`,
     enabled: false, // 默认不启用，让用户手动开启
     transport: {
-      type: "stdio" as const,
+      type: 'stdio' as const,
       command: config.command,
       args: config.args,
     },
@@ -658,17 +612,15 @@ const cleanupOrphanedHealthCheckConversations = () => {
     });
 
     if (deletedCount > 0) {
-      console.log(
-        `[AionUi] Cleaned up ${deletedCount} orphaned health-check conversation(s) on startup`,
-      );
+      console.log(`[AionUi] Cleaned up ${deletedCount} orphaned health-check conversation(s) on startup`);
     }
   } catch (error) {
-    console.warn("[AionUi] Failed to cleanup orphaned health-check conversations:", error);
+    console.warn('[AionUi] Failed to cleanup orphaned health-check conversations:', error);
   }
 };
 
 const initStorage = async () => {
-  console.log("[AionUi] Starting storage initialization...");
+  console.log('[AionUi] Starting storage initialization...');
 
   // 1. 先执行数据迁移（在任何目录创建之前）
   await migrateLegacyData();
@@ -686,16 +638,16 @@ const initStorage = async () => {
 
   // 4. 初始化 MCP 配置（为所有用户提供默认配置）
   try {
-    const existingMcpConfig = await configFile.get("mcp.config").catch((): undefined => undefined);
+    const existingMcpConfig = await configFile.get('mcp.config').catch((): undefined => undefined);
 
     // 仅当配置不存在或为空时，写入默认值（适用于新用户和老用户）
     if (!existingMcpConfig || !Array.isArray(existingMcpConfig) || existingMcpConfig.length === 0) {
       const defaultServers = getDefaultMcpServers();
-      await configFile.set("mcp.config", defaultServers);
-      console.log("[AionUi] Default MCP servers initialized");
+      await configFile.set('mcp.config', defaultServers);
+      console.log('[AionUi] Default MCP servers initialized');
     }
   } catch (error) {
-    console.error("[AionUi] Failed to initialize default MCP servers:", error);
+    console.error('[AionUi] Failed to initialize default MCP servers:', error);
   }
   // 5. 初始化内置助手（Assistants）
   try {
@@ -705,30 +657,25 @@ const initStorage = async () => {
 
     // 5.2 初始化助手配置（只包含元数据，不包含 context）
     // Initialize assistant config (metadata only, no context)
-    const existingAgents =
-      (await configFile.get("acp.customAgents").catch((): undefined => undefined)) || [];
+    const existingAgents = (await configFile.get('acp.customAgents').catch((): undefined => undefined)) || [];
     const builtinAssistants = getBuiltinAssistants();
 
     // 5.2.1 检查是否需要迁移：修复老版本中所有助手都默认启用的问题
     // Check if migration needed: fix old version where all assistants were enabled by default
-    const ASSISTANT_ENABLED_MIGRATION_KEY = "migration.assistantEnabledFixed";
+    const ASSISTANT_ENABLED_MIGRATION_KEY = 'migration.assistantEnabledFixed';
     const migrationDone = await configFile.get(ASSISTANT_ENABLED_MIGRATION_KEY).catch(() => false);
     const needsMigration = !migrationDone && existingAgents.length > 0;
 
     // 5.2.2 检查是否需要迁移：为内置助手添加默认启用的技能
     // Check if migration needed: add default enabled skills for builtin assistants
-    const BUILTIN_SKILLS_MIGRATION_KEY = "migration.builtinDefaultSkillsAdded_v2";
-    const builtinSkillsMigrationDone = await configFile
-      .get(BUILTIN_SKILLS_MIGRATION_KEY)
-      .catch(() => false);
+    const BUILTIN_SKILLS_MIGRATION_KEY = 'migration.builtinDefaultSkillsAdded_v2';
+    const builtinSkillsMigrationDone = await configFile.get(BUILTIN_SKILLS_MIGRATION_KEY).catch(() => false);
     const needsBuiltinSkillsMigration = !builtinSkillsMigrationDone;
 
     // 5.2.3 检查是否需要迁移：为内置助手添加 promptsI18n
     // Check if migration needed: add promptsI18n for builtin assistants
-    const PROMPTS_I18N_MIGRATION_KEY = "migration.promptsI18nAdded";
-    const promptsI18nMigrationDone = await configFile
-      .get(PROMPTS_I18N_MIGRATION_KEY)
-      .catch(() => false);
+    const PROMPTS_I18N_MIGRATION_KEY = 'migration.promptsI18nAdded';
+    const promptsI18nMigrationDone = await configFile.get(PROMPTS_I18N_MIGRATION_KEY).catch(() => false);
     const needsPromptsI18nMigration = !promptsI18nMigrationDone;
 
     // 更新或添加内置助手配置
@@ -749,19 +696,9 @@ const initStorage = async () => {
         // 检查 promptsI18n 是否需要更新（如果不存在或已更改，或需要迁移）
         // Check if promptsI18n needs update (if missing, changed, or migration needed)
         const promptsI18nMissing = !existing.promptsI18n && builtin.promptsI18n;
-        const promptsI18nChanged =
-          existing.promptsI18n &&
-          builtin.promptsI18n &&
-          JSON.stringify(existing.promptsI18n) !== JSON.stringify(builtin.promptsI18n);
-        const needsPromptsI18nUpdate =
-          needsPromptsI18nMigration || promptsI18nMissing || promptsI18nChanged;
-        const shouldUpdate =
-          existing.name !== builtin.name ||
-          existing.description !== builtin.description ||
-          existing.avatar !== builtin.avatar ||
-          existing.isPreset !== builtin.isPreset ||
-          existing.isBuiltin !== builtin.isBuiltin ||
-          needsPromptsI18nUpdate;
+        const promptsI18nChanged = existing.promptsI18n && builtin.promptsI18n && JSON.stringify(existing.promptsI18n) !== JSON.stringify(builtin.promptsI18n);
+        const needsPromptsI18nUpdate = needsPromptsI18nMigration || promptsI18nMissing || promptsI18nChanged;
+        const shouldUpdate = existing.name !== builtin.name || existing.description !== builtin.description || existing.avatar !== builtin.avatar || existing.isPreset !== builtin.isPreset || existing.isBuiltin !== builtin.isBuiltin || needsPromptsI18nUpdate;
         // 当 enabled 是 undefined 或需要迁移时，设置默认值（Cowork 启用，其他禁用）
         // When enabled is undefined or migration needed, set default value (Cowork enabled, others disabled)
         const needsEnabledFix = existing.enabled === undefined || needsMigration;
@@ -775,20 +712,12 @@ const initStorage = async () => {
         // 为有 defaultEnabledSkills 配置的内置助手添加默认技能（仅在迁移时且用户未设置 enabledSkills 时）
         // Add default enabled skills for builtin assistants with defaultEnabledSkills (only during migration and if user hasn't set enabledSkills)
         let resolvedEnabledSkills = existing.enabledSkills;
-        const needsSkillsMigration =
-          needsBuiltinSkillsMigration &&
-          builtin.enabledSkills &&
-          (!existing.enabledSkills || existing.enabledSkills.length === 0);
+        const needsSkillsMigration = needsBuiltinSkillsMigration && builtin.enabledSkills && (!existing.enabledSkills || existing.enabledSkills.length === 0);
         if (needsSkillsMigration) {
           resolvedEnabledSkills = builtin.enabledSkills;
         }
 
-        if (
-          shouldUpdate ||
-          needsEnabledFix ||
-          (needsSkillsMigration && resolvedEnabledSkills !== existing.enabledSkills) ||
-          needsPromptsI18nUpdate
-        ) {
+        if (shouldUpdate || needsEnabledFix || (needsSkillsMigration && resolvedEnabledSkills !== existing.enabledSkills) || needsPromptsI18nUpdate) {
           // 保留用户已设置的 enabled 和 presetAgentType / Preserve user-set enabled and presetAgentType
           updatedAgents[index] = {
             ...existing,
@@ -810,7 +739,7 @@ const initStorage = async () => {
     }
 
     if (hasChanges) {
-      await configFile.set("acp.customAgents", updatedAgents);
+      await configFile.set('acp.customAgents', updatedAgents);
     }
 
     // 标记迁移完成 / Mark migration as done
@@ -824,7 +753,7 @@ const initStorage = async () => {
       await configFile.set(PROMPTS_I18N_MIGRATION_KEY, true);
     }
   } catch (error) {
-    console.error("[AionUi] Failed to initialize builtin assistants:", error);
+    console.error('[AionUi] Failed to initialize builtin assistants:', error);
   }
 
   // 6. 初始化数据库（better-sqlite3）
@@ -832,10 +761,7 @@ const initStorage = async () => {
     getDatabase();
     cleanupOrphanedHealthCheckConversations();
   } catch (error) {
-    console.error(
-      "[InitStorage] Database initialization failed, falling back to file-based storage:",
-      error,
-    );
+    console.error('[InitStorage] Database initialization failed, falling back to file-based storage:', error);
   }
 
   application.systemInfo.provider(() => {
@@ -882,12 +808,12 @@ const skillsContentCache = new Map<string, string>();
  */
 export const loadSkillsContent = async (enabledSkills: string[]): Promise<string> => {
   if (!enabledSkills || enabledSkills.length === 0) {
-    return "";
+    return '';
   }
 
   // 使用排序后的 skill 名称作为缓存 key，确保相同组合命中缓存
   // Use sorted skill names as cache key to ensure same combinations hit cache
-  const cacheKey = [...enabledSkills].sort().join(",");
+  const cacheKey = [...enabledSkills].sort().join(',');
   const cached = skillsContentCache.get(cacheKey);
   if (cached !== undefined) {
     return cached;
@@ -900,10 +826,10 @@ export const loadSkillsContent = async (enabledSkills: string[]): Promise<string
   for (const skillName of enabledSkills) {
     // 优先尝试内置 skills 目录：_builtin/{skillName}/SKILL.md
     // First try builtin skills directory: _builtin/{skillName}/SKILL.md
-    const builtinSkillFile = path.join(builtinSkillsDir, skillName, "SKILL.md");
+    const builtinSkillFile = path.join(builtinSkillsDir, skillName, 'SKILL.md');
     // 然后尝试目录结构：{skillName}/SKILL.md（与 aioncli-core 的 loadSkillsFromDir 一致）
     // Then try directory structure: {skillName}/SKILL.md (consistent with aioncli-core's loadSkillsFromDir)
-    const skillDirFile = path.join(skillsDir, skillName, "SKILL.md");
+    const skillDirFile = path.join(skillsDir, skillName, 'SKILL.md');
     // 向后兼容：扁平结构 {skillName}.md
     // Backward compatible: flat structure {skillName}.md
     const skillFlatFile = path.join(skillsDir, `${skillName}.md`);
@@ -912,11 +838,11 @@ export const loadSkillsContent = async (enabledSkills: string[]): Promise<string
       let content: string | null = null;
 
       if (existsSync(builtinSkillFile)) {
-        content = await fs.readFile(builtinSkillFile, "utf-8");
+        content = await fs.readFile(builtinSkillFile, 'utf-8');
       } else if (existsSync(skillDirFile)) {
-        content = await fs.readFile(skillDirFile, "utf-8");
+        content = await fs.readFile(skillDirFile, 'utf-8');
       } else if (existsSync(skillFlatFile)) {
-        content = await fs.readFile(skillFlatFile, "utf-8");
+        content = await fs.readFile(skillFlatFile, 'utf-8');
       }
 
       if (content && content.trim()) {
@@ -927,8 +853,7 @@ export const loadSkillsContent = async (enabledSkills: string[]): Promise<string
     }
   }
 
-  const result =
-    skillContents.length === 0 ? "" : `[Available Skills]\n${skillContents.join("\n\n")}`;
+  const result = skillContents.length === 0 ? '' : `[Available Skills]\n${skillContents.join('\n\n')}`;
 
   // 缓存结果 / Cache result
   skillsContentCache.set(cacheKey, result);

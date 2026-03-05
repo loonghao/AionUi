@@ -4,16 +4,16 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { ipcBridge } from "@/common";
-import LanguageSwitcher from "@/renderer/components/LanguageSwitcher";
-import { iconColors } from "@/renderer/theme/colors";
-import { Alert, Button, Form, Modal, Switch, Tooltip } from "@arco-design/web-react";
-import { FolderOpen } from "@icon-park/react";
-import React, { useCallback, useEffect, useRef, useState } from "react";
-import { useTranslation } from "react-i18next";
-import useSWR from "swr";
-import AionScrollArea from "@/renderer/components/base/AionScrollArea";
-import { useSettingsViewMode } from "../settingsViewContext";
+import { ipcBridge } from '@/common';
+import LanguageSwitcher from '@/renderer/components/LanguageSwitcher';
+import { iconColors } from '@/renderer/theme/colors';
+import { Alert, Button, Form, Modal, Switch, Tooltip } from '@arco-design/web-react';
+import { FolderOpen } from '@icon-park/react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import useSWR from 'swr';
+import AionScrollArea from '@/renderer/components/base/AionScrollArea';
+import { useSettingsViewMode } from '../settingsViewContext';
 
 /**
  * 目录选择输入组件 / Directory selection input component
@@ -29,13 +29,13 @@ const DirInputItem: React.FC<{
   return (
     <Form.Item label={label} field={field}>
       {(value, form) => {
-        const currentValue = form.getFieldValue(field) || "";
+        const currentValue = form.getFieldValue(field) || '';
 
         const handlePick = () => {
           ipcBridge.dialog.showOpen
             .invoke({
               defaultPath: currentValue,
-              properties: ["openDirectory", "createDirectory"],
+              properties: ['openDirectory', 'createDirectory'],
             })
             .then((data) => {
               if (data?.[0]) {
@@ -43,21 +43,19 @@ const DirInputItem: React.FC<{
               }
             })
             .catch((error) => {
-              console.error("Failed to open directory dialog:", error);
+              console.error('Failed to open directory dialog:', error);
             });
         };
 
         return (
-          <div className="aion-dir-input h-[32px] flex items-center rounded-8px border border-solid border-transparent pl-14px bg-[var(--fill-0)]">
-            <Tooltip content={currentValue || t("settings.dirNotConfigured")} position="top">
-              <div className="flex-1 min-w-0 text-13px text-t-primary truncate ">
-                {currentValue || t("settings.dirNotConfigured")}
-              </div>
+          <div className='aion-dir-input h-[32px] flex items-center rounded-8px border border-solid border-transparent pl-14px bg-[var(--fill-0)]'>
+            <Tooltip content={currentValue || t('settings.dirNotConfigured')} position='top'>
+              <div className='flex-1 min-w-0 text-13px text-t-primary truncate '>{currentValue || t('settings.dirNotConfigured')}</div>
             </Tooltip>
             <Button
-              type="text"
-              style={{ borderLeft: "1px solid var(--color-border-2)", borderRadius: "0 8px 8px 0" }}
-              icon={<FolderOpen theme="outline" size="18" fill={iconColors.primary} />}
+              type='text'
+              style={{ borderLeft: '1px solid var(--color-border-2)', borderRadius: '0 8px 8px 0' }}
+              icon={<FolderOpen theme='outline' size='18' fill={iconColors.primary} />}
               onClick={(e) => {
                 e.stopPropagation();
                 handlePick();
@@ -80,9 +78,9 @@ const PreferenceRow: React.FC<{
   /** 控件元素 / Control element */
   children: React.ReactNode;
 }> = ({ label, children }) => (
-  <div className="flex items-center justify-between gap-24px py-12px">
-    <div className="text-14px text-2">{label}</div>
-    <div className="flex-1 flex justify-end">{children}</div>
+  <div className='flex items-center justify-between gap-24px py-12px'>
+    <div className='text-14px text-2'>{label}</div>
+    <div className='flex-1 flex justify-end'>{children}</div>
   </div>
 );
 
@@ -103,7 +101,7 @@ const SystemModalContent: React.FC = () => {
   const [modal, modalContextHolder] = Modal.useModal();
   const [error, setError] = useState<string | null>(null);
   const viewMode = useSettingsViewMode();
-  const isPageMode = viewMode === "page";
+  const isPageMode = viewMode === 'page';
   const initializingRef = useRef(true);
 
   // 关闭到托盘状态 / Close to tray state
@@ -128,9 +126,7 @@ const SystemModalContent: React.FC = () => {
   }, []);
 
   // Get system directory info
-  const { data: systemInfo } = useSWR("system.dir.info", () =>
-    ipcBridge.application.systemInfo.invoke(),
-  );
+  const { data: systemInfo } = useSWR('system.dir.info', () => ipcBridge.application.systemInfo.invoke());
 
   // Initialize form data
   useEffect(() => {
@@ -146,23 +142,16 @@ const SystemModalContent: React.FC = () => {
 
   // 偏好设置项配置 / Preference items configuration
   const preferenceItems = [
-    { key: "language", label: t("settings.language"), component: <LanguageSwitcher /> },
-    {
-      key: "closeToTray",
-      label: t("settings.closeToTray"),
-      component: <Switch checked={closeToTray} onChange={handleCloseToTrayChange} />,
-    },
+    { key: 'language', label: t('settings.language'), component: <LanguageSwitcher /> },
+    { key: 'closeToTray', label: t('settings.closeToTray'), component: <Switch checked={closeToTray} onChange={handleCloseToTrayChange} /> },
   ];
 
   // 目录配置保存确认 / Directory configuration save confirmation
-  const saveDirConfigValidate = (_values: {
-    cacheDir: string;
-    workDir: string;
-  }): Promise<unknown> => {
+  const saveDirConfigValidate = (_values: { cacheDir: string; workDir: string }): Promise<unknown> => {
     return new Promise((resolve, reject) => {
       modal.confirm({
-        title: t("settings.updateConfirm"),
-        content: t("settings.restartConfirm"),
+        title: t('settings.updateConfirm'),
+        content: t('settings.restartConfirm'),
         onOk: resolve,
         onCancel: reject,
       });
@@ -187,15 +176,15 @@ const SystemModalContent: React.FC = () => {
         if (result.success) {
           await ipcBridge.application.restart.invoke();
         } else {
-          setError(result.msg || "Failed to update system info");
+          setError(result.msg || 'Failed to update system info');
           // Revert form to original values on failure
-          form.setFieldValue("cacheDir", systemInfo.cacheDir);
-          form.setFieldValue("workDir", systemInfo.workDir);
+          form.setFieldValue('cacheDir', systemInfo.cacheDir);
+          form.setFieldValue('workDir', systemInfo.workDir);
         }
       } catch (caughtError: unknown) {
         // User cancelled the confirm dialog — revert
-        form.setFieldValue("cacheDir", systemInfo.cacheDir);
-        form.setFieldValue("workDir", systemInfo.workDir);
+        form.setFieldValue('cacheDir', systemInfo.cacheDir);
+        form.setFieldValue('workDir', systemInfo.workDir);
         if (caughtError) {
           setError(caughtError instanceof Error ? caughtError.message : String(caughtError));
         }
@@ -203,40 +192,29 @@ const SystemModalContent: React.FC = () => {
         savingRef.current = false;
       }
     },
-    [systemInfo, form, saveDirConfigValidate],
+    [systemInfo, form, saveDirConfigValidate]
   );
 
   return (
-    <div className="flex flex-col h-full w-full">
+    <div className='flex flex-col h-full w-full'>
       {modalContextHolder}
 
       {/* 内容区域 / Content Area */}
-      <AionScrollArea className="flex-1 min-h-0 pb-16px" disableOverflow={isPageMode}>
-        <div className="space-y-16px">
+      <AionScrollArea className='flex-1 min-h-0 pb-16px' disableOverflow={isPageMode}>
+        <div className='space-y-16px'>
           {/* 偏好设置与高级设置合并展示 / Combined preferences and advanced settings */}
-          <div className="px-[12px] md:px-[32px] py-16px bg-2 rd-16px space-y-12px">
-            <div className="w-full flex flex-col divide-y divide-border-2">
+          <div className='px-[12px] md:px-[32px] py-16px bg-2 rd-16px space-y-12px'>
+            <div className='w-full flex flex-col divide-y divide-border-2'>
               {preferenceItems.map((item) => (
                 <PreferenceRow key={item.key} label={item.label}>
                   {item.component}
                 </PreferenceRow>
               ))}
             </div>
-            <Form
-              form={form}
-              layout="vertical"
-              className="space-y-16px"
-              onValuesChange={handleValuesChange}
-            >
-              <DirInputItem label={t("settings.cacheDir")} field="cacheDir" />
-              <DirInputItem label={t("settings.workDir")} field="workDir" />
-              {error && (
-                <Alert
-                  className="mt-16px"
-                  type="error"
-                  content={typeof error === "string" ? error : JSON.stringify(error)}
-                />
-              )}
+            <Form form={form} layout='vertical' className='space-y-16px' onValuesChange={handleValuesChange}>
+              <DirInputItem label={t('settings.cacheDir')} field='cacheDir' />
+              <DirInputItem label={t('settings.workDir')} field='workDir' />
+              {error && <Alert className='mt-16px' type='error' content={typeof error === 'string' ? error : JSON.stringify(error)} />}
             </Form>
           </div>
         </div>

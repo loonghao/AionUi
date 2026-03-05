@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { ipcBridge } from "@/common";
-import { cronService } from "@process/services/cron/CronService";
+import { ipcBridge } from '@/common';
+import { cronService } from '@process/services/cron/CronService';
 
 /**
  * Initialize cron IPC bridge handlers

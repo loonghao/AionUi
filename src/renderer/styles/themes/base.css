@@ -670,7 +670,7 @@ body,
   background: rgba(0, 0, 0, 0.2);
 }
 
-[data-theme="dark"] ::-webkit-scrollbar-thumb:hover {
+[data-theme='dark'] ::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.2);
 }
 
@@ -688,7 +688,7 @@ body,
   background: rgba(0, 0, 0, 0.1);
 }
 
-[data-theme="dark"] *:hover::-webkit-scrollbar-thumb {
+[data-theme='dark'] *:hover::-webkit-scrollbar-thumb {
   background: rgba(255, 255, 255, 0.1);
 }
 

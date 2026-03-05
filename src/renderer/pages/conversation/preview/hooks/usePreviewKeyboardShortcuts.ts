@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useEffect } from "react";
+import { useEffect } from 'react';
 
 /**
  * 预览面板快捷键配置
@@ -30,14 +30,11 @@ interface UsePreviewKeyboardShortcutsOptions {
  *
  * @param options - 快捷键配置 / Keyboard shortcuts configuration
  */
-export const usePreviewKeyboardShortcuts = ({
-  isDirty,
-  onSave,
-}: UsePreviewKeyboardShortcutsOptions): void => {
+export const usePreviewKeyboardShortcuts = ({ isDirty, onSave }: UsePreviewKeyboardShortcutsOptions): void => {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       // Cmd/Ctrl + S
-      if ((e.metaKey || e.ctrlKey) && e.key === "s") {
+      if ((e.metaKey || e.ctrlKey) && e.key === 's') {
         e.preventDefault(); // 阻止浏览器默认保存行为 / Prevent default browser save
         if (isDirty) {
           onSave();
@@ -45,7 +42,7 @@ export const usePreviewKeyboardShortcuts = ({
       }
     };
 
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isDirty, onSave]);
 };

@@ -1,7 +1,7 @@
-import { useState, useEffect, useRef, useCallback } from "react";
-import { ConfigStorage } from "@/common/storage";
-import { acpConversation, mcpService } from "@/common/ipcBridge";
-import type { IMcpServer } from "@/common/storage";
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { ConfigStorage } from '@/common/storage';
+import { acpConversation, mcpService } from '@/common/ipcBridge';
+import type { IMcpServer } from '@/common/storage';
 
 /**
  * MCP Agent安装状态管理Hook
@@ -12,16 +12,13 @@ export const useMcpAgentStatus = () => {
   const [loadingServers, setLoadingServers] = useState<Set<string>>(new Set());
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
   const lastCheckTimeRef = useRef<number>(0);
-  const agentConfigsCacheRef = useRef<Array<{
-    source: string;
-    servers: Array<{ name: string }>;
-  }> | null>(null);
+  const agentConfigsCacheRef = useRef<Array<{ source: string; servers: Array<{ name: string }> }> | null>(null);
 
   // 加载已保存的agent安装状态
   useEffect(() => {
-    void ConfigStorage.get("mcp.agentInstallStatus")
+    void ConfigStorage.get('mcp.agentInstallStatus')
       .then((status) => {
-        if (status && typeof status === "object") {
+        if (status && typeof status === 'object') {
           setAgentInstallStatus(status as Record<string, string[]>);
         }
       })
@@ -32,7 +29,7 @@ export const useMcpAgentStatus = () => {
 
   // 保存agent安装状态到存储
   const saveAgentInstallStatus = useCallback((status: Record<string, string[]>) => {
-    void ConfigStorage.set("mcp.agentInstallStatus", status).catch(() => {
+    void ConfigStorage.set('mcp.agentInstallStatus', status).catch(() => {
       // Handle storage error silently
     });
     setAgentInstallStatus(status);
@@ -40,19 +37,13 @@ export const useMcpAgentStatus = () => {
 
   // 处理agent配置数据的通用函数
   const processAgentConfigs = useCallback(
-    (
-      servers: IMcpServer[],
-      agentConfigs: Array<{ source: string; servers: Array<{ name: string }> }>,
-      targetServerName?: string,
-    ) => {
+    (servers: IMcpServer[], agentConfigs: Array<{ source: string; servers: Array<{ name: string }> }>, targetServerName?: string) => {
       // 基于当前状态创建新状态，避免重置其他服务器的状态
       const installStatus: Record<string, string[]> = { ...agentInstallStatus };
 
       // 预构建服务器名称到服务器对象的映射，避免重复find操作
       const serverMap = new Map<string, IMcpServer>();
-      const serversToProcess = targetServerName
-        ? servers.filter((s) => s.name === targetServerName)
-        : servers;
+      const serversToProcess = targetServerName ? servers.filter((s) => s.name === targetServerName) : servers;
 
       serversToProcess.forEach((server) => {
         if (server.enabled) {
@@ -88,7 +79,7 @@ export const useMcpAgentStatus = () => {
 
       saveAgentInstallStatus(filteredInstallStatus);
     },
-    [agentInstallStatus, saveAgentInstallStatus],
+    [agentInstallStatus, saveAgentInstallStatus]
   );
 
   // 检查每个MCP服务器在哪些agent中安装了
@@ -98,20 +89,14 @@ export const useMcpAgentStatus = () => {
       const now = Date.now();
       const CACHE_DURATION = 5000; // 5秒缓存
 
-      if (
-        !forceRefresh &&
-        agentConfigsCacheRef.current &&
-        now - lastCheckTimeRef.current < CACHE_DURATION
-      ) {
+      if (!forceRefresh && agentConfigsCacheRef.current && now - lastCheckTimeRef.current < CACHE_DURATION) {
         // 使用缓存数据重新计算状态
         processAgentConfigs(servers, agentConfigsCacheRef.current, targetServerName);
         return;
       }
 
       // 设置加载状态 - 如果指定了目标服务器则只标记该服务器，否则标记所有启用的服务器
-      const serversToLoad = targetServerName
-        ? [targetServerName]
-        : servers.filter((s) => s.enabled).map((s) => s.name);
+      const serversToLoad = targetServerName ? [targetServerName] : servers.filter((s) => s.enabled).map((s) => s.name);
       setLoadingServers((prev) => {
         const newSet = new Set(prev);
         serversToLoad.forEach((name) => newSet.add(name));
@@ -154,7 +139,7 @@ export const useMcpAgentStatus = () => {
         });
       }
     },
-    [agentInstallStatus, processAgentConfigs, saveAgentInstallStatus],
+    [agentInstallStatus, processAgentConfigs, saveAgentInstallStatus]
   );
 
   // 防抖版本的状态检查，避免频繁调用
@@ -170,7 +155,7 @@ export const useMcpAgentStatus = () => {
         });
       }, 300); // 300ms 防抖
     },
-    [checkAgentInstallStatus],
+    [checkAgentInstallStatus]
   );
 
   // 仅检查单个服务器的安装状态（不执行连接测试等其他操作）
@@ -210,7 +195,7 @@ export const useMcpAgentStatus = () => {
         }
 
         // 同时更新本地存储
-        void ConfigStorage.set("mcp.agentInstallStatus", updated).catch(() => {
+        void ConfigStorage.set('mcp.agentInstallStatus', updated).catch(() => {
           // Handle storage error silently
         });
 
@@ -233,7 +218,7 @@ export const useMcpAgentStatus = () => {
     (serverName: string) => {
       return loadingServers.has(serverName);
     },
-    [loadingServers],
+    [loadingServers]
   );
 
   return {

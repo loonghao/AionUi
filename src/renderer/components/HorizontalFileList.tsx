@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { IconLeft, IconRight } from "@arco-design/web-react/icon";
-import React, { useRef, useState, useEffect } from "react";
+import { IconLeft, IconRight } from '@arco-design/web-react/icon';
+import React, { useRef, useState, useEffect } from 'react';
 
 interface HorizontalFileListProps {
   children: React.ReactNode;
@@ -54,7 +54,7 @@ const HorizontalFileList: React.FC<HorizontalFileListProps> = ({ children }) => 
 
     let rafId: number | null = null;
     const scheduleCheck = () => {
-      if (typeof window !== "undefined" && "requestAnimationFrame" in window) {
+      if (typeof window !== 'undefined' && 'requestAnimationFrame' in window) {
         if (rafId !== null) {
           cancelAnimationFrame(rafId);
         }
@@ -70,14 +70,14 @@ const HorizontalFileList: React.FC<HorizontalFileListProps> = ({ children }) => 
     resizeObserver.observe(container);
 
     // 监听滚动事件，实时更新按钮显示状态
-    container.addEventListener("scroll", checkScroll, { passive: true });
+    container.addEventListener('scroll', checkScroll, { passive: true });
 
     return () => {
       if (rafId !== null) {
         cancelAnimationFrame(rafId);
       }
       resizeObserver.disconnect();
-      container.removeEventListener("scroll", checkScroll);
+      container.removeEventListener('scroll', checkScroll);
     };
   }, [checkScroll]);
 
@@ -95,7 +95,7 @@ const HorizontalFileList: React.FC<HorizontalFileListProps> = ({ children }) => 
 
     container.scrollBy({
       left: 200,
-      behavior: "smooth",
+      behavior: 'smooth',
     });
   };
 
@@ -108,19 +108,19 @@ const HorizontalFileList: React.FC<HorizontalFileListProps> = ({ children }) => 
 
     container.scrollBy({
       left: -200,
-      behavior: "smooth",
+      behavior: 'smooth',
     });
   };
 
   return (
-    <div className="relative">
+    <div className='relative'>
       {/* 横向滚动容器，隐藏滚动条 */}
       <div
         ref={scrollContainerRef}
-        className="flex items-center gap-8px overflow-x-auto overflow-y-hidden scrollbar-hide pt-5px pb-5px"
+        className='flex items-center gap-8px overflow-x-auto overflow-y-hidden scrollbar-hide pt-5px pb-5px'
         style={{
-          scrollbarWidth: "none", // Firefox
-          msOverflowStyle: "none", // IE/Edge
+          scrollbarWidth: 'none', // Firefox
+          msOverflowStyle: 'none', // IE/Edge
         }}
       >
         {children}
@@ -128,44 +128,44 @@ const HorizontalFileList: React.FC<HorizontalFileListProps> = ({ children }) => 
       {/* 左侧滚动按钮 - 在非起始位置时显示 */}
       {showScrollButton && canScrollLeft && (
         <div
-          className="absolute left-0 top-0 h-full flex items-center cursor-pointer"
+          className='absolute left-0 top-0 h-full flex items-center cursor-pointer'
           style={{
-            background: "linear-gradient(to left, transparent, var(--dialog-fill-0) 30%)", // 左侧渐变遮罩
-            width: "60px",
-            pointerEvents: "none", // 遮罩层不响应点击
+            background: 'linear-gradient(to left, transparent, var(--dialog-fill-0) 30%)', // 左侧渐变遮罩
+            width: '60px',
+            pointerEvents: 'none', // 遮罩层不响应点击
           }}
         >
           <button
             onClick={handleScrollLeft}
-            className="ml-0px w-28px h-28px rd-50% bg-1 flex items-center justify-center hover:bg-2 transition-colors border-1 border-solid b-color-border-2"
+            className='ml-0px w-28px h-28px rd-50% bg-1 flex items-center justify-center hover:bg-2 transition-colors border-1 border-solid b-color-border-2'
             style={{
-              pointerEvents: "auto", // 按钮响应点击
-              boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)",
+              pointerEvents: 'auto', // 按钮响应点击
+              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
             }}
           >
-            <IconLeft style={{ fontSize: "14px", color: "var(--text-t-primary)" }} />
+            <IconLeft style={{ fontSize: '14px', color: 'var(--text-t-primary)' }} />
           </button>
         </div>
       )}
       {/* 右侧滚动按钮 - 在非结束位置时显示 */}
       {showScrollButton && canScrollRight && (
         <div
-          className="absolute right-0 top-0 h-full flex items-center cursor-pointer"
+          className='absolute right-0 top-0 h-full flex items-center cursor-pointer'
           style={{
-            background: "linear-gradient(to right, transparent, var(--dialog-fill-0) 30%)", // 右侧渐变遮罩
-            width: "60px",
-            pointerEvents: "none", // 遮罩层不响应点击
+            background: 'linear-gradient(to right, transparent, var(--dialog-fill-0) 30%)', // 右侧渐变遮罩
+            width: '60px',
+            pointerEvents: 'none', // 遮罩层不响应点击
           }}
         >
           <button
             onClick={handleScrollRight}
-            className="ml-auto mr-0px w-28px h-28px rd-50% bg-1 flex items-center justify-center hover:bg-2 transition-colors border-1 border-solid b-color-border-2"
+            className='ml-auto mr-0px w-28px h-28px rd-50% bg-1 flex items-center justify-center hover:bg-2 transition-colors border-1 border-solid b-color-border-2'
             style={{
-              pointerEvents: "auto", // 按钮响应点击
-              boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)",
+              pointerEvents: 'auto', // 按钮响应点击
+              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
             }}
           >
-            <IconRight style={{ fontSize: "14px", color: "var(--text-t-primary)" }} />
+            <IconRight style={{ fontSize: '14px', color: 'var(--text-t-primary)' }} />
           </button>
         </div>
       )}

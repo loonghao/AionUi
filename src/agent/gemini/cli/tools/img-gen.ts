@@ -4,42 +4,23 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { TProviderWithModel } from "@/common/storage";
-import { Type } from "@google/genai";
-import type {
-  Config,
-  ToolResult,
-  ToolInvocation,
-  ToolLocation,
-  ToolCallConfirmationDetails,
-  ToolResultDisplay,
-  MessageBus,
-} from "@office-ai/aioncli-core";
-import {
-  BaseDeclarativeTool,
-  BaseToolInvocation,
-  Kind,
-  getErrorMessage,
-  ToolErrorType,
-} from "@office-ai/aioncli-core";
-import * as fs from "fs";
-import { jsonrepair } from "jsonrepair";
-import * as path from "path";
-import type OpenAI from "openai";
-import { ClientFactory, type RotatingClient } from "@/common/ClientFactory";
-import type { UnifiedChatCompletionResponse } from "@/common/RotatingApiClient";
-import {
-  IMAGE_EXTENSIONS,
-  MIME_TYPE_MAP,
-  MIME_TO_EXT_MAP,
-  DEFAULT_IMAGE_EXTENSION,
-} from "@/common/constants";
+import type { TProviderWithModel } from '@/common/storage';
+import { Type } from '@google/genai';
+import type { Config, ToolResult, ToolInvocation, ToolLocation, ToolCallConfirmationDetails, ToolResultDisplay, MessageBus } from '@office-ai/aioncli-core';
+import { BaseDeclarativeTool, BaseToolInvocation, Kind, getErrorMessage, ToolErrorType } from '@office-ai/aioncli-core';
+import * as fs from 'fs';
+import { jsonrepair } from 'jsonrepair';
+import * as path from 'path';
+import type OpenAI from 'openai';
+import { ClientFactory, type RotatingClient } from '@/common/ClientFactory';
+import type { UnifiedChatCompletionResponse } from '@/common/RotatingApiClient';
+import { IMAGE_EXTENSIONS, MIME_TYPE_MAP, MIME_TO_EXT_MAP, DEFAULT_IMAGE_EXTENSION } from '@/common/constants';
 
 /**
  * Safely parse JSON string with jsonrepair fallback
  */
 function safeJsonParse<T = unknown>(jsonString: string, fallbackValue: T): T {
-  if (!jsonString || typeof jsonString !== "string") {
+  if (!jsonString || typeof jsonString !== 'string') {
     return fallbackValue;
   }
 
@@ -50,7 +31,7 @@ function safeJsonParse<T = unknown>(jsonString: string, fallbackValue: T): T {
       const repairedJson = jsonrepair(jsonString);
       return JSON.parse(repairedJson) as T;
     } catch (repairError) {
-      console.warn("[ImageGen] JSON parse failed:", jsonString.substring(0, 50));
+      console.warn('[ImageGen] JSON parse failed:', jsonString.substring(0, 50));
       return fallbackValue;
     }
   }
@@ -65,10 +46,10 @@ interface ImageGenerationResult {
 }
 
 interface ImageContent {
-  type: "image_url";
+  type: 'image_url';
   image_url: {
     url: string;
-    detail: "auto" | "low" | "high";
+    detail: 'auto' | 'low' | 'high';
   };
 }
 
@@ -94,17 +75,17 @@ function isImageFile(filePath: string): boolean {
 }
 
 function isHttpUrl(str: string): boolean {
-  return str.startsWith("http://") || str.startsWith("https://");
+  return str.startsWith('http://') || str.startsWith('https://');
 }
 
 async function fileToBase64(filePath: string): Promise<string> {
   try {
     const fileBuffer = await fs.promises.readFile(filePath);
-    return fileBuffer.toString("base64");
+    return fileBuffer.toString('base64');
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     // Provide a more specific error message for missing files
-    if (errorMessage.includes("ENOENT") || errorMessage.includes("no such file")) {
+    if (errorMessage.includes('ENOENT') || errorMessage.includes('no such file')) {
       throw new Error(`Image file not found: ${filePath}`);
     }
     throw new Error(`Failed to read image file: ${errorMessage}`);
@@ -125,20 +106,15 @@ function getFileExtensionFromDataUrl(dataUrl: string): string {
   return DEFAULT_IMAGE_EXTENSION;
 }
 
-async function saveGeneratedImage(
-  base64Data: string,
-  config: Config,
-  messageId?: string,
-  conversationId?: string,
-): Promise<string> {
+async function saveGeneratedImage(base64Data: string, config: Config, messageId?: string, conversationId?: string): Promise<string> {
   const workspaceDir = config.getWorkingDir();
   const timestamp = Date.now();
   const fileExtension = getFileExtensionFromDataUrl(base64Data);
   const fileName = `img-${timestamp}${fileExtension}`;
   const filePath = path.join(workspaceDir, fileName);
 
-  const base64WithoutPrefix = base64Data.replace(/^data:image\/[^;]+;base64,/, "");
-  const imageBuffer = Buffer.from(base64WithoutPrefix, "base64");
+  const base64WithoutPrefix = base64Data.replace(/^data:image\/[^;]+;base64,/, '');
+  const imageBuffer = Buffer.from(base64WithoutPrefix, 'base64');
 
   try {
     // Save image to file system (in workspace)
@@ -147,27 +123,22 @@ async function saveGeneratedImage(
 
     return filePath;
   } catch (error) {
-    console.error("[ImageGen] Failed to save image file:", error);
-    throw new Error(
-      `Failed to save image: ${error instanceof Error ? error.message : String(error)}`,
-    );
+    console.error('[ImageGen] Failed to save image file:', error);
+    throw new Error(`Failed to save image: ${error instanceof Error ? error.message : String(error)}`);
   }
 }
 
-export class ImageGenerationTool extends BaseDeclarativeTool<
-  ImageGenerationToolParams,
-  ToolResult
-> {
-  static readonly Name: string = "aionui_image_generation";
+export class ImageGenerationTool extends BaseDeclarativeTool<ImageGenerationToolParams, ToolResult> {
+  static readonly Name: string = 'aionui_image_generation';
 
   constructor(
     private readonly config: Config,
     private readonly imageGenerationModel: TProviderWithModel,
-    private readonly proxy?: string,
+    private readonly proxy?: string
   ) {
     super(
       ImageGenerationTool.Name,
-      "ImageGeneration",
+      'ImageGeneration',
       `REQUIRED tool for generating or editing images. You MUST use this tool for ANY image generation request.
 
 ⚠️ CRITICAL: You (the AI assistant) CANNOT generate images directly. You MUST call this tool for:
@@ -205,28 +176,26 @@ IMPORTANT: When user provides multiple images (like @img1.jpg @img2.png), ALWAYS
         properties: {
           prompt: {
             type: Type.STRING,
-            description:
-              'The text prompt in English that must clearly specify the operation type: "Generate image: [English description]" for creating new images, "Analyze image: [what to analyze in English]" for image recognition/analysis, or "Edit image: [modifications in English]" for image editing. Always start with the operation type and use English for the entire prompt.',
+            description: 'The text prompt in English that must clearly specify the operation type: "Generate image: [English description]" for creating new images, "Analyze image: [what to analyze in English]" for image recognition/analysis, or "Edit image: [modifications in English]" for image editing. Always start with the operation type and use English for the entire prompt.',
           },
           image_uris: {
             type: Type.ARRAY,
-            description:
-              'Optional: Array of paths to existing local image files or HTTP/HTTPS URLs to edit/modify. Examples: ["test.jpg", "https://example.com/img.png"]. When user uses @filename.ext format, always pass the filename (without @) to this array. For single image, use array format: ["test.jpg"]. Local files must actually exist on disk.',
+            description: 'Optional: Array of paths to existing local image files or HTTP/HTTPS URLs to edit/modify. Examples: ["test.jpg", "https://example.com/img.png"]. When user uses @filename.ext format, always pass the filename (without @) to this array. For single image, use array format: ["test.jpg"]. Local files must actually exist on disk.',
             items: {
               type: Type.STRING,
             },
           },
         },
-        required: ["prompt"],
+        required: ['prompt'],
       },
       config.getMessageBus(),
       true, // isOutputMarkdown
-      false, // canUpdateOutput
+      false // canUpdateOutput
     );
   }
 
   public override validateToolParams(params: ImageGenerationToolParams): string | null {
-    if (!params.prompt || params.prompt.trim() === "") {
+    if (!params.prompt || params.prompt.trim() === '') {
       return "The 'prompt' parameter cannot be empty.";
     }
 
@@ -235,7 +204,7 @@ IMPORTANT: When user provides multiple images (like @img1.jpg @img2.png), ALWAYS
       let imageUris: string[];
 
       // Handle JSON string format from model
-      if (typeof params.image_uris === "string") {
+      if (typeof params.image_uris === 'string') {
         const parsed = safeJsonParse<string[]>(params.image_uris, null);
         imageUris = Array.isArray(parsed) ? parsed : [params.image_uris];
       } else if (Array.isArray(params.image_uris)) {
@@ -251,7 +220,7 @@ IMPORTANT: When user provides multiple images (like @img1.jpg @img2.png), ALWAYS
       for (let i = 0; i < imageUris.length; i++) {
         const imageUri = imageUris[i].trim();
 
-        if (imageUri === "") {
+        if (imageUri === '') {
           return `Empty image URI at index ${i}`;
         }
 
@@ -283,21 +252,8 @@ IMPORTANT: When user provides multiple images (like @img1.jpg @img2.png), ALWAYS
     return null;
   }
 
-  protected createInvocation(
-    params: ImageGenerationToolParams,
-    messageBus: MessageBus,
-    _toolName?: string,
-    _toolDisplayName?: string,
-  ): ToolInvocation<ImageGenerationToolParams, ToolResult> {
-    return new ImageGenerationInvocation(
-      this.config,
-      this.imageGenerationModel,
-      params,
-      this.proxy,
-      messageBus,
-      _toolName,
-      _toolDisplayName,
-    );
+  protected createInvocation(params: ImageGenerationToolParams, messageBus: MessageBus, _toolName?: string, _toolDisplayName?: string): ToolInvocation<ImageGenerationToolParams, ToolResult> {
+    return new ImageGenerationInvocation(this.config, this.imageGenerationModel, params, this.proxy, messageBus, _toolName, _toolDisplayName);
   }
 }
 
@@ -312,7 +268,7 @@ class ImageGenerationInvocation extends BaseToolInvocation<ImageGenerationToolPa
     private readonly proxy: string | undefined,
     messageBus: MessageBus,
     _toolName?: string,
-    _toolDisplayName?: string,
+    _toolDisplayName?: string
   ) {
     super(params, messageBus, _toolName, _toolDisplayName);
 
@@ -334,7 +290,7 @@ class ImageGenerationInvocation extends BaseToolInvocation<ImageGenerationToolPa
     if (!this.params.image_uris) return [];
 
     // Handle JSON string format from model
-    if (typeof this.params.image_uris === "string") {
+    if (typeof this.params.image_uris === 'string') {
       const parsed = safeJsonParse<string[]>(this.params.image_uris, null);
       return Array.isArray(parsed) ? parsed : [this.params.image_uris];
     }
@@ -343,15 +299,11 @@ class ImageGenerationInvocation extends BaseToolInvocation<ImageGenerationToolPa
   }
 
   getDescription(): string {
-    const displayPrompt =
-      this.params.prompt.length > 100
-        ? this.params.prompt.substring(0, 97) + "..."
-        : this.params.prompt;
+    const displayPrompt = this.params.prompt.length > 100 ? this.params.prompt.substring(0, 97) + '...' : this.params.prompt;
     const imageUris = this.getImageUris();
 
     if (imageUris.length > 0) {
-      const imageDisplay =
-        imageUris.length === 1 ? `"${imageUris[0]}"` : `${imageUris.length} images`;
+      const imageDisplay = imageUris.length === 1 ? `"${imageUris[0]}"` : `${imageUris.length} images`;
       return `Modifying ${imageDisplay} with prompt: "${displayPrompt}"`;
     } else {
       return `Generating image with prompt: "${displayPrompt}"`;
@@ -371,10 +323,10 @@ class ImageGenerationInvocation extends BaseToolInvocation<ImageGenerationToolPa
   private async processImageUri(imageUri: string): Promise<ImageContent | null> {
     if (isHttpUrl(imageUri)) {
       return {
-        type: "image_url",
+        type: 'image_url',
         image_url: {
           url: imageUri,
-          detail: "auto",
+          detail: 'auto',
         },
       };
     } else {
@@ -382,7 +334,7 @@ class ImageGenerationInvocation extends BaseToolInvocation<ImageGenerationToolPa
       let processedUri = imageUri;
 
       // 如果文件名以@开头，去掉@符号
-      if (imageUri.startsWith("@")) {
+      if (imageUri.startsWith('@')) {
         processedUri = imageUri.substring(1);
       }
 
@@ -408,34 +360,26 @@ class ImageGenerationInvocation extends BaseToolInvocation<ImageGenerationToolPa
         const base64Data = await fileToBase64(fullPath);
         const mimeType = getImageMimeType(fullPath);
         return {
-          type: "image_url",
+          type: 'image_url',
           image_url: {
             url: `data:${mimeType};base64,${base64Data}`,
-            detail: "auto",
+            detail: 'auto',
           },
         };
       } catch (error) {
         // 文件不存在或读取失败，提供详细的错误信息
         const workspaceDir = this.config.getWorkingDir();
-        const possiblePaths = [imageUri, path.join(workspaceDir, imageUri)].filter(
-          (p, i, arr) => arr.indexOf(p) === i,
-        ); // 去重
+        const possiblePaths = [imageUri, path.join(workspaceDir, imageUri)].filter((p, i, arr) => arr.indexOf(p) === i); // 去重
 
         const errorMessage = error instanceof Error ? error.message : String(error);
 
         // If it's already a detailed error from fileToBase64, throw it directly
-        if (
-          errorMessage.includes("Image file not found") ||
-          errorMessage.includes("not a supported image type")
-        ) {
+        if (errorMessage.includes('Image file not found') || errorMessage.includes('not a supported image type')) {
           throw error;
         }
 
         // Otherwise provide detailed search paths
-        throw new Error(
-          `Image file not found. Searched paths:\n${possiblePaths.map((p) => `- ${p}`).join("\n")}\n\n` +
-            "Please ensure the image file exists and has a valid image extension (.jpg, .png, .gif, .webp, etc.)",
-        );
+        throw new Error(`Image file not found. Searched paths:\n${possiblePaths.map((p) => `- ${p}`).join('\n')}\n\n` + 'Please ensure the image file exists and has a valid image extension (.jpg, .png, .gif, .webp, etc.)');
       }
     }
   }
@@ -443,13 +387,13 @@ class ImageGenerationInvocation extends BaseToolInvocation<ImageGenerationToolPa
   async execute(signal: AbortSignal, updateOutput?: (output: string) => void): Promise<ToolResult> {
     if (signal.aborted) {
       return {
-        llmContent: "Image generation was cancelled by user before it could start.",
-        returnDisplay: "Operation cancelled by user.",
+        llmContent: 'Image generation was cancelled by user before it could start.',
+        returnDisplay: 'Operation cancelled by user.',
       };
     }
 
     try {
-      updateOutput?.("Initializing image generation...");
+      updateOutput?.('Initializing image generation...');
 
       // Build message content with explicit operation type for better AI understanding
       const imageUris = this.getImageUris();
@@ -465,7 +409,7 @@ class ImageGenerationInvocation extends BaseToolInvocation<ImageGenerationToolPa
 
       const contentParts: OpenAI.Chat.Completions.ChatCompletionContentPart[] = [
         {
-          type: "text",
+          type: 'text',
           text: enhancedPrompt,
         },
       ];
@@ -475,18 +419,16 @@ class ImageGenerationInvocation extends BaseToolInvocation<ImageGenerationToolPa
         updateOutput?.(`Processing ${imageUris.length} image(s)...`);
 
         // Process images in parallel for better performance
-        const imageResults = await Promise.allSettled(
-          imageUris.map((uri) => this.processImageUri(uri)),
-        );
+        const imageResults = await Promise.allSettled(imageUris.map((uri) => this.processImageUri(uri)));
 
         const successful: ImageContent[] = [];
         const errors: string[] = [];
 
         imageResults.forEach((result, index) => {
-          if (result.status === "fulfilled" && result.value) {
+          if (result.status === 'fulfilled' && result.value) {
             successful.push(result.value);
           } else {
-            const error = result.status === "rejected" ? result.reason : "Unknown error";
+            const error = result.status === 'rejected' ? result.reason : 'Unknown error';
             const errorMessage = error instanceof Error ? error.message : String(error);
             errors.push(`Image ${index + 1} (${imageUris[index]}): ${errorMessage}`);
           }
@@ -499,8 +441,8 @@ class ImageGenerationInvocation extends BaseToolInvocation<ImageGenerationToolPa
 
         if (successful.length === 0) {
           return {
-            llmContent: `Error: Failed to process any images. Errors:\n${errors.join("\n")}`,
-            returnDisplay: `Error: Failed to process images:\n${errors.join("\n")}`,
+            llmContent: `Error: Failed to process any images. Errors:\n${errors.join('\n')}`,
+            returnDisplay: `Error: Failed to process images:\n${errors.join('\n')}`,
             error: {
               message: `Failed to process ${imageUris.length} images`,
               type: ToolErrorType.EXECUTION_FAILED,
@@ -516,12 +458,12 @@ class ImageGenerationInvocation extends BaseToolInvocation<ImageGenerationToolPa
 
       const messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
         {
-          role: "user",
+          role: 'user',
           content: contentParts,
         },
       ];
 
-      updateOutput?.("Sending request to AI service...");
+      updateOutput?.('Sending request to AI service...');
 
       const client = await this.ensureClient();
       const completion: UnifiedChatCompletionResponse = await client.createChatCompletion(
@@ -532,15 +474,13 @@ class ImageGenerationInvocation extends BaseToolInvocation<ImageGenerationToolPa
         {
           signal,
           timeout: API_TIMEOUT_MS,
-        },
+        }
       );
 
       const choice = completion.choices[0];
       if (!choice) {
-        const errorMsg = "No response from image generation API";
-        console.error(
-          `[ImageGen] ${errorMsg}. Full response: ${JSON.stringify(completion).substring(0, 500)}`,
-        );
+        const errorMsg = 'No response from image generation API';
+        console.error(`[ImageGen] ${errorMsg}. Full response: ${JSON.stringify(completion).substring(0, 500)}`);
         return {
           llmContent: `Error: ${errorMsg}`,
           returnDisplay: errorMsg,
@@ -551,9 +491,9 @@ class ImageGenerationInvocation extends BaseToolInvocation<ImageGenerationToolPa
         };
       }
 
-      updateOutput?.("Processing AI response...");
+      updateOutput?.('Processing AI response...');
 
-      const responseText = choice.message.content || "Image generated successfully.";
+      const responseText = choice.message.content || 'Image generated successfully.';
       let images = choice.message.images;
 
       // If no images field, try to extract from markdown in content
@@ -565,7 +505,7 @@ class ImageGenerationInvocation extends BaseToolInvocation<ImageGenerationToolPa
         const dataUrlMatches = [...responseText.matchAll(dataUrlRegex)];
         if (dataUrlMatches.length > 0) {
           images = dataUrlMatches.map((match) => ({
-            type: "image_url" as const,
+            type: 'image_url' as const,
             image_url: { url: match[1] },
           }));
         } else {
@@ -576,12 +516,10 @@ class ImageGenerationInvocation extends BaseToolInvocation<ImageGenerationToolPa
             const workspaceDir = this.config.getWorkingDir();
 
             // Process file paths - convert to full path and read as base64
-            const processedImages: Array<{ type: "image_url"; image_url: { url: string } }> = [];
+            const processedImages: Array<{ type: 'image_url'; image_url: { url: string } }> = [];
             for (const match of filePathMatches) {
               const filePath = match[1];
-              const fullPath = path.isAbsolute(filePath)
-                ? filePath
-                : path.join(workspaceDir, filePath);
+              const fullPath = path.isAbsolute(filePath) ? filePath : path.join(workspaceDir, filePath);
 
               try {
                 // Check if file exists and read it
@@ -589,7 +527,7 @@ class ImageGenerationInvocation extends BaseToolInvocation<ImageGenerationToolPa
                 const base64Data = await fileToBase64(fullPath);
                 const mimeType = getImageMimeType(fullPath);
                 processedImages.push({
-                  type: "image_url",
+                  type: 'image_url',
                   image_url: { url: `data:${mimeType};base64,${base64Data}` },
                 });
               } catch (fileError) {
@@ -607,9 +545,7 @@ class ImageGenerationInvocation extends BaseToolInvocation<ImageGenerationToolPa
       if (!images || images.length === 0) {
         // No images generated - warn user with clear feedback
         // 未生成图像 - 向用户提供清晰的反馈
-        console.warn(
-          `[ImageGen] No images returned from model ${this.currentModel}. Response: ${responseText.substring(0, 200)}`,
-        );
+        console.warn(`[ImageGen] No images returned from model ${this.currentModel}. Response: ${responseText.substring(0, 200)}`);
         const warningMessage = `⚠️ Image generation did not produce any images.\n\nModel response: ${responseText}\n\n💡 Tip: Make sure your image generation model supports this type of request. Current model: ${this.currentModel}`;
         return {
           llmContent: warningMessage,
@@ -619,18 +555,18 @@ class ImageGenerationInvocation extends BaseToolInvocation<ImageGenerationToolPa
 
       const firstImage = images[0];
 
-      if (firstImage.type === "image_url" && firstImage.image_url?.url) {
-        updateOutput?.("Saving generated image...");
+      if (firstImage.type === 'image_url' && firstImage.image_url?.url) {
+        updateOutput?.('Saving generated image...');
 
         // Get conversation_id from config session
         const sessionId = this.config.getSessionId();
-        const conversationId = sessionId?.split("########")[0]; // Extract conversation_id from session_id
+        const conversationId = sessionId?.split('########')[0]; // Extract conversation_id from session_id
 
         const imagePath = await saveGeneratedImage(
           firstImage.image_url.url,
           this.config,
           undefined, // messageId - will be set when message is composed
-          conversationId,
+          conversationId
         );
         const relativeImagePath = path.relative(this.config.getWorkingDir(), imagePath);
 
@@ -657,8 +593,8 @@ class ImageGenerationInvocation extends BaseToolInvocation<ImageGenerationToolPa
 
       if (signal.aborted) {
         return {
-          llmContent: "Image generation was cancelled by user.",
-          returnDisplay: "Operation cancelled by user.",
+          llmContent: 'Image generation was cancelled by user.',
+          returnDisplay: 'Operation cancelled by user.',
         };
       }
 
@@ -666,13 +602,13 @@ class ImageGenerationInvocation extends BaseToolInvocation<ImageGenerationToolPa
       let errorType: ToolErrorType = ToolErrorType.EXECUTION_FAILED;
 
       // Map specific errors to appropriate types
-      if (errorMessage.includes("API key") || errorMessage.includes("authentication")) {
+      if (errorMessage.includes('API key') || errorMessage.includes('authentication')) {
         errorType = ToolErrorType.EXECUTION_FAILED;
-      } else if (errorMessage.includes("timeout") || errorMessage.includes("timed out")) {
+      } else if (errorMessage.includes('timeout') || errorMessage.includes('timed out')) {
         errorType = ToolErrorType.EXECUTION_FAILED;
-      } else if (errorMessage.includes("network") || errorMessage.includes("fetch")) {
+      } else if (errorMessage.includes('network') || errorMessage.includes('fetch')) {
         errorType = ToolErrorType.EXECUTION_FAILED;
-      } else if (errorMessage.includes("not found") || errorMessage.includes("ENOENT")) {
+      } else if (errorMessage.includes('not found') || errorMessage.includes('ENOENT')) {
         errorType = ToolErrorType.EXECUTION_FAILED;
       }
 

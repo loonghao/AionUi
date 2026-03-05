@@ -10,7 +10,7 @@
  */
 
 export interface AtCommandPart {
-  type: "text" | "atPath";
+  type: 'text' | 'atPath';
   content: string;
 }
 
@@ -20,9 +20,9 @@ export interface AtCommandPart {
  */
 function unescapeAtPath(rawPath: string): string {
   // Remove leading @ if present
-  const path = rawPath.startsWith("@") ? rawPath.substring(1) : rawPath;
+  const path = rawPath.startsWith('@') ? rawPath.substring(1) : rawPath;
   // Unescape backslash-escaped characters
-  return path.replace(/\\(.)/g, "$1");
+  return path.replace(/\\(.)/g, '$1');
 }
 
 /**
@@ -50,10 +50,7 @@ export function parseAllAtCommands(query: string): AtCommandPart[] {
     let nextSearchIndex = currentIndex;
     // Find next unescaped '@'
     while (nextSearchIndex < query.length) {
-      if (
-        query[nextSearchIndex] === "@" &&
-        (nextSearchIndex === 0 || query[nextSearchIndex - 1] !== "\\")
-      ) {
+      if (query[nextSearchIndex] === '@' && (nextSearchIndex === 0 || query[nextSearchIndex - 1] !== '\\')) {
         atIndex = nextSearchIndex;
         break;
       }
@@ -63,7 +60,7 @@ export function parseAllAtCommands(query: string): AtCommandPart[] {
     if (atIndex === -1) {
       // No more @
       if (currentIndex < query.length) {
-        parts.push({ type: "text", content: query.substring(currentIndex) });
+        parts.push({ type: 'text', content: query.substring(currentIndex) });
       }
       break;
     }
@@ -71,7 +68,7 @@ export function parseAllAtCommands(query: string): AtCommandPart[] {
     // Add text before @
     if (atIndex > currentIndex) {
       parts.push({
-        type: "text",
+        type: 'text',
         content: query.substring(currentIndex, atIndex),
       });
     }
@@ -83,16 +80,16 @@ export function parseAllAtCommands(query: string): AtCommandPart[] {
       const char = query[pathEndIndex];
       if (inEscape) {
         inEscape = false;
-      } else if (char === "\\") {
+      } else if (char === '\\') {
         inEscape = true;
       } else if (/[,\s;!?()[\]{}]/.test(char)) {
         // Path ends at first whitespace or punctuation not escaped
         break;
-      } else if (char === ".") {
+      } else if (char === '.') {
         // For . we need to be more careful - only terminate if followed by whitespace or end of string
         // This allows file extensions like .txt, .js but terminates at sentence endings like "file.txt. Next sentence"
-        const nextChar = pathEndIndex + 1 < query.length ? query[pathEndIndex + 1] : "";
-        if (nextChar === "" || /\s/.test(nextChar)) {
+        const nextChar = pathEndIndex + 1 < query.length ? query[pathEndIndex + 1] : '';
+        if (nextChar === '' || /\s/.test(nextChar)) {
           break;
         }
       }
@@ -100,11 +97,11 @@ export function parseAllAtCommands(query: string): AtCommandPart[] {
     }
     const rawAtPath = query.substring(atIndex, pathEndIndex);
     const atPath = unescapeAtPath(rawAtPath);
-    parts.push({ type: "atPath", content: atPath });
+    parts.push({ type: 'atPath', content: atPath });
     currentIndex = pathEndIndex;
   }
   // Filter out empty text parts that might result from consecutive @paths or leading/trailing spaces
-  return parts.filter((part) => !(part.type === "text" && part.content.trim() === ""));
+  return parts.filter((part) => !(part.type === 'text' && part.content.trim() === ''));
 }
 
 /**
@@ -113,9 +110,7 @@ export function parseAllAtCommands(query: string): AtCommandPart[] {
  */
 export function extractAtPaths(query: string): string[] {
   const parts = parseAllAtCommands(query);
-  return parts
-    .filter((part) => part.type === "atPath" && part.content !== "")
-    .map((part) => part.content);
+  return parts.filter((part) => part.type === 'atPath' && part.content !== '').map((part) => part.content);
 }
 
 /**
@@ -130,21 +125,18 @@ export function hasAtReferences(query: string): boolean {
  * Reconstruct query from parts, optionally replacing @ paths
  * 从部分重建查询，可选择替换 @ 路径
  */
-export function reconstructQuery(
-  parts: AtCommandPart[],
-  pathReplacer?: (path: string) => string,
-): string {
+export function reconstructQuery(parts: AtCommandPart[], pathReplacer?: (path: string) => string): string {
   return parts
     .map((part) => {
-      if (part.type === "text") {
+      if (part.type === 'text') {
         return part.content;
       } else {
         // atPath
         if (pathReplacer) {
           return pathReplacer(part.content);
         }
-        return "@" + part.content;
+        return '@' + part.content;
       }
     })
-    .join("");
+    .join('');
 }

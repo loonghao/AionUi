@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useRef, useLayoutEffect, useCallback } from "react";
+import { useRef, useLayoutEffect, useCallback } from 'react';
 
 /**
  * 保持值的最新引用，避免闭包陷阱
@@ -63,6 +63,6 @@ export function useLatestCallback<T extends (...args: any[]) => any>(fn: T): T {
     ((...args: any[]) => {
       return ref.current(...args);
     }) as T,
-    [], // 依赖数组为空，确保函数引用永远稳定 / Empty deps to ensure stable reference
+    [] // 依赖数组为空，确保函数引用永远稳定 / Empty deps to ensure stable reference
   );
 }

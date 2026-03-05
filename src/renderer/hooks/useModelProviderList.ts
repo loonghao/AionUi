@@ -1,11 +1,11 @@
-import { ipcBridge } from "@/common";
-import { GOOGLE_AUTH_PROVIDER_ID } from "@/common/constants";
-import type { IProvider } from "@/common/storage";
-import { useCallback, useEffect, useMemo, useRef } from "react";
-import useSWR from "swr";
-import { useGeminiGoogleAuthModels } from "./useGeminiGoogleAuthModels";
-import type { GeminiModeOption } from "./useModeModeList";
-import { hasSpecificModelCapability } from "@/renderer/utils/modelCapabilities";
+import { ipcBridge } from '@/common';
+import { GOOGLE_AUTH_PROVIDER_ID } from '@/common/constants';
+import type { IProvider } from '@/common/storage';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
+import useSWR from 'swr';
+import { useGeminiGoogleAuthModels } from './useGeminiGoogleAuthModels';
+import type { GeminiModeOption } from './useModeModeList';
+import { hasSpecificModelCapability } from '@/renderer/utils/modelCapabilities';
 
 export interface ModelProviderListResult {
   providers: IProvider[];
@@ -27,9 +27,7 @@ export const useModelProviderList = (): ModelProviderListResult => {
     return lookup;
   }, [geminiModeOptions]);
 
-  const { data: modelConfig } = useSWR("model.config.shared", () =>
-    ipcBridge.mode.getModelConfig.invoke(),
-  );
+  const { data: modelConfig } = useSWR('model.config.shared', () => ipcBridge.mode.getModelConfig.invoke());
 
   // Mutable cache for available-model filtering
   const availableModelsCacheRef = useRef(new Map<string, string[]>());
@@ -41,10 +39,8 @@ export const useModelProviderList = (): ModelProviderListResult => {
 
   const getAvailableModels = useCallback((provider: IProvider): string[] => {
     // 包含 modelEnabled 状态到缓存 key 中
-    const modelEnabledKey = provider.modelEnabled
-      ? JSON.stringify(provider.modelEnabled)
-      : "all-enabled";
-    const cacheKey = `${provider.id}-${(provider.model || []).join(",")}-${modelEnabledKey}`;
+    const modelEnabledKey = provider.modelEnabled ? JSON.stringify(provider.modelEnabled) : 'all-enabled';
+    const cacheKey = `${provider.id}-${(provider.model || []).join(',')}-${modelEnabledKey}`;
     const cache = availableModelsCacheRef.current;
     if (cache.has(cacheKey)) {
       return cache.get(cacheKey)!;
@@ -55,8 +51,8 @@ export const useModelProviderList = (): ModelProviderListResult => {
       const isModelEnabled = provider.modelEnabled?.[modelName] !== false;
       if (!isModelEnabled) continue;
 
-      const functionCalling = hasSpecificModelCapability(provider, modelName, "function_calling");
-      const excluded = hasSpecificModelCapability(provider, modelName, "excludeFromPrimary");
+      const functionCalling = hasSpecificModelCapability(provider, modelName, 'function_calling');
+      const excluded = hasSpecificModelCapability(provider, modelName, 'excludeFromPrimary');
       if ((functionCalling === true || functionCalling === undefined) && excluded !== true) {
         result.push(modelName);
       }
@@ -73,12 +69,12 @@ export const useModelProviderList = (): ModelProviderListResult => {
     if (isGoogleAuth) {
       const googleProvider: IProvider = {
         id: GOOGLE_AUTH_PROVIDER_ID,
-        name: "Gemini Google Auth",
-        platform: "gemini-with-google-auth",
-        baseUrl: "",
-        apiKey: "",
+        name: 'Gemini Google Auth',
+        platform: 'gemini-with-google-auth',
+        baseUrl: '',
+        apiKey: '',
         model: geminiModeOptions.map((v) => v.value),
-        capabilities: [{ type: "text" }, { type: "vision" }, { type: "function_calling" }],
+        capabilities: [{ type: 'text' }, { type: 'vision' }, { type: 'function_calling' }],
         enabled: true, // Google Auth provider 始终启用
       } as unknown as IProvider;
       list = [googleProvider, ...list];
@@ -89,16 +85,14 @@ export const useModelProviderList = (): ModelProviderListResult => {
 
   const formatModelLabel = useCallback(
     (provider: { platform?: string } | undefined, modelName?: string) => {
-      if (!modelName) return "";
-      const isGoogleAuthProvider = provider?.platform
-        ?.toLowerCase()
-        .includes("gemini-with-google-auth");
+      if (!modelName) return '';
+      const isGoogleAuthProvider = provider?.platform?.toLowerCase().includes('gemini-with-google-auth');
       if (isGoogleAuthProvider) {
         return geminiModeLookup.get(modelName)?.label || modelName;
       }
       return modelName;
     },
-    [geminiModeLookup],
+    [geminiModeLookup]
   );
 
   return { providers, geminiModeLookup, getAvailableModels, formatModelLabel };

@@ -4,12 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { CodexPermissionOption } from "../types/permissionTypes";
-import {
-  PermissionType,
-  PermissionSeverity,
-  PERMISSION_DECISION_MAP,
-} from "../types/permissionTypes";
+import type { CodexPermissionOption } from '../types/permissionTypes';
+import { PermissionType, PermissionSeverity, PERMISSION_DECISION_MAP } from '../types/permissionTypes';
 
 /**
  * 基础权限选项配置
@@ -17,31 +13,31 @@ import {
  */
 const BASE_PERMISSION_OPTIONS: ReadonlyArray<CodexPermissionOption> = [
   {
-    optionId: "allow_once",
-    name: "codex.permissions.allow_once",
-    kind: "allow_once" as const,
-    description: "codex.permissions.allow_once_desc",
+    optionId: 'allow_once',
+    name: 'codex.permissions.allow_once',
+    kind: 'allow_once' as const,
+    description: 'codex.permissions.allow_once_desc',
     severity: PermissionSeverity.LOW,
   },
   {
-    optionId: "allow_always",
-    name: "codex.permissions.allow_always",
-    kind: "allow_always" as const,
-    description: "codex.permissions.allow_always_desc",
+    optionId: 'allow_always',
+    name: 'codex.permissions.allow_always',
+    kind: 'allow_always' as const,
+    description: 'codex.permissions.allow_always_desc',
     severity: PermissionSeverity.MEDIUM,
   },
   {
-    optionId: "reject_once",
-    name: "codex.permissions.reject_once",
-    kind: "reject_once" as const,
-    description: "codex.permissions.reject_once_desc",
+    optionId: 'reject_once',
+    name: 'codex.permissions.reject_once',
+    kind: 'reject_once' as const,
+    description: 'codex.permissions.reject_once_desc',
     severity: PermissionSeverity.LOW,
   },
   {
-    optionId: "reject_always",
-    name: "codex.permissions.reject_always",
-    kind: "reject_always" as const,
-    description: "codex.permissions.reject_always_desc",
+    optionId: 'reject_always',
+    name: 'codex.permissions.reject_always',
+    kind: 'reject_always' as const,
+    description: 'codex.permissions.reject_always_desc',
     severity: PermissionSeverity.HIGH,
   },
 ] as const;
@@ -63,23 +59,23 @@ interface PermissionConfig {
  */
 const PERMISSION_CONFIGS: Record<PermissionType, PermissionConfig> = {
   [PermissionType.COMMAND_EXECUTION]: {
-    titleKey: "codex.permissions.titles.command_execution",
-    descriptionKey: "codex.permissions.descriptions.command_execution",
-    icon: "⚡",
+    titleKey: 'codex.permissions.titles.command_execution',
+    descriptionKey: 'codex.permissions.descriptions.command_execution',
+    icon: '⚡',
     severity: PermissionSeverity.HIGH,
     options: createPermissionOptions(PermissionType.COMMAND_EXECUTION),
   },
   [PermissionType.FILE_WRITE]: {
-    titleKey: "codex.permissions.titles.file_write",
-    descriptionKey: "codex.permissions.descriptions.file_write",
-    icon: "📝",
+    titleKey: 'codex.permissions.titles.file_write',
+    descriptionKey: 'codex.permissions.descriptions.file_write',
+    icon: '📝',
     severity: PermissionSeverity.MEDIUM,
     options: createPermissionOptions(PermissionType.FILE_WRITE),
   },
   [PermissionType.FILE_READ]: {
-    titleKey: "codex.permissions.titles.file_read",
-    descriptionKey: "codex.permissions.descriptions.file_read",
-    icon: "📖",
+    titleKey: 'codex.permissions.titles.file_read',
+    descriptionKey: 'codex.permissions.descriptions.file_read',
+    icon: '📖',
     severity: PermissionSeverity.LOW,
     options: createPermissionOptions(PermissionType.FILE_READ),
   },
@@ -107,9 +103,7 @@ function getPermissionConfig(type: PermissionType): PermissionConfig {
  * 根据权限类型创建选项
  * 工厂函数，简化权限选项的创建
  */
-export function createPermissionOptionsForType(
-  permissionType: PermissionType,
-): CodexPermissionOption[] {
+export function createPermissionOptionsForType(permissionType: PermissionType): CodexPermissionOption[] {
   const config = getPermissionConfig(permissionType);
   return config.options;
 }
@@ -118,7 +112,7 @@ export function createPermissionOptionsForType(
  * 将UI选项决策转换为后端决策
  */
 export function mapPermissionDecision(optionId: keyof typeof PERMISSION_DECISION_MAP): string {
-  return PERMISSION_DECISION_MAP[optionId] || "denied";
+  return PERMISSION_DECISION_MAP[optionId] || 'denied';
 }
 
 /**

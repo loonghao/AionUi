@@ -35,35 +35,35 @@ export interface AgentModeOption {
  */
 export const AGENT_MODES: Record<string, AgentModeOption[]> = {
   claude: [
-    { value: "default", label: "Default" },
-    { value: "plan", label: "Plan" },
-    { value: "bypassPermissions", label: "YOLO" },
+    { value: 'default', label: 'Default' },
+    { value: 'plan', label: 'Plan' },
+    { value: 'bypassPermissions', label: 'YOLO' },
   ],
   // Qwen: ACP session/set_mode returns success but does not enforce plan mode behavior.
   // Plan mode disabled until upstream fix. See https://github.com/QwenLM/qwen-code/issues/1806
   qwen: [
-    { value: "default", label: "Default" },
-    { value: "yolo", label: "YOLO" },
+    { value: 'default', label: 'Default' },
+    { value: 'yolo', label: 'YOLO' },
   ],
   opencode: [
-    { value: "build", label: "Build" },
-    { value: "plan", label: "Plan" },
+    { value: 'build', label: 'Build' },
+    { value: 'plan', label: 'Plan' },
   ],
   iflow: [
-    { value: "default", label: "Default" },
-    { value: "smart", label: "Smart" },
-    { value: "plan", label: "Plan" },
-    { value: "yolo", label: "YOLO" },
+    { value: 'default', label: 'Default' },
+    { value: 'smart', label: 'Smart' },
+    { value: 'plan', label: 'Plan' },
+    { value: 'yolo', label: 'YOLO' },
   ],
   gemini: [
-    { value: "default", label: "Default" },
-    { value: "autoEdit", label: "Auto-Accept Edits" },
-    { value: "yolo", label: "YOLO" },
+    { value: 'default', label: 'Default' },
+    { value: 'autoEdit', label: 'Auto-Accept Edits' },
+    { value: 'yolo', label: 'YOLO' },
   ],
   codex: [
-    { value: "default", label: "Plan" },
-    { value: "autoEdit", label: "Auto Edit" },
-    { value: "yolo", label: "Full Auto" },
+    { value: 'default', label: 'Plan' },
+    { value: 'autoEdit', label: 'Auto Edit' },
+    { value: 'yolo', label: 'Full Auto' },
   ],
 };
 

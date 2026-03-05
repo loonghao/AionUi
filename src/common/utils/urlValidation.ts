@@ -18,9 +18,9 @@ export const API_HOST_CONFIG = {
    */
   google: {
     /** Gemini API (generativelanguage.googleapis.com) */
-    gemini: "generativelanguage.googleapis.com",
+    gemini: 'generativelanguage.googleapis.com',
     /** Vertex AI (aiplatform.googleapis.com) */
-    vertexAi: "aiplatform.googleapis.com",
+    vertexAi: 'aiplatform.googleapis.com',
   },
 
   /**
@@ -28,7 +28,7 @@ export const API_HOST_CONFIG = {
    * OpenAI Official Hosts
    */
   openai: {
-    api: "api.openai.com",
+    api: 'api.openai.com',
   },
 
   /**
@@ -36,7 +36,7 @@ export const API_HOST_CONFIG = {
    * Anthropic Official Hosts
    */
   anthropic: {
-    api: "api.anthropic.com",
+    api: 'api.anthropic.com',
   },
 } as const;
 

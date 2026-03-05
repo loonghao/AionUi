@@ -12,10 +12,10 @@
  * Inspired by aioncli-core's SkillManager design
  */
 
-import fs from "fs/promises";
-import path from "path";
-import { existsSync } from "fs";
-import { getSkillsDir, getBuiltinSkillsDir } from "../initStorage";
+import fs from 'fs/promises';
+import path from 'path';
+import { existsSync } from 'fs';
+import { getSkillsDir, getBuiltinSkillsDir } from '../initStorage';
 
 /**
  * Skill 定义（与 aioncli-core 兼容）
@@ -74,7 +74,7 @@ function parseFrontmatter(content: string): { name?: string; description?: strin
  * Remove frontmatter, keep only body content
  */
 function extractBody(content: string): string {
-  return content.replace(/^---\s*\n[\s\S]*?\n---\s*\n?/, "").trim();
+  return content.replace(/^---\s*\n[\s\S]*?\n---\s*\n?/, '').trim();
 }
 
 /**
@@ -112,7 +112,7 @@ export class AcpSkillManager {
    * @returns AcpSkillManager 实例 / AcpSkillManager instance
    */
   static getInstance(enabledSkills?: string[]): AcpSkillManager {
-    const cacheKey = enabledSkills?.sort().join(",") || "all";
+    const cacheKey = enabledSkills?.sort().join(',') || 'all';
 
     // 如果缓存键变化，需要重新创建实例
     // If cache key changed, need to recreate instance
@@ -156,11 +156,11 @@ export class AcpSkillManager {
         if (!entry.isDirectory()) continue;
 
         const skillName = entry.name;
-        const skillFile = path.join(builtinDir, skillName, "SKILL.md");
+        const skillFile = path.join(builtinDir, skillName, 'SKILL.md');
         if (!existsSync(skillFile)) continue;
 
         try {
-          const content = await fs.readFile(skillFile, "utf-8");
+          const content = await fs.readFile(skillFile, 'utf-8');
           const { name, description } = parseFrontmatter(content);
 
           const skillDef: SkillDefinition = {
@@ -217,18 +217,18 @@ export class AcpSkillManager {
         const skillName = entry.name;
 
         // 跳过内置 skills 目录 / Skip builtin skills directory
-        if (skillName === "_builtin") continue;
+        if (skillName === '_builtin') continue;
 
         // 只加载启用的 skills / Only load enabled skills
         if (!enabledSkills.includes(skillName)) {
           continue;
         }
 
-        const skillFile = path.join(skillsDir, skillName, "SKILL.md");
+        const skillFile = path.join(skillsDir, skillName, 'SKILL.md');
         if (!existsSync(skillFile)) continue;
 
         try {
-          const content = await fs.readFile(skillFile, "utf-8");
+          const content = await fs.readFile(skillFile, 'utf-8');
           const { name, description } = parseFrontmatter(content);
 
           const skillDef: SkillDefinition = {
@@ -318,11 +318,11 @@ export class AcpSkillManager {
     // 如果 body 还没加载，现在加载
     if (skill.body === undefined) {
       try {
-        const content = await fs.readFile(skill.location, "utf-8");
+        const content = await fs.readFile(skill.location, 'utf-8');
         skill.body = extractBody(content);
       } catch (error) {
         console.warn(`[AcpSkillManager] Failed to load skill body for ${name}:`, error);
-        skill.body = "";
+        skill.body = '';
       }
     }
 
@@ -371,7 +371,7 @@ export class AcpSkillManager {
  * Build skills index text (for first message injection)
  */
 export function buildSkillsIndexText(skills: SkillIndex[]): string {
-  if (skills.length === 0) return "";
+  if (skills.length === 0) return '';
 
   const lines = skills.map((s) => `- ${s.name}: ${s.description}`);
 
@@ -379,7 +379,7 @@ export function buildSkillsIndexText(skills: SkillIndex[]): string {
 The following skills are available. When you need detailed instructions for a specific skill,
 you can request it by outputting: [LOAD_SKILL: skill-name]
 
-${lines.join("\n")}`;
+${lines.join('\n')}`;
 }
 
 /**
@@ -400,7 +400,7 @@ export function detectSkillLoadRequest(content: string): string[] {
  * Build skill content text (for injection)
  */
 export function buildSkillContentText(skills: SkillDefinition[]): string {
-  if (skills.length === 0) return "";
+  if (skills.length === 0) return '';
 
-  return skills.map((s) => `[Skill: ${s.name}]\n${s.body}`).join("\n\n");
+  return skills.map((s) => `[Skill: ${s.name}]\n${s.body}`).join('\n\n');
 }

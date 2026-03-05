@@ -4,9 +4,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import * as path from "path";
-import { existsSync } from "fs";
-import type { LoadedExtension, ExtSkill } from "../types";
+import * as path from 'path';
+import { existsSync } from 'fs';
+import type { LoadedExtension, ExtSkill } from '../types';
 
 type ResolvedSkill = {
   name: string;
@@ -32,15 +32,11 @@ export function resolveSkills(extensions: LoadedExtension[]): ResolvedSkill[] {
 function convertSkill(skill: ExtSkill, ext: LoadedExtension): ResolvedSkill | null {
   const absolutePath = path.resolve(ext.directory, skill.file);
   if (!absolutePath.startsWith(ext.directory)) {
-    console.warn(
-      `[Extensions] Skill file path traversal attempt: ${skill.file} in ${ext.manifest.name}`,
-    );
+    console.warn(`[Extensions] Skill file path traversal attempt: ${skill.file} in ${ext.manifest.name}`);
     return null;
   }
   if (!existsSync(absolutePath)) {
-    console.warn(
-      `[Extensions] Skill file not found: ${absolutePath} (extension: ${ext.manifest.name})`,
-    );
+    console.warn(`[Extensions] Skill file not found: ${absolutePath} (extension: ${ext.manifest.name})`);
     return null;
   }
   return {

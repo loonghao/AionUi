@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { LoadedExtension, ExtMcpServer } from "../types";
+import type { LoadedExtension, ExtMcpServer } from '../types';
 
 export function resolveMcpServers(extensions: LoadedExtension[]): Record<string, unknown>[] {
   const servers: Record<string, unknown>[] = [];
@@ -22,7 +22,7 @@ export function resolveMcpServers(extensions: LoadedExtension[]): Record<string,
 function convertMcpServer(
   server: ExtMcpServer,
   ext: LoadedExtension,
-  timestamp: number,
+  timestamp: number
 ): Record<string, unknown> {
   return {
     id: `ext-${ext.manifest.name}-${server.name}`,
@@ -33,7 +33,7 @@ function convertMcpServer(
     createdAt: timestamp,
     updatedAt: timestamp,
     originalJson: JSON.stringify(server, null, 2),
-    _source: "extension",
+    _source: 'extension',
     _extensionName: ext.manifest.name,
   };
 }

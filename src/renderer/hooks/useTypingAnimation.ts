@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from 'react';
 
 interface UseTypingAnimationOptions {
   content: string; // 原始内容 / Original content
@@ -28,11 +28,7 @@ interface UseTypingAnimationOptions {
  * });
  * ```
  */
-export const useTypingAnimation = ({
-  content,
-  enabled = true,
-  speed = 50,
-}: UseTypingAnimationOptions) => {
+export const useTypingAnimation = ({ content, enabled = true, speed = 50 }: UseTypingAnimationOptions) => {
   const [displayedContent, setDisplayedContent] = useState(content); // 当前显示的内容 / Currently displayed content
   const [isAnimating, setIsAnimating] = useState(false); // 是否正在打字动画 / Whether typing animation is active
   const animationFrameRef = useRef<number | null>(null); // 动画帧 ID / Animation frame ID

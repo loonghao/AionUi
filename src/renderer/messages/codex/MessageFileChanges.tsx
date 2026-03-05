@@ -4,19 +4,19 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { CodexToolCallUpdate } from "@/common/chatLib";
-import FileChangesPanel, { type FileChangeItem } from "@/renderer/components/base/FileChangesPanel";
-import { usePreviewLauncher } from "@/renderer/hooks/usePreviewLauncher";
-import { extractContentFromDiff, parseDiff, type FileChangeInfo } from "@/renderer/utils/diffUtils";
-import { getFileTypeInfo } from "@/renderer/utils/fileType";
-import React, { useCallback, useMemo } from "react";
-import { useTranslation } from "react-i18next";
-import type { WriteFileResult } from "../types";
+import type { CodexToolCallUpdate } from '@/common/chatLib';
+import FileChangesPanel, { type FileChangeItem } from '@/renderer/components/base/FileChangesPanel';
+import { usePreviewLauncher } from '@/renderer/hooks/usePreviewLauncher';
+import { extractContentFromDiff, parseDiff, type FileChangeInfo } from '@/renderer/utils/diffUtils';
+import { getFileTypeInfo } from '@/renderer/utils/fileType';
+import React, { useCallback, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
+import type { WriteFileResult } from '../types';
 
 // Re-export for backwards compatibility
-export { parseDiff, type FileChangeInfo } from "@/renderer/utils/diffUtils";
+export { parseDiff, type FileChangeInfo } from '@/renderer/utils/diffUtils';
 
-type TurnDiffContent = Extract<CodexToolCallUpdate, { subtype: "turn_diff" }>;
+type TurnDiffContent = Extract<CodexToolCallUpdate, { subtype: 'turn_diff' }>;
 
 // 支持两种数据源 / Support two data sources
 export interface MessageFileChangesProps {
@@ -37,12 +37,7 @@ export interface MessageFileChangesProps {
  * 显示会话中所有已生成/修改的文件，点击可打开预览
  * Display all generated/modified files in the conversation, click to preview
  */
-const MessageFileChanges: React.FC<MessageFileChangesProps> = ({
-  turnDiffChanges = [],
-  writeFileChanges = [],
-  diffsChanges = [],
-  className,
-}) => {
+const MessageFileChanges: React.FC<MessageFileChangesProps> = ({ turnDiffChanges = [], writeFileChanges = [], diffsChanges = [], className }) => {
   const { t } = useTranslation();
   const { launchPreview } = usePreviewLauncher();
 
@@ -85,7 +80,7 @@ const MessageFileChanges: React.FC<MessageFileChangesProps> = ({
         diffContent: fileInfo.diff,
       });
     },
-    [fileChanges, launchPreview],
+    [fileChanges, launchPreview]
   );
 
   // 点击变更统计 → 打开 diff 对比视图 / Click change stats → open diff comparison view
@@ -96,13 +91,13 @@ const MessageFileChanges: React.FC<MessageFileChangesProps> = ({
 
       void launchPreview({
         fileName: fileInfo.fileName,
-        contentType: "diff",
+        contentType: 'diff',
         editable: false,
-        language: "diff",
+        language: 'diff',
         diffContent: fileInfo.diff,
       });
     },
-    [fileChanges, launchPreview],
+    [fileChanges, launchPreview]
   );
 
   // 如果没有文件变更，不渲染 / Don't render if no file changes
@@ -110,15 +105,7 @@ const MessageFileChanges: React.FC<MessageFileChangesProps> = ({
     return null;
   }
 
-  return (
-    <FileChangesPanel
-      title={t("messages.fileChangesCount", { count: fileChanges.length })}
-      files={fileChanges}
-      onFileClick={handleFileClick}
-      onDiffClick={handleDiffClick}
-      className={className}
-    />
-  );
+  return <FileChangesPanel title={t('messages.fileChangesCount', { count: fileChanges.length })} files={fileChanges} onFileClick={handleFileClick} onDiffClick={handleDiffClick} className={className} />;
 };
 
 export default React.memo(MessageFileChanges);

@@ -7,10 +7,7 @@
 /**
  * Cron command types detected from agent message content
  */
-export type CronCommand =
-  | { kind: "create"; name: string; schedule: string; scheduleDescription: string; message: string }
-  | { kind: "list" }
-  | { kind: "delete"; jobId: string };
+export type CronCommand = { kind: 'create'; name: string; schedule: string; scheduleDescription: string; message: string } | { kind: 'list' } | { kind: 'delete'; jobId: string };
 
 /**
  * Remove markdown code blocks from content to avoid detecting commands in examples
@@ -18,7 +15,7 @@ export type CronCommand =
  */
 function stripCodeBlocks(content: string): string {
   // Remove fenced code blocks (```...```)
-  return content.replace(/```[\s\S]*?```/g, "");
+  return content.replace(/```[\s\S]*?```/g, '');
 }
 
 /**
@@ -36,7 +33,7 @@ function stripCodeBlocks(content: string): string {
  * @returns Array of detected commands
  */
 export function detectCronCommands(content: string): CronCommand[] {
-  if (!content || typeof content !== "string") {
+  if (!content || typeof content !== 'string') {
     return [];
   }
 
@@ -51,24 +48,22 @@ export function detectCronCommands(content: string): CronCommand[] {
     const body = match[1];
     const parsed = parseCronCreateBody(body);
     if (parsed) {
-      commands.push({ kind: "create", ...parsed });
+      commands.push({ kind: 'create', ...parsed });
     }
   }
 
   // Fallback: Try to parse unclosed CRON_CREATE block (agent forgot closing tag)
-  if (commands.filter((c) => c.kind === "create").length === 0) {
+  if (commands.filter((c) => c.kind === 'create').length === 0) {
     const hasOpenCreate = /\[CRON_CREATE\]/i.test(cleanContent);
     const hasCloseCreate = /\[\/CRON_CREATE\]/i.test(cleanContent);
     if (hasOpenCreate && !hasCloseCreate) {
       // Try to extract content after [CRON_CREATE] until end or next command
-      const fallbackMatch = cleanContent.match(
-        /\[CRON_CREATE\]\s*\n?([\s\S]*?)(?=\[CRON_(?:LIST|DELETE)|$)/i,
-      );
+      const fallbackMatch = cleanContent.match(/\[CRON_CREATE\]\s*\n?([\s\S]*?)(?=\[CRON_(?:LIST|DELETE)|$)/i);
       if (fallbackMatch) {
         const body = fallbackMatch[1];
         const parsed = parseCronCreateBody(body);
         if (parsed) {
-          commands.push({ kind: "create", ...parsed });
+          commands.push({ kind: 'create', ...parsed });
         }
       }
     }
@@ -76,7 +71,7 @@ export function detectCronCommands(content: string): CronCommand[] {
 
   // Detect [CRON_LIST]
   if (/\[CRON_LIST\]/i.test(cleanContent)) {
-    commands.push({ kind: "list" });
+    commands.push({ kind: 'list' });
   }
 
   // Detect [CRON_DELETE: xxx] - but ignore placeholder values like "任务ID", "task-id", etc.
@@ -84,9 +79,9 @@ export function detectCronCommands(content: string): CronCommand[] {
   for (const match of deleteMatches) {
     const jobId = match[1].trim();
     // Skip placeholder values that are clearly not real job IDs
-    const placeholders = ["任务id", "task-id", "taskid", "job-id", "jobid", "xxx", "id"];
+    const placeholders = ['任务id', 'task-id', 'taskid', 'job-id', 'jobid', 'xxx', 'id'];
     if (jobId && !placeholders.includes(jobId.toLowerCase())) {
-      commands.push({ kind: "delete", jobId });
+      commands.push({ kind: 'delete', jobId });
     }
   }
 
@@ -102,9 +97,7 @@ export function detectCronCommands(content: string): CronCommand[] {
  * schedule_description: Every Monday at 9:00 AM (optional, will auto-generate if missing)
  * message: Message content (can be multi-line until next field or end)
  */
-function parseCronCreateBody(
-  body: string,
-): { name: string; schedule: string; scheduleDescription: string; message: string } | null {
+function parseCronCreateBody(body: string): { name: string; schedule: string; scheduleDescription: string; message: string } | null {
   if (!body) {
     return null;
   }
@@ -123,14 +116,12 @@ function parseCronCreateBody(
 
   // Extract message - everything after "message:" until end or next field
   // Message can be multi-line
-  const messageMatch = body.match(
-    /message:\s*([\s\S]*?)(?=\n(?:name|schedule|schedule_description):|$)/i,
-  );
+  const messageMatch = body.match(/message:\s*([\s\S]*?)(?=\n(?:name|schedule|schedule_description):|$)/i);
   let message = messageMatch?.[1]?.trim();
 
   // If message ends with [/CRON_CREATE], strip it (should already be stripped, but just in case)
   if (message) {
-    message = message.replace(/\[\/CRON_CREATE\]/gi, "").trim();
+    message = message.replace(/\[\/CRON_CREATE\]/gi, '').trim();
   }
 
   // Validate required fields
@@ -146,7 +137,7 @@ function parseCronCreateBody(
  * Useful for quick check before full parsing
  */
 export function hasCronCommands(content: string): boolean {
-  if (!content || typeof content !== "string") {
+  if (!content || typeof content !== 'string') {
     return false;
   }
   return /\[CRON_(?:CREATE|LIST|DELETE)/i.test(content);
@@ -157,14 +148,14 @@ export function hasCronCommands(content: string): boolean {
  * Used to create clean display version for UI
  */
 export function stripCronCommands(content: string): string {
-  if (!content || typeof content !== "string") {
+  if (!content || typeof content !== 'string') {
     return content;
   }
 
   return content
-    .replace(/\[CRON_CREATE\][\s\S]*?\[\/CRON_CREATE\]/gi, "")
-    .replace(/\[CRON_LIST\]/gi, "")
-    .replace(/\[CRON_DELETE:[^\]]+\]/gi, "")
-    .replace(/\n{3,}/g, "\n\n") // Collapse multiple newlines
+    .replace(/\[CRON_CREATE\][\s\S]*?\[\/CRON_CREATE\]/gi, '')
+    .replace(/\[CRON_LIST\]/gi, '')
+    .replace(/\[CRON_DELETE:[^\]]+\]/gi, '')
+    .replace(/\n{3,}/g, '\n\n') // Collapse multiple newlines
     .trim();
 }

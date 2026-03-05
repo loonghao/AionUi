@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React from "react";
-import classNames from "classnames";
+import React from 'react';
+import classNames from 'classnames';
 
 interface ShimmerTextProps {
   children: React.ReactNode;
@@ -22,24 +22,18 @@ interface ShimmerTextProps {
   pauseOnHover?: boolean;
 }
 
-const ShimmerText: React.FC<ShimmerTextProps> = ({
-  children,
-  className,
-  duration = 3,
-  pauseOnHover = false,
-}) => {
+const ShimmerText: React.FC<ShimmerTextProps> = ({ children, className, duration = 3, pauseOnHover = false }) => {
   // Inline styles for shimmer effect to avoid global CSS additions
   const shimmerStyle: React.CSSProperties = {
-    background:
-      "linear-gradient(90deg, var(--text-secondary) 0%, var(--text-primary) 50%, var(--text-secondary) 100%)",
-    backgroundSize: "200% 100%",
-    backgroundClip: "text",
-    WebkitBackgroundClip: "text",
-    color: "transparent",
+    background: 'linear-gradient(90deg, var(--text-secondary) 0%, var(--text-primary) 50%, var(--text-secondary) 100%)',
+    backgroundSize: '200% 100%',
+    backgroundClip: 'text',
+    WebkitBackgroundClip: 'text',
+    color: 'transparent',
     animation: `shimmer-scan ${duration}s linear infinite`,
     ...(pauseOnHover && {
-      ":hover": {
-        animationPlayState: "paused",
+      ':hover': {
+        animationPlayState: 'paused',
       },
     }),
   };
@@ -47,9 +41,9 @@ const ShimmerText: React.FC<ShimmerTextProps> = ({
   // Define animation keyframes inline
   React.useEffect(() => {
     // Check if keyframes already exist to avoid duplicates
-    const existingStyle = document.querySelector("[data-shimmer-keyframes]");
+    const existingStyle = document.querySelector('[data-shimmer-keyframes]');
     if (!existingStyle) {
-      const styleElement = document.createElement("style");
+      const styleElement = document.createElement('style');
       styleElement.textContent = `
         @keyframes shimmer-scan {
           0% {
@@ -60,7 +54,7 @@ const ShimmerText: React.FC<ShimmerTextProps> = ({
           }
         }
       `;
-      styleElement.setAttribute("data-shimmer-keyframes", "true");
+      styleElement.setAttribute('data-shimmer-keyframes', 'true');
       document.head.appendChild(styleElement);
     }
   }, []);
@@ -72,14 +66,14 @@ const ShimmerText: React.FC<ShimmerTextProps> = ({
       onMouseEnter={
         pauseOnHover
           ? (e) => {
-              (e.target as HTMLElement).style.animationPlayState = "paused";
+              (e.target as HTMLElement).style.animationPlayState = 'paused';
             }
           : undefined
       }
       onMouseLeave={
         pauseOnHover
           ? (e) => {
-              (e.target as HTMLElement).style.animationPlayState = "running";
+              (e.target as HTMLElement).style.animationPlayState = 'running';
             }
           : undefined
       }

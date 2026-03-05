@@ -199,6 +199,7 @@ _Seu assistente AI 24/7 — acesse AionUi de qualquer dispositivo, em qualquer l
 
 <p align="center"><em>Controle e monitore seu agente remotamente — Claude, Gemini, Codex. Pelo navegador ou celular, como o Claude Code remote.</em></p>
 
+
 > [Tutorial de acesso remoto à Internet](https://github.com/iOfficeAI/AionUi/wiki/Remote-Internet-Access-Guide-Chinese)
 
 ## ✨ Cowork em ação
@@ -623,7 +624,6 @@ prek run --from-ref origin/main --to-ref HEAD
 ```
 
 #### Sistema de Build
-
 AionUi usa **electron-vite** para empacotamento rápido:
 
 - **Processo principal**: Empacotado com Vite (ESM)

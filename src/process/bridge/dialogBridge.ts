@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { BrowserWindow, dialog } from "electron";
-import { ipcBridge } from "../../common";
+import { BrowserWindow, dialog } from 'electron';
+import { ipcBridge } from '../../common';
 
 export function initDialogBridge(): void {
   ipcBridge.dialog.showOpen.provider((options) => {
@@ -17,9 +17,7 @@ export function initDialogBridge(): void {
       properties: options?.properties,
     };
 
-    const showDialogPromise = parentWindow
-      ? dialog.showOpenDialog(parentWindow, dialogOptions)
-      : dialog.showOpenDialog(dialogOptions);
+    const showDialogPromise = parentWindow ? dialog.showOpenDialog(parentWindow, dialogOptions) : dialog.showOpenDialog(dialogOptions);
 
     return showDialogPromise.then((res) => {
       return res.filePaths;

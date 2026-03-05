@@ -61,18 +61,18 @@
 ### Before (硬编码):
 
 ```tsx
-<div className="bg-#EFF0F6 hover:bg-#E5E7F0">
-  <span className="text-#1D2129">文本</span>
-  <div className="border border-#E5E6EB"></div>
+<div className='bg-#EFF0F6 hover:bg-#E5E7F0'>
+  <span className='text-#1D2129'>文本</span>
+  <div className='border border-#E5E6EB'></div>
 </div>
 ```
 
 ### After (主题变量):
 
 ```tsx
-<div className="bg-aou-1 hover:bg-aou-2">
-  <span className="text-t-primary">文本</span>
-  <div className="border border-b-base"></div>
+<div className='bg-aou-1 hover:bg-aou-2'>
+  <span className='text-t-primary'>文本</span>
+  <div className='border border-b-base'></div>
 </div>
 ```
 

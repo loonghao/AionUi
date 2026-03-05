@@ -4,43 +4,43 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { ipcBridge } from "@/common";
-import type { TMessage } from "@/common/chatLib";
-import { transformMessage } from "@/common/chatLib";
-import { uuid } from "@/common/utils";
-import SendBox from "@/renderer/components/sendbox";
-import { getSendBoxDraftHook, type FileOrFolderItem } from "@/renderer/hooks/useSendBoxDraft";
-import { createSetUploadFile } from "@/renderer/hooks/useSendBoxFiles";
-import { useAddOrUpdateMessage } from "@/renderer/messages/hooks";
-import { allSupportedExts, type FileMetadata } from "@/renderer/services/FileService";
-import { emitter, useAddEventListener } from "@/renderer/utils/emitter";
-import { mergeFileSelectionItems } from "@/renderer/utils/fileSelection";
-import { Button, Message, Tag } from "@arco-design/web-react";
-import { Plus } from "@icon-park/react";
-import { iconColors } from "@/renderer/theme/colors";
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useTranslation } from "react-i18next";
-import { buildDisplayMessage } from "@/renderer/utils/messageFiles";
-import ThoughtDisplay, { type ThoughtData } from "@/renderer/components/ThoughtDisplay";
-import FilePreview from "@/renderer/components/FilePreview";
-import HorizontalFileList from "@/renderer/components/HorizontalFileList";
-import { usePreviewContext } from "@/renderer/pages/conversation/preview";
-import { useLatestRef } from "@/renderer/hooks/useLatestRef";
-import { useOpenFileSelector } from "@/renderer/hooks/useOpenFileSelector";
-import { useAutoTitle } from "@/renderer/hooks/useAutoTitle";
-import { useSlashCommands } from "@/renderer/hooks/useSlashCommands";
+import { ipcBridge } from '@/common';
+import type { TMessage } from '@/common/chatLib';
+import { transformMessage } from '@/common/chatLib';
+import { uuid } from '@/common/utils';
+import SendBox from '@/renderer/components/sendbox';
+import { getSendBoxDraftHook, type FileOrFolderItem } from '@/renderer/hooks/useSendBoxDraft';
+import { createSetUploadFile } from '@/renderer/hooks/useSendBoxFiles';
+import { useAddOrUpdateMessage } from '@/renderer/messages/hooks';
+import { allSupportedExts, type FileMetadata } from '@/renderer/services/FileService';
+import { emitter, useAddEventListener } from '@/renderer/utils/emitter';
+import { mergeFileSelectionItems } from '@/renderer/utils/fileSelection';
+import { Button, Message, Tag } from '@arco-design/web-react';
+import { Plus } from '@icon-park/react';
+import { iconColors } from '@/renderer/theme/colors';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { buildDisplayMessage } from '@/renderer/utils/messageFiles';
+import ThoughtDisplay, { type ThoughtData } from '@/renderer/components/ThoughtDisplay';
+import FilePreview from '@/renderer/components/FilePreview';
+import HorizontalFileList from '@/renderer/components/HorizontalFileList';
+import { usePreviewContext } from '@/renderer/pages/conversation/preview';
+import { useLatestRef } from '@/renderer/hooks/useLatestRef';
+import { useOpenFileSelector } from '@/renderer/hooks/useOpenFileSelector';
+import { useAutoTitle } from '@/renderer/hooks/useAutoTitle';
+import { useSlashCommands } from '@/renderer/hooks/useSlashCommands';
 
 interface OpenClawDraftData {
-  _type: "openclaw-gateway";
+  _type: 'openclaw-gateway';
   atPath: Array<string | FileOrFolderItem>;
   content: string;
   uploadFile: string[];
 }
 
-const useOpenClawSendBoxDraft = getSendBoxDraftHook("openclaw-gateway", {
-  _type: "openclaw-gateway",
+const useOpenClawSendBoxDraft = getSendBoxDraftHook('openclaw-gateway', {
+  _type: 'openclaw-gateway',
   atPath: [],
-  content: "",
+  content: '',
   uploadFile: [],
 });
 
@@ -49,11 +49,9 @@ const useOpenClawSendBoxDraft = getSendBoxDraftHook("openclaw-gateway", {
  * Returns true if validation passes, false otherwise (with user-facing error).
  */
 const validateRuntimeMismatch = async (conversationId: string): Promise<boolean> => {
-  const runtimeResult = await ipcBridge.openclawConversation.getRuntime.invoke({
-    conversation_id: conversationId,
-  });
+  const runtimeResult = await ipcBridge.openclawConversation.getRuntime.invoke({ conversation_id: conversationId });
   if (!runtimeResult?.success || !runtimeResult.data) {
-    Message.error("Failed to validate agent runtime");
+    Message.error('Failed to validate agent runtime');
     return false;
   }
 
@@ -61,46 +59,30 @@ const validateRuntimeMismatch = async (conversationId: string): Promise<boolean>
   const expected = runtimeResult.data.expected || {};
   const mismatches: string[] = [];
 
-  const norm = (v?: string | null) => (v || "").trim();
-  const eqPath = (a?: string | null, b?: string | null) =>
-    norm(a).replace(/[\\/]+$/, "") === norm(b).replace(/[\\/]+$/, "");
+  const norm = (v?: string | null) => (v || '').trim();
+  const eqPath = (a?: string | null, b?: string | null) => norm(a).replace(/[\\/]+$/, '') === norm(b).replace(/[\\/]+$/, '');
 
   if (expected.expectedWorkspace && !eqPath(expected.expectedWorkspace, runtime.workspace)) {
-    mismatches.push(
-      `workspace: expected=${expected.expectedWorkspace || "-"} actual=${runtime.workspace || "-"}`,
-    );
+    mismatches.push(`workspace: expected=${expected.expectedWorkspace || '-'} actual=${runtime.workspace || '-'}`);
   }
   if (expected.expectedBackend && norm(expected.expectedBackend) !== norm(runtime.backend)) {
-    mismatches.push(
-      `backend: expected=${expected.expectedBackend || "-"} actual=${runtime.backend || "-"}`,
-    );
+    mismatches.push(`backend: expected=${expected.expectedBackend || '-'} actual=${runtime.backend || '-'}`);
   }
   if (expected.expectedAgentName && norm(expected.expectedAgentName) !== norm(runtime.agentName)) {
-    mismatches.push(
-      `agent: expected=${expected.expectedAgentName || "-"} actual=${runtime.agentName || "-"}`,
-    );
+    mismatches.push(`agent: expected=${expected.expectedAgentName || '-'} actual=${runtime.agentName || '-'}`);
   }
   if (expected.expectedCliPath && norm(expected.expectedCliPath) !== norm(runtime.cliPath)) {
-    mismatches.push(
-      `cliPath: expected=${expected.expectedCliPath || "-"} actual=${runtime.cliPath || "-"}`,
-    );
+    mismatches.push(`cliPath: expected=${expected.expectedCliPath || '-'} actual=${runtime.cliPath || '-'}`);
   }
   if (expected.expectedModel && norm(expected.expectedModel) !== norm(runtime.model)) {
-    mismatches.push(
-      `model: expected=${expected.expectedModel || "-"} actual=${runtime.model || "-"}`,
-    );
+    mismatches.push(`model: expected=${expected.expectedModel || '-'} actual=${runtime.model || '-'}`);
   }
-  if (
-    expected.expectedIdentityHash &&
-    norm(expected.expectedIdentityHash) !== norm(runtime.identityHash)
-  ) {
-    mismatches.push(
-      `identity: expected=${expected.expectedIdentityHash || "-"} actual=${runtime.identityHash || "-"}`,
-    );
+  if (expected.expectedIdentityHash && norm(expected.expectedIdentityHash) !== norm(runtime.identityHash)) {
+    mismatches.push(`identity: expected=${expected.expectedIdentityHash || '-'} actual=${runtime.identityHash || '-'}`);
   }
 
   if (mismatches.length > 0) {
-    Message.error(`Agent switch validation failed: ${mismatches.join(" | ")}`);
+    Message.error(`Agent switch validation failed: ${mismatches.join(' | ')}`);
     return false;
   }
   return true;
@@ -110,7 +92,7 @@ const EMPTY_AT_PATH: Array<string | FileOrFolderItem> = [];
 const EMPTY_UPLOAD_FILES: string[] = [];
 
 const OpenClawSendBox: React.FC<{ conversation_id: string }> = ({ conversation_id }) => {
-  const [workspacePath, setWorkspacePath] = useState("");
+  const [workspacePath, setWorkspacePath] = useState('');
   const { t } = useTranslation();
   const { checkAndUpdateTitle } = useAutoTitle();
   const slashCommands = useSlashCommands(conversation_id);
@@ -120,8 +102,8 @@ const OpenClawSendBox: React.FC<{ conversation_id: string }> = ({ conversation_i
   const [aiProcessing, setAiProcessing] = useState(false);
   const [openclawStatus, setOpenClawStatus] = useState<string | null>(null);
   const [thought, setThought] = useState<ThoughtData>({
-    description: "",
-    subject: "",
+    description: '',
+    subject: '',
   });
 
   // Use ref to sync state for immediate access in event handlers
@@ -167,7 +149,7 @@ const OpenClawSendBox: React.FC<{ conversation_id: string }> = ({ conversation_i
                 ref.pending = null;
               }
             },
-            THROTTLE_MS - (now - ref.lastUpdate),
+            THROTTLE_MS - (now - ref.lastUpdate)
           );
         }
       }
@@ -185,13 +167,13 @@ const OpenClawSendBox: React.FC<{ conversation_id: string }> = ({ conversation_i
   const { data: draftData, mutate: mutateDraft } = useOpenClawSendBoxDraft(conversation_id);
   const atPath = draftData?.atPath ?? EMPTY_AT_PATH;
   const uploadFile = draftData?.uploadFile ?? EMPTY_UPLOAD_FILES;
-  const content = draftData?.content ?? "";
+  const content = draftData?.content ?? '';
 
   const setAtPath = useCallback(
     (val: Array<string | FileOrFolderItem>) => {
       mutateDraft((prev) => ({ ...(prev as OpenClawDraftData), atPath: val }));
     },
-    [mutateDraft],
+    [mutateDraft]
   );
 
   const setUploadFile = createSetUploadFile(mutateDraft, draftData);
@@ -200,7 +182,7 @@ const OpenClawSendBox: React.FC<{ conversation_id: string }> = ({ conversation_i
     (val: string) => {
       mutateDraft((prev) => ({ ...(prev as OpenClawDraftData), content: val }));
     },
-    [mutateDraft],
+    [mutateDraft]
   );
 
   const setContentRef = useLatestRef(setContent);
@@ -215,7 +197,7 @@ const OpenClawSendBox: React.FC<{ conversation_id: string }> = ({ conversation_i
     }
 
     setOpenClawStatus(null);
-    setThought({ subject: "", description: "" });
+    setThought({ subject: '', description: '' });
     hasContentInTurnRef.current = false;
 
     // Check actual conversation status from backend before resetting aiProcessing
@@ -227,7 +209,7 @@ const OpenClawSendBox: React.FC<{ conversation_id: string }> = ({ conversation_i
         aiProcessingRef.current = false;
         return;
       }
-      const isRunning = res.status === "running";
+      const isRunning = res.status === 'running';
       setAiProcessing(isRunning);
       aiProcessingRef.current = isRunning;
     });
@@ -240,7 +222,7 @@ const OpenClawSendBox: React.FC<{ conversation_id: string }> = ({ conversation_i
       .invoke({ conversation_id })
       .then((res) => {
         if (res?.success && res.data?.runtime?.hasActiveSession) {
-          setOpenClawStatus("session_active");
+          setOpenClawStatus('session_active');
         }
       })
       .catch(() => {
@@ -257,11 +239,11 @@ const OpenClawSendBox: React.FC<{ conversation_id: string }> = ({ conversation_i
   }, [setSendBoxHandler, content]);
 
   useAddEventListener(
-    "sendbox.fill",
+    'sendbox.fill',
     (text: string) => {
       setContentRef.current(text);
     },
-    [],
+    []
   );
 
   useEffect(() => {
@@ -271,13 +253,13 @@ const OpenClawSendBox: React.FC<{ conversation_id: string }> = ({ conversation_i
       }
 
       // Cancel pending finish timeout if new message arrives
-      if (finishTimeoutRef.current && message.type !== "finish") {
+      if (finishTimeoutRef.current && message.type !== 'finish') {
         clearTimeout(finishTimeoutRef.current);
         finishTimeoutRef.current = null;
       }
 
       switch (message.type) {
-        case "thought":
+        case 'thought':
           // Auto-recover aiProcessing state if thought arrives after finish
           // 如果 thought 在 finish 后到达，自动恢复 aiProcessing 状态
           if (!aiProcessingRef.current) {
@@ -286,21 +268,21 @@ const OpenClawSendBox: React.FC<{ conversation_id: string }> = ({ conversation_i
           }
           throttledSetThought(message.data as ThoughtData);
           break;
-        case "finish":
+        case 'finish':
           {
             // Use delayed reset to detect true end of task
             // 使用延迟重置来检测任务的真正结束
             finishTimeoutRef.current = setTimeout(() => {
               setAiProcessing(false);
               aiProcessingRef.current = false;
-              setThought({ subject: "", description: "" });
+              setThought({ subject: '', description: '' });
               finishTimeoutRef.current = null;
             }, 1000);
             hasContentInTurnRef.current = false;
           }
           break;
-        case "content":
-        case "acp_permission": {
+        case 'content':
+        case 'acp_permission': {
           // Mark that current turn has content output
           hasContentInTurnRef.current = true;
           // Auto-recover aiProcessing state if content arrives after finish
@@ -308,14 +290,14 @@ const OpenClawSendBox: React.FC<{ conversation_id: string }> = ({ conversation_i
             setAiProcessing(true);
             aiProcessingRef.current = true;
           }
-          setThought({ subject: "", description: "" });
+          setThought({ subject: '', description: '' });
           const transformedMessage = transformMessage(message);
           if (transformedMessage) {
             addOrUpdateMessage(transformedMessage);
           }
           break;
         }
-        case "agent_status": {
+        case 'agent_status': {
           // Auto-recover aiProcessing state if agent_status arrives after finish
           if (!aiProcessingRef.current) {
             setAiProcessing(true);
@@ -337,7 +319,7 @@ const OpenClawSendBox: React.FC<{ conversation_id: string }> = ({ conversation_i
             setAiProcessing(true);
             aiProcessingRef.current = true;
           }
-          setThought({ subject: "", description: "" });
+          setThought({ subject: '', description: '' });
           const transformedMessage = transformMessage(message);
           if (transformedMessage) {
             addOrUpdateMessage(transformedMessage);
@@ -359,29 +341,23 @@ const OpenClawSendBox: React.FC<{ conversation_id: string }> = ({ conversation_i
       const filePaths = pastedFiles.map((file) => file.path);
       setUploadFile((prev) => [...prev, ...filePaths]);
     },
-    [setUploadFile],
+    [setUploadFile]
   );
 
-  useAddEventListener(
-    "openclaw-gateway.selected.file",
-    (items: Array<string | FileOrFolderItem>) => {
-      setTimeout(() => {
-        setAtPath(items);
-      }, 10);
-    },
-  );
+  useAddEventListener('openclaw-gateway.selected.file', (items: Array<string | FileOrFolderItem>) => {
+    setTimeout(() => {
+      setAtPath(items);
+    }, 10);
+  });
 
-  useAddEventListener(
-    "openclaw-gateway.selected.file.append",
-    (items: Array<string | FileOrFolderItem>) => {
-      setTimeout(() => {
-        const merged = mergeFileSelectionItems(atPathRef.current, items);
-        if (merged !== atPathRef.current) {
-          setAtPath(merged as Array<string | FileOrFolderItem>);
-        }
-      }, 10);
-    },
-  );
+  useAddEventListener('openclaw-gateway.selected.file.append', (items: Array<string | FileOrFolderItem>) => {
+    setTimeout(() => {
+      const merged = mergeFileSelectionItems(atPathRef.current, items);
+      if (merged !== atPathRef.current) {
+        setAtPath(merged as Array<string | FileOrFolderItem>);
+      }
+    }, 10);
+  });
 
   const onSendHandler = async (message: string) => {
     const runtimeOk = await validateRuntimeMismatch(conversation_id);
@@ -390,24 +366,21 @@ const OpenClawSendBox: React.FC<{ conversation_id: string }> = ({ conversation_i
     const msg_id = uuid();
     // Content is already cleared by the shared SendBox component (setInput(''))
     // before calling onSend — no need to clear again here.
-    emitter.emit("openclaw-gateway.selected.file.clear");
+    emitter.emit('openclaw-gateway.selected.file.clear');
     const currentAtPath = [...atPath];
     const currentUploadFile = [...uploadFile];
     setAtPath([]);
     setUploadFile([]);
 
-    const filePaths = [
-      ...currentUploadFile,
-      ...currentAtPath.map((item) => (typeof item === "string" ? item : item.path)),
-    ];
+    const filePaths = [...currentUploadFile, ...currentAtPath.map((item) => (typeof item === 'string' ? item : item.path))];
     const displayMessage = buildDisplayMessage(message, filePaths, workspacePath);
 
     const userMessage: TMessage = {
       id: msg_id,
       msg_id,
       conversation_id,
-      type: "text",
-      position: "right",
+      type: 'text',
+      position: 'right',
       content: { content: displayMessage },
       createdAt: Date.now(),
     };
@@ -415,9 +388,7 @@ const OpenClawSendBox: React.FC<{ conversation_id: string }> = ({ conversation_i
     setAiProcessing(true);
     aiProcessingRef.current = true;
     try {
-      const atPathStrings = currentAtPath.map((item) =>
-        typeof item === "string" ? item : item.path,
-      );
+      const atPathStrings = currentAtPath.map((item) => (typeof item === 'string' ? item : item.path));
       await ipcBridge.openclawConversation.sendMessage.invoke({
         input: displayMessage,
         msg_id,
@@ -425,7 +396,7 @@ const OpenClawSendBox: React.FC<{ conversation_id: string }> = ({ conversation_i
         files: [...currentUploadFile, ...atPathStrings],
       });
       void checkAndUpdateTitle(conversation_id, message);
-      emitter.emit("chat.history.refresh");
+      emitter.emit('chat.history.refresh');
     } catch (error) {
       // Only reset aiProcessing on error, normal flow is reset by 'finish' event
       setAiProcessing(false);
@@ -438,7 +409,7 @@ const OpenClawSendBox: React.FC<{ conversation_id: string }> = ({ conversation_i
     (files: string[]) => {
       setUploadFile((prev) => [...prev, ...files]);
     },
-    [setUploadFile],
+    [setUploadFile]
   );
   const { openFileSelector, onSlashBuiltinCommand } = useOpenFileSelector({
     onFilesSelected: appendSelectedFiles,
@@ -447,7 +418,7 @@ const OpenClawSendBox: React.FC<{ conversation_id: string }> = ({ conversation_i
   // Handle initial message from guid page
   useEffect(() => {
     if (!conversation_id || !openclawStatus) return;
-    if (openclawStatus !== "session_active") return;
+    if (openclawStatus !== 'session_active') return;
 
     const storageKey = `openclaw_initial_message_${conversation_id}`;
     const processedKey = `openclaw_initial_processed_${conversation_id}`;
@@ -461,7 +432,7 @@ const OpenClawSendBox: React.FC<{ conversation_id: string }> = ({ conversation_i
         const runtimeOk = await validateRuntimeMismatch(conversation_id);
         if (!runtimeOk) return;
 
-        sessionStorage.setItem(processedKey, "true");
+        sessionStorage.setItem(processedKey, 'true');
         setAiProcessing(true);
         aiProcessingRef.current = true;
         const { input, files = [] } = JSON.parse(stored) as { input: string; files?: string[] };
@@ -473,22 +444,16 @@ const OpenClawSendBox: React.FC<{ conversation_id: string }> = ({ conversation_i
           id: msg_id,
           msg_id,
           conversation_id,
-          type: "text",
-          position: "right",
+          type: 'text',
+          position: 'right',
           content: { content: initialDisplayMessage },
           createdAt: Date.now(),
         };
         addOrUpdateMessage(userMessage, true);
 
-        await ipcBridge.openclawConversation.sendMessage.invoke({
-          input: initialDisplayMessage,
-          msg_id,
-          conversation_id,
-          files,
-          loading_id,
-        });
+        await ipcBridge.openclawConversation.sendMessage.invoke({ input: initialDisplayMessage, msg_id, conversation_id, files, loading_id });
         void checkAndUpdateTitle(conversation_id, input);
-        emitter.emit("chat.history.refresh");
+        emitter.emit('chat.history.refresh');
         sessionStorage.removeItem(storageKey);
       } catch (err) {
         sessionStorage.removeItem(processedKey);
@@ -500,7 +465,7 @@ const OpenClawSendBox: React.FC<{ conversation_id: string }> = ({ conversation_i
 
     const timer = setTimeout(() => {
       processInitialMessage().catch((error) => {
-        console.error("Failed to process initial message:", error);
+        console.error('Failed to process initial message:', error);
       });
     }, 200);
 
@@ -521,13 +486,13 @@ const OpenClawSendBox: React.FC<{ conversation_id: string }> = ({ conversation_i
 
       setAiProcessing(false);
       aiProcessingRef.current = false;
-      setThought({ subject: "", description: "" });
+      setThought({ subject: '', description: '' });
       hasContentInTurnRef.current = false;
     }
   };
 
   return (
-    <div className="max-w-800px w-full mx-auto flex flex-col mt-auto mb-16px">
+    <div className='max-w-800px w-full mx-auto flex flex-col mt-auto mb-16px'>
       <ThoughtDisplay thought={thought} running={aiProcessing} onStop={handleStop} />
 
       <SendBox
@@ -535,12 +500,12 @@ const OpenClawSendBox: React.FC<{ conversation_id: string }> = ({ conversation_i
         onChange={setContent}
         loading={aiProcessing}
         disabled={false}
-        className="z-10"
+        className='z-10'
         placeholder={
           aiProcessing
-            ? t("conversation.chat.processing")
-            : t("acp.sendbox.placeholder", {
-                backend: "OpenClaw",
+            ? t('conversation.chat.processing')
+            : t('acp.sendbox.placeholder', {
+                backend: 'OpenClaw',
                 defaultValue: `Send message to OpenClaw...`,
               })
         }
@@ -549,39 +514,25 @@ const OpenClawSendBox: React.FC<{ conversation_id: string }> = ({ conversation_i
         supportedExts={allSupportedExts}
         defaultMultiLine={true}
         lockMultiLine={true}
-        tools={
-          <Button
-            type="secondary"
-            shape="circle"
-            icon={<Plus theme="outline" size="14" strokeWidth={2} fill={iconColors.primary} />}
-            onClick={openFileSelector}
-          />
-        }
+        tools={<Button type='secondary' shape='circle' icon={<Plus theme='outline' size='14' strokeWidth={2} fill={iconColors.primary} />} onClick={openFileSelector} />}
         prefix={
           <>
-            {(uploadFile.length > 0 ||
-              atPath.some((item) => (typeof item === "string" ? true : item.isFile))) && (
+            {(uploadFile.length > 0 || atPath.some((item) => (typeof item === 'string' ? true : item.isFile))) && (
               <HorizontalFileList>
                 {uploadFile.map((path) => (
-                  <FilePreview
-                    key={path}
-                    path={path}
-                    onRemove={() => setUploadFile(uploadFile.filter((v) => v !== path))}
-                  />
+                  <FilePreview key={path} path={path} onRemove={() => setUploadFile(uploadFile.filter((v) => v !== path))} />
                 ))}
                 {atPath.map((item) => {
-                  const isFile = typeof item === "string" ? true : item.isFile;
-                  const path = typeof item === "string" ? item : item.path;
+                  const isFile = typeof item === 'string' ? true : item.isFile;
+                  const path = typeof item === 'string' ? item : item.path;
                   if (isFile) {
                     return (
                       <FilePreview
                         key={path}
                         path={path}
                         onRemove={() => {
-                          const newAtPath = atPath.filter((v) =>
-                            typeof v === "string" ? v !== path : v.path !== path,
-                          );
-                          emitter.emit("openclaw-gateway.selected.file", newAtPath);
+                          const newAtPath = atPath.filter((v) => (typeof v === 'string' ? v !== path : v.path !== path));
+                          emitter.emit('openclaw-gateway.selected.file', newAtPath);
                           setAtPath(newAtPath);
                         }}
                       />
@@ -591,21 +542,19 @@ const OpenClawSendBox: React.FC<{ conversation_id: string }> = ({ conversation_i
                 })}
               </HorizontalFileList>
             )}
-            {atPath.some((item) => (typeof item === "string" ? false : !item.isFile)) && (
-              <div className="flex flex-wrap items-center gap-8px mb-8px">
+            {atPath.some((item) => (typeof item === 'string' ? false : !item.isFile)) && (
+              <div className='flex flex-wrap items-center gap-8px mb-8px'>
                 {atPath.map((item) => {
-                  if (typeof item === "string") return null;
+                  if (typeof item === 'string') return null;
                   if (!item.isFile) {
                     return (
                       <Tag
                         key={item.path}
-                        color="blue"
+                        color='blue'
                         closable
                         onClose={() => {
-                          const newAtPath = atPath.filter((v) =>
-                            typeof v === "string" ? true : v.path !== item.path,
-                          );
-                          emitter.emit("openclaw-gateway.selected.file", newAtPath);
+                          const newAtPath = atPath.filter((v) => (typeof v === 'string' ? true : v.path !== item.path));
+                          emitter.emit('openclaw-gateway.selected.file', newAtPath);
                           setAtPath(newAtPath);
                         }}
                       >

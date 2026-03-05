@@ -4,9 +4,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import * as path from "path";
-import { existsSync } from "fs";
-import type { LoadedExtension, ExtWebui } from "../types";
+import * as path from 'path';
+import { existsSync } from 'fs';
+import type { LoadedExtension, ExtWebui } from '../types';
 
 export type WebuiContribution = {
   config: ExtWebui;
@@ -22,11 +22,7 @@ export function resolveWebuiContributions(extensions: LoadedExtension[]): WebuiC
 
     const validated = validateWebuiContribution(webui, ext);
     if (validated) {
-      result.push({
-        config: validated,
-        directory: ext.directory,
-        extensionName: ext.manifest.name,
-      });
+      result.push({ config: validated, directory: ext.directory, extensionName: ext.manifest.name });
     }
   }
   return result;
@@ -42,14 +38,10 @@ function validateWebuiContribution(webui: ExtWebui, ext: LoadedExtension): ExtWe
     for (const route of webui.apiRoutes) {
       const absPath = path.resolve(extDir, route.entryPoint);
       if (!absPath.startsWith(extDir)) {
-        console.warn(
-          `[Extensions] WebUI API route path traversal attempt: ${route.entryPoint} in ${extName}`,
-        );
+        console.warn(`[Extensions] WebUI API route path traversal attempt: ${route.entryPoint} in ${extName}`);
         hasWarning = true;
       } else if (!existsSync(absPath)) {
-        console.warn(
-          `[Extensions] WebUI API route entryPoint not found: ${absPath} (extension: ${extName})`,
-        );
+        console.warn(`[Extensions] WebUI API route entryPoint not found: ${absPath} (extension: ${extName})`);
         hasWarning = true;
       }
     }
@@ -60,14 +52,10 @@ function validateWebuiContribution(webui: ExtWebui, ext: LoadedExtension): ExtWe
     for (const handler of webui.wsHandlers) {
       const absPath = path.resolve(extDir, handler.entryPoint);
       if (!absPath.startsWith(extDir)) {
-        console.warn(
-          `[Extensions] WebUI WS handler path traversal attempt: ${handler.entryPoint} in ${extName}`,
-        );
+        console.warn(`[Extensions] WebUI WS handler path traversal attempt: ${handler.entryPoint} in ${extName}`);
         hasWarning = true;
       } else if (!existsSync(absPath)) {
-        console.warn(
-          `[Extensions] WebUI WS handler entryPoint not found: ${absPath} (extension: ${extName})`,
-        );
+        console.warn(`[Extensions] WebUI WS handler entryPoint not found: ${absPath} (extension: ${extName})`);
         hasWarning = true;
       }
     }
@@ -78,14 +66,10 @@ function validateWebuiContribution(webui: ExtWebui, ext: LoadedExtension): ExtWe
     for (const mw of webui.middleware) {
       const absPath = path.resolve(extDir, mw.entryPoint);
       if (!absPath.startsWith(extDir)) {
-        console.warn(
-          `[Extensions] WebUI middleware path traversal attempt: ${mw.entryPoint} in ${extName}`,
-        );
+        console.warn(`[Extensions] WebUI middleware path traversal attempt: ${mw.entryPoint} in ${extName}`);
         hasWarning = true;
       } else if (!existsSync(absPath)) {
-        console.warn(
-          `[Extensions] WebUI middleware entryPoint not found: ${absPath} (extension: ${extName})`,
-        );
+        console.warn(`[Extensions] WebUI middleware entryPoint not found: ${absPath} (extension: ${extName})`);
         hasWarning = true;
       }
     }
@@ -96,23 +80,17 @@ function validateWebuiContribution(webui: ExtWebui, ext: LoadedExtension): ExtWe
     for (const asset of webui.staticAssets) {
       const absPath = path.resolve(extDir, asset.directory);
       if (!absPath.startsWith(extDir)) {
-        console.warn(
-          `[Extensions] WebUI static asset path traversal attempt: ${asset.directory} in ${extName}`,
-        );
+        console.warn(`[Extensions] WebUI static asset path traversal attempt: ${asset.directory} in ${extName}`);
         hasWarning = true;
       } else if (!existsSync(absPath)) {
-        console.warn(
-          `[Extensions] WebUI static asset directory not found: ${absPath} (extension: ${extName})`,
-        );
+        console.warn(`[Extensions] WebUI static asset directory not found: ${absPath} (extension: ${extName})`);
         hasWarning = true;
       }
     }
   }
 
   if (hasWarning) {
-    console.warn(
-      `[Extensions] WebUI contribution from "${extName}" has validation warnings (loaded with warnings)`,
-    );
+    console.warn(`[Extensions] WebUI contribution from "${extName}" has validation warnings (loaded with warnings)`);
   }
 
   return webui;
