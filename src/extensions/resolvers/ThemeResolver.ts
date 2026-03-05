@@ -60,6 +60,7 @@ function convertTheme(theme: ExtTheme, ext: LoadedExtension): ICssTheme | null {
       // Prefix with extension name to avoid ID conflicts
       id: `ext-${ext.manifest.name}-${theme.id}`,
       name: `${theme.name} (${ext.manifest.displayName || ext.manifest.name})`,
+      nameI18n: theme.nameI18n,
       css,
       cover,
       isPreset: true,

@@ -444,6 +444,7 @@ export interface IMcpTool {
 export interface ICssTheme {
   id: string; // 唯一标识 / Unique identifier
   name: string; // 主题名称 / Theme name
+  nameI18n?: Record<string, string>; // 国际化名称 / Internationalized name
   cover?: string; // 封面图片 base64 或 URL / Cover image base64 or URL
   css: string; // CSS 样式代码 / CSS style code
   isPreset?: boolean; // 是否为预设主题 / Whether it's a preset theme

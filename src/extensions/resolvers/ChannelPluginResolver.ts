@@ -23,6 +23,23 @@ type ChannelPluginEntry = {
   meta: ExtChannelPlugin;
 };
 
+/**
+ * Minimal interface that external channel plugins must satisfy.
+ * External extensions cannot `import` the internal BasePlugin class, so we
+ * use duck-typing to verify they implement the required contract instead of
+ * relying on `instanceof BasePlugin`.
+ */
+const REQUIRED_METHODS = ['start', 'stop', 'sendMessage'] as const;
+
+function isValidPluginClass(PluginClass: unknown): boolean {
+  if (typeof PluginClass !== 'function') return false;
+  const proto = (PluginClass as { prototype?: unknown }).prototype;
+  if (!proto || typeof proto !== 'object') return false;
+  return REQUIRED_METHODS.every(
+    (method) => typeof (proto as Record<string, unknown>)[method] === 'function',
+  );
+}
+
 export function resolveChannelPlugins(extensions: LoadedExtension[]): Map<string, ChannelPluginEntry> {
   const result = new Map<string, ChannelPluginEntry>();
   for (const ext of extensions) {
@@ -55,18 +72,28 @@ export function resolveChannelPlugins(extensions: LoadedExtension[]): Map<string
         const mod = nativeRequire(entryPath);
         const PluginClass = mod.default || mod.Plugin || mod[Object.keys(mod)[0]];
 
-        if (!PluginClass || !(PluginClass.prototype instanceof BasePlugin)) {
+        // Internal plugins that directly extend BasePlugin pass the instanceof check.
+        // External extension plugins cannot import BasePlugin, so we fall back to
+        // duck-type validation — they must expose start/stop/sendMessage on prototype.
+        const isInternal = PluginClass && PluginClass.prototype instanceof BasePlugin;
+        const isDuckValid = !isInternal && isValidPluginClass(PluginClass);
+
+        if (!isInternal && !isDuckValid) {
           console.warn(
-            `[Extension] Channel plugin "${plugin.type}": exported class must extend BasePlugin`
+            `[Extension] Channel plugin "${plugin.type}": exported class must extend BasePlugin ` +
+              `or implement the required methods (${REQUIRED_METHODS.join(', ')})`
           );
           continue;
         }
 
         result.set(plugin.type, {
-          constructor: PluginClass,
+          constructor: PluginClass as typeof BasePlugin,
           meta: plugin,
         });
-        console.log(`[Extension] Loaded channel plugin: ${plugin.type} (${plugin.name})`);
+        console.log(
+          `[Extension] Loaded channel plugin: ${plugin.type} (${plugin.name})` +
+            (isDuckValid ? ' [duck-typed]' : ''),
+        );
         logSecurity(`Channel plugin "${plugin.type}" loaded successfully`);
       } catch (error) {
         console.error(`[Extension] Failed to load channel plugin "${plugin.type}":`, error);

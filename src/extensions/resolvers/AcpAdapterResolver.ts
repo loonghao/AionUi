@@ -38,6 +38,8 @@ function convertAcpAdapter(adapter: ExtAcpAdapter, ext: LoadedExtension): Record
     connectionType,
     endpoint: adapter.endpoint,
     models: adapter.models,
+    yoloMode: adapter.yoloMode,
+    healthCheck: adapter.healthCheck,
     isPreset: false,
     isBuiltin: false,
     enabled: true,
