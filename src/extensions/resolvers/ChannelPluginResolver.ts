@@ -9,8 +9,7 @@ import fs from 'fs';
 import { BasePlugin } from '@/channels/plugins/BasePlugin';
 import type { LoadedExtension, ExtChannelPlugin } from '../types';
 
-const DEBUG_ENABLED =
-  process.env.AIONUI_EXTENSION_DEBUG === '1' || process.env.AIONUI_EXTENSION_DEBUG === 'true';
+const DEBUG_ENABLED = process.env.AIONUI_EXTENSION_DEBUG === '1' || process.env.AIONUI_EXTENSION_DEBUG === 'true';
 
 function logSecurity(message: string): void {
   if (DEBUG_ENABLED) {
@@ -35,9 +34,7 @@ function isValidPluginClass(PluginClass: unknown): boolean {
   if (typeof PluginClass !== 'function') return false;
   const proto = (PluginClass as { prototype?: unknown }).prototype;
   if (!proto || typeof proto !== 'object') return false;
-  return REQUIRED_METHODS.every(
-    (method) => typeof (proto as Record<string, unknown>)[method] === 'function',
-  );
+  return REQUIRED_METHODS.every((method) => typeof (proto as Record<string, unknown>)[method] === 'function');
 }
 
 export function resolveChannelPlugins(extensions: LoadedExtension[]): Map<string, ChannelPluginEntry> {
@@ -60,11 +57,7 @@ export function resolveChannelPlugins(extensions: LoadedExtension[]): Map<string
         continue;
       }
 
-      logSecurity(
-        `Loading channel plugin "${plugin.type}" from: ${entryPath}\n` +
-          `  ⚠️  This code will run with FULL process privileges.\n` +
-          `  ⚠️  Only load extensions from trusted sources.`
-      );
+      logSecurity(`Loading channel plugin "${plugin.type}" from: ${entryPath}\n` + `  ⚠️  This code will run with FULL process privileges.\n` + `  ⚠️  Only load extensions from trusted sources.`);
 
       try {
         // eslint-disable-next-line no-eval
@@ -79,10 +72,7 @@ export function resolveChannelPlugins(extensions: LoadedExtension[]): Map<string
         const isDuckValid = !isInternal && isValidPluginClass(PluginClass);
 
         if (!isInternal && !isDuckValid) {
-          console.warn(
-            `[Extension] Channel plugin "${plugin.type}": exported class must extend BasePlugin ` +
-              `or implement the required methods (${REQUIRED_METHODS.join(', ')})`
-          );
+          console.warn(`[Extension] Channel plugin "${plugin.type}": exported class must extend BasePlugin ` + `or implement the required methods (${REQUIRED_METHODS.join(', ')})`);
           continue;
         }
 
@@ -90,10 +80,7 @@ export function resolveChannelPlugins(extensions: LoadedExtension[]): Map<string
           constructor: PluginClass as typeof BasePlugin,
           meta: plugin,
         });
-        console.log(
-          `[Extension] Loaded channel plugin: ${plugin.type} (${plugin.name})` +
-            (isDuckValid ? ' [duck-typed]' : ''),
-        );
+        console.log(`[Extension] Loaded channel plugin: ${plugin.type} (${plugin.name})` + (isDuckValid ? ' [duck-typed]' : ''));
         logSecurity(`Channel plugin "${plugin.type}" loaded successfully`);
       } catch (error) {
         console.error(`[Extension] Failed to load channel plugin "${plugin.type}":`, error);
