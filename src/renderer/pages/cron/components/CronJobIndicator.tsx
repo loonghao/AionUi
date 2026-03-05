@@ -4,13 +4,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { iconColors } from '@/renderer/theme/colors';
-import { Tooltip } from '@arco-design/web-react';
-import { AlarmClock, Attention, PauseOne } from '@icon-park/react';
-import React from 'react';
-import { useTranslation } from 'react-i18next';
+import { iconColors } from "@/renderer/theme/colors";
+import { Tooltip } from "@arco-design/web-react";
+import { AlarmClock, Attention, PauseOne } from "@icon-park/react";
+import React from "react";
+import { useTranslation } from "react-i18next";
 
-export type CronJobStatus = 'none' | 'active' | 'paused' | 'error' | 'unread' | 'unconfigured';
+export type CronJobStatus = "none" | "active" | "paused" | "error" | "unread" | "unconfigured";
 
 interface CronJobIndicatorProps {
   status: CronJobStatus;
@@ -22,30 +22,34 @@ interface CronJobIndicatorProps {
  * Simple indicator icon for conversations with cron jobs
  * Used in ChatHistory to distinguish conversations with scheduled tasks
  */
-const CronJobIndicator: React.FC<CronJobIndicatorProps> = ({ status, size = 14, className = '' }) => {
+const CronJobIndicator: React.FC<CronJobIndicatorProps> = ({
+  status,
+  size = 14,
+  className = "",
+}) => {
   const { t } = useTranslation();
 
-  if (status === 'none') {
+  if (status === "none") {
     return null;
   }
 
   const getIcon = () => {
     const iconProps = {
-      theme: 'outline' as const,
+      theme: "outline" as const,
       size,
       strokeWidth: 3,
-      fill: '#000000',
-      className: 'flex items-center',
+      fill: "#000000",
+      className: "flex items-center",
     };
 
     switch (status) {
-      case 'unread':
+      case "unread":
         // Show alarm clock with red dot overlay for unread executions
         return (
-          <span className='relative inline-flex'>
+          <span className="relative inline-flex">
             <AlarmClock {...iconProps} />
             <span
-              className='absolute rounded-full bg-red-500'
+              className="absolute rounded-full bg-red-500"
               style={{
                 width: Math.max(6, size * 0.4),
                 height: Math.max(6, size * 0.4),
@@ -55,13 +59,13 @@ const CronJobIndicator: React.FC<CronJobIndicatorProps> = ({ status, size = 14, 
             />
           </span>
         );
-      case 'active':
+      case "active":
         return <AlarmClock {...iconProps} />;
-      case 'paused':
+      case "paused":
         return <PauseOne {...iconProps} />;
-      case 'error':
+      case "error":
         return <Attention {...iconProps} />;
-      case 'unconfigured':
+      case "unconfigured":
         return <AlarmClock {...iconProps} />;
       default:
         return null;
@@ -70,18 +74,18 @@ const CronJobIndicator: React.FC<CronJobIndicatorProps> = ({ status, size = 14, 
 
   const getTooltip = () => {
     switch (status) {
-      case 'unread':
-        return t('cron.status.unread');
-      case 'active':
-        return t('cron.status.active');
-      case 'paused':
-        return t('cron.status.paused');
-      case 'error':
-        return t('cron.status.error');
-      case 'unconfigured':
-        return t('cron.status.unconfigured');
+      case "unread":
+        return t("cron.status.unread");
+      case "active":
+        return t("cron.status.active");
+      case "paused":
+        return t("cron.status.paused");
+      case "error":
+        return t("cron.status.error");
+      case "unconfigured":
+        return t("cron.status.unconfigured");
       default:
-        return '';
+        return "";
     }
   };
 

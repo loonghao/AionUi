@@ -1,19 +1,19 @@
 // hooks/useTheme.ts
-import { ConfigStorage } from '@/common/storage';
-import { useCallback, useEffect, useState } from 'react';
+import { ConfigStorage } from "@/common/storage";
+import { useCallback, useEffect, useState } from "react";
 
-export type Theme = 'light' | 'dark';
+export type Theme = "light" | "dark";
 
-const DEFAULT_THEME: Theme = 'light';
-const THEME_CACHE_KEY = '__aionui_theme';
+const DEFAULT_THEME: Theme = "light";
+const THEME_CACHE_KEY = "__aionui_theme";
 
 // Initialize theme immediately when module loads
 const initTheme = async () => {
   try {
-    const theme = (await ConfigStorage.get('theme')) as Theme;
+    const theme = (await ConfigStorage.get("theme")) as Theme;
     const initialTheme = theme || DEFAULT_THEME;
-    document.documentElement.setAttribute('data-theme', initialTheme);
-    document.body.setAttribute('arco-theme', initialTheme);
+    document.documentElement.setAttribute("data-theme", initialTheme);
+    document.body.setAttribute("arco-theme", initialTheme);
     try {
       localStorage.setItem(THEME_CACHE_KEY, initialTheme);
     } catch (_e) {
@@ -21,16 +21,16 @@ const initTheme = async () => {
     }
     return initialTheme;
   } catch (error) {
-    console.error('Failed to load initial theme:', error);
-    document.documentElement.setAttribute('data-theme', DEFAULT_THEME);
-    document.body.setAttribute('arco-theme', DEFAULT_THEME);
+    console.error("Failed to load initial theme:", error);
+    document.documentElement.setAttribute("data-theme", DEFAULT_THEME);
+    document.body.setAttribute("arco-theme", DEFAULT_THEME);
     return DEFAULT_THEME;
   }
 };
 
 // Run theme initialization immediately
 let initialThemePromise: Promise<Theme> | null = null;
-if (typeof window !== 'undefined') {
+if (typeof window !== "undefined") {
   initialThemePromise = initTheme();
 }
 
@@ -39,8 +39,8 @@ const useTheme = (): [Theme, (theme: Theme) => Promise<void>] => {
 
   // Apply theme to document
   const applyTheme = useCallback((newTheme: Theme) => {
-    document.documentElement.setAttribute('data-theme', newTheme);
-    document.body.setAttribute('arco-theme', newTheme);
+    document.documentElement.setAttribute("data-theme", newTheme);
+    document.body.setAttribute("arco-theme", newTheme);
     try {
       localStorage.setItem(THEME_CACHE_KEY, newTheme);
     } catch (_e) {
@@ -54,15 +54,15 @@ const useTheme = (): [Theme, (theme: Theme) => Promise<void>] => {
       try {
         setThemeState(newTheme);
         applyTheme(newTheme);
-        await ConfigStorage.set('theme', newTheme);
+        await ConfigStorage.set("theme", newTheme);
       } catch (error) {
-        console.error('Failed to save theme:', error);
+        console.error("Failed to save theme:", error);
         // Revert on error
         setThemeState(theme);
         applyTheme(theme);
       }
     },
-    [theme, applyTheme]
+    [theme, applyTheme],
   );
 
   // Initialize theme state from the early initialization
@@ -73,7 +73,7 @@ const useTheme = (): [Theme, (theme: Theme) => Promise<void>] => {
           setThemeState(initialTheme);
         })
         .catch((error) => {
-          console.error('Failed to initialize theme:', error);
+          console.error("Failed to initialize theme:", error);
         });
     }
   }, []);

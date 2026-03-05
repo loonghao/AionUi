@@ -4,4 +4,4 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-export { PairingService, getPairingService } from './PairingService';
+export { PairingService, getPairingService } from "./PairingService";

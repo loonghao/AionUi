@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { ErrorRequestHandler, Response } from 'express';
+import type { ErrorRequestHandler, Response } from "express";
 
 /**
  * 应用错误类 - 自定义错误类，包含状态码和错误代码
@@ -14,7 +14,7 @@ export class AppError extends Error {
   public readonly statusCode: number;
   public readonly code: string;
 
-  constructor(message: string, statusCode = 500, code = 'internal_error') {
+  constructor(message: string, statusCode = 500, code = "internal_error") {
     super(message);
     this.statusCode = statusCode;
     this.code = code;
@@ -36,7 +36,7 @@ interface ErrorCommand {
 class JsonErrorCommand implements ErrorCommand {
   constructor(
     private readonly statusCode: number,
-    private readonly payload: Record<string, unknown>
+    private readonly payload: Record<string, unknown>,
   ) {}
 
   execute(res: Response): void {
@@ -54,12 +54,12 @@ class JsonErrorCommand implements ErrorCommand {
 export const errorHandler: ErrorRequestHandler = (err, _req, res, _next) => {
   const isAppError = err instanceof AppError;
   const statusCode = isAppError ? err.statusCode : 500;
-  const code = isAppError ? err.code : 'internal_error';
-  const message = isAppError ? err.message : 'Internal server error';
+  const code = isAppError ? err.code : "internal_error";
+  const message = isAppError ? err.message : "Internal server error";
 
   // 仅记录非预期错误 / Only log unexpected errors
   if (!isAppError) {
-    console.error('[Error]', err);
+    console.error("[Error]", err);
   }
 
   const command = new JsonErrorCommand(statusCode, {
@@ -78,6 +78,10 @@ export const errorHandler: ErrorRequestHandler = (err, _req, res, _next) => {
  * @param code - 错误代码 / Error code
  * @returns AppError 实例 / AppError instance
  */
-export const createAppError = (message: string, statusCode = 400, code = 'bad_request'): AppError => {
+export const createAppError = (
+  message: string,
+  statusCode = 400,
+  code = "bad_request",
+): AppError => {
   return new AppError(message, statusCode, code);
 };

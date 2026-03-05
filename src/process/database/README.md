@@ -65,17 +65,17 @@
 ### 主进程 (Main Process)
 
 ```typescript
-import { getDatabase } from '@/process/database/export';
+import { getDatabase } from "@/process/database/export";
 
 // 获取数据库实例
 const db = getDatabase();
 
 // 创建会话
 const conversation: TChatConversation = {
-  id: 'conv_123',
-  name: 'My Conversation',
-  type: 'gemini',
-  extra: { workspace: '/path/to/workspace' },
+  id: "conv_123",
+  name: "My Conversation",
+  type: "gemini",
+  extra: { workspace: "/path/to/workspace" },
   model: {
     /* provider info */
   },
@@ -85,44 +85,44 @@ const conversation: TChatConversation = {
 
 const result = db.createConversation(conversation);
 if (result.success) {
-  console.log('Conversation created');
+  console.log("Conversation created");
 }
 
 // 插入消息
 const message: TMessage = {
-  id: 'msg_123',
-  conversation_id: 'conv_123',
-  type: 'text',
-  content: { content: 'Hello world' },
-  position: 'right',
+  id: "msg_123",
+  conversation_id: "conv_123",
+  type: "text",
+  content: { content: "Hello world" },
+  position: "right",
   createdAt: Date.now(),
 };
 
 db.insertMessage(message);
 
 // 查询会话的消息（分页）
-const messages = db.getConversationMessages('conv_123', 0, 50);
+const messages = db.getConversationMessages("conv_123", 0, 50);
 console.log(messages.data); // TMessage[]
 ```
 
 ### 渲染进程 (Renderer Process)
 
 ```typescript
-import { ipcBridge } from '@/common';
+import { ipcBridge } from "@/common";
 
 // 通过IPC查询消息
 const messages = await ipcBridge.database.getConversationMessages({
-  conversation_id: 'conv_123',
+  conversation_id: "conv_123",
   page: 0,
   pageSize: 100,
 });
 
 // 草稿使用React状态管理
-const [draft, setDraft] = useState('');
+const [draft, setDraft] = useState("");
 
 // UI状态使用localStorage
-localStorage.setItem('sidebar_collapsed', 'true');
-const collapsed = localStorage.getItem('sidebar_collapsed') === 'true';
+localStorage.setItem("sidebar_collapsed", "true");
+const collapsed = localStorage.getItem("sidebar_collapsed") === "true";
 ```
 
 ## 数据库文件位置
@@ -141,7 +141,7 @@ const collapsed = localStorage.getItem('sidebar_collapsed') === 'true';
 ### 查看迁移状态
 
 ```typescript
-import { getMigrationStatus } from '@/process/database/export';
+import { getMigrationStatus } from "@/process/database/export";
 
 const status = await getMigrationStatus();
 console.log(status);
@@ -156,20 +156,20 @@ console.log(status);
 ### 手动触发迁移
 
 ```typescript
-import { migrateFileStorageToDatabase } from '@/process/database/export';
+import { migrateFileStorageToDatabase } from "@/process/database/export";
 
 const result = await migrateFileStorageToDatabase();
 if (result.success) {
-  console.log('Migration completed:', result.stats);
+  console.log("Migration completed:", result.stats);
 } else {
-  console.error('Migration errors:', result.errors);
+  console.error("Migration errors:", result.errors);
 }
 ```
 
 ### 回滚迁移（测试用）
 
 ```typescript
-import { rollbackMigration } from '@/process/database/export';
+import { rollbackMigration } from "@/process/database/export";
 
 await rollbackMigration();
 // 清除迁移标记，可以重新运行迁移
@@ -180,18 +180,18 @@ await rollbackMigration();
 ### 导出数据
 
 ```typescript
-import { exportDatabaseToJSON } from '@/process/database/export';
+import { exportDatabaseToJSON } from "@/process/database/export";
 
 const data = await exportDatabaseToJSON();
-await fs.writeFile('backup.json', JSON.stringify(data, null, 2));
+await fs.writeFile("backup.json", JSON.stringify(data, null, 2));
 ```
 
 ### 导入数据
 
 ```typescript
-import { importDatabaseFromJSON } from '@/process/database/export';
+import { importDatabaseFromJSON } from "@/process/database/export";
 
-const data = JSON.parse(await fs.readFile('backup.json', 'utf-8'));
+const data = JSON.parse(await fs.readFile("backup.json", "utf-8"));
 await importDatabaseFromJSON(data);
 ```
 
@@ -275,7 +275,7 @@ await importDatabaseFromJSON(data);
 数据库Schema有版本控制，当前版本为 **v4**。每个版本升级都有对应的迁移脚本。
 
 ```typescript
-import { getDatabase } from '@/process/database/export';
+import { getDatabase } from "@/process/database/export";
 
 const db = getDatabase();
 
@@ -316,7 +316,7 @@ const isV2Applied = db.isMigrationApplied(2);
 ```typescript
 const migration_v5: IMigration = {
   version: 5,
-  name: 'Add user sessions table',
+  name: "Add user sessions table",
   up: (db) => {
     db.exec(`
       CREATE TABLE IF NOT EXISTS user_sessions (
@@ -331,11 +331,11 @@ const migration_v5: IMigration = {
       CREATE INDEX IF NOT EXISTS idx_user_sessions_token
         ON user_sessions(token);
     `);
-    console.log('[Migration v5] Added user sessions table');
+    console.log("[Migration v5] Added user sessions table");
   },
   down: (db) => {
     db.exec(`DROP TABLE IF EXISTS user_sessions;`);
-    console.log('[Migration v5] Rolled back: Removed user sessions table');
+    console.log("[Migration v5] Rolled back: Removed user sessions table");
   },
 };
 
@@ -400,7 +400,7 @@ SELECT * FROM configs WHERE key LIKE 'migration_v%';
 ### 回滚迁移（测试用）
 
 ```typescript
-import { rollbackMigrations } from '@/process/database/export';
+import { rollbackMigrations } from "@/process/database/export";
 
 // ⚠️ WARNING: 这会导致数据丢失！
 const db = getDatabase();

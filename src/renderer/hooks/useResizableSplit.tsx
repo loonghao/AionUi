@@ -4,13 +4,16 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useCallback } from 'react';
-import type { CSSProperties } from 'react';
-import classNames from 'classnames';
-import { removeStack } from '@/renderer/utils/common';
+import React, { useState, useCallback } from "react";
+import type { CSSProperties } from "react";
+import classNames from "classnames";
+import { removeStack } from "@/renderer/utils/common";
 
-const addWindowEventListener = <K extends keyof WindowEventMap>(key: K, handler: (e: WindowEventMap[K]) => void): (() => void) => {
-  if (typeof window === 'undefined') {
+const addWindowEventListener = <K extends keyof WindowEventMap>(
+  key: K,
+  handler: (e: WindowEventMap[K]) => void,
+): (() => void) => {
+  if (typeof window === "undefined") {
     return () => {};
   }
   window.addEventListener(key, handler);
@@ -48,7 +51,7 @@ export const useResizableSplit = (options: UseResizableSplitOptions = {}) => {
         }
       }
     } catch (error) {
-      console.error('Failed to read split ratio from localStorage:', error);
+      console.error("Failed to read split ratio from localStorage:", error);
     }
     return defaultWidth;
   };
@@ -56,10 +59,10 @@ export const useResizableSplit = (options: UseResizableSplitOptions = {}) => {
   const [splitRatio, setSplitRatioState] = useState(() => getStoredRatio());
 
   const dispatchSplitResizeEvent = useCallback((ratio: number) => {
-    if (typeof window === 'undefined' || typeof window.dispatchEvent !== 'function') {
+    if (typeof window === "undefined" || typeof window.dispatchEvent !== "function") {
       return;
     }
-    window.dispatchEvent(new CustomEvent('preview-panel-resize', { detail: { ratio } }));
+    window.dispatchEvent(new CustomEvent("preview-panel-resize", { detail: { ratio } }));
   }, []);
 
   // 保存比例到 LocalStorage / Save ratio to LocalStorage
@@ -71,18 +74,18 @@ export const useResizableSplit = (options: UseResizableSplitOptions = {}) => {
         try {
           localStorage.setItem(storageKey, ratio.toString());
         } catch (error) {
-          console.error('Failed to save split ratio to localStorage:', error);
+          console.error("Failed to save split ratio to localStorage:", error);
         }
       }
     },
-    [storageKey, dispatchSplitResizeEvent]
+    [storageKey, dispatchSplitResizeEvent],
   );
 
   // 处理拖动开始事件 / Handle drag start event
   const handleDragStart = useCallback(
     (reverse = false) =>
       (event: React.PointerEvent<HTMLDivElement>) => {
-        if (event.pointerType !== 'touch' && event.button !== 0) {
+        if (event.pointerType !== "touch" && event.button !== 0) {
           return;
         }
         event.preventDefault();
@@ -116,23 +119,23 @@ export const useResizableSplit = (options: UseResizableSplitOptions = {}) => {
         // 初始化拖动样式 / Initialize drag styles
         const initDragStyle = () => {
           const originalUserSelect = document.body.style.userSelect;
-          document.body.style.userSelect = 'none';
-          document.body.style.cursor = 'col-resize';
+          document.body.style.userSelect = "none";
+          document.body.style.cursor = "col-resize";
 
-          const layoutSider = dragHandle.closest('.layout-sider');
+          const layoutSider = dragHandle.closest(".layout-sider");
           if (layoutSider) {
-            layoutSider.classList.add('layout-sider--dragging');
+            layoutSider.classList.add("layout-sider--dragging");
           }
 
           return () => {
             document.body.style.userSelect = originalUserSelect;
-            document.body.style.cursor = '';
+            document.body.style.cursor = "";
             if (rafId !== null) {
               cancelAnimationFrame(rafId);
               rafId = null;
             }
             if (layoutSider) {
-              layoutSider.classList.remove('layout-sider--dragging');
+              layoutSider.classList.remove("layout-sider--dragging");
             }
           };
         };
@@ -150,7 +153,7 @@ export const useResizableSplit = (options: UseResizableSplitOptions = {}) => {
           flushPendingRatio();
 
           let finalRatio = latestRatio;
-          if (e && 'clientX' in e && typeof e.clientX === 'number') {
+          if (e && "clientX" in e && typeof e.clientX === "number") {
             const deltaX = reverse ? startX - e.clientX : e.clientX - startX;
             const deltaRatio = (deltaX / containerWidth) * 100;
             finalRatio = Math.max(minWidth, Math.min(maxWidth, startRatio + deltaRatio));
@@ -189,7 +192,7 @@ export const useResizableSplit = (options: UseResizableSplitOptions = {}) => {
         if (dragHandle.setPointerCapture) {
           try {
             dragHandle.setPointerCapture(pointerId);
-            dragHandle.addEventListener('lostpointercapture', handleLostPointerCapture);
+            dragHandle.addEventListener("lostpointercapture", handleLostPointerCapture);
           } catch (error) {
             // 忽略 pointer capture 失败，继续使用备用逻辑 / Ignore failures silently
           }
@@ -199,27 +202,45 @@ export const useResizableSplit = (options: UseResizableSplitOptions = {}) => {
           if (dragHandle.releasePointerCapture && dragHandle.hasPointerCapture?.(pointerId)) {
             dragHandle.releasePointerCapture(pointerId);
           }
-          dragHandle.removeEventListener('lostpointercapture', handleLostPointerCapture);
+          dragHandle.removeEventListener("lostpointercapture", handleLostPointerCapture);
         };
 
         cleanupListeners = removeStack(
           initDragStyle(),
           releasePointerCapture,
-          addWindowEventListener('pointermove', handlePointerMove),
-          addWindowEventListener('pointerup', handlePointerUp),
-          addWindowEventListener('pointercancel', handlePointerCancel),
-          addWindowEventListener('mouseup', handleMouseUp),
-          addWindowEventListener('blur', () => finishDrag())
+          addWindowEventListener("pointermove", handlePointerMove),
+          addWindowEventListener("pointerup", handlePointerUp),
+          addWindowEventListener("pointercancel", handlePointerCancel),
+          addWindowEventListener("mouseup", handleMouseUp),
+          addWindowEventListener("blur", () => finishDrag()),
         );
       },
-    [splitRatio, minWidth, maxWidth, setSplitRatio, dispatchSplitResizeEvent]
+    [splitRatio, minWidth, maxWidth, setSplitRatio, dispatchSplitResizeEvent],
   );
 
-  const renderHandle = ({ className, style, reverse }: { className?: string; style?: CSSProperties; reverse?: boolean } = {}) => (
-    <div className={classNames('group absolute top-0 bottom-0 z-20 cursor-col-resize flex items-center', reverse ? 'justify-start' : 'justify-end', className)} style={{ width: '12px', ...style }} onPointerDown={handleDragStart(reverse)} onDoubleClick={() => setSplitRatio(defaultWidth)}>
-      <span className='pointer-events-none block h-full w-2px bg-bg-3 opacity-90 rd-full transition-all duration-150 group-hover:w-6px group-hover:bg-aou-6 group-active:w-6px group-active:bg-aou-6' />
+  const renderHandle = ({
+    className,
+    style,
+    reverse,
+  }: { className?: string; style?: CSSProperties; reverse?: boolean } = {}) => (
+    <div
+      className={classNames(
+        "group absolute top-0 bottom-0 z-20 cursor-col-resize flex items-center",
+        reverse ? "justify-start" : "justify-end",
+        className,
+      )}
+      style={{ width: "12px", ...style }}
+      onPointerDown={handleDragStart(reverse)}
+      onDoubleClick={() => setSplitRatio(defaultWidth)}
+    >
+      <span className="pointer-events-none block h-full w-2px bg-bg-3 opacity-90 rd-full transition-all duration-150 group-hover:w-6px group-hover:bg-aou-6 group-active:w-6px group-active:bg-aou-6" />
     </div>
   );
 
-  return { splitRatio, dragHandle: renderHandle({ className: 'right-0' }), setSplitRatio, createDragHandle: renderHandle };
+  return {
+    splitRatio,
+    dragHandle: renderHandle({ className: "right-0" }),
+    setSplitRatio,
+    createDragHandle: renderHandle,
+  };
 };

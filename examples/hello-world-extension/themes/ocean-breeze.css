@@ -86,7 +86,7 @@
 }
 
 /* ==================== Dark Mode ==================== */
-[data-theme='dark'] {
+[data-theme="dark"] {
   --color-primary: #22d3ee;
   --primary: #22d3ee;
   --color-primary-light-1: #67e8f9;
@@ -186,7 +186,7 @@ html {
   border-right: 2px solid var(--border-base);
 }
 
-[data-theme='dark'] .layout-sider {
+[data-theme="dark"] .layout-sider {
   background: linear-gradient(180deg, #1a3333 0%, #132626 100%);
   border-right: 2px solid var(--border-base);
 }
@@ -197,7 +197,7 @@ html {
   box-shadow: 0 2px 8px rgba(8, 145, 178, 0.3);
 }
 
-[data-theme='dark'] .layout-sider-header {
+[data-theme="dark"] .layout-sider-header {
   background: linear-gradient(135deg, #0e7490 0%, #0891b2 100%);
   box-shadow: 0 2px 8px rgba(34, 211, 238, 0.3);
 }
@@ -239,7 +239,7 @@ html {
   z-index: 1;
 }
 
-[data-theme='dark'] .layout-content.bg-1::before {
+[data-theme="dark"] .layout-content.bg-1::before {
   background: linear-gradient(
     135deg,
     rgba(12, 26, 26, 0.8) 0%,
@@ -286,7 +286,7 @@ html {
   box-shadow: 0 2px 16px rgba(8, 145, 178, 0.1);
 }
 
-[data-theme='dark'] .guidInputCard {
+[data-theme="dark"] .guidInputCard {
   background: linear-gradient(135deg, rgba(26, 51, 51, 0.95) 0%, rgba(38, 64, 64, 0.95) 100%);
   border: 2px solid var(--border-base);
   box-shadow: 0 4px 20px rgba(34, 211, 238, 0.15);
@@ -298,14 +298,16 @@ html {
   color: var(--color-text-1);
 }
 
-[data-theme='dark'] .guidInputCard textarea {
+[data-theme="dark"] .guidInputCard textarea {
   background-color: rgba(19, 38, 38, 0.8);
   color: var(--color-text-1);
 }
 
 /* Send box */
 .sendbox-container:not([class*="model"]):not([class*="Model"]),
-[class*="sendbox"]:not([class*="input"]):not([class*="textarea"]):not([class*="model"]):not([class*="Model"]):not([class*="tools"]) {
+[class*="sendbox"]:not([class*="input"]):not([class*="textarea"]):not([class*="model"]):not(
+    [class*="Model"]
+  ):not([class*="tools"]) {
   border-radius: 16px;
   border: 2px solid var(--border-base);
   background-color: rgba(255, 255, 255, 0.9);
@@ -314,8 +316,11 @@ html {
   transition: all 0.3s ease;
 }
 
-[data-theme='dark'] .sendbox-container:not([class*="model"]):not([class*="Model"]),
-[data-theme='dark'] [class*="sendbox"]:not([class*="input"]):not([class*="textarea"]):not([class*="model"]):not([class*="Model"]):not([class*="tools"]) {
+[data-theme="dark"] .sendbox-container:not([class*="model"]):not([class*="Model"]),
+[data-theme="dark"]
+  [class*="sendbox"]:not([class*="input"]):not([class*="textarea"]):not([class*="model"]):not(
+    [class*="Model"]
+  ):not([class*="tools"]) {
   background: linear-gradient(135deg, rgba(26, 51, 51, 0.9) 0%, rgba(38, 64, 64, 0.9) 100%);
   border: 2px solid var(--border-base);
   box-shadow: 0 4px 20px rgba(34, 211, 238, 0.2);
@@ -333,8 +338,8 @@ html {
   box-shadow: 0 6px 24px rgba(8, 145, 178, 0.2);
 }
 
-[data-theme='dark'] .sendbox-container:focus-within,
-[data-theme='dark'] [class*="sendbox"]:focus-within {
+[data-theme="dark"] .sendbox-container:focus-within,
+[data-theme="dark"] [class*="sendbox"]:focus-within {
   border-color: var(--color-primary);
   box-shadow: 0 6px 28px rgba(34, 211, 238, 0.35);
 }
@@ -351,8 +356,8 @@ html {
   padding: 12px 16px;
 }
 
-[data-theme='dark'] .message-item.user .message-bubble,
-[data-theme='dark'] [class*="message"][class*="user"] .message-content {
+[data-theme="dark"] .message-item.user .message-bubble,
+[data-theme="dark"] [class*="message"][class*="user"] .message-content {
   background: linear-gradient(135deg, #0e7490 0%, #0891b2 100%);
   box-shadow: 0 4px 16px rgba(34, 211, 238, 0.4);
 }
@@ -369,9 +374,9 @@ html {
   padding: 12px 16px;
 }
 
-[data-theme='dark'] .message-item.ai .message-bubble,
-[data-theme='dark'] [class*="message"][class*="ai"] .message-content,
-[data-theme='dark'] [class*="message"][class*="assistant"] .message-content {
+[data-theme="dark"] .message-item.ai .message-bubble,
+[data-theme="dark"] [class*="message"][class*="ai"] .message-content,
+[data-theme="dark"] [class*="message"][class*="assistant"] .message-content {
   background: linear-gradient(135deg, rgba(26, 51, 51, 0.95) 0%, rgba(38, 64, 64, 0.95) 100%);
   border: 2px solid var(--border-base);
   box-shadow: 0 4px 16px rgba(34, 211, 238, 0.15);
@@ -387,8 +392,8 @@ html {
   margin: 4px 0;
 }
 
-[data-theme='dark'] .message-item.ai .arco-alert,
-[data-theme='dark'] [class*="message"][class*="ai"] .arco-alert {
+[data-theme="dark"] .message-item.ai .arco-alert,
+[data-theme="dark"] [class*="message"][class*="ai"] .arco-alert {
   background-color: rgba(19, 38, 38, 0.7);
   border: 1px solid var(--border-base);
 }
@@ -402,8 +407,8 @@ html {
   margin: 4px 0;
 }
 
-[data-theme='dark'] .message-item.ai .arco-card,
-[data-theme='dark'] [class*="message"][class*="ai"] .arco-card {
+[data-theme="dark"] .message-item.ai .arco-card,
+[data-theme="dark"] [class*="message"][class*="ai"] .arco-card {
   background-color: rgba(19, 38, 38, 0.7);
   border: 1px solid var(--border-base);
 }
@@ -426,14 +431,18 @@ button[type="primary"]:hover:not([class*="icon"]):not([class*="circle"]):not([cl
   box-shadow: 0 6px 20px rgba(8, 145, 178, 0.4);
 }
 
-[data-theme='dark'] .arco-btn-primary:not([class*="icon"]):not([class*="circle"]):not([class*="model"]),
-[data-theme='dark'] button[type="primary"]:not([class*="icon"]):not([class*="circle"]):not([class*="model"]) {
+[data-theme="dark"]
+  .arco-btn-primary:not([class*="icon"]):not([class*="circle"]):not([class*="model"]),
+[data-theme="dark"]
+  button[type="primary"]:not([class*="icon"]):not([class*="circle"]):not([class*="model"]) {
   background: linear-gradient(135deg, #0e7490 0%, #0891b2 100%);
   box-shadow: 0 4px 12px rgba(34, 211, 238, 0.3);
 }
 
-[data-theme='dark'] .arco-btn-primary:hover:not([class*="icon"]):not([class*="circle"]):not([class*="model"]),
-[data-theme='dark'] button[type="primary"]:hover:not([class*="icon"]):not([class*="circle"]):not([class*="model"]) {
+[data-theme="dark"]
+  .arco-btn-primary:hover:not([class*="icon"]):not([class*="circle"]):not([class*="model"]),
+[data-theme="dark"]
+  button[type="primary"]:hover:not([class*="icon"]):not([class*="circle"]):not([class*="model"]) {
   background: linear-gradient(135deg, #0891b2 0%, #06b6d4 100%);
   box-shadow: 0 8px 24px rgba(34, 211, 238, 0.5);
 }
@@ -462,11 +471,11 @@ button[type="primary"]:hover:not([class*="icon"]):not([class*="circle"]):not([cl
   border-radius: 4px;
 }
 
-[data-theme='dark'] *:hover::-webkit-scrollbar-thumb {
+[data-theme="dark"] *:hover::-webkit-scrollbar-thumb {
   background: rgba(34, 211, 238, 0.35);
 }
 
-[data-theme='dark'] *:hover::-webkit-scrollbar-thumb:hover {
+[data-theme="dark"] *:hover::-webkit-scrollbar-thumb:hover {
   background: linear-gradient(135deg, #06b6d4 0%, #22d3ee 100%);
 }
 
@@ -507,17 +516,17 @@ a:hover:not([class*="button"]):not([class*="btn"]) {
   border-color: #164e63;
 }
 
-[data-theme='dark'] .arco-tooltip-inner,
-[data-theme='dark'] .arco-popover-inner,
-[data-theme='dark'] .arco-popover-content {
+[data-theme="dark"] .arco-tooltip-inner,
+[data-theme="dark"] .arco-popover-inner,
+[data-theme="dark"] .arco-popover-content {
   background: linear-gradient(135deg, #264040 0%, #1a3333 100%);
   color: var(--color-text-1);
   border: 2px solid var(--color-primary);
   box-shadow: 0 6px 20px rgba(34, 211, 238, 0.3);
 }
 
-[data-theme='dark'] .arco-tooltip-arrow,
-[data-theme='dark'] .arco-popover-arrow {
+[data-theme="dark"] .arco-tooltip-arrow,
+[data-theme="dark"] .arco-popover-arrow {
   border-color: var(--color-primary);
 }
 
@@ -538,19 +547,19 @@ a:hover:not([class*="button"]):not([class*="btn"]) {
   border-top: 1px solid #a5f3fc;
 }
 
-[data-theme='dark'] .arco-modal-header {
+[data-theme="dark"] .arco-modal-header {
   background: linear-gradient(135deg, #0e7490 0%, #0891b2 100%);
   color: white;
   border-bottom: 1px solid rgba(255, 255, 255, 0.2);
 }
 
-[data-theme='dark'] .arco-modal-body {
+[data-theme="dark"] .arco-modal-body {
   background: linear-gradient(135deg, rgba(26, 51, 51, 0.98) 0%, rgba(38, 64, 64, 0.98) 100%);
   backdrop-filter: blur(16px);
   color: var(--color-text-1);
 }
 
-[data-theme='dark'] .arco-modal-footer {
+[data-theme="dark"] .arco-modal-footer {
   background: linear-gradient(135deg, rgba(26, 51, 51, 0.98) 0%, rgba(38, 64, 64, 0.98) 100%);
   border-top: 1px solid var(--border-base);
 }

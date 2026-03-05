@@ -20,21 +20,21 @@ export enum CodexAgentEventType {
    *  rollout_path: string
    * }
    * */
-  SESSION_CONFIGURED = 'session_configured',
+  SESSION_CONFIGURED = "session_configured",
 
   /**
    * 任务开始事件 - 代理已开始任务
    * prompt: '你好 codex'
    * payload: { model_context_window: number | null }
    */
-  TASK_STARTED = 'task_started',
+  TASK_STARTED = "task_started",
 
   /**
    * 任务完成事件 - 代理已完成所有操作
    * prompt: '你好 codex'
    * payload: { last_agent_message: string | null }
    */
-  TASK_COMPLETE = 'task_complete',
+  TASK_COMPLETE = "task_complete",
 
   // Text & reasoning events
   /**
@@ -42,55 +42,55 @@ export enum CodexAgentEventType {
    * prompt: '你好 codex'
    * payload: { delta: string }
    */
-  AGENT_MESSAGE_DELTA = 'agent_message_delta',
+  AGENT_MESSAGE_DELTA = "agent_message_delta",
 
   /**
    * 代理消息事件 - 代理文本输出消息（完整输出消息）
    * prompt: '你好 codex'
    * payload: { message: string }
    */
-  AGENT_MESSAGE = 'agent_message',
+  AGENT_MESSAGE = "agent_message",
 
   /**
    * 用户消息事件 - 用户/系统输入消息（发送给模型的内容）
    * prompt: '你好 codex'
    * payload: { message: string, kind: InputMessageKind | null, images: string[] | null }
    */
-  USER_MESSAGE = 'user_message',
+  USER_MESSAGE = "user_message",
 
   /**
    * 代理推理事件 - 来自代理的推理事件（完整的思考文本）
    * prompt: '我想翻阅codex收发消息原始数据格式的接口文档,应该去哪获取？'
    * payload: { text: string }
    */
-  AGENT_REASONING = 'agent_reasoning',
+  AGENT_REASONING = "agent_reasoning",
 
   /**
    * 代理推理增量事件 - 来自代理的推理增量事件（流式增量输出文本）
    * prompt: '可以给我一个openAI 官方 url吗？'
    * payload: { delta: string }
    */
-  AGENT_REASONING_DELTA = 'agent_reasoning_delta',
+  AGENT_REASONING_DELTA = "agent_reasoning_delta",
 
   /**
    * 代理推理原始内容事件 - 来自代理的原始思维链
    * prompt: 'TypeScript 编译错误：'Property X does not exist'，请帮我分析原因'
    * payload: { text: string }
    */
-  AGENT_REASONING_RAW_CONTENT = 'agent_reasoning_raw_content',
+  AGENT_REASONING_RAW_CONTENT = "agent_reasoning_raw_content",
 
   /**
    * 代理推理原始内容增量事件 - 来自代理的推理内容增量事件
    * payload: { delta: string }
    */
-  AGENT_REASONING_RAW_CONTENT_DELTA = 'agent_reasoning_raw_content_delta',
+  AGENT_REASONING_RAW_CONTENT_DELTA = "agent_reasoning_raw_content_delta",
 
   /**
    * 代理推理章节分隔事件 - 当模型开始新的推理摘要部分时发出信号（例如，新的标题块）
    * prompt: 'TypeScript 编译错误：'Property X does not exist'，请帮我分析原因'
    * payload: {}
    */
-  AGENT_REASONING_SECTION_BREAK = 'agent_reasoning_section_break',
+  AGENT_REASONING_SECTION_BREAK = "agent_reasoning_section_break",
 
   // Usage / telemetry
   /**
@@ -114,7 +114,7 @@ export enum CodexAgentEventType {
       "model_context_window": 272000
     } | null }
    */
-  TOKEN_COUNT = 'token_count',
+  TOKEN_COUNT = "token_count",
 
   // 命令执行事件 Command execution events
   /**
@@ -134,7 +134,7 @@ export enum CodexAgentEventType {
       ]
     }
    */
-  EXEC_COMMAND_BEGIN = 'exec_command_begin',
+  EXEC_COMMAND_BEGIN = "exec_command_begin",
 
   /**
    * 执行命令输出增量事件 - 正在运行命令的增量输出块
@@ -147,7 +147,7 @@ export enum CodexAgentEventType {
       "chunk": "LgouLgo="
     }
    */
-  EXEC_COMMAND_OUTPUT_DELTA = 'exec_command_output_delta',
+  EXEC_COMMAND_OUTPUT_DELTA = "exec_command_output_delta",
 
   /**
    * 执行命令结束事件 - 表示命令执行完成
@@ -166,7 +166,7 @@ export enum CodexAgentEventType {
    *  "formatted_output": ".\\n..\\n"
    * }
    */
-  EXEC_COMMAND_END = 'exec_command_end',
+  EXEC_COMMAND_END = "exec_command_end",
 
   /**
    * 执行批准请求事件 - 请求批准命令执行
@@ -179,7 +179,7 @@ export enum CodexAgentEventType {
       "reason": "Need to create hello.txt with requested content per user instruction"
     }
    */
-  EXEC_APPROVAL_REQUEST = 'exec_approval_request',
+  EXEC_APPROVAL_REQUEST = "exec_approval_request",
 
   //  补丁/文件修改事件 Patch/file modification events
   /**
@@ -196,7 +196,7 @@ export enum CodexAgentEventType {
       grant_root: null,
     }
    */
-  APPLY_PATCH_APPROVAL_REQUEST = 'apply_patch_approval_request',
+  APPLY_PATCH_APPROVAL_REQUEST = "apply_patch_approval_request",
 
   /**
    * 补丁应用开始事件 - 通知代理即将应用代码补丁。镜像 `ExecCommandBegin`，以便前端可以显示进度指示器
@@ -216,7 +216,7 @@ export enum CodexAgentEventType {
         }
       }
    */
-  PATCH_APPLY_BEGIN = 'patch_apply_begin',
+  PATCH_APPLY_BEGIN = "patch_apply_begin",
 
   /**
    * 补丁应用结束事件 - 通知补丁应用已完成
@@ -229,7 +229,7 @@ export enum CodexAgentEventType {
       "success": true
     }
    */
-  PATCH_APPLY_END = 'patch_apply_end',
+  PATCH_APPLY_END = "patch_apply_end",
 
   // MCP tool events
   /**
@@ -250,7 +250,7 @@ export enum CodexAgentEventType {
       }
     }
    */
-  MCP_TOOL_CALL_BEGIN = 'mcp_tool_call_begin',
+  MCP_TOOL_CALL_BEGIN = "mcp_tool_call_begin",
 
   /**
    * MCP工具调用结束事件 - 表示MCP工具调用结束
@@ -284,13 +284,13 @@ export enum CodexAgentEventType {
       }
     }
    */
-  MCP_TOOL_CALL_END = 'mcp_tool_call_end',
+  MCP_TOOL_CALL_END = "mcp_tool_call_end",
 
   /**
    * MCP列表工具响应事件 - 代理可用的MCP工具列表
    * payload: { tools: Record<string, McpTool> }
    */
-  MCP_LIST_TOOLS_RESPONSE = 'mcp_list_tools_response',
+  MCP_LIST_TOOLS_RESPONSE = "mcp_list_tools_response",
 
   // Web search events
   /**
@@ -302,7 +302,7 @@ export enum CodexAgentEventType {
    *  "call_id":"ws_010bdd5c4db8ef410168da04c74a648196b7e30cb864885b26"
    * }
    */
-  WEB_SEARCH_BEGIN = 'web_search_begin',
+  WEB_SEARCH_BEGIN = "web_search_begin",
 
   /**
    * 网络搜索结束事件 - 表示网络搜索结束
@@ -313,7 +313,7 @@ export enum CodexAgentEventType {
    *  "query":"TypeScript 5.0 whats new site:devblogs.microsoft.com/typescript"
    * }
    */
-  WEB_SEARCH_END = 'web_search_end',
+  WEB_SEARCH_END = "web_search_end",
 
   // Conversation history & context
   /**
@@ -325,36 +325,36 @@ export enum CodexAgentEventType {
       "unified_diff": "diff --git a//Users/pojian/Library/Application Support/AionUi/aionui/codex-temp-1759197123355/freestyle.txt b//Users/pojian/Library/Application Support/AionUi/aionui/codex-temp-1759197123355/freestyle.txt\nnew file mode 100644\nindex 0000000000000000000000000000000000000000..151e31d7a6627e3fb0df2e49b3c0c179f96e46cc\n--- /dev/null\n+++ b//Users/pojian/Library/Application Support/AionUi/aionui/codex-temp-1759197123355/freestyle.txt\n@@ -0,0 +1,2 @@\n+This file was created via apply_patch.\n+Line two says hello.\n"
     }
    */
-  TURN_DIFF = 'turn_diff',
+  TURN_DIFF = "turn_diff",
 
   /**
    * 获取历史条目响应事件 - GetHistoryEntryRequest 的响应
    * prompt: 查看当前会话的历史记录
    * payload: { offset: number, log_id: number, entry: HistoryEntry | null }
    */
-  GET_HISTORY_ENTRY_RESPONSE = 'get_history_entry_response',
+  GET_HISTORY_ENTRY_RESPONSE = "get_history_entry_response",
 
   /**
    * 列出自定义提示响应事件 - 代理可用的自定义提示列表
    * payload: { custom_prompts: CustomPrompt[] }
    */
-  LIST_CUSTOM_PROMPTS_RESPONSE = 'list_custom_prompts_response',
+  LIST_CUSTOM_PROMPTS_RESPONSE = "list_custom_prompts_response",
 
   /**
    * 对话路径事件 - 表示对话路径信息
    * payload: { conversation_id: string, path: string }
    */
-  CONVERSATION_PATH = 'conversation_path',
+  CONVERSATION_PATH = "conversation_path",
 
   /**
    * 后台事件 - 后台处理事件
    * payload: { message: string }
    */
-  BACKGROUND_EVENT = 'background_event',
+  BACKGROUND_EVENT = "background_event",
 
   /**
    * 转换中止事件 - 表示转换已中止
    * payload: { reason: TurnAbortReason }
    */
-  TURN_ABORTED = 'turn_aborted',
+  TURN_ABORTED = "turn_aborted",
 }

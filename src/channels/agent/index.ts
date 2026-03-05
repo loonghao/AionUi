@@ -4,4 +4,4 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-export * from './ChannelMessageService';
+export * from "./ChannelMessageService";

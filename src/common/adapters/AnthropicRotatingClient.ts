@@ -4,11 +4,15 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import Anthropic, { type ClientOptions as AnthropicClientOptions_ } from '@anthropic-ai/sdk';
-import { AuthType } from '@office-ai/aioncli-core';
-import type { RotatingApiClientOptions } from '../RotatingApiClient';
-import { RotatingApiClient } from '../RotatingApiClient';
-import { OpenAI2AnthropicConverter, type OpenAIChatCompletionParams, type OpenAIChatCompletionResponse } from './OpenAI2AnthropicConverter';
+import Anthropic, { type ClientOptions as AnthropicClientOptions_ } from "@anthropic-ai/sdk";
+import { AuthType } from "@office-ai/aioncli-core";
+import type { RotatingApiClientOptions } from "../RotatingApiClient";
+import { RotatingApiClient } from "../RotatingApiClient";
+import {
+  OpenAI2AnthropicConverter,
+  type OpenAIChatCompletionParams,
+  type OpenAIChatCompletionResponse,
+} from "./OpenAI2AnthropicConverter";
 
 export interface AnthropicClientConfig {
   model?: string;
@@ -20,9 +24,13 @@ export class AnthropicRotatingClient extends RotatingApiClient<Anthropic> {
   private readonly config: AnthropicClientConfig;
   private readonly converter: OpenAI2AnthropicConverter;
 
-  constructor(apiKeys: string, config: AnthropicClientConfig = {}, options: RotatingApiClientOptions = {}) {
+  constructor(
+    apiKeys: string,
+    config: AnthropicClientConfig = {},
+    options: RotatingApiClientOptions = {},
+  ) {
     const createClient = (apiKey: string) => {
-      const cleanedApiKey = apiKey.replace(/[\s\r\n\t]/g, '').trim();
+      const cleanedApiKey = apiKey.replace(/[\s\r\n\t]/g, "").trim();
 
       const clientConfig: AnthropicClientOptions_ = {
         apiKey: cleanedApiKey,
@@ -42,7 +50,7 @@ export class AnthropicRotatingClient extends RotatingApiClient<Anthropic> {
     super(apiKeys, AuthType.USE_ANTHROPIC, createClient, options);
     this.config = config;
     this.converter = new OpenAI2AnthropicConverter({
-      defaultModel: config.model || 'claude-sonnet-4-20250514',
+      defaultModel: config.model || "claude-sonnet-4-20250514",
     });
   }
 
@@ -58,10 +66,13 @@ export class AnthropicRotatingClient extends RotatingApiClient<Anthropic> {
   /**
    * OpenAI-compatible createChatCompletion method for unified interface
    */
-  async createChatCompletion(params: OpenAIChatCompletionParams, options?: { signal?: AbortSignal; timeout?: number }): Promise<OpenAIChatCompletionResponse> {
+  async createChatCompletion(
+    params: OpenAIChatCompletionParams,
+    options?: { signal?: AbortSignal; timeout?: number },
+  ): Promise<OpenAIChatCompletionResponse> {
     // Handle request cancellation
     if (options?.signal?.aborted) {
-      throw new Error('Request was aborted');
+      throw new Error("Request was aborted");
     }
 
     return await this.executeWithRetry(async (client) => {
@@ -79,7 +90,9 @@ export class AnthropicRotatingClient extends RotatingApiClient<Anthropic> {
   /**
    * Direct Anthropic API call for native usage
    */
-  async createMessage(request: Anthropic.MessageCreateParamsNonStreaming): Promise<Anthropic.Message> {
+  async createMessage(
+    request: Anthropic.MessageCreateParamsNonStreaming,
+  ): Promise<Anthropic.Message> {
     return await this.executeWithRetry(async (client) => {
       return await client.messages.create(request);
     });

@@ -4,15 +4,15 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { IDirOrFile } from '@/common/ipcBridge';
-import { app } from 'electron';
-import { existsSync, lstatSync, mkdirSync, readlinkSync, symlinkSync, unlinkSync } from 'fs';
-import fs from 'fs/promises';
-import path from 'path';
-import { getSystemDir } from './initStorage';
+import type { IDirOrFile } from "@/common/ipcBridge";
+import { app } from "electron";
+import { existsSync, lstatSync, mkdirSync, readlinkSync, symlinkSync, unlinkSync } from "fs";
+import fs from "fs/promises";
+import path from "path";
+import { getSystemDir } from "./initStorage";
 export const getTempPath = () => {
-  const rootPath = app.getPath('temp');
-  return path.join(rootPath, 'aionui');
+  const rootPath = app.getPath("temp");
+  return path.join(rootPath, "aionui");
 };
 
 /**
@@ -26,11 +26,11 @@ export const getTempPath = () => {
  */
 const ensureCliSafeSymlink = (targetPath: string, symlinkName: string): string => {
   // Only needed on macOS where Application Support has a space
-  if (process.platform !== 'darwin') {
+  if (process.platform !== "darwin") {
     return targetPath;
   }
 
-  const homePath = app.getPath('home');
+  const homePath = app.getPath("home");
   const symlinkPath = path.join(homePath, symlinkName);
 
   // Ensure symlink exists
@@ -76,9 +76,9 @@ const ensureCliSafeSymlink = (targetPath: string, symlinkName: string): string =
  * 获取数据目录路径，macOS 上使用 ~/.aionui 符号链接。
  */
 export const getDataPath = (): string => {
-  const rootPath = app.getPath('userData');
-  const dataPath = path.join(rootPath, 'aionui');
-  return ensureCliSafeSymlink(dataPath, '.aionui');
+  const rootPath = app.getPath("userData");
+  const dataPath = path.join(rootPath, "aionui");
+  return ensureCliSafeSymlink(dataPath, ".aionui");
 };
 
 /**
@@ -86,9 +86,9 @@ export const getDataPath = (): string => {
  * 获取配置目录路径，macOS 上使用 ~/.aionui-config 符号链接。
  */
 export const getConfigPath = (): string => {
-  const rootPath = app.getPath('userData');
-  const configPath = path.join(rootPath, 'config');
-  return ensureCliSafeSymlink(configPath, '.aionui-config');
+  const rootPath = app.getPath("userData");
+  const configPath = path.join(rootPath, "config");
+  return ensureCliSafeSymlink(configPath, ".aionui-config");
 };
 
 export const generateHashWithFullName = (fullName: string): string => {
@@ -99,7 +99,7 @@ export const generateHashWithFullName = (fullName: string): string => {
     hash = hash & hash; // Convert to 32bit integer
   }
   // 取绝对值并转换为16进制，然后取前8位
-  return Math.abs(hash).toString(16).padStart(8, '0'); //.slice(0, 8);
+  return Math.abs(hash).toString(16).padStart(8, "0"); //.slice(0, 8);
 };
 
 // 递归读取目录内容，返回树状结构
@@ -115,15 +115,21 @@ export async function readDirectoryRecursive(
       onProcess?(result: { file: number; dir: number; match?: IDirOrFile }): void;
       process?: { file: number; dir: number };
     };
-  }
+  },
 ): Promise<IDirOrFile> {
   const { root = dirPath, maxDepth = 1, fileService, search, abortController } = options || {};
-  const { text: searchText, onProcess: onSearchProcess = () => {}, process = { file: 0, dir: 1 } } = search || {};
+  const {
+    text: searchText,
+    onProcess: onSearchProcess = () => {},
+    process = { file: 0, dir: 1 },
+  } = search || {};
 
-  const matchSearch = searchText ? (fullPath: string) => fullPath.includes(searchText) : (_: string) => false;
+  const matchSearch = searchText
+    ? (fullPath: string) => fullPath.includes(searchText)
+    : (_: string) => false;
 
   const checkStatus = () => {
-    if (abortController.signal.aborted) throw new Error('readDirectoryRecursive aborted!');
+    if (abortController.signal.aborted) throw new Error("readDirectoryRecursive aborted!");
   };
 
   const stats = await fs.stat(dirPath);
@@ -150,7 +156,7 @@ export async function readDirectoryRecursive(
 
   for (const item of items) {
     checkStatus();
-    if (item === 'node_modules') continue;
+    if (item === "node_modules") continue;
     const itemPath = path.join(dirPath, item);
     if (fileService && fileService.shouldIgnoreFile(itemPath)) continue;
 
@@ -216,11 +222,15 @@ interface CopyOptions {
   overwrite?: boolean;
 }
 
-export async function copyDirectoryRecursively(src: string, dest: string, options: CopyOptions = {}) {
+export async function copyDirectoryRecursively(
+  src: string,
+  dest: string,
+  options: CopyOptions = {},
+) {
   const { overwrite = true } = options;
 
   // 标准化路径：Windows 转小写（不区分大小写），Unix/macOS 保持原样（区分大小写）
-  const isWindows = process.platform === 'win32';
+  const isWindows = process.platform === "win32";
   const normalizedSrc = isWindows ? path.resolve(src).toLowerCase() : path.resolve(src);
   const normalizedDest = isWindows ? path.resolve(dest).toLowerCase() : path.resolve(dest);
 
@@ -300,16 +310,20 @@ export async function verifyDirectoryFiles(dir1: string, dir2: string): Promise<
 
     return true;
   } catch (error) {
-    console.warn('[AionUi] Error verifying directory files:', error);
+    console.warn("[AionUi] Error verifying directory files:", error);
     return false;
   }
 }
 
-export const copyFilesToDirectory = async (dir: string, files?: string[], skipCleanup = false): Promise<string[]> => {
+export const copyFilesToDirectory = async (
+  dir: string,
+  files?: string[],
+  skipCleanup = false,
+): Promise<string[]> => {
   if (!files) return [];
 
   const { cacheDir } = getSystemDir();
-  const tempDir = path.join(cacheDir, 'temp');
+  const tempDir = path.join(cacheDir, "temp");
   const copiedFiles: string[] = [];
   const resolvedDir = path.resolve(dir);
 

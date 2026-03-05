@@ -4,24 +4,24 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { ipcBridge } from '@/common';
-import type { FileMetadata } from './FileService';
-import { getFileExtension } from './FileService';
+import { ipcBridge } from "@/common";
+import type { FileMetadata } from "./FileService";
+import { getFileExtension } from "./FileService";
 
 type PasteHandler = (event: React.ClipboardEvent | ClipboardEvent) => Promise<boolean>;
 
 // MIME 类型到文件扩展名的映射
 function getExtensionFromMimeType(mimeType: string): string {
   const mimeMap: Record<string, string> = {
-    'image/png': '.png',
-    'image/jpeg': '.jpg',
-    'image/jpg': '.jpg',
-    'image/gif': '.gif',
-    'image/webp': '.webp',
-    'image/bmp': '.bmp',
-    'image/svg+xml': '.svg',
+    "image/png": ".png",
+    "image/jpeg": ".jpg",
+    "image/jpg": ".jpg",
+    "image/gif": ".gif",
+    "image/webp": ".webp",
+    "image/bmp": ".bmp",
+    "image/svg+xml": ".svg",
   };
-  return mimeMap[mimeType] || '.png'; // 默认为 .png
+  return mimeMap[mimeType] || ".png"; // 默认为 .png
 }
 
 class PasteServiceClass {
@@ -33,7 +33,7 @@ class PasteServiceClass {
   init() {
     if (this.isInitialized) return;
 
-    document.addEventListener('paste', this.handleGlobalPaste);
+    document.addEventListener("paste", this.handleGlobalPaste);
     this.isInitialized = true;
   }
 
@@ -77,12 +77,15 @@ class PasteServiceClass {
       return false;
     }
 
-    const editableElement = target.closest('input, textarea, [contenteditable]');
+    const editableElement = target.closest("input, textarea, [contenteditable]");
     if (!editableElement) {
       return false;
     }
 
-    if (editableElement instanceof HTMLInputElement || editableElement instanceof HTMLTextAreaElement) {
+    if (
+      editableElement instanceof HTMLInputElement ||
+      editableElement instanceof HTMLTextAreaElement
+    ) {
       return true;
     }
 
@@ -90,18 +93,23 @@ class PasteServiceClass {
       if (editableElement.isContentEditable) {
         return true;
       }
-      const attr = editableElement.getAttribute('contenteditable');
-      return !!attr && attr.toLowerCase() !== 'false';
+      const attr = editableElement.getAttribute("contenteditable");
+      return !!attr && attr.toLowerCase() !== "false";
     }
 
     return false;
   }
 
   // 通用粘贴处理逻辑
-  async handlePaste(event: React.ClipboardEvent | ClipboardEvent, supportedExts: string[], onFilesAdded: (files: FileMetadata[]) => void, onTextPaste?: (text: string) => void): Promise<boolean> {
+  async handlePaste(
+    event: React.ClipboardEvent | ClipboardEvent,
+    supportedExts: string[],
+    onFilesAdded: (files: FileMetadata[]) => void,
+    onTextPaste?: (text: string) => void,
+  ): Promise<boolean> {
     // 立即事件冒泡,避免全局监听器重复处理
     event.stopPropagation();
-    const clipboardText = event.clipboardData?.getData('text');
+    const clipboardText = event.clipboardData?.getData("text");
     const files = event.clipboardData?.files;
     // If caller passes an empty array, treat it as "allow all file types"
     const allowAll = !supportedExts || supportedExts.length === 0;
@@ -116,7 +124,7 @@ class PasteServiceClass {
 
         // 检查是否有文件路径 (Electron 环境下 File 对象会有额外的 path 属性)
 
-        if (!filePath && file.type.startsWith('image/')) {
+        if (!filePath && file.type.startsWith("image/")) {
           // 剪贴板图片，需要检查是否支持该类型
           const fileExt = getFileExtension(file.name) || getExtensionFromMimeType(file.type);
 
@@ -127,11 +135,13 @@ class PasteServiceClass {
 
               // 生成简洁的文件名，如果剪贴板图片有奇怪的默认名，替换为简洁名称
               const now = new Date();
-              const timeStr = `${now.getHours().toString().padStart(2, '0')}${now.getMinutes().toString().padStart(2, '0')}${now.getSeconds().toString().padStart(2, '0')}`;
+              const timeStr = `${now.getHours().toString().padStart(2, "0")}${now.getMinutes().toString().padStart(2, "0")}${now.getSeconds().toString().padStart(2, "0")}`;
 
               // 如果文件名看起来像系统生成的（包含时间戳格式），使用我们的命名
-              const isSystemGenerated = file.name && /^[a-zA-Z]?_?\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}/.test(file.name);
-              const fileName = file.name && !isSystemGenerated ? file.name : `pasted_image_${timeStr}${fileExt}`;
+              const isSystemGenerated =
+                file.name && /^[a-zA-Z]?_?\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}/.test(file.name);
+              const fileName =
+                file.name && !isSystemGenerated ? file.name : `pasted_image_${timeStr}${fileExt}`;
 
               // 创建临时文件并写入数据
               const tempPath = await ipcBridge.fs.createTempFile.invoke({ fileName });
@@ -149,7 +159,7 @@ class PasteServiceClass {
                 });
               }
             } catch (error) {
-              console.error('创建临时文件失败:', error);
+              console.error("创建临时文件失败:", error);
             }
           } else {
             // 不支持的文件类型，跳过但不报错（让后续过滤处理）
@@ -172,7 +182,7 @@ class PasteServiceClass {
             // 不支持的文件类型
             console.warn(`Unsupported file type: ${file.name}, extension: ${fileExt}`);
           }
-        } else if (!file.type.startsWith('image/')) {
+        } else if (!file.type.startsWith("image/")) {
           // 没有文件路径的非图片文件（从文件管理器复制粘贴的文件）
           const fileExt = getFileExtension(file.name);
 
@@ -199,7 +209,7 @@ class PasteServiceClass {
                 });
               }
             } catch (error) {
-              console.error('创建临时文件失败:', error);
+              console.error("创建临时文件失败:", error);
             }
           } else {
             console.warn(`Unsupported file type: ${file.name}, extension: ${fileExt}`);
@@ -217,13 +227,13 @@ class PasteServiceClass {
     // 处理纯文本粘贴（只在没有文件时）
     if (clipboardText && (!files || files.length === 0)) {
       // 在 iOS 上, 让 Safari 自己处理纯文本粘贴, 以避免粘贴菜单/键盘抖动问题
-      const isIOS = typeof navigator !== 'undefined' && /iP(hone|ad|od)/.test(navigator.userAgent);
+      const isIOS = typeof navigator !== "undefined" && /iP(hone|ad|od)/.test(navigator.userAgent);
       if (isIOS) {
         return false;
       }
       if (onTextPaste) {
         // 清理文本中多余的换行符，特别是末尾的换行符
-        const cleanedText = clipboardText.replace(/\n\s*$/, '');
+        const cleanedText = clipboardText.replace(/\n\s*$/, "");
         onTextPaste(cleanedText);
         return true; // 已处理，阻止默认行为
       }
@@ -236,7 +246,7 @@ class PasteServiceClass {
   // 清理资源
   destroy() {
     if (this.isInitialized) {
-      document.removeEventListener('paste', this.handleGlobalPaste);
+      document.removeEventListener("paste", this.handleGlobalPaste);
       this.handlers.clear();
       this.lastFocusedComponent = null;
       this.isInitialized = false;

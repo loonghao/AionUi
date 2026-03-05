@@ -4,12 +4,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { ForkTask } from '@/worker/fork/ForkTask';
-import path from 'path';
-import { ipcBridge } from '../../common';
-import type { IConfirmation } from '../../common/chatLib';
+import { ForkTask } from "@/worker/fork/ForkTask";
+import path from "path";
+import { ipcBridge } from "../../common";
+import type { IConfirmation } from "../../common/chatLib";
 
-type AgentType = 'gemini' | 'acp' | 'codex' | 'openclaw-gateway' | 'nanobot';
+type AgentType = "gemini" | "acp" | "codex" | "openclaw-gateway" | "nanobot";
 
 /**
  * @description agent任务基础类
@@ -21,7 +21,7 @@ class BaseAgentManager<Data, ConfirmationOption extends any = any> extends ForkT
   type: AgentType;
   protected conversation_id: string;
   protected confirmations: Array<IConfirmation<ConfirmationOption>> = [];
-  status: 'pending' | 'running' | 'finished' | undefined;
+  status: "pending" | "running" | "finished" | undefined;
 
   /**
    * Whether this agent is in yolo mode (auto-approve)
@@ -29,14 +29,14 @@ class BaseAgentManager<Data, ConfirmationOption extends any = any> extends ForkT
   protected yoloMode: boolean = false;
 
   constructor(type: AgentType, data: Data) {
-    super(path.resolve(__dirname, type + '.js'), {
+    super(path.resolve(__dirname, type + ".js"), {
       type: type,
       data: data,
     });
     this.type = type;
 
     // Set yoloMode from data if present
-    if (data && typeof data === 'object' && 'yoloMode' in data) {
+    if (data && typeof data === "object" && "yoloMode" in data) {
       this.yoloMode = !!(data as any).yoloMode;
     }
   }
@@ -59,12 +59,20 @@ class BaseAgentManager<Data, ConfirmationOption extends any = any> extends ForkT
 
     const originIndex = this.confirmations.findIndex((p) => p.id === data.id);
     if (originIndex !== -1) {
-      this.confirmations = this.confirmations.map((item, i) => (i === originIndex ? { ...item, ...data } : item));
-      ipcBridge.conversation.confirmation.update.emit({ ...data, conversation_id: this.conversation_id });
+      this.confirmations = this.confirmations.map((item, i) =>
+        i === originIndex ? { ...item, ...data } : item,
+      );
+      ipcBridge.conversation.confirmation.update.emit({
+        ...data,
+        conversation_id: this.conversation_id,
+      });
       return;
     }
     this.confirmations = [...this.confirmations, data];
-    ipcBridge.conversation.confirmation.add.emit({ ...data, conversation_id: this.conversation_id });
+    ipcBridge.conversation.confirmation.add.emit({
+      ...data,
+      conversation_id: this.conversation_id,
+    });
   }
   confirm(_msg_id: string, callId: string, _data: ConfirmationOption) {
     // 查找要移除的确认项（根据 callId 匹配）
@@ -98,11 +106,11 @@ class BaseAgentManager<Data, ConfirmationOption extends any = any> extends ForkT
   }
 
   stop() {
-    return this.postMessagePromise('stop.stream', {});
+    return this.postMessagePromise("stop.stream", {});
   }
 
   sendMessage(data: any) {
-    return this.postMessagePromise('send.message', data);
+    return this.postMessagePromise("send.message", data);
   }
 
   /**

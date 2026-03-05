@@ -30,6 +30,6 @@ const windowControlsMock = {
   windowControls: windowControlsMock,
 };
 
-if (typeof window !== 'undefined') {
+if (typeof window !== "undefined") {
   (window as any).electronAPI = (global as any).electronAPI;
 }

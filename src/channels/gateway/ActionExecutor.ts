@@ -4,28 +4,45 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { TMessage } from '@/common/chatLib';
-import { getDatabase } from '@/process/database';
-import { ProcessConfig } from '@/process/initStorage';
-import { ConversationService } from '@/process/services/conversationService';
-import { buildChatErrorResponse, chatActions } from '../actions/ChatActions';
-import { handlePairingShow, platformActions } from '../actions/PlatformActions';
-import { getChannelDefaultModel, systemActions } from '../actions/SystemActions';
-import type { IActionContext, IRegisteredAction } from '../actions/types';
-import { getChannelMessageService } from '../agent/ChannelMessageService';
-import type { SessionManager } from '../core/SessionManager';
-import type { PairingService } from '../pairing/PairingService';
-import type { PluginMessageHandler } from '../plugins/BasePlugin';
-import { getChannelConversationName, resolveChannelConvType } from '../types';
-import { createMainMenuCard, createErrorRecoveryCard, createToolConfirmationCard } from '../plugins/lark/LarkCards';
-import { convertHtmlToLarkMarkdown } from '../plugins/lark/LarkAdapter';
-import { createMainMenuCard as createDingTalkMainMenuCard, createErrorRecoveryCard as createDingTalkErrorRecoveryCard, createResponseActionsCard as createDingTalkResponseActionsCard, createToolConfirmationCard as createDingTalkToolConfirmationCard } from '../plugins/dingtalk/DingTalkCards';
-import { convertHtmlToDingTalkMarkdown } from '../plugins/dingtalk/DingTalkAdapter';
-import { createMainMenuKeyboard, createToolConfirmationKeyboard } from '../plugins/telegram/TelegramKeyboards';
-import { escapeHtml } from '../plugins/telegram/TelegramAdapter';
-import type { ChannelAgentType, IUnifiedIncomingMessage, IUnifiedOutgoingMessage, PluginType } from '../types';
-import type { PluginManager } from './PluginManager';
-import type { AcpBackend } from '@/types/acpTypes';
+import type { TMessage } from "@/common/chatLib";
+import { getDatabase } from "@/process/database";
+import { ProcessConfig } from "@/process/initStorage";
+import { ConversationService } from "@/process/services/conversationService";
+import { buildChatErrorResponse, chatActions } from "../actions/ChatActions";
+import { handlePairingShow, platformActions } from "../actions/PlatformActions";
+import { getChannelDefaultModel, systemActions } from "../actions/SystemActions";
+import type { IActionContext, IRegisteredAction } from "../actions/types";
+import { getChannelMessageService } from "../agent/ChannelMessageService";
+import type { SessionManager } from "../core/SessionManager";
+import type { PairingService } from "../pairing/PairingService";
+import type { PluginMessageHandler } from "../plugins/BasePlugin";
+import { getChannelConversationName, resolveChannelConvType } from "../types";
+import {
+  createMainMenuCard,
+  createErrorRecoveryCard,
+  createToolConfirmationCard,
+} from "../plugins/lark/LarkCards";
+import { convertHtmlToLarkMarkdown } from "../plugins/lark/LarkAdapter";
+import {
+  createMainMenuCard as createDingTalkMainMenuCard,
+  createErrorRecoveryCard as createDingTalkErrorRecoveryCard,
+  createResponseActionsCard as createDingTalkResponseActionsCard,
+  createToolConfirmationCard as createDingTalkToolConfirmationCard,
+} from "../plugins/dingtalk/DingTalkCards";
+import { convertHtmlToDingTalkMarkdown } from "../plugins/dingtalk/DingTalkAdapter";
+import {
+  createMainMenuKeyboard,
+  createToolConfirmationKeyboard,
+} from "../plugins/telegram/TelegramKeyboards";
+import { escapeHtml } from "../plugins/telegram/TelegramAdapter";
+import type {
+  ChannelAgentType,
+  IUnifiedIncomingMessage,
+  IUnifiedOutgoingMessage,
+  PluginType,
+} from "../types";
+import type { PluginManager } from "./PluginManager";
+import type { AcpBackend } from "@/types/acpTypes";
 
 // ==================== Platform-specific Helpers ====================
 
@@ -33,10 +50,10 @@ import type { AcpBackend } from '@/types/acpTypes';
  * Get main menu reply markup based on platform
  */
 function getMainMenuMarkup(platform: PluginType) {
-  if (platform === 'lark') {
+  if (platform === "lark") {
     return createMainMenuCard();
   }
-  if (platform === 'dingtalk') {
+  if (platform === "dingtalk") {
     return createDingTalkMainMenuCard();
   }
   return createMainMenuKeyboard();
@@ -46,8 +63,8 @@ function getMainMenuMarkup(platform: PluginType) {
  * Get response actions markup based on platform
  */
 function getResponseActionsMarkup(platform: PluginType, text?: string) {
-  if (platform === 'dingtalk') {
-    return createDingTalkResponseActionsCard(text || '');
+  if (platform === "dingtalk") {
+    return createDingTalkResponseActionsCard(text || "");
   }
   // Telegram and Lark: no response action buttons
   return undefined;
@@ -56,12 +73,28 @@ function getResponseActionsMarkup(platform: PluginType, text?: string) {
 /**
  * Get tool confirmation markup based on platform
  */
-function getToolConfirmationMarkup(platform: PluginType, callId: string, options: Array<{ label: string; value: string }>, title?: string, description?: string) {
-  if (platform === 'lark') {
-    return createToolConfirmationCard(callId, title || 'Confirmation', description || 'Please confirm', options);
+function getToolConfirmationMarkup(
+  platform: PluginType,
+  callId: string,
+  options: Array<{ label: string; value: string }>,
+  title?: string,
+  description?: string,
+) {
+  if (platform === "lark") {
+    return createToolConfirmationCard(
+      callId,
+      title || "Confirmation",
+      description || "Please confirm",
+      options,
+    );
   }
-  if (platform === 'dingtalk') {
-    return createDingTalkToolConfirmationCard(callId, title || 'Confirmation', description || 'Please confirm', options);
+  if (platform === "dingtalk") {
+    return createDingTalkToolConfirmationCard(
+      callId,
+      title || "Confirmation",
+      description || "Please confirm",
+      options,
+    );
   }
   return createToolConfirmationKeyboard(callId, options);
 }
@@ -70,10 +103,10 @@ function getToolConfirmationMarkup(platform: PluginType, callId: string, options
  * Get error recovery markup based on platform
  */
 function getErrorRecoveryMarkup(platform: PluginType, errorMessage?: string) {
-  if (platform === 'lark') {
+  if (platform === "lark") {
     return createErrorRecoveryCard(errorMessage);
   }
-  if (platform === 'dingtalk') {
+  if (platform === "dingtalk") {
     return createDingTalkErrorRecoveryCard(errorMessage);
   }
   return createMainMenuKeyboard(); // Telegram uses main menu for recovery
@@ -83,10 +116,10 @@ function getErrorRecoveryMarkup(platform: PluginType, errorMessage?: string) {
  * Escape/format text for platform
  */
 function formatTextForPlatform(text: string, platform: PluginType): string {
-  if (platform === 'lark') {
+  if (platform === "lark") {
     return convertHtmlToLarkMarkdown(text);
   }
-  if (platform === 'dingtalk') {
+  if (platform === "dingtalk") {
     return convertHtmlToDingTalkMarkdown(text);
   }
   return escapeHtml(text);
@@ -98,29 +131,29 @@ function formatTextForPlatform(text: string, platform: PluginType): string {
  */
 function getConfirmationOptions(type: string): Array<{ label: string; value: string }> {
   switch (type) {
-    case 'edit':
+    case "edit":
       return [
-        { label: '✅ Allow Once', value: 'proceed_once' },
-        { label: '✅ Always Allow', value: 'proceed_always' },
-        { label: '❌ Cancel', value: 'cancel' },
+        { label: "✅ Allow Once", value: "proceed_once" },
+        { label: "✅ Always Allow", value: "proceed_always" },
+        { label: "❌ Cancel", value: "cancel" },
       ];
-    case 'exec':
+    case "exec":
       return [
-        { label: '✅ Allow Execution', value: 'proceed_once' },
-        { label: '✅ Always Allow', value: 'proceed_always' },
-        { label: '❌ Cancel', value: 'cancel' },
+        { label: "✅ Allow Execution", value: "proceed_once" },
+        { label: "✅ Always Allow", value: "proceed_always" },
+        { label: "❌ Cancel", value: "cancel" },
       ];
-    case 'mcp':
+    case "mcp":
       return [
-        { label: '✅ Allow Once', value: 'proceed_once' },
-        { label: '✅ Always Allow Tool', value: 'proceed_always_tool' },
-        { label: '✅ Always Allow Server', value: 'proceed_always_server' },
-        { label: '❌ Cancel', value: 'cancel' },
+        { label: "✅ Allow Once", value: "proceed_once" },
+        { label: "✅ Always Allow Tool", value: "proceed_always_tool" },
+        { label: "✅ Always Allow Server", value: "proceed_always_server" },
+        { label: "❌ Cancel", value: "cancel" },
       ];
     default:
       return [
-        { label: '✅ Confirm', value: 'proceed_once' },
-        { label: '❌ Cancel', value: 'cancel' },
+        { label: "✅ Confirm", value: "proceed_once" },
+        { label: "❌ Cancel", value: "cancel" },
       ];
   }
 }
@@ -131,20 +164,24 @@ function getConfirmationOptions(type: string): Array<{ label: string; value: str
  * 注意：所有用户输入的内容都需要转义 HTML 特殊字符
  * Note: All user input content needs HTML special characters escaped
  */
-function getConfirmationPrompt(details: { type: string; title?: string; [key: string]: any }): string {
-  if (!details) return 'Please confirm the operation';
+function getConfirmationPrompt(details: {
+  type: string;
+  title?: string;
+  [key: string]: any;
+}): string {
+  if (!details) return "Please confirm the operation";
 
   switch (details.type) {
-    case 'edit':
-      return `📝 <b>Edit File Confirmation</b>\nFile: <code>${escapeHtml(details.fileName || 'Unknown file')}</code>\n\nAllow editing this file?`;
-    case 'exec':
-      return `⚡ <b>Execute Command Confirmation</b>\nCommand: <code>${escapeHtml(details.command || 'Unknown command')}</code>\n\nAllow executing this command?`;
-    case 'mcp':
-      return `🔧 <b>MCP Tool Confirmation</b>\nTool: <code>${escapeHtml(details.toolDisplayName || details.toolName || 'Unknown tool')}</code>\nServer: <code>${escapeHtml(details.serverName || 'Unknown server')}</code>\n\nAllow calling this tool?`;
-    case 'info':
-      return `ℹ️ <b>Information Confirmation</b>\n${escapeHtml(details.prompt || '')}\n\nContinue?`;
+    case "edit":
+      return `📝 <b>Edit File Confirmation</b>\nFile: <code>${escapeHtml(details.fileName || "Unknown file")}</code>\n\nAllow editing this file?`;
+    case "exec":
+      return `⚡ <b>Execute Command Confirmation</b>\nCommand: <code>${escapeHtml(details.command || "Unknown command")}</code>\n\nAllow executing this command?`;
+    case "mcp":
+      return `🔧 <b>MCP Tool Confirmation</b>\nTool: <code>${escapeHtml(details.toolDisplayName || details.toolName || "Unknown tool")}</code>\nServer: <code>${escapeHtml(details.serverName || "Unknown server")}</code>\n\nAllow calling this tool?`;
+    case "info":
+      return `ℹ️ <b>Information Confirmation</b>\n${escapeHtml(details.prompt || "")}\n\nContinue?`;
     default:
-      return 'Please confirm the operation';
+      return "Please confirm the operation";
   }
 }
 
@@ -152,82 +189,110 @@ function getConfirmationPrompt(details: { type: string; title?: string; [key: st
  * 将 TMessage 转换为 IUnifiedOutgoingMessage
  * Convert TMessage to IUnifiedOutgoingMessage for platform
  */
-function convertTMessageToOutgoing(message: TMessage, platform: PluginType, isComplete = false): IUnifiedOutgoingMessage {
+function convertTMessageToOutgoing(
+  message: TMessage,
+  platform: PluginType,
+  isComplete = false,
+): IUnifiedOutgoingMessage {
   switch (message.type) {
-    case 'text': {
+    case "text": {
       // 根据平台格式化文本
       // Format text based on platform
-      const rawText = formatTextForPlatform(message.content.content || '', platform);
-      const text = rawText.trim() ? rawText : '...';
+      const rawText = formatTextForPlatform(message.content.content || "", platform);
+      const text = rawText.trim() ? rawText : "...";
       return {
-        type: 'text',
+        type: "text",
         text,
-        parseMode: 'HTML',
+        parseMode: "HTML",
         replyMarkup: isComplete ? getResponseActionsMarkup(platform, text) : undefined,
       };
     }
 
-    case 'tips': {
-      const icon = message.content.type === 'error' ? '❌' : message.content.type === 'success' ? '✅' : '⚠️';
-      const content = formatTextForPlatform(message.content.content || '', platform);
+    case "tips": {
+      const icon =
+        message.content.type === "error" ? "❌" : message.content.type === "success" ? "✅" : "⚠️";
+      const content = formatTextForPlatform(message.content.content || "", platform);
       return {
-        type: 'text',
+        type: "text",
         text: `${icon} ${content}`,
-        parseMode: 'HTML',
+        parseMode: "HTML",
       };
     }
 
-    case 'tool_group': {
+    case "tool_group": {
       // 显示工具调用状态
       // Show tool call status
       const toolLines = message.content.map((tool) => {
-        const statusIcon = tool.status === 'Success' ? '✅' : tool.status === 'Error' ? '❌' : tool.status === 'Executing' ? '⏳' : tool.status === 'Confirming' ? '❓' : '📋';
-        const desc = formatTextForPlatform(tool.description || tool.name || '', platform);
+        const statusIcon =
+          tool.status === "Success"
+            ? "✅"
+            : tool.status === "Error"
+              ? "❌"
+              : tool.status === "Executing"
+                ? "⏳"
+                : tool.status === "Confirming"
+                  ? "❓"
+                  : "📋";
+        const desc = formatTextForPlatform(tool.description || tool.name || "", platform);
         return `${statusIcon} ${desc}`;
       });
 
       // 检查是否有需要确认的工具
       // Check if there are tools that need confirmation
-      const confirmingTool = message.content.find((tool) => tool.status === 'Confirming' && tool.confirmationDetails);
+      const confirmingTool = message.content.find(
+        (tool) => tool.status === "Confirming" && tool.confirmationDetails,
+      );
       if (confirmingTool && confirmingTool.confirmationDetails) {
         // 根据确认类型生成选项
         // Generate options based on confirmation type
         const options = getConfirmationOptions(confirmingTool.confirmationDetails.type);
-        const confirmText = toolLines.join('\n') + '\n\n' + getConfirmationPrompt(confirmingTool.confirmationDetails);
+        const confirmText =
+          toolLines.join("\n") + "\n\n" + getConfirmationPrompt(confirmingTool.confirmationDetails);
 
         return {
-          type: 'text',
+          type: "text",
           text: confirmText,
-          parseMode: 'HTML',
-          replyMarkup: getToolConfirmationMarkup(platform, confirmingTool.callId, options, 'Tool Confirmation', confirmText),
+          parseMode: "HTML",
+          replyMarkup: getToolConfirmationMarkup(
+            platform,
+            confirmingTool.callId,
+            options,
+            "Tool Confirmation",
+            confirmText,
+          ),
         };
       }
 
       return {
-        type: 'text',
-        text: toolLines.join('\n') || '🔧 Executing tools...',
-        parseMode: 'HTML',
+        type: "text",
+        text: toolLines.join("\n") || "🔧 Executing tools...",
+        parseMode: "HTML",
       };
     }
 
-    case 'tool_call': {
-      const statusIcon = message.content.status === 'success' ? '✅' : message.content.status === 'error' ? '❌' : '⏳';
-      const name = formatTextForPlatform(message.content.name || '', platform);
+    case "tool_call": {
+      const statusIcon =
+        message.content.status === "success"
+          ? "✅"
+          : message.content.status === "error"
+            ? "❌"
+            : "⏳";
+      const name = formatTextForPlatform(message.content.name || "", platform);
       return {
-        type: 'text',
+        type: "text",
         text: `${statusIcon} ${name}`,
-        parseMode: 'HTML',
+        parseMode: "HTML",
       };
     }
 
-    case 'acp_permission':
-    case 'codex_permission': {
+    case "acp_permission":
+    case "codex_permission": {
       // Channels (Telegram/Lark) use automatic approval via yoloMode.
       // Show a subtle indicator instead of an error message.
       return {
-        type: 'text',
-        text: `⏳ ${formatTextForPlatform('Applying automatic approval for permission request...', platform)}`,
-        parseMode: 'HTML',
+        type: "text",
+        text: `⏳ ${formatTextForPlatform("Applying automatic approval for permission request...", platform)}`,
+        parseMode: "HTML",
       };
     }
 
@@ -235,9 +300,9 @@ function convertTMessageToOutgoing(message: TMessage, platform: PluginType, isCo
       // 其他类型暂不支持，显示通用消息
       // Other types not supported yet, show generic message
       return {
-        type: 'text',
-        text: '⏳ Processing...',
-        parseMode: 'HTML',
+        type: "text",
+        text: "⏳ Processing...",
+        parseMode: "HTML",
       };
   }
 }
@@ -259,7 +324,11 @@ export class ActionExecutor {
   // Action registry
   private actionRegistry: Map<string, IRegisteredAction> = new Map();
 
-  constructor(pluginManager: PluginManager, sessionManager: SessionManager, pairingService: PairingService) {
+  constructor(
+    pluginManager: PluginManager,
+    sessionManager: SessionManager,
+    pairingService: PairingService,
+  ) {
     this.pluginManager = pluginManager;
     this.sessionManager = sessionManager;
     this.pairingService = pairingService;
@@ -306,7 +375,7 @@ export class ActionExecutor {
       const isAuthorized = this.pairingService.isUserAuthorized(user.id, platform);
 
       // Handle /start command - always show pairing
-      if (content.type === 'command' && content.text === '/start') {
+      if (content.type === "command" && content.text === "/start") {
         const result = await handlePairingShow(context);
         if (result.message) {
           await context.sendMessage(result.message);
@@ -331,9 +400,9 @@ export class ActionExecutor {
       if (!channelUser) {
         console.error(`[ActionExecutor] Authorized user not found in database: ${user.id}`);
         await context.sendMessage({
-          type: 'text',
-          text: '❌ User data error. Please re-pair your account.',
-          parseMode: 'HTML',
+          type: "text",
+          text: "❌ User data error. Please re-pair your account.",
+          parseMode: "HTML",
         });
         return;
       }
@@ -344,25 +413,47 @@ export class ActionExecutor {
       // Get or create session (scoped by chatId for per-chat isolation)
       let session = this.sessionManager.getSession(channelUser.id, chatId);
       if (!session || !session.conversationId) {
-        const source = platform === 'lark' ? 'lark' : platform === 'dingtalk' ? 'dingtalk' : 'telegram';
+        const source =
+          platform === "lark" ? "lark" : platform === "dingtalk" ? "dingtalk" : "telegram";
 
         // Read selected agent for this platform (defaults to Gemini)
         let savedAgent: unknown = undefined;
         try {
-          savedAgent = await (platform === 'lark' ? ProcessConfig.get('assistant.lark.agent') : platform === 'dingtalk' ? ProcessConfig.get('assistant.dingtalk.agent') : ProcessConfig.get('assistant.telegram.agent'));
+          savedAgent = await (platform === "lark"
+            ? ProcessConfig.get("assistant.lark.agent")
+            : platform === "dingtalk"
+              ? ProcessConfig.get("assistant.dingtalk.agent")
+              : ProcessConfig.get("assistant.telegram.agent"));
         } catch {
           // ignore
         }
-        const backend = (savedAgent && typeof savedAgent === 'object' && typeof (savedAgent as any).backend === 'string' ? (savedAgent as any).backend : 'gemini') as string;
-        const customAgentId = savedAgent && typeof savedAgent === 'object' ? ((savedAgent as any).customAgentId as string | undefined) : undefined;
-        const agentName = savedAgent && typeof savedAgent === 'object' ? ((savedAgent as any).name as string | undefined) : undefined;
+        const backend = (
+          savedAgent &&
+          typeof savedAgent === "object" &&
+          typeof (savedAgent as any).backend === "string"
+            ? (savedAgent as any).backend
+            : "gemini"
+        ) as string;
+        const customAgentId =
+          savedAgent && typeof savedAgent === "object"
+            ? ((savedAgent as any).customAgentId as string | undefined)
+            : undefined;
+        const agentName =
+          savedAgent && typeof savedAgent === "object"
+            ? ((savedAgent as any).name as string | undefined)
+            : undefined;
 
         // Always resolve a provider model (required by ICreateConversationParams typing; ignored by ACP/Codex)
         const model = await getChannelDefaultModel(platform);
 
         // Map backend to conversation type for lookup
         const { convType, convBackend } = resolveChannelConvType(backend);
-        const conversationName = getChannelConversationName(platform, convType, convBackend, chatId);
+        const conversationName = getChannelConversationName(
+          platform,
+          convType,
+          convBackend,
+          chatId,
+        );
 
         // Lookup existing conversation by source + chatId + type + backend (per-chat isolation)
         const db2 = getDatabase();
@@ -371,25 +462,25 @@ export class ActionExecutor {
 
         const result = existing
           ? { success: true as const, conversation: existing }
-          : backend === 'codex'
+          : backend === "codex"
             ? await ConversationService.createConversation({
-                type: 'codex',
+                type: "codex",
                 model,
                 name: conversationName,
                 source,
                 channelChatId: chatId,
                 extra: {},
               })
-            : backend === 'gemini'
+            : backend === "gemini"
               ? await ConversationService.createGeminiConversation({
                   model,
                   name: conversationName,
                   source,
                   channelChatId: chatId,
                 })
-              : backend === 'openclaw-gateway'
+              : backend === "openclaw-gateway"
                 ? await ConversationService.createConversation({
-                    type: 'openclaw-gateway',
+                    type: "openclaw-gateway",
                     model,
                     name: conversationName,
                     source,
@@ -397,7 +488,7 @@ export class ActionExecutor {
                     extra: {},
                   })
                 : await ConversationService.createConversation({
-                    type: 'acp',
+                    type: "acp",
                     model,
                     name: conversationName,
                     source,
@@ -411,13 +502,19 @@ export class ActionExecutor {
 
         if (result.success && result.conversation) {
           const { convType: agentType } = resolveChannelConvType(backend);
-          session = this.sessionManager.createSessionWithConversation(channelUser, result.conversation.id, agentType as ChannelAgentType, undefined, chatId);
+          session = this.sessionManager.createSessionWithConversation(
+            channelUser,
+            result.conversation.id,
+            agentType as ChannelAgentType,
+            undefined,
+            chatId,
+          );
         } else {
           console.error(`[ActionExecutor] Failed to create conversation: ${result.error}`);
           await context.sendMessage({
-            type: 'text',
-            text: `❌ Failed to create session: ${result.error || 'Unknown error'}`,
-            parseMode: 'HTML',
+            type: "text",
+            text: `❌ Failed to create session: ${result.error || "Unknown error"}`,
+            parseMode: "HTML",
           });
           return;
         }
@@ -429,27 +526,27 @@ export class ActionExecutor {
       if (action) {
         // Explicit action from button press
         await this.executeAction(context, action.name, action.params);
-      } else if (content.type === 'action') {
+      } else if (content.type === "action") {
         // Action encoded in content
         await this.executeAction(context, content.text, {});
-      } else if (content.type === 'text' && content.text) {
+      } else if (content.type === "text" && content.text) {
         // Regular text message - send to AI
         await this.handleChatMessage(context, content.text);
       } else {
         // Unsupported content type
         await context.sendMessage({
-          type: 'text',
-          text: 'This message type is not supported. Please send a text message.',
-          parseMode: 'HTML',
+          type: "text",
+          text: "This message type is not supported. Please send a text message.",
+          parseMode: "HTML",
           replyMarkup: getMainMenuMarkup(platform as PluginType),
         });
       }
     } catch (error: any) {
       console.error(`[ActionExecutor] Error handling message:`, error);
       await context.sendMessage({
-        type: 'text',
+        type: "text",
         text: `❌ Error processing message: ${error.message}`,
-        parseMode: 'HTML',
+        parseMode: "HTML",
         replyMarkup: getErrorRecoveryMarkup(platform as PluginType, error.message),
       });
     }
@@ -458,15 +555,19 @@ export class ActionExecutor {
   /**
    * Execute a registered action
    */
-  private async executeAction(context: IActionContext, actionName: string, params?: Record<string, string>): Promise<void> {
+  private async executeAction(
+    context: IActionContext,
+    actionName: string,
+    params?: Record<string, string>,
+  ): Promise<void> {
     const action = this.actionRegistry.get(actionName);
 
     if (!action) {
       console.warn(`[ActionExecutor] Unknown action: ${actionName}`);
       await context.sendMessage({
-        type: 'text',
+        type: "text",
         text: `Unknown action: ${actionName}`,
-        parseMode: 'HTML',
+        parseMode: "HTML",
       });
       return;
     }
@@ -480,9 +581,9 @@ export class ActionExecutor {
     } catch (error: any) {
       console.error(`[ActionExecutor] Action ${actionName} failed:`, error);
       await context.sendMessage({
-        type: 'text',
+        type: "text",
         text: `❌ Action failed: ${error.message}`,
-        parseMode: 'HTML',
+        parseMode: "HTML",
       });
     }
   }
@@ -498,9 +599,9 @@ export class ActionExecutor {
 
     // Send "thinking" indicator
     const thinkingMsgId = await context.sendMessage({
-      type: 'text',
-      text: '⏳ Thinking...',
-      parseMode: 'HTML',
+      type: "text",
+      text: "⏳ Thinking...",
+      parseMode: "HTML",
     });
 
     try {
@@ -508,7 +609,7 @@ export class ActionExecutor {
       const conversationId = context.conversationId;
 
       if (!sessionId || !conversationId) {
-        throw new Error('Session not initialized');
+        throw new Error("Session not initialized");
       }
 
       const messageService = getChannelMessageService();
@@ -542,91 +643,103 @@ export class ActionExecutor {
 
       // 发送消息
       // Send message
-      await messageService.sendMessage(sessionId, conversationId, text, async (message: TMessage, isInsert: boolean) => {
-        const now = Date.now();
+      await messageService.sendMessage(
+        sessionId,
+        conversationId,
+        text,
+        async (message: TMessage, isInsert: boolean) => {
+          const now = Date.now();
 
-        // 转换消息格式（根据平台）
-        // Convert message format (based on platform)
-        const outgoingMessage = convertTMessageToOutgoing(message, context.platform as PluginType, false);
+          // 转换消息格式（根据平台）
+          // Convert message format (based on platform)
+          const outgoingMessage = convertTMessageToOutgoing(
+            message,
+            context.platform as PluginType,
+            false,
+          );
 
-        // Strip replyMarkup during streaming to prevent premature card finalization.
-        // Tool confirmation cards set replyMarkup (e.g., for Confirming status),
-        // but DingTalk interprets replyMarkup as "stream complete" and finishes the AI Card.
-        // Channel conversations use yoloMode (auto-approve), so confirmation buttons are unnecessary.
-        const streamOutgoing: IUnifiedOutgoingMessage = { ...outgoingMessage, replyMarkup: undefined };
+          // Strip replyMarkup during streaming to prevent premature card finalization.
+          // Tool confirmation cards set replyMarkup (e.g., for Confirming status),
+          // but DingTalk interprets replyMarkup as "stream complete" and finishes the AI Card.
+          // Channel conversations use yoloMode (auto-approve), so confirmation buttons are unnecessary.
+          const streamOutgoing: IUnifiedOutgoingMessage = {
+            ...outgoingMessage,
+            replyMarkup: undefined,
+          };
 
-        // 保存最后一条消息内容（不含 replyMarkup，最终消息会单独添加）
-        // Save last message content (without replyMarkup, final message adds it separately)
-        lastMessageContent = streamOutgoing;
+          // 保存最后一条消息内容（不含 replyMarkup，最终消息会单独添加）
+          // Save last message content (without replyMarkup, final message adds it separately)
+          lastMessageContent = streamOutgoing;
 
-        // IMPORTANT: Always treat first streaming message as update to thinking message
-        // This prevents async race condition where first insert's sendMessage takes time
-        // while subsequent messages arrive and get processed as updates
-        // 重要：始终将第一个流式消息视为更新thinking消息
-        // 这可以防止异步竞态条件：第一个insert的sendMessage耗时时，后续消息已到达并被当作update处理
-        if (isInsert && sentMessageIds.length === 1) {
-          // First streaming message: update thinking message instead of inserting
-          // 第一个流式消息：更新thinking消息而不是插入新消息
-          pendingMessage = streamOutgoing;
+          // IMPORTANT: Always treat first streaming message as update to thinking message
+          // This prevents async race condition where first insert's sendMessage takes time
+          // while subsequent messages arrive and get processed as updates
+          // 重要：始终将第一个流式消息视为更新thinking消息
+          // 这可以防止异步竞态条件：第一个insert的sendMessage耗时时，后续消息已到达并被当作update处理
+          if (isInsert && sentMessageIds.length === 1) {
+            // First streaming message: update thinking message instead of inserting
+            // 第一个流式消息：更新thinking消息而不是插入新消息
+            pendingMessage = streamOutgoing;
 
-          if (now - lastUpdateTime >= UPDATE_THROTTLE_MS) {
-            if (pendingUpdateTimer) {
-              clearTimeout(pendingUpdateTimer);
-              pendingUpdateTimer = null;
-            }
-            await doEditMessage(streamOutgoing);
-          } else {
-            if (pendingUpdateTimer) {
-              clearTimeout(pendingUpdateTimer);
-            }
-            const delay = UPDATE_THROTTLE_MS - (now - lastUpdateTime);
-            pendingUpdateTimer = setTimeout(() => {
-              if (pendingMessage) {
-                void doEditMessage(pendingMessage);
-                pendingMessage = null;
+            if (now - lastUpdateTime >= UPDATE_THROTTLE_MS) {
+              if (pendingUpdateTimer) {
+                clearTimeout(pendingUpdateTimer);
+                pendingUpdateTimer = null;
               }
-              pendingUpdateTimer = null;
-            }, delay);
-          }
-        } else if (isInsert) {
-          // 新消息：发送新消息
-          // New message: send new message
-          try {
-            const newMsgId = await context.sendMessage(streamOutgoing);
-            sentMessageIds.push(newMsgId);
-          } catch {
-            // Ignore send errors
-          }
-        } else {
-          // 更新消息：使用定时器节流，确保最后一条消息能被发送
-          // Update message: throttle with timer to ensure last message is sent
-          pendingMessage = streamOutgoing;
-
-          if (now - lastUpdateTime >= UPDATE_THROTTLE_MS) {
-            // 距离上次发送超过节流时间，立即发送
-            // Enough time has passed since last send, send immediately
-            if (pendingUpdateTimer) {
-              clearTimeout(pendingUpdateTimer);
-              pendingUpdateTimer = null;
-            }
-            await doEditMessage(streamOutgoing);
-          } else {
-            // 在节流时间内，设置定时器延迟发送
-            // Within throttle window, set timer to send later
-            if (pendingUpdateTimer) {
-              clearTimeout(pendingUpdateTimer);
-            }
-            const delay = UPDATE_THROTTLE_MS - (now - lastUpdateTime);
-            pendingUpdateTimer = setTimeout(() => {
-              if (pendingMessage) {
-                void doEditMessage(pendingMessage);
-                pendingMessage = null;
+              await doEditMessage(streamOutgoing);
+            } else {
+              if (pendingUpdateTimer) {
+                clearTimeout(pendingUpdateTimer);
               }
-              pendingUpdateTimer = null;
-            }, delay);
+              const delay = UPDATE_THROTTLE_MS - (now - lastUpdateTime);
+              pendingUpdateTimer = setTimeout(() => {
+                if (pendingMessage) {
+                  void doEditMessage(pendingMessage);
+                  pendingMessage = null;
+                }
+                pendingUpdateTimer = null;
+              }, delay);
+            }
+          } else if (isInsert) {
+            // 新消息：发送新消息
+            // New message: send new message
+            try {
+              const newMsgId = await context.sendMessage(streamOutgoing);
+              sentMessageIds.push(newMsgId);
+            } catch {
+              // Ignore send errors
+            }
+          } else {
+            // 更新消息：使用定时器节流，确保最后一条消息能被发送
+            // Update message: throttle with timer to ensure last message is sent
+            pendingMessage = streamOutgoing;
+
+            if (now - lastUpdateTime >= UPDATE_THROTTLE_MS) {
+              // 距离上次发送超过节流时间，立即发送
+              // Enough time has passed since last send, send immediately
+              if (pendingUpdateTimer) {
+                clearTimeout(pendingUpdateTimer);
+                pendingUpdateTimer = null;
+              }
+              await doEditMessage(streamOutgoing);
+            } else {
+              // 在节流时间内，设置定时器延迟发送
+              // Within throttle window, set timer to send later
+              if (pendingUpdateTimer) {
+                clearTimeout(pendingUpdateTimer);
+              }
+              const delay = UPDATE_THROTTLE_MS - (now - lastUpdateTime);
+              pendingUpdateTimer = setTimeout(() => {
+                if (pendingMessage) {
+                  void doEditMessage(pendingMessage);
+                  pendingMessage = null;
+                }
+                pendingUpdateTimer = null;
+              }, delay);
+            }
           }
-        }
-      });
+        },
+      );
 
       // 清除待处理的定时器，确保最后一条消息被处理
       // Clear pending timer and ensure last message is processed
@@ -651,8 +764,13 @@ export class ActionExecutor {
       try {
         // 使用最后一条消息的实际内容，添加操作按钮（根据平台）
         // Use actual content of last message, add action buttons (based on platform)
-        const responseMarkup = getResponseActionsMarkup(context.platform as PluginType, lastMessageContent?.text);
-        const finalMessage: IUnifiedOutgoingMessage = lastMessageContent ? { ...lastMessageContent, replyMarkup: responseMarkup } : { type: 'text', text: '✅ Done', parseMode: 'HTML', replyMarkup: responseMarkup };
+        const responseMarkup = getResponseActionsMarkup(
+          context.platform as PluginType,
+          lastMessageContent?.text,
+        );
+        const finalMessage: IUnifiedOutgoingMessage = lastMessageContent
+          ? { ...lastMessageContent, replyMarkup: responseMarkup }
+          : { type: "text", text: "✅ Done", parseMode: "HTML", replyMarkup: responseMarkup };
         await context.editMessage(lastMsgId, finalMessage);
       } catch {
         // 忽略最终编辑错误
@@ -664,7 +782,7 @@ export class ActionExecutor {
       // Update message with error
       const errorResponse = buildChatErrorResponse(error.message);
       await context.editMessage(thinkingMsgId, {
-        type: 'text',
+        type: "text",
         text: errorResponse.text,
         parseMode: errorResponse.parseMode,
         replyMarkup: errorResponse.replyMarkup,

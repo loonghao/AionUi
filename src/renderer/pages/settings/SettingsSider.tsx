@@ -1,14 +1,27 @@
-import FlexFullContainer from '@/renderer/components/FlexFullContainer';
-import { isElectronDesktop } from '@/renderer/utils/platform';
-import { Communication, Computer, Earth, Gemini, Info, LinkCloud, Robot, System, Toolkit } from '@icon-park/react';
-import classNames from 'classnames';
-import React, { useMemo } from 'react';
-import { useTranslation } from 'react-i18next';
-import { useLocation, useNavigate } from 'react-router-dom';
-import { Tooltip } from '@arco-design/web-react';
-import { getSiderTooltipProps } from '@/renderer/utils/siderTooltip';
+import FlexFullContainer from "@/renderer/components/FlexFullContainer";
+import { isElectronDesktop } from "@/renderer/utils/platform";
+import {
+  Communication,
+  Computer,
+  Earth,
+  Gemini,
+  Info,
+  LinkCloud,
+  Robot,
+  System,
+  Toolkit,
+} from "@icon-park/react";
+import classNames from "classnames";
+import React, { useMemo } from "react";
+import { useTranslation } from "react-i18next";
+import { useLocation, useNavigate } from "react-router-dom";
+import { Tooltip } from "@arco-design/web-react";
+import { getSiderTooltipProps } from "@/renderer/utils/siderTooltip";
 
-const SettingsSider: React.FC<{ collapsed?: boolean; tooltipEnabled?: boolean }> = ({ collapsed = false, tooltipEnabled = false }) => {
+const SettingsSider: React.FC<{ collapsed?: boolean; tooltipEnabled?: boolean }> = ({
+  collapsed = false,
+  tooltipEnabled = false,
+}) => {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const { pathname } = useLocation();
@@ -19,78 +32,89 @@ const SettingsSider: React.FC<{ collapsed?: boolean; tooltipEnabled?: boolean }>
   const menus = useMemo(() => {
     const items = [
       {
-        label: t('settings.gemini'),
+        label: t("settings.gemini"),
         icon: <Gemini />,
-        path: 'gemini',
+        path: "gemini",
       },
       {
-        label: t('settings.model'),
+        label: t("settings.model"),
         icon: <LinkCloud />,
-        path: 'model',
+        path: "model",
       },
       {
-        label: t('settings.assistants', { defaultValue: 'Assistants' }),
+        label: t("settings.assistants", { defaultValue: "Assistants" }),
         icon: <Robot />,
-        path: 'agent',
+        path: "agent",
       },
       {
-        label: t('settings.tools'),
+        label: t("settings.tools"),
         icon: <Toolkit />,
-        path: 'tools',
+        path: "tools",
       },
       {
-        label: t('settings.display'),
+        label: t("settings.display"),
         icon: <Computer />,
-        path: 'display',
+        path: "display",
       },
     ];
 
     // 桌面端显示 WebUI，WebUI 浏览器模式下显示 Channels / Desktop shows WebUI, WebUI browser mode shows Channels
     items.push({
-      label: t('settings.webui'),
+      label: t("settings.webui"),
       icon: isDesktop ? <Earth /> : <Communication />,
-      path: 'webui',
+      path: "webui",
     });
 
     items.push(
       {
-        label: t('settings.system'),
+        label: t("settings.system"),
         icon: <System />,
-        path: 'system',
+        path: "system",
       },
       {
-        label: t('settings.about'),
+        label: t("settings.about"),
         icon: <Info />,
-        path: 'about',
-      }
+        path: "about",
+      },
     );
 
     return items;
   }, [t, isDesktop]);
   const siderTooltipProps = getSiderTooltipProps(tooltipEnabled);
   return (
-    <div className={classNames('flex-1 settings-sider flex flex-col gap-2px', { 'settings-sider--collapsed': collapsed })}>
+    <div
+      className={classNames("flex-1 settings-sider flex flex-col gap-2px", {
+        "settings-sider--collapsed": collapsed,
+      })}
+    >
       {menus.map((item) => {
         const isSelected = pathname.includes(item.path);
         return (
-          <Tooltip key={item.path} {...siderTooltipProps} content={item.label} position='right'>
+          <Tooltip key={item.path} {...siderTooltipProps} content={item.label} position="right">
             <div
-              className={classNames('settings-sider__item hover:bg-aou-1 px-12px py-8px rd-8px flex justify-start items-center group cursor-pointer relative overflow-hidden group shrink-0 conversation-item [&.conversation-item+&.conversation-item]:mt-2px', {
-                '!bg-aou-2 ': isSelected,
-              })}
+              className={classNames(
+                "settings-sider__item hover:bg-aou-1 px-12px py-8px rd-8px flex justify-start items-center group cursor-pointer relative overflow-hidden group shrink-0 conversation-item [&.conversation-item+&.conversation-item]:mt-2px",
+                {
+                  "!bg-aou-2 ": isSelected,
+                },
+              )}
               onClick={() => {
-                Promise.resolve(navigate(`/settings/${item.path}`, { replace: true })).catch((error) => {
-                  console.error('Navigation failed:', error);
-                });
+                Promise.resolve(navigate(`/settings/${item.path}`, { replace: true })).catch(
+                  (error) => {
+                    console.error("Navigation failed:", error);
+                  },
+                );
               }}
             >
               {React.cloneElement(item.icon, {
-                theme: 'outline',
-                size: '20',
-                className: 'mt-2px ml-2px mr-8px flex',
+                theme: "outline",
+                size: "20",
+                className: "mt-2px ml-2px mr-8px flex",
               })}
-              <FlexFullContainer className='h-24px'>
-                <div className='settings-sider__item-label text-nowrap overflow-hidden inline-block w-full text-14px lh-24px whitespace-nowrap text-t-primary'>{item.label}</div>
+              <FlexFullContainer className="h-24px">
+                <div className="settings-sider__item-label text-nowrap overflow-hidden inline-block w-full text-14px lh-24px whitespace-nowrap text-t-primary">
+                  {item.label}
+                </div>
               </FlexFullContainer>
             </div>
           </Tooltip>

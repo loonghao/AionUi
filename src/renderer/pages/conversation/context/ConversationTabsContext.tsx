@@ -4,10 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { TChatConversation } from '@/common/storage';
-import { STORAGE_KEYS } from '@/common/storageKeys';
-import { addEventListener } from '@/renderer/utils/emitter';
-import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
+import type { TChatConversation } from "@/common/storage";
+import { STORAGE_KEYS } from "@/common/storageKeys";
+import { addEventListener } from "@/renderer/utils/emitter";
+import React, { createContext, useCallback, useContext, useEffect, useState } from "react";
 
 /** 会话 Tab 数据结构 / Conversation Tab data structure */
 export interface ConversationTab {
@@ -18,7 +18,7 @@ export interface ConversationTab {
   /** 工作空间路径 / Workspace path */
   workspace: string;
   /** 会话类型 / Conversation type */
-  type: 'gemini' | 'acp' | 'codex' | 'openclaw-gateway' | 'nanobot';
+  type: "gemini" | "acp" | "codex" | "openclaw-gateway" | "nanobot";
   /** 是否有未保存的修改 / Whether there are unsaved changes */
   isDirty?: boolean;
 }
@@ -86,7 +86,7 @@ export const ConversationTabsProvider: React.FC<{ children: React.ReactNode }> =
         JSON.stringify({
           openTabs,
           activeTabId,
-        })
+        }),
       );
     } catch {
       // 忽略存储错误（如存储空间不足）/ Ignore storage errors (e.g., quota exceeded)
@@ -123,7 +123,7 @@ export const ConversationTabsProvider: React.FC<{ children: React.ReactNode }> =
         {
           id: conversation.id,
           name: conversation.name,
-          workspace: conversation.extra?.workspace || '',
+          workspace: conversation.extra?.workspace || "",
           type: conversation.type,
         },
       ];
@@ -151,7 +151,7 @@ export const ConversationTabsProvider: React.FC<{ children: React.ReactNode }> =
         return filtered;
       });
     },
-    [activeTabId]
+    [activeTabId],
   );
 
   const switchTab = useCallback((conversationId: string) => {
@@ -181,7 +181,7 @@ export const ConversationTabsProvider: React.FC<{ children: React.ReactNode }> =
         return newTabs;
       });
     },
-    [activeTabId]
+    [activeTabId],
   );
 
   const closeTabsToRight = useCallback(
@@ -202,7 +202,7 @@ export const ConversationTabsProvider: React.FC<{ children: React.ReactNode }> =
         return newTabs;
       });
     },
-    [activeTabId]
+    [activeTabId],
   );
 
   const closeOtherTabs = useCallback((conversationId: string) => {
@@ -223,13 +223,13 @@ export const ConversationTabsProvider: React.FC<{ children: React.ReactNode }> =
           return { ...tab, name: newName };
         }
         return tab;
-      })
+      }),
     );
   }, []);
 
   // 监听会话删除事件，自动关闭对应 tab / Listen to conversation deletion event, auto-close corresponding tab
   useEffect(() => {
-    return addEventListener('conversation.deleted', (conversationId) => {
+    return addEventListener("conversation.deleted", (conversationId) => {
       closeTab(conversationId);
     });
   }, [closeTab]);
@@ -258,7 +258,7 @@ export const ConversationTabsProvider: React.FC<{ children: React.ReactNode }> =
 export const useConversationTabs = () => {
   const context = useContext(ConversationTabsContext);
   if (!context) {
-    throw new Error('useConversationTabs must be used within ConversationTabsProvider');
+    throw new Error("useConversationTabs must be used within ConversationTabsProvider");
   }
   return context;
 };

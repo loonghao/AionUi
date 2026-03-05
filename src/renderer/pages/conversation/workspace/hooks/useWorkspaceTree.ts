@@ -4,25 +4,29 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { ipcBridge } from '@/common';
-import type { IDirOrFile } from '@/common/ipcBridge';
-import { emitter } from '@/renderer/utils/emitter';
-import { dispatchWorkspaceHasFilesEvent } from '@/renderer/utils/workspaceEvents';
-import { useCallback, useRef, useState } from 'react';
-import type { SelectedNodeRef } from '../types';
-import { getFirstLevelKeys } from '../utils/treeHelpers';
+import { ipcBridge } from "@/common";
+import type { IDirOrFile } from "@/common/ipcBridge";
+import { emitter } from "@/renderer/utils/emitter";
+import { dispatchWorkspaceHasFilesEvent } from "@/renderer/utils/workspaceEvents";
+import { useCallback, useRef, useState } from "react";
+import type { SelectedNodeRef } from "../types";
+import { getFirstLevelKeys } from "../utils/treeHelpers";
 
 interface UseWorkspaceTreeOptions {
   workspace: string;
   conversation_id: string;
-  eventPrefix: 'gemini' | 'acp' | 'codex';
+  eventPrefix: "gemini" | "acp" | "codex";
 }
 
 /**
  * useWorkspaceTree - 合并树状态管理和选择逻辑
  * Merge tree state management and selection logic
  */
-export function useWorkspaceTree({ workspace, conversation_id, eventPrefix }: UseWorkspaceTreeOptions) {
+export function useWorkspaceTree({
+  workspace,
+  conversation_id,
+  eventPrefix,
+}: UseWorkspaceTreeOptions) {
   // Tree state / 树状态
   const [files, setFiles] = useState<IDirOrFile[]>([]);
   const [loading, setLoading] = useState(false);
@@ -71,19 +75,34 @@ export function useWorkspaceTree({ workspace, conversation_id, eventPrefix }: Us
   const loadWorkspace = useCallback(
     (path: string, search?: string) => {
       const seq = ++loadSeqRef.current;
-      console.warn('[WS_DEBUG] loadWorkspace called', { seq, path, workspace, conversation_id, search });
+      console.warn("[WS_DEBUG] loadWorkspace called", {
+        seq,
+        path,
+        workspace,
+        conversation_id,
+        search,
+      });
       setLoadingHandler(true);
       return ipcBridge.conversation.getWorkspace
-        .invoke({ path, workspace, conversation_id, search: search || '' })
+        .invoke({ path, workspace, conversation_id, search: search || "" })
         .then((res) => {
           const childCount = res?.[0]?.children?.length ?? 0;
-          console.warn('[WS_DEBUG] getWorkspace returned', { seq, current: loadSeqRef.current, resLength: res?.length, childCount, rootName: res?.[0]?.name });
+          console.warn("[WS_DEBUG] getWorkspace returned", {
+            seq,
+            current: loadSeqRef.current,
+            resLength: res?.length,
+            childCount,
+            rootName: res?.[0]?.name,
+          });
 
           // Ignore stale responses from aborted requests:
           // The backend aborts previous getWorkspace calls, returning [].
           // Only apply the result from the latest request.
           if (seq !== loadSeqRef.current) {
-            console.warn('[WS_DEBUG] ignoring stale response', { seq, current: loadSeqRef.current });
+            console.warn("[WS_DEBUG] ignoring stale response", {
+              seq,
+              current: loadSeqRef.current,
+            });
             return res;
           }
 
@@ -121,7 +140,7 @@ export function useWorkspaceTree({ workspace, conversation_id, eventPrefix }: Us
           setLoadingHandler(false);
         });
     },
-    [conversation_id, workspace, setLoadingHandler]
+    [conversation_id, workspace, setLoadingHandler],
   );
 
   /**
@@ -147,7 +166,7 @@ export function useWorkspaceTree({ workspace, conversation_id, eventPrefix }: Us
         if (!nodeData.isFile && nodeData.fullPath) {
           // 记录最后选中的文件夹 / Remember the latest selected folder
           selectedNodeRef.current = {
-            relativePath: key ?? '',
+            relativePath: key ?? "",
             fullPath: nodeData.fullPath,
           };
         }
@@ -200,7 +219,7 @@ export function useWorkspaceTree({ workspace, conversation_id, eventPrefix }: Us
         }
       }
     },
-    [eventPrefix]
+    [eventPrefix],
   );
 
   /**

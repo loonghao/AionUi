@@ -3,11 +3,11 @@
  * Verifies lazy-loading and modular locale performance behavior
  */
 
-import * as fs from 'fs';
-import * as path from 'path';
-import i18nConfig from '../../src/shared/i18n-config.json';
+import * as fs from "fs";
+import * as path from "path";
+import i18nConfig from "../../src/shared/i18n-config.json";
 
-const LOCALES_DIR = path.resolve(__dirname, '../../src/renderer/i18n/locales');
+const LOCALES_DIR = path.resolve(__dirname, "../../src/renderer/i18n/locales");
 const SUPPORTED_LANGUAGES = i18nConfig.supportedLanguages;
 const MODULES = i18nConfig.modules;
 const SINGLE_MODULE_BUDGET_MS = Number(process.env.I18N_SINGLE_MODULE_BUDGET_MS ?? 50);
@@ -15,25 +15,25 @@ const FULL_LOCALE_BUDGET_MS = Number(process.env.I18N_FULL_LOCALE_BUDGET_MS ?? 3
 const STARTUP_BUDGET_MS = Number(process.env.I18N_STARTUP_BUDGET_MS ?? 400);
 const SWITCH_BUDGET_MS = Number(process.env.I18N_SWITCH_BUDGET_MS ?? 400);
 
-describe('i18n Performance Tests', () => {
-  describe('Module Loading Performance', () => {
-    it('should load a single module within time budget', async () => {
-      const modulePath = path.join(LOCALES_DIR, 'en-US', 'common.json');
+describe("i18n Performance Tests", () => {
+  describe("Module Loading Performance", () => {
+    it("should load a single module within time budget", async () => {
+      const modulePath = path.join(LOCALES_DIR, "en-US", "common.json");
 
       const start = performance.now();
-      const content = await fs.promises.readFile(modulePath, 'utf-8');
+      const content = await fs.promises.readFile(modulePath, "utf-8");
       JSON.parse(content);
       const end = performance.now();
 
       expect(end - start).toBeLessThan(SINGLE_MODULE_BUDGET_MS);
     });
 
-    it('should load a full locale within time budget', async () => {
+    it("should load a full locale within time budget", async () => {
       const start = performance.now();
 
       for (const module of MODULES) {
-        const modulePath = path.join(LOCALES_DIR, 'en-US', `${module}.json`);
-        const content = await fs.promises.readFile(modulePath, 'utf-8');
+        const modulePath = path.join(LOCALES_DIR, "en-US", `${module}.json`);
+        const content = await fs.promises.readFile(modulePath, "utf-8");
         JSON.parse(content);
       }
 
@@ -41,31 +41,31 @@ describe('i18n Performance Tests', () => {
       expect(end - start).toBeLessThan(FULL_LOCALE_BUDGET_MS);
     });
 
-    it('should load all modules in parallel successfully', async () => {
+    it("should load all modules in parallel successfully", async () => {
       const results = await Promise.all(
         MODULES.map(async (module) => {
-          const modulePath = path.join(LOCALES_DIR, 'en-US', `${module}.json`);
-          const content = await fs.promises.readFile(modulePath, 'utf-8');
+          const modulePath = path.join(LOCALES_DIR, "en-US", `${module}.json`);
+          const content = await fs.promises.readFile(modulePath, "utf-8");
           return { module, data: JSON.parse(content) };
-        })
+        }),
       );
 
       expect(results).toHaveLength(MODULES.length);
       for (const { data } of results) {
         expect(data).toBeDefined();
-        expect(typeof data).toBe('object');
+        expect(typeof data).toBe("object");
       }
     });
   });
 
-  describe('File Size Optimization', () => {
-    it('should keep each modularized module smaller', async () => {
+  describe("File Size Optimization", () => {
+    it("should keep each modularized module smaller", async () => {
       const sizes = await Promise.all(
         MODULES.map(async (module) => {
-          const modulePath = path.join(LOCALES_DIR, 'en-US', `${module}.json`);
+          const modulePath = path.join(LOCALES_DIR, "en-US", `${module}.json`);
           const stats = await fs.promises.stat(modulePath);
           return stats.size;
-        })
+        }),
       );
 
       const totalSize = sizes.reduce((a, b) => a + b, 0);
@@ -74,34 +74,34 @@ describe('i18n Performance Tests', () => {
     });
   });
 
-  describe('Memory Usage', () => {
-    it('should cache only the loaded language', async () => {
+  describe("Memory Usage", () => {
+    it("should cache only the loaded language", async () => {
       const loadedTranslations = new Map<string, Record<string, unknown>>();
 
       const translations: Record<string, unknown> = {};
       for (const module of MODULES) {
-        const modulePath = path.join(LOCALES_DIR, 'en-US', `${module}.json`);
-        const content = await fs.promises.readFile(modulePath, 'utf-8');
+        const modulePath = path.join(LOCALES_DIR, "en-US", `${module}.json`);
+        const content = await fs.promises.readFile(modulePath, "utf-8");
         translations[module] = JSON.parse(content);
       }
 
-      loadedTranslations.set('en-US', translations);
+      loadedTranslations.set("en-US", translations);
 
       expect(loadedTranslations.size).toBe(1);
-      expect(loadedTranslations.has('en-US')).toBe(true);
+      expect(loadedTranslations.has("en-US")).toBe(true);
     });
   });
 
-  describe('Startup Performance', () => {
-    it('should load startup locale within time budget', async () => {
+  describe("Startup Performance", () => {
+    it("should load startup locale within time budget", async () => {
       const start = performance.now();
 
       await Promise.all(
         MODULES.map(async (module) => {
-          const modulePath = path.join(LOCALES_DIR, 'zh-CN', `${module}.json`);
-          const content = await fs.promises.readFile(modulePath, 'utf-8');
+          const modulePath = path.join(LOCALES_DIR, "zh-CN", `${module}.json`);
+          const content = await fs.promises.readFile(modulePath, "utf-8");
           return JSON.parse(content);
-        })
+        }),
       );
 
       const end = performance.now();
@@ -109,28 +109,28 @@ describe('i18n Performance Tests', () => {
       expect(end - start).toBeLessThan(STARTUP_BUDGET_MS);
     });
 
-    it('should switch locale within time budget', async () => {
+    it("should switch locale within time budget", async () => {
       const loadedTranslations = new Map<string, Record<string, unknown>>();
 
       const zhCNTranslations: Record<string, unknown> = {};
       for (const module of MODULES) {
-        const modulePath = path.join(LOCALES_DIR, 'zh-CN', `${module}.json`);
-        const content = await fs.promises.readFile(modulePath, 'utf-8');
+        const modulePath = path.join(LOCALES_DIR, "zh-CN", `${module}.json`);
+        const content = await fs.promises.readFile(modulePath, "utf-8");
         zhCNTranslations[module] = JSON.parse(content);
       }
-      loadedTranslations.set('zh-CN', zhCNTranslations);
+      loadedTranslations.set("zh-CN", zhCNTranslations);
 
       const start = performance.now();
 
       const jaJPTranslations: Record<string, unknown> = {};
       await Promise.all(
         MODULES.map(async (module) => {
-          const modulePath = path.join(LOCALES_DIR, 'ja-JP', `${module}.json`);
-          const content = await fs.promises.readFile(modulePath, 'utf-8');
+          const modulePath = path.join(LOCALES_DIR, "ja-JP", `${module}.json`);
+          const content = await fs.promises.readFile(modulePath, "utf-8");
           jaJPTranslations[module] = JSON.parse(content);
-        })
+        }),
       );
-      loadedTranslations.set('ja-JP', jaJPTranslations);
+      loadedTranslations.set("ja-JP", jaJPTranslations);
 
       const end = performance.now();
 
@@ -138,8 +138,8 @@ describe('i18n Performance Tests', () => {
     });
   });
 
-  describe('Lazy Loading Impact', () => {
-    it('should reduce startup memory by loading only required locale', () => {
+  describe("Lazy Loading Impact", () => {
+    it("should reduce startup memory by loading only required locale", () => {
       const estimatedSizePerLocale = 100 * 1024;
       const oldMemoryUsage = SUPPORTED_LANGUAGES.length * estimatedSizePerLocale;
       const newMemoryUsage = estimatedSizePerLocale;

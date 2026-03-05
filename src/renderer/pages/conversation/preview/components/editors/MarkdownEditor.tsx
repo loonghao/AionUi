@@ -4,11 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useThemeContext } from '@/renderer/context/ThemeContext';
-import { markdown } from '@codemirror/lang-markdown';
-import CodeMirror from '@uiw/react-codemirror';
-import React, { useRef, useCallback } from 'react';
-import { useCodeMirrorScroll, useScrollSyncTarget } from '../../hooks/useScrollSyncHelpers';
+import { useThemeContext } from "@/renderer/context/ThemeContext";
+import { markdown } from "@codemirror/lang-markdown";
+import CodeMirror from "@uiw/react-codemirror";
+import React, { useRef, useCallback } from "react";
+import { useCodeMirrorScroll, useScrollSyncTarget } from "../../hooks/useScrollSyncHelpers";
 
 interface MarkdownEditorProps {
   value: string; // 编辑器内容 / Editor content
@@ -25,7 +25,13 @@ interface MarkdownEditorProps {
  * 基于 CodeMirror 实现，支持语法高亮和实时编辑
  * Based on CodeMirror, supports syntax highlighting and live editing
  */
-const MarkdownEditor: React.FC<MarkdownEditorProps> = ({ value, onChange, readOnly = false, containerRef, onScroll }) => {
+const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
+  value,
+  onChange,
+  readOnly = false,
+  containerRef,
+  onScroll,
+}) => {
   const { theme } = useThemeContext();
   const editorWrapperRef = useRef<HTMLDivElement>(null);
 
@@ -37,17 +43,17 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({ value, onChange, readOn
     (targetPercent: number) => {
       setScrollPercent(targetPercent);
     },
-    [setScrollPercent]
+    [setScrollPercent],
   );
   useScrollSyncTarget(containerRef, handleTargetScroll);
 
   return (
-    <div ref={containerRef} className='h-full w-full overflow-hidden'>
-      <div ref={editorWrapperRef} className='h-full w-full'>
+    <div ref={containerRef} className="h-full w-full overflow-hidden">
+      <div ref={editorWrapperRef} className="h-full w-full">
         <CodeMirror
           value={value}
-          height='100%'
-          theme={theme === 'dark' ? 'dark' : 'light'}
+          height="100%"
+          theme={theme === "dark" ? "dark" : "light"}
           extensions={[markdown()]} // Markdown 语法支持 / Markdown syntax support
           onChange={onChange}
           readOnly={readOnly}
@@ -58,8 +64,8 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({ value, onChange, readOn
             foldGutter: true, // 折叠功能 / Code folding
           }}
           style={{
-            fontSize: '14px',
-            height: '100%',
+            fontSize: "14px",
+            height: "100%",
           }}
         />
       </div>

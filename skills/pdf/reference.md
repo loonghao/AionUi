@@ -55,12 +55,12 @@ pdf-lib is a powerful JavaScript library for creating and modifying PDF document
 #### Load and Manipulate Existing PDF
 
 ```javascript
-import { PDFDocument } from 'pdf-lib';
-import fs from 'fs';
+import { PDFDocument } from "pdf-lib";
+import fs from "fs";
 
 async function manipulatePDF() {
   // Load existing PDF
-  const existingPdfBytes = fs.readFileSync('input.pdf');
+  const existingPdfBytes = fs.readFileSync("input.pdf");
   const pdfDoc = await PDFDocument.load(existingPdfBytes);
 
   // Get page count
@@ -69,7 +69,7 @@ async function manipulatePDF() {
 
   // Add new page
   const newPage = pdfDoc.addPage([600, 400]);
-  newPage.drawText('Added by pdf-lib', {
+  newPage.drawText("Added by pdf-lib", {
     x: 100,
     y: 300,
     size: 16,
@@ -77,15 +77,15 @@ async function manipulatePDF() {
 
   // Save modified PDF
   const pdfBytes = await pdfDoc.save();
-  fs.writeFileSync('modified.pdf', pdfBytes);
+  fs.writeFileSync("modified.pdf", pdfBytes);
 }
 ```
 
 #### Create Complex PDFs from Scratch
 
 ```javascript
-import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
-import fs from 'fs';
+import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
+import fs from "fs";
 
 async function createPDF() {
   const pdfDoc = await PDFDocument.create();
@@ -99,7 +99,7 @@ async function createPDF() {
   const { width, height } = page.getSize();
 
   // Add text with styling
-  page.drawText('Invoice #12345', {
+  page.drawText("Invoice #12345", {
     x: 50,
     y: height - 50,
     size: 18,
@@ -118,9 +118,9 @@ async function createPDF() {
 
   // Add table-like content
   const items = [
-    ['Item', 'Qty', 'Price', 'Total'],
-    ['Widget', '2', '$50', '$100'],
-    ['Gadget', '1', '$75', '$75'],
+    ["Item", "Qty", "Price", "Total"],
+    ["Widget", "2", "$50", "$100"],
+    ["Gadget", "1", "$75", "$75"],
   ];
 
   let yPos = height - 150;
@@ -139,23 +139,23 @@ async function createPDF() {
   });
 
   const pdfBytes = await pdfDoc.save();
-  fs.writeFileSync('created.pdf', pdfBytes);
+  fs.writeFileSync("created.pdf", pdfBytes);
 }
 ```
 
 #### Advanced Merge and Split Operations
 
 ```javascript
-import { PDFDocument } from 'pdf-lib';
-import fs from 'fs';
+import { PDFDocument } from "pdf-lib";
+import fs from "fs";
 
 async function mergePDFs() {
   // Create new document
   const mergedPdf = await PDFDocument.create();
 
   // Load source PDFs
-  const pdf1Bytes = fs.readFileSync('doc1.pdf');
-  const pdf2Bytes = fs.readFileSync('doc2.pdf');
+  const pdf1Bytes = fs.readFileSync("doc1.pdf");
+  const pdf2Bytes = fs.readFileSync("doc2.pdf");
 
   const pdf1 = await PDFDocument.load(pdf1Bytes);
   const pdf2 = await PDFDocument.load(pdf2Bytes);
@@ -169,7 +169,7 @@ async function mergePDFs() {
   pdf2Pages.forEach((page) => mergedPdf.addPage(page));
 
   const mergedPdfBytes = await mergedPdf.save();
-  fs.writeFileSync('merged.pdf', mergedPdfBytes);
+  fs.writeFileSync("merged.pdf", mergedPdfBytes);
 }
 ```
 
@@ -180,14 +180,14 @@ PDF.js is Mozilla's JavaScript library for rendering PDFs in the browser.
 #### Basic PDF Loading and Rendering
 
 ```javascript
-import * as pdfjsLib from 'pdfjs-dist';
+import * as pdfjsLib from "pdfjs-dist";
 
 // Configure worker (important for performance)
-pdfjsLib.GlobalWorkerOptions.workerSrc = './pdf.worker.js';
+pdfjsLib.GlobalWorkerOptions.workerSrc = "./pdf.worker.js";
 
 async function renderPDF() {
   // Load PDF
-  const loadingTask = pdfjsLib.getDocument('document.pdf');
+  const loadingTask = pdfjsLib.getDocument("document.pdf");
   const pdf = await loadingTask.promise;
 
   console.log(`Loaded PDF with ${pdf.numPages} pages`);
@@ -197,8 +197,8 @@ async function renderPDF() {
   const viewport = page.getViewport({ scale: 1.5 });
 
   // Render to canvas
-  const canvas = document.createElement('canvas');
-  const context = canvas.getContext('2d');
+  const canvas = document.createElement("canvas");
+  const context = canvas.getContext("2d");
   canvas.height = viewport.height;
   canvas.width = viewport.width;
 
@@ -215,20 +215,20 @@ async function renderPDF() {
 #### Extract Text with Coordinates
 
 ```javascript
-import * as pdfjsLib from 'pdfjs-dist';
+import * as pdfjsLib from "pdfjs-dist";
 
 async function extractText() {
-  const loadingTask = pdfjsLib.getDocument('document.pdf');
+  const loadingTask = pdfjsLib.getDocument("document.pdf");
   const pdf = await loadingTask.promise;
 
-  let fullText = '';
+  let fullText = "";
 
   // Extract text from all pages
   for (let i = 1; i <= pdf.numPages; i++) {
     const page = await pdf.getPage(i);
     const textContent = await page.getTextContent();
 
-    const pageText = textContent.items.map((item) => item.str).join(' ');
+    const pageText = textContent.items.map((item) => item.str).join(" ");
 
     fullText += `\n--- Page ${i} ---\n${pageText}`;
 
@@ -250,10 +250,10 @@ async function extractText() {
 #### Extract Annotations and Forms
 
 ```javascript
-import * as pdfjsLib from 'pdfjs-dist';
+import * as pdfjsLib from "pdfjs-dist";
 
 async function extractAnnotations() {
-  const loadingTask = pdfjsLib.getDocument('annotated.pdf');
+  const loadingTask = pdfjsLib.getDocument("annotated.pdf");
   const pdf = await loadingTask.promise;
 
   for (let i = 1; i <= pdf.numPages; i++) {

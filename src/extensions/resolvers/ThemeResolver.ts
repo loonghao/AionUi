@@ -4,10 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import * as path from 'path';
-import { existsSync, readFileSync } from 'fs';
-import type { ICssTheme } from '@/common/storage';
-import type { LoadedExtension, ExtTheme } from '../types';
+import * as path from "path";
+import { existsSync, readFileSync } from "fs";
+import type { ICssTheme } from "@/common/storage";
+import type { LoadedExtension, ExtTheme } from "../types";
 
 export function resolveThemes(extensions: LoadedExtension[]): ICssTheme[] {
   const themes: ICssTheme[] = [];
@@ -23,7 +23,9 @@ export function resolveThemes(extensions: LoadedExtension[]): ICssTheme[] {
 
       // Global de-duplication by final theme ID to prevent duplicate loading.
       if (seenThemeIds.has(resolved.id)) {
-        console.warn(`[Extensions] Duplicate resolved theme ID "${resolved.id}", skipping (${ext.manifest.name})`);
+        console.warn(
+          `[Extensions] Duplicate resolved theme ID "${resolved.id}", skipping (${ext.manifest.name})`,
+        );
         continue;
       }
       seenThemeIds.add(resolved.id);
@@ -37,22 +39,26 @@ export function resolveThemes(extensions: LoadedExtension[]): ICssTheme[] {
 function convertTheme(theme: ExtTheme, ext: LoadedExtension): ICssTheme | null {
   const absolutePath = path.resolve(ext.directory, theme.file);
   if (!absolutePath.startsWith(ext.directory)) {
-    console.warn(`[Extensions] Theme file path traversal attempt: ${theme.file} in ${ext.manifest.name}`);
+    console.warn(
+      `[Extensions] Theme file path traversal attempt: ${theme.file} in ${ext.manifest.name}`,
+    );
     return null;
   }
   if (!existsSync(absolutePath)) {
-    console.warn(`[Extensions] Theme file not found: ${absolutePath} (extension: ${ext.manifest.name})`);
+    console.warn(
+      `[Extensions] Theme file not found: ${absolutePath} (extension: ${ext.manifest.name})`,
+    );
     return null;
   }
   try {
-    const css = readFileSync(absolutePath, 'utf-8');
+    const css = readFileSync(absolutePath, "utf-8");
     const now = Date.now();
 
     let cover: string | undefined;
     if (theme.cover) {
       const coverPath = path.resolve(ext.directory, theme.cover);
       if (coverPath.startsWith(ext.directory) && existsSync(coverPath)) {
-        cover = `file://${coverPath.replace(/\\/g, '/')}`;
+        cover = `file://${coverPath.replace(/\\/g, "/")}`;
       }
     }
 
@@ -70,7 +76,7 @@ function convertTheme(theme: ExtTheme, ext: LoadedExtension): ICssTheme | null {
   } catch (error) {
     console.warn(
       `[Extensions] Failed to read theme file ${absolutePath}:`,
-      error instanceof Error ? error.message : error
+      error instanceof Error ? error.message : error,
     );
     return null;
   }

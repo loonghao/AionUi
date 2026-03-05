@@ -1,5 +1,5 @@
-import { ApiKeyManager } from './ApiKeyManager';
-import type { AuthType } from '@office-ai/aioncli-core';
+import { ApiKeyManager } from "./ApiKeyManager";
+import type { AuthType } from "@office-ai/aioncli-core";
 
 // Unified interface for chat completion across different providers
 export interface UnifiedChatCompletionParams {
@@ -18,7 +18,7 @@ export interface UnifiedChatCompletionResponse {
       role: string;
       content: string;
       images?: Array<{
-        type: 'image_url';
+        type: "image_url";
         image_url: { url: string };
       }>;
     };
@@ -53,7 +53,12 @@ export abstract class RotatingApiClient<T> {
   protected readonly options: Required<RotatingApiClientOptions>;
   protected readonly originalApiKeys: string;
 
-  constructor(apiKeys: string, authType: AuthType, createClientFn: (apiKey: string) => T, options: RotatingApiClientOptions = {}) {
+  constructor(
+    apiKeys: string,
+    authType: AuthType,
+    createClientFn: (apiKey: string) => T,
+    options: RotatingApiClientOptions = {},
+  ) {
     this.originalApiKeys = apiKeys;
     this.createClientFn = createClientFn;
     this.options = {
@@ -61,7 +66,7 @@ export abstract class RotatingApiClient<T> {
       retryDelay: options.retryDelay ?? DEFAULT_RETRY_DELAY,
     };
 
-    if (apiKeys && (apiKeys.includes(',') || apiKeys.includes('\n'))) {
+    if (apiKeys && (apiKeys.includes(",") || apiKeys.includes("\n"))) {
       this.apiKeyManager = new ApiKeyManager(apiKeys, authType);
     }
 
@@ -75,7 +80,7 @@ export abstract class RotatingApiClient<T> {
       try {
         this.client = this.createClientFn(apiKey);
       } catch (error) {
-        console.error('[RotatingApiClient] Client initialization failed:', error);
+        console.error("[RotatingApiClient] Client initialization failed:", error);
         throw error;
       }
     }
@@ -101,7 +106,7 @@ export abstract class RotatingApiClient<T> {
   }
 
   private isSingleKey(): boolean {
-    return !this.originalApiKeys.includes(',') && !this.originalApiKeys.includes('\n');
+    return !this.originalApiKeys.includes(",") && !this.originalApiKeys.includes("\n");
   }
 
   private parseMultipleKeys(): string[] {
@@ -112,7 +117,7 @@ export abstract class RotatingApiClient<T> {
   }
 
   protected isRetryableError(error: unknown): boolean {
-    if (!error || typeof error !== 'object') return false;
+    if (!error || typeof error !== "object") return false;
 
     const apiError = error as ApiError;
     const status = apiError.status || apiError.code;
@@ -127,7 +132,7 @@ export abstract class RotatingApiClient<T> {
 
   async executeWithRetry<R>(operation: (client: T) => Promise<R>): Promise<R> {
     if (!this.client) {
-      throw new Error('Client not initialized - no valid API key provided');
+      throw new Error("Client not initialized - no valid API key provided");
     }
 
     let lastError: unknown;
@@ -139,7 +144,8 @@ export abstract class RotatingApiClient<T> {
         lastError = error;
 
         const isLastAttempt = attempt === this.options.maxRetries - 1;
-        const canRotateKey = this.apiKeyManager?.hasMultipleKeys() && this.isRetryableError(error) && !isLastAttempt;
+        const canRotateKey =
+          this.apiKeyManager?.hasMultipleKeys() && this.isRetryableError(error) && !isLastAttempt;
 
         if (canRotateKey && this.apiKeyManager.rotateKey()) {
           this.initializeClient();

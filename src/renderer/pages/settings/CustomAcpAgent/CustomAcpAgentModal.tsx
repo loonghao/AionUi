@@ -4,26 +4,26 @@
  *
  * Redesigned modal with CLI card selection, logo display, and collapsible advanced JSON config.
  */
-import type { AcpBackendConfig, AcpBackend } from '@/types/acpTypes';
-import { ACP_BACKENDS_ALL } from '@/types/acpTypes';
-import { Alert, Input, Spin, Collapse } from '@arco-design/web-react';
-import React, { useState, useCallback, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
-import CodeMirror from '@uiw/react-codemirror';
-import { json } from '@codemirror/lang-json';
-import { useThemeContext } from '@/renderer/context/ThemeContext';
-import AionModal from '@/renderer/components/base/AionModal';
-import { uuid } from '@/common/utils';
-import { acpConversation } from '@/common/ipcBridge';
-import { CheckSmall } from '@icon-park/react';
+import type { AcpBackendConfig, AcpBackend } from "@/types/acpTypes";
+import { ACP_BACKENDS_ALL } from "@/types/acpTypes";
+import { Alert, Input, Spin, Collapse } from "@arco-design/web-react";
+import React, { useState, useCallback, useEffect } from "react";
+import { useTranslation } from "react-i18next";
+import CodeMirror from "@uiw/react-codemirror";
+import { json } from "@codemirror/lang-json";
+import { useThemeContext } from "@/renderer/context/ThemeContext";
+import AionModal from "@/renderer/components/base/AionModal";
+import { uuid } from "@/common/utils";
+import { acpConversation } from "@/common/ipcBridge";
+import { CheckSmall } from "@icon-park/react";
 
 // CLI Logo 导入 / CLI Logo imports
-import CodeBuddyLogo from '@/renderer/assets/logos/codebuddy.svg';
-import GooseLogo from '@/renderer/assets/logos/goose.svg';
-import AuggieLogo from '@/renderer/assets/logos/auggie.svg';
-import KimiLogo from '@/renderer/assets/logos/kimi.svg';
-import OpencodeLogo from '@/renderer/assets/logos/opencode.svg';
-import QoderLogo from '@/renderer/assets/logos/qoder.png';
+import CodeBuddyLogo from "@/renderer/assets/logos/codebuddy.svg";
+import GooseLogo from "@/renderer/assets/logos/goose.svg";
+import AuggieLogo from "@/renderer/assets/logos/auggie.svg";
+import KimiLogo from "@/renderer/assets/logos/kimi.svg";
+import OpencodeLogo from "@/renderer/assets/logos/opencode.svg";
+import QoderLogo from "@/renderer/assets/logos/qoder.png";
 
 /**
  * 后端 Logo 映射表，用于在 CLI 卡片中显示对应的图标
@@ -58,17 +58,22 @@ interface DetectedAgent {
   customAgentId?: string;
 }
 
-const CustomAcpAgentModal: React.FC<CustomAcpAgentModalProps> = ({ visible, agent, onCancel, onSubmit }) => {
+const CustomAcpAgentModal: React.FC<CustomAcpAgentModalProps> = ({
+  visible,
+  agent,
+  onCancel,
+  onSubmit,
+}) => {
   const { t } = useTranslation();
   const { theme } = useThemeContext();
 
   // 组件状态 / Component state
   const [detectedAgents, setDetectedAgents] = useState<DetectedAgent[]>([]); // 检测到的 CLI 列表 / Detected CLI list
   const [loadingAgents, setLoadingAgents] = useState(false); // 加载状态 / Loading state
-  const [selectedCli, setSelectedCli] = useState<string>(''); // 当前选中的 CLI 路径 / Currently selected CLI path
-  const [agentName, setAgentName] = useState(''); // 显示名称（独立于 JSON 配置）/ Display name (separate from JSON config)
+  const [selectedCli, setSelectedCli] = useState<string>(""); // 当前选中的 CLI 路径 / Currently selected CLI path
+  const [agentName, setAgentName] = useState(""); // 显示名称（独立于 JSON 配置）/ Display name (separate from JSON config)
   const [showAdvanced, setShowAdvanced] = useState(false); // 是否展开高级配置 / Whether advanced config is expanded
-  const [jsonInput, setJsonInput] = useState(''); // JSON 配置内容（不含 name）/ JSON config content (excludes name)
+  const [jsonInput, setJsonInput] = useState(""); // JSON 配置内容（不含 name）/ JSON config content (excludes name)
   const [validation, setValidation] = useState<ValidationResult>({ isValid: true }); // JSON 校验结果 / JSON validation result
 
   /**
@@ -85,14 +90,14 @@ const CustomAcpAgentModal: React.FC<CustomAcpAgentModalProps> = ({ visible, agen
         // 只展示第三方独立 CLI（goose, auggie, kimi, opencode）
         // Only show third-party standalone CLIs (goose, auggie, kimi, opencode)
         const filteredAgents = response.data.filter((a) => {
-          if (['gemini', 'custom', 'codex'].includes(a.backend)) return false;
+          if (["gemini", "custom", "codex"].includes(a.backend)) return false;
           const backendConfig = ACP_BACKENDS_ALL[a.backend];
           return backendConfig && !backendConfig.authRequired;
         });
         setDetectedAgents(filteredAgents);
       }
     } catch (error) {
-      console.error('Failed to load detected agents:', error);
+      console.error("Failed to load detected agents:", error);
     } finally {
       setLoadingAgents(false);
     }
@@ -106,7 +111,7 @@ const CustomAcpAgentModal: React.FC<CustomAcpAgentModalProps> = ({ visible, agen
    */
   const generateJsonConfig = useCallback((selected: DetectedAgent) => {
     const config = {
-      defaultCliPath: selected.cliPath || '',
+      defaultCliPath: selected.cliPath || "",
       enabled: true,
       env: {},
       acpArgs: selected.acpArgs,
@@ -122,13 +127,13 @@ const CustomAcpAgentModal: React.FC<CustomAcpAgentModalProps> = ({ visible, agen
     try {
       const parsed = JSON.parse(input);
       if (!parsed.defaultCliPath) {
-        return { isValid: false, errorMessage: 'Missing required field: defaultCliPath' };
+        return { isValid: false, errorMessage: "Missing required field: defaultCliPath" };
       }
       return { isValid: true };
     } catch (error) {
       return {
         isValid: false,
-        errorMessage: error instanceof SyntaxError ? error.message : 'Invalid JSON format',
+        errorMessage: error instanceof SyntaxError ? error.message : "Invalid JSON format",
       };
     }
   }, []);
@@ -144,9 +149,9 @@ const CustomAcpAgentModal: React.FC<CustomAcpAgentModalProps> = ({ visible, agen
       if (agent) {
         // 编辑模式：显示高级配置，name 从显示名称输入框获取
         setShowAdvanced(true);
-        setAgentName(agent.name || 'Custom Agent');
+        setAgentName(agent.name || "Custom Agent");
         const config = {
-          defaultCliPath: agent.defaultCliPath || '',
+          defaultCliPath: agent.defaultCliPath || "",
           enabled: agent.enabled ?? true,
           env: agent.env || {},
           acpArgs: agent.acpArgs,
@@ -154,9 +159,9 @@ const CustomAcpAgentModal: React.FC<CustomAcpAgentModalProps> = ({ visible, agen
         setJsonInput(JSON.stringify(config, null, 2));
       } else {
         // 新增模式 / Add mode
-        setSelectedCli('');
-        setAgentName('');
-        setJsonInput('');
+        setSelectedCli("");
+        setAgentName("");
+        setJsonInput("");
         setShowAdvanced(false);
         void loadDetectedAgents(); // 显式标记为不需要等待 / Explicitly mark as fire-and-forget
       }
@@ -178,7 +183,7 @@ const CustomAcpAgentModal: React.FC<CustomAcpAgentModalProps> = ({ visible, agen
         setJsonInput(generateJsonConfig(selected));
       }
     },
-    [detectedAgents, generateJsonConfig]
+    [detectedAgents, generateJsonConfig],
   );
 
   // 当名称改变时同步更新 JSON（保持 JSON 与当前选中 CLI 一致）
@@ -205,7 +210,7 @@ const CustomAcpAgentModal: React.FC<CustomAcpAgentModalProps> = ({ visible, agen
       const parsed = JSON.parse(jsonInput);
       const customAgent: AcpBackendConfig = {
         id: agent?.id || parsed.id || uuid(),
-        name: agentName || 'Custom Agent', // name 始终从输入框获取 / name always from input field
+        name: agentName || "Custom Agent", // name 始终从输入框获取 / name always from input field
         defaultCliPath: parsed.defaultCliPath,
         enabled: parsed.enabled ?? true,
         env: parsed.env || {},
@@ -220,7 +225,7 @@ const CustomAcpAgentModal: React.FC<CustomAcpAgentModalProps> = ({ visible, agen
       const customAgent: AcpBackendConfig = {
         id: uuid(),
         name: agentName || selected.name,
-        defaultCliPath: selected.cliPath || '',
+        defaultCliPath: selected.cliPath || "",
         enabled: true,
         env: {},
         acpArgs: selected.acpArgs,
@@ -245,40 +250,68 @@ const CustomAcpAgentModal: React.FC<CustomAcpAgentModalProps> = ({ visible, agen
       onOk={handleSubmit}
       okButtonProps={{ disabled: isSubmitDisabled() }}
       header={{
-        title: agent ? t('settings.editCustomAgent') || 'Edit Custom Agent' : t('settings.configureCustomAgent') || 'Add Custom Agent',
+        title: agent
+          ? t("settings.editCustomAgent") || "Edit Custom Agent"
+          : t("settings.configureCustomAgent") || "Add Custom Agent",
         showClose: true,
       }}
-      style={{ width: 520, height: 'auto', maxHeight: '80vh' }}
+      style={{ width: 520, height: "auto", maxHeight: "80vh" }}
       contentStyle={{
         borderRadius: 16,
-        padding: '20px',
-        background: 'var(--bg-1)',
-        overflow: 'auto',
+        padding: "20px",
+        background: "var(--bg-1)",
+        overflow: "auto",
       }}
     >
-      <div className='space-y-16px'>
+      <div className="space-y-16px">
         {/* CLI 选择卡片（仅新增模式显示）/ CLI selection cards (only shown in add mode) */}
         {!agent && (
           <div>
-            <div className='mb-8px text-sm font-medium text-t-primary'>{t('settings.selectCli') || 'Select CLI'}</div>
+            <div className="mb-8px text-sm font-medium text-t-primary">
+              {t("settings.selectCli") || "Select CLI"}
+            </div>
             {loadingAgents ? (
-              <div className='flex items-center justify-center py-16px'>
+              <div className="flex items-center justify-center py-16px">
                 <Spin />
               </div>
             ) : detectedAgents.length === 0 ? (
-              <Alert type='warning' content={t('settings.noCliDetected') || 'No CLI tools detected. Please install an ACP-compatible CLI first.'} />
+              <Alert
+                type="warning"
+                content={
+                  t("settings.noCliDetected") ||
+                  "No CLI tools detected. Please install an ACP-compatible CLI first."
+                }
+              />
             ) : (
-              <div className='grid grid-cols-2 gap-8px'>
+              <div className="grid grid-cols-2 gap-8px">
                 {detectedAgents.map((detectedAgent) => {
                   const logo = BACKEND_LOGO_MAP[detectedAgent.backend];
                   const isSelected = selectedCli === detectedAgent.cliPath;
                   return (
-                    <div key={detectedAgent.cliPath} className={`p-10px rounded-lg cursor-pointer transition-all flex items-center gap-8px relative border ${isSelected ? 'bg-[var(--color-fill-2)] border-primary' : 'bg-[var(--bg-2)] border-transparent hover:bg-[var(--color-fill-2)] hover:border-[var(--color-border-2)]'}`} onClick={() => handleSelectCli(detectedAgent.cliPath || '')}>
-                      {logo && <img src={logo} alt={`${detectedAgent.name} logo`} className='w-24px h-24px object-contain flex-shrink-0' />}
-                      <div className='min-w-0 flex-1'>
-                        <div className='font-medium text-sm text-t-primary'>{detectedAgent.name}</div>
+                    <div
+                      key={detectedAgent.cliPath}
+                      className={`p-10px rounded-lg cursor-pointer transition-all flex items-center gap-8px relative border ${isSelected ? "bg-[var(--color-fill-2)] border-primary" : "bg-[var(--bg-2)] border-transparent hover:bg-[var(--color-fill-2)] hover:border-[var(--color-border-2)]"}`}
+                      onClick={() => handleSelectCli(detectedAgent.cliPath || "")}
+                    >
+                      {logo && (
+                        <img
+                          src={logo}
+                          alt={`${detectedAgent.name} logo`}
+                          className="w-24px h-24px object-contain flex-shrink-0"
+                        />
+                      )}
+                      <div className="min-w-0 flex-1">
+                        <div className="font-medium text-sm text-t-primary">
+                          {detectedAgent.name}
+                        </div>
                       </div>
-                      {isSelected && <CheckSmall theme='filled' size={16} className='text-primary flex-shrink-0' />}
+                      {isSelected && (
+                        <CheckSmall
+                          theme="filled"
+                          size={16}
+                          className="text-primary flex-shrink-0"
+                        />
+                      )}
                     </div>
                   );
                 })}
@@ -290,26 +323,39 @@ const CustomAcpAgentModal: React.FC<CustomAcpAgentModalProps> = ({ visible, agen
         {/* 显示名称输入（选中 CLI 或编辑模式时显示）/ Display name input (shown when CLI selected or in edit mode) */}
         {(selectedCli || agent) && (
           <div>
-            <div className='mb-8px text-sm font-medium text-t-primary'>{t('settings.agentDisplayName') || 'Display Name'}</div>
-            <Input value={agentName} onChange={(v) => setAgentName(v)} placeholder={t('settings.agentNamePlaceholder') || 'Enter a name for this agent'} />
+            <div className="mb-8px text-sm font-medium text-t-primary">
+              {t("settings.agentDisplayName") || "Display Name"}
+            </div>
+            <Input
+              value={agentName}
+              onChange={(v) => setAgentName(v)}
+              placeholder={t("settings.agentNamePlaceholder") || "Enter a name for this agent"}
+            />
           </div>
         )}
 
         {/* 高级配置（可折叠 JSON 编辑器）/ Advanced config (collapsible JSON editor) */}
         {(selectedCli || agent) && (
           <Collapse
-            activeKey={showAdvanced ? ['advanced'] : []}
+            activeKey={showAdvanced ? ["advanced"] : []}
             // Arco Collapse.onChange 签名：(key, keys, e) => void，第二个参数 keys 是当前激活的 key 数组
             // Arco Collapse.onChange signature: (key, keys, e) => void, second param keys is array of active keys
-            onChange={(_key, keys) => setShowAdvanced(keys.includes('advanced'))}
+            onChange={(_key, keys) => setShowAdvanced(keys.includes("advanced"))}
             bordered={false}
-            style={{ background: 'transparent' }}
+            style={{ background: "transparent" }}
           >
-            <Collapse.Item name='advanced' header={<span className='text-sm text-t-secondary'>{t('settings.advancedMode') || 'Advanced Configuration'}</span>}>
-              <div className='pt-8px'>
+            <Collapse.Item
+              name="advanced"
+              header={
+                <span className="text-sm text-t-secondary">
+                  {t("settings.advancedMode") || "Advanced Configuration"}
+                </span>
+              }
+            >
+              <div className="pt-8px">
                 <CodeMirror
                   value={jsonInput}
-                  height='180px'
+                  height="180px"
                   theme={theme}
                   extensions={[json()]}
                   onChange={(value: string) => setJsonInput(value)}
@@ -326,14 +372,19 @@ const CustomAcpAgentModal: React.FC<CustomAcpAgentModalProps> = ({ visible, agen
                     allowMultipleSelections: false,
                   }}
                   style={{
-                    fontSize: '12px',
-                    border: validation.isValid || !jsonInput.trim() ? '1px solid var(--color-border-2)' : '1px solid var(--danger)',
-                    borderRadius: '6px',
-                    overflow: 'hidden',
+                    fontSize: "12px",
+                    border:
+                      validation.isValid || !jsonInput.trim()
+                        ? "1px solid var(--color-border-2)"
+                        : "1px solid var(--danger)",
+                    borderRadius: "6px",
+                    overflow: "hidden",
                   }}
-                  className='[&_.cm-editor]:rounded-[6px]'
+                  className="[&_.cm-editor]:rounded-[6px]"
                 />
-                {!validation.isValid && jsonInput.trim() && <div className='mt-8px text-xs text-red-500'>{validation.errorMessage}</div>}
+                {!validation.isValid && jsonInput.trim() && (
+                  <div className="mt-8px text-xs text-red-500">{validation.errorMessage}</div>
+                )}
               </div>
             </Collapse.Item>
           </Collapse>

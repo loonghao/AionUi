@@ -4,9 +4,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { ReactNode } from 'react';
+import type { ReactNode } from "react";
 
-export type ChannelStatus = 'active' | 'coming_soon';
+export type ChannelStatus = "active" | "coming_soon";
 
 export interface ChannelConfig {
   id: string;

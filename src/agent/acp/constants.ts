@@ -8,20 +8,20 @@
 // These are used with session/set_mode to enable YOLO (auto-approve) mode
 
 /** Claude Code: bypass all permission checks */
-export const CLAUDE_YOLO_SESSION_MODE = 'bypassPermissions' as const;
+export const CLAUDE_YOLO_SESSION_MODE = "bypassPermissions" as const;
 
 /** Qwen Code: auto-approve all operations */
-export const QWEN_YOLO_SESSION_MODE = 'yolo' as const;
+export const QWEN_YOLO_SESSION_MODE = "yolo" as const;
 
 /** iFlow CLI: auto-approve all operations (verified via ACP test) */
-export const IFLOW_YOLO_SESSION_MODE = 'yolo' as const;
+export const IFLOW_YOLO_SESSION_MODE = "yolo" as const;
 
 /** CodeBuddy: bypass all permission checks (same as Claude's mode name) */
-export const CODEBUDDY_YOLO_SESSION_MODE = 'bypassPermissions' as const;
+export const CODEBUDDY_YOLO_SESSION_MODE = "bypassPermissions" as const;
 
 /** Goose: environment variable for auto mode (set before process spawn) */
-export const GOOSE_YOLO_ENV_VAR = 'GOOSE_MODE' as const;
-export const GOOSE_YOLO_ENV_VALUE = 'auto' as const;
+export const GOOSE_YOLO_ENV_VAR = "GOOSE_MODE" as const;
+export const GOOSE_YOLO_ENV_VALUE = "auto" as const;
 
 /**
  * OpenCode: AionUi integrates with the TypeScript version (anomalyco/opencode)

@@ -4,9 +4,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { ProtocolDetectionResponse } from '@/common/utils/protocolDetector';
-import { ipcBridge } from '@/common';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import type { ProtocolDetectionResponse } from "@/common/utils/protocolDetector";
+import { ipcBridge } from "@/common";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 /**
  * 协议检测 Hook 配置
@@ -51,7 +51,11 @@ interface UseProtocolDetectionResult {
  * @param apiKey - API Key（可以是逗号或换行分隔的多个 Key）
  * @param options - 配置选项
  */
-export function useProtocolDetection(baseUrl: string, apiKey: string, options: UseProtocolDetectionOptions = {}): UseProtocolDetectionResult {
+export function useProtocolDetection(
+  baseUrl: string,
+  apiKey: string,
+  options: UseProtocolDetectionOptions = {},
+): UseProtocolDetectionResult {
   const { debounceMs = 800, autoDetect = true, timeout = 10000, testAllKeys = false } = options;
 
   const [isDetecting, setIsDetecting] = useState(false);
@@ -106,7 +110,7 @@ export function useProtocolDetection(baseUrl: string, apiKey: string, options: U
           setError(null);
         } else {
           setResult(response.data || null);
-          setError(response.msg || 'Detection failed');
+          setError(response.msg || "Detection failed");
         }
       } catch (e: any) {
         // 检查是否是最新的请求
@@ -123,7 +127,7 @@ export function useProtocolDetection(baseUrl: string, apiKey: string, options: U
         }
       }
     },
-    [timeout, testAllKeys]
+    [timeout, testAllKeys],
   );
 
   /**

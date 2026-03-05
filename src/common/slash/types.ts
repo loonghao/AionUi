@@ -9,14 +9,14 @@
  * - `template`: Expands into a prompt template text
  * - `builtin`: Executes a built-in application action (e.g., /open for file picker)
  */
-export type SlashCommandKind = 'template' | 'builtin';
+export type SlashCommandKind = "template" | "builtin";
 
 /**
  * Indicates where the slash command originates from.
  * - `acp`: Provided by the ACP agent (e.g., Claude)
  * - `builtin`: Built into the application
  */
-export type SlashCommandSource = 'acp' | 'builtin';
+export type SlashCommandSource = "acp" | "builtin";
 
 /**
  * Represents a single slash command item in the autocomplete list.

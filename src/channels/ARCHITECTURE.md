@@ -185,8 +185,16 @@ ChannelManager (singleton)
 ### 4.1 Plugin 相关
 
 ```typescript
-type PluginType = 'telegram' | 'slack' | 'discord' | 'lark' | 'dingtalk';
-type PluginStatus = 'created' | 'initializing' | 'ready' | 'starting' | 'running' | 'stopping' | 'stopped' | 'error';
+type PluginType = "telegram" | "slack" | "discord" | "lark" | "dingtalk";
+type PluginStatus =
+  | "created"
+  | "initializing"
+  | "ready"
+  | "starting"
+  | "running"
+  | "stopping"
+  | "stopped"
+  | "error";
 
 interface IChannelPluginConfig {
   id: string;
@@ -219,9 +227,9 @@ interface IUnifiedIncomingMessage {
 
 // 出站（系统 → 平台）
 interface IUnifiedOutgoingMessage {
-  type: 'text' | 'image' | 'file' | 'buttons';
+  type: "text" | "image" | "file" | "buttons";
   text?: string;
-  parseMode?: 'HTML' | 'MarkdownV2' | 'Markdown';
+  parseMode?: "HTML" | "MarkdownV2" | "Markdown";
   buttons?: IActionButton[][];
   replyMarkup?: unknown;
   // ...
@@ -231,7 +239,7 @@ interface IUnifiedOutgoingMessage {
 ### 4.3 Action 体系
 
 ```typescript
-type ActionCategory = 'platform' | 'system' | 'chat';
+type ActionCategory = "platform" | "system" | "chat";
 
 interface IRegisteredAction {
   name: string; // e.g. 'session.new', 'pairing.show'
@@ -244,7 +252,7 @@ interface IRegisteredAction {
 ### 4.4 Session 与 Agent
 
 ```typescript
-type ChannelAgentType = 'gemini' | 'acp' | 'codex';
+type ChannelAgentType = "gemini" | "acp" | "codex";
 
 interface IChannelSession {
   id: string;

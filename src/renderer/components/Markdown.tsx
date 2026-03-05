@@ -4,35 +4,35 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import ReactMarkdown from 'react-markdown';
+import ReactMarkdown from "react-markdown";
 
-import SyntaxHighlighter from 'react-syntax-highlighter';
-import { vs, vs2015 } from 'react-syntax-highlighter/dist/esm/styles/hljs';
-import rehypeKatex from 'rehype-katex';
-import rehypeRaw from 'rehype-raw';
-import remarkBreaks from 'remark-breaks';
-import remarkGfm from 'remark-gfm';
-import remarkMath from 'remark-math';
+import SyntaxHighlighter from "react-syntax-highlighter";
+import { vs, vs2015 } from "react-syntax-highlighter/dist/esm/styles/hljs";
+import rehypeKatex from "rehype-katex";
+import rehypeRaw from "rehype-raw";
+import remarkBreaks from "remark-breaks";
+import remarkGfm from "remark-gfm";
+import remarkMath from "remark-math";
 
-import katex from 'katex';
+import katex from "katex";
 // Import KaTeX CSS to make it available in the document
-import 'katex/dist/katex.min.css';
+import "katex/dist/katex.min.css";
 
-import { diffColors } from '@/renderer/theme/colors';
-import { openExternalUrl } from '@/renderer/utils/platform';
-import { Message } from '@arco-design/web-react';
-import { Copy, Down, Up } from '@icon-park/react';
-import { theme } from '@office-ai/platform';
-import classNames from 'classnames';
-import React, { useMemo, useState } from 'react';
-import ReactDOM from 'react-dom';
-import { useTranslation } from 'react-i18next';
-import { addImportantToAll } from '../utils/customCssProcessor';
-import { convertLatexDelimiters } from '../utils/latexDelimiters';
-import LocalImageView from './LocalImageView';
+import { diffColors } from "@/renderer/theme/colors";
+import { openExternalUrl } from "@/renderer/utils/platform";
+import { Message } from "@arco-design/web-react";
+import { Copy, Down, Up } from "@icon-park/react";
+import { theme } from "@office-ai/platform";
+import classNames from "classnames";
+import React, { useMemo, useState } from "react";
+import ReactDOM from "react-dom";
+import { useTranslation } from "react-i18next";
+import { addImportantToAll } from "../utils/customCssProcessor";
+import { convertLatexDelimiters } from "../utils/latexDelimiters";
+import LocalImageView from "./LocalImageView";
 
 const formatCode = (code: string) => {
-  const content = String(code).replace(/\n$/, '');
+  const content = String(code).replace(/\n$/, "");
   try {
     //@todo 可以再美化
     return JSON.stringify(
@@ -40,7 +40,7 @@ const formatCode = (code: string) => {
       (_key, value) => {
         return value;
       },
-      2
+      2,
     );
   } catch (error) {
     return content;
@@ -56,13 +56,13 @@ const logicRender = <T, F>(condition: boolean, trueComponent: T, falseComponent?
  * Highlights additions (green), deletions (red), and hunk headers (blue)
  */
 const getDiffLineStyle = (line: string, isDark: boolean): React.CSSProperties => {
-  if (line.startsWith('+') && !line.startsWith('+++')) {
+  if (line.startsWith("+") && !line.startsWith("+++")) {
     return { backgroundColor: isDark ? diffColors.additionBgDark : diffColors.additionBgLight };
   }
-  if (line.startsWith('-') && !line.startsWith('---')) {
+  if (line.startsWith("-") && !line.startsWith("---")) {
     return { backgroundColor: isDark ? diffColors.deletionBgDark : diffColors.deletionBgLight };
   }
-  if (line.startsWith('@@')) {
+  if (line.startsWith("@@")) {
     return { backgroundColor: isDark ? diffColors.hunkBgDark : diffColors.hunkBgLight };
   }
   return {};
@@ -71,35 +71,43 @@ const getDiffLineStyle = (line: string, isDark: boolean): React.CSSProperties =>
 function CodeBlock(props: any) {
   const { t } = useTranslation();
   const [fold, setFlow] = useState(true);
-  const [currentTheme, setCurrentTheme] = useState<'light' | 'dark'>(() => {
-    return (document.documentElement.getAttribute('data-theme') as 'light' | 'dark') || 'light';
+  const [currentTheme, setCurrentTheme] = useState<"light" | "dark">(() => {
+    return (document.documentElement.getAttribute("data-theme") as "light" | "dark") || "light";
   });
 
   React.useEffect(() => {
     const updateTheme = () => {
-      const theme = (document.documentElement.getAttribute('data-theme') as 'light' | 'dark') || 'light';
+      const theme =
+        (document.documentElement.getAttribute("data-theme") as "light" | "dark") || "light";
       setCurrentTheme(theme);
     };
 
     const observer = new MutationObserver(updateTheme);
     observer.observe(document.documentElement, {
       attributes: true,
-      attributeFilter: ['data-theme'],
+      attributeFilter: ["data-theme"],
     });
 
     return () => observer.disconnect();
   }, []);
 
   return useMemo(() => {
-    const { children, className, node: _node, hiddenCodeCopyButton: _hiddenCodeCopyButton, codeStyle: _codeStyle, ...rest } = props;
-    const match = /language-(\w+)/.exec(className || '');
-    const language = match?.[1] || 'text';
-    const codeTheme = currentTheme === 'dark' ? vs2015 : vs;
+    const {
+      children,
+      className,
+      node: _node,
+      hiddenCodeCopyButton: _hiddenCodeCopyButton,
+      codeStyle: _codeStyle,
+      ...rest
+    } = props;
+    const match = /language-(\w+)/.exec(className || "");
+    const language = match?.[1] || "text";
+    const codeTheme = currentTheme === "dark" ? vs2015 : vs;
 
     // Render latex/math code blocks as KaTeX display math
     // Skip full LaTeX documents (with \documentclass, \begin{document}, etc.) — KaTeX only handles math
-    if (language === 'latex' || language === 'math' || language === 'tex') {
-      const latexSource = String(children).replace(/\n$/, '');
+    if (language === "latex" || language === "math" || language === "tex") {
+      const latexSource = String(children).replace(/\n$/, "");
       const isFullDocument = /\\(documentclass|begin\{document\}|usepackage)\b/.test(latexSource);
       if (!isFullDocument) {
         try {
@@ -107,20 +115,20 @@ function CodeBlock(props: any) {
             displayMode: true,
             throwOnError: false,
           });
-          return <div className='katex-display' dangerouslySetInnerHTML={{ __html: html }} />;
+          return <div className="katex-display" dangerouslySetInnerHTML={{ __html: html }} />;
         } catch {
           // Fall through to render as code block if KaTeX fails
         }
       }
     }
 
-    if (!String(children).includes('\n')) {
+    if (!String(children).includes("\n")) {
       return (
         <code
           {...rest}
           className={className}
           style={{
-            fontWeight: 'bold',
+            fontWeight: "bold",
           }}
         >
           {children}
@@ -128,59 +136,75 @@ function CodeBlock(props: any) {
       );
     }
 
-    const isDiff = language === 'diff';
+    const isDiff = language === "diff";
     const formattedContent = formatCode(children);
-    const diffLines = isDiff ? formattedContent.split('\n') : [];
+    const diffLines = isDiff ? formattedContent.split("\n") : [];
 
     return (
-      <div style={{ width: '100%', minWidth: 0, maxWidth: '100%', ...(props.codeStyle || {}) }}>
+      <div style={{ width: "100%", minWidth: 0, maxWidth: "100%", ...(props.codeStyle || {}) }}>
         <div
           style={{
-            border: '1px solid var(--bg-3)',
-            borderRadius: '0.3rem',
-            overflow: 'hidden',
-            overflowX: 'auto',
+            border: "1px solid var(--bg-3)",
+            borderRadius: "0.3rem",
+            overflow: "hidden",
+            overflowX: "auto",
           }}
         >
           <div
             style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              backgroundColor: 'var(--bg-2)',
-              borderTopLeftRadius: '0.3rem',
-              borderTopRightRadius: '0.3rem',
-              borderBottomLeftRadius: fold ? '0.3rem' : '0',
-              borderBottomRightRadius: fold ? '0.3rem' : '0',
-              padding: '6px 10px',
-              borderBottom: !fold ? '1px solid var(--bg-3)' : undefined,
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              backgroundColor: "var(--bg-2)",
+              borderTopLeftRadius: "0.3rem",
+              borderTopRightRadius: "0.3rem",
+              borderBottomLeftRadius: fold ? "0.3rem" : "0",
+              borderBottomRightRadius: fold ? "0.3rem" : "0",
+              padding: "6px 10px",
+              borderBottom: !fold ? "1px solid var(--bg-3)" : undefined,
             }}
           >
             <span
               style={{
-                textDecoration: 'none',
-                color: 'var(--text-secondary)',
-                fontSize: '12px',
-                lineHeight: '20px',
+                textDecoration: "none",
+                color: "var(--text-secondary)",
+                fontSize: "12px",
+                lineHeight: "20px",
               }}
             >
-              {'<' + language.toLocaleLowerCase() + '>'}
+              {"<" + language.toLocaleLowerCase() + ">"}
             </span>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
               {/* 复制代码按钮 / Copy code button */}
               <Copy
-                theme='outline'
-                size='18'
-                style={{ cursor: 'pointer' }}
-                fill='var(--text-secondary)'
+                theme="outline"
+                size="18"
+                style={{ cursor: "pointer" }}
+                fill="var(--text-secondary)"
                 onClick={() => {
                   void navigator.clipboard.writeText(formatCode(children)).then(() => {
-                    Message.success(t('common.copySuccess'));
+                    Message.success(t("common.copySuccess"));
                   });
                 }}
               />
               {/* 折叠/展开按钮 / Fold/unfold button */}
-              {logicRender(!fold, <Up theme='outline' size='20' style={{ cursor: 'pointer' }} fill='var(--text-secondary)' onClick={() => setFlow(true)} />, <Down theme='outline' size='20' style={{ cursor: 'pointer' }} fill='var(--text-secondary)' onClick={() => setFlow(false)} />)}
+              {logicRender(
+                !fold,
+                <Up
+                  theme="outline"
+                  size="20"
+                  style={{ cursor: "pointer" }}
+                  fill="var(--text-secondary)"
+                  onClick={() => setFlow(true)}
+                />,
+                <Down
+                  theme="outline"
+                  size="20"
+                  style={{ cursor: "pointer" }}
+                  fill="var(--text-secondary)"
+                  onClick={() => setFlow(false)}
+                />,
+              )}
             </div>
           </div>
           {logicRender(
@@ -190,49 +214,62 @@ function CodeBlock(props: any) {
                 children={formattedContent}
                 language={language}
                 style={codeTheme}
-                PreTag='div'
+                PreTag="div"
                 wrapLines={isDiff}
                 lineProps={
                   isDiff
                     ? (lineNumber: number) => ({
-                        style: { display: 'block', ...getDiffLineStyle(diffLines[lineNumber - 1] || '', currentTheme === 'dark') },
+                        style: {
+                          display: "block",
+                          ...getDiffLineStyle(
+                            diffLines[lineNumber - 1] || "",
+                            currentTheme === "dark",
+                          ),
+                        },
                       })
                     : undefined
                 }
                 customStyle={{
-                  marginTop: '0',
-                  margin: '0',
-                  borderTopLeftRadius: '0',
-                  borderTopRightRadius: '0',
-                  borderBottomLeftRadius: '0',
-                  borderBottomRightRadius: '0',
-                  border: 'none',
-                  background: 'transparent',
-                  color: 'var(--text-primary)',
-                  overflowX: 'auto',
-                  maxWidth: '100%',
+                  marginTop: "0",
+                  margin: "0",
+                  borderTopLeftRadius: "0",
+                  borderTopRightRadius: "0",
+                  borderBottomLeftRadius: "0",
+                  borderBottomRightRadius: "0",
+                  border: "none",
+                  background: "transparent",
+                  color: "var(--text-primary)",
+                  overflowX: "auto",
+                  maxWidth: "100%",
                 }}
                 codeTagProps={{
                   style: {
-                    color: 'var(--text-primary)',
+                    color: "var(--text-primary)",
                   },
                 }}
               />
               <div
                 style={{
-                  display: 'flex',
-                  justifyContent: 'flex-end',
-                  alignItems: 'center',
-                  backgroundColor: 'var(--bg-2)',
-                  borderBottomLeftRadius: '0.3rem',
-                  borderBottomRightRadius: '0.3rem',
-                  padding: '6px 10px',
-                  borderTop: '1px solid var(--bg-3)',
+                  display: "flex",
+                  justifyContent: "flex-end",
+                  alignItems: "center",
+                  backgroundColor: "var(--bg-2)",
+                  borderBottomLeftRadius: "0.3rem",
+                  borderBottomRightRadius: "0.3rem",
+                  padding: "6px 10px",
+                  borderTop: "1px solid var(--bg-3)",
                 }}
               >
-                <Up theme='outline' size='20' style={{ cursor: 'pointer' }} fill='var(--text-secondary)' onClick={() => setFlow(true)} title={t('common.collapse', '收起')} />
+                <Up
+                  theme="outline"
+                  size="20"
+                  style={{ cursor: "pointer" }}
+                  fill="var(--text-secondary)"
+                  onClick={() => setFlow(true)}
+                  title={t("common.collapse", "收起")}
+                />
               </div>
-            </>
+            </>,
           )}
         </div>
       </div>
@@ -240,14 +277,18 @@ function CodeBlock(props: any) {
   }, [props, currentTheme, fold, t]);
 }
 
-const createInitStyle = (currentTheme = 'light', cssVars?: Record<string, string>, customCss?: string) => {
-  const style = document.createElement('style');
+const createInitStyle = (
+  currentTheme = "light",
+  cssVars?: Record<string, string>,
+  customCss?: string,
+) => {
+  const style = document.createElement("style");
   // 将外部 CSS 变量注入到 Shadow DOM 中，支持深色模式 Inject external CSS variables into Shadow DOM for dark mode support
   const cssVarsDeclaration = cssVars
     ? Object.entries(cssVars)
         .map(([key, value]) => `${key}: ${value};`)
-        .join('\n    ')
-    : '';
+        .join("\n    ")
+    : "";
 
   style.innerHTML = `
   /* Shadow DOM CSS 变量定义 Shadow DOM CSS variable definitions */
@@ -360,7 +401,7 @@ const createInitStyle = (currentTheme = 'light', cssVars?: Record<string, string
   }
 
   /* 用户自定义 CSS（注入到 Shadow DOM）User Custom CSS (injected into Shadow DOM) */
-  ${customCss || ''}
+  ${customCss || ""}
   `;
   return style;
 };
@@ -377,10 +418,12 @@ const getKatexStyleSheet = (): CSSStyleSheet | null => {
 
   try {
     // Find the KaTeX stylesheet in the document
-    const katexSheet = [...document.styleSheets].find((sheet) => sheet.href?.includes('katex') || (sheet.ownerNode as HTMLElement)?.dataset?.katex);
+    const katexSheet = [...document.styleSheets].find(
+      (sheet) => sheet.href?.includes("katex") || (sheet.ownerNode as HTMLElement)?.dataset?.katex,
+    );
 
     if (katexSheet) {
-      const cssRules = [...katexSheet.cssRules].map((rule) => rule.cssText).join('\n');
+      const cssRules = [...katexSheet.cssRules].map((rule) => rule.cssText).join("\n");
       katexStyleSheet = new CSSStyleSheet();
       katexStyleSheet.replaceSync(cssRules);
       return katexStyleSheet;
@@ -392,9 +435,9 @@ const getKatexStyleSheet = (): CSSStyleSheet | null => {
       try {
         const rules = [...sheet.cssRules];
         // Check if this stylesheet contains KaTeX rules
-        const hasKatexRules = rules.some((rule) => rule.cssText.includes('.katex'));
+        const hasKatexRules = rules.some((rule) => rule.cssText.includes(".katex"));
         if (hasKatexRules) {
-          const cssRules = rules.map((rule) => rule.cssText).join('\n');
+          const cssRules = rules.map((rule) => rule.cssText).join("\n");
           katexStyleSheet = new CSSStyleSheet();
           katexStyleSheet.replaceSync(cssRules);
           return katexStyleSheet;
@@ -405,7 +448,7 @@ const getKatexStyleSheet = (): CSSStyleSheet | null => {
       }
     }
   } catch (error) {
-    console.warn('Failed to create KaTeX stylesheet for Shadow DOM:', error);
+    console.warn("Failed to create KaTeX stylesheet for Shadow DOM:", error);
   }
 
   return null;
@@ -414,40 +457,40 @@ const getKatexStyleSheet = (): CSSStyleSheet | null => {
 const ShadowView = ({ children }: { children: React.ReactNode }) => {
   const [root, setRoot] = useState<ShadowRoot | null>(null);
   const styleRef = React.useRef<HTMLStyleElement | null>(null);
-  const [customCss, setCustomCss] = useState<string>('');
+  const [customCss, setCustomCss] = useState<string>("");
 
   // 从 ConfigStorage 加载自定义 CSS / Load custom CSS from ConfigStorage
   React.useEffect(() => {
-    void import('@/common/storage').then(({ ConfigStorage }) => {
-      ConfigStorage.get('customCss')
+    void import("@/common/storage").then(({ ConfigStorage }) => {
+      ConfigStorage.get("customCss")
         .then((css) => {
           if (css) {
             // 使用统一的工具函数自动添加 !important
             const processedCss = addImportantToAll(css);
             setCustomCss(processedCss);
           } else {
-            setCustomCss('');
+            setCustomCss("");
           }
         })
         .catch((error) => {
-          console.error('Failed to load custom CSS:', error);
+          console.error("Failed to load custom CSS:", error);
         });
     });
 
     // 监听自定义 CSS 更新事件 / Listen to custom CSS update events
     const handleCustomCssUpdate = (e: CustomEvent) => {
       if (e.detail?.customCss !== undefined) {
-        const css = e.detail.customCss || '';
+        const css = e.detail.customCss || "";
         // 使用统一的工具函数自动添加 !important
         const processedCss = addImportantToAll(css);
         setCustomCss(processedCss);
       }
     };
 
-    window.addEventListener('custom-css-updated', handleCustomCssUpdate as EventListener);
+    window.addEventListener("custom-css-updated", handleCustomCssUpdate as EventListener);
 
     return () => {
-      window.removeEventListener('custom-css-updated', handleCustomCssUpdate as EventListener);
+      window.removeEventListener("custom-css-updated", handleCustomCssUpdate as EventListener);
     };
   }, []);
 
@@ -455,16 +498,16 @@ const ShadowView = ({ children }: { children: React.ReactNode }) => {
   const updateStyles = React.useCallback(
     (shadowRoot: ShadowRoot) => {
       const computedStyle = getComputedStyle(document.documentElement);
-      const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+      const currentTheme = document.documentElement.getAttribute("data-theme") || "light";
       const cssVars = {
-        '--bg-1': computedStyle.getPropertyValue('--bg-1'),
-        '--bg-2': computedStyle.getPropertyValue('--bg-2'),
-        '--bg-3': computedStyle.getPropertyValue('--bg-3'),
-        '--color-text-1': computedStyle.getPropertyValue('--color-text-1'),
-        '--color-text-2': computedStyle.getPropertyValue('--color-text-2'),
-        '--color-text-3': computedStyle.getPropertyValue('--color-text-3'),
-        '--text-primary': computedStyle.getPropertyValue('--text-primary'),
-        '--text-secondary': computedStyle.getPropertyValue('--text-secondary'),
+        "--bg-1": computedStyle.getPropertyValue("--bg-1"),
+        "--bg-2": computedStyle.getPropertyValue("--bg-2"),
+        "--bg-3": computedStyle.getPropertyValue("--bg-3"),
+        "--color-text-1": computedStyle.getPropertyValue("--color-text-1"),
+        "--color-text-2": computedStyle.getPropertyValue("--color-text-2"),
+        "--color-text-3": computedStyle.getPropertyValue("--color-text-3"),
+        "--text-primary": computedStyle.getPropertyValue("--text-primary"),
+        "--text-secondary": computedStyle.getPropertyValue("--text-secondary"),
       };
 
       // 移除旧样式并添加新样式 Remove old style and add new style
@@ -482,7 +525,7 @@ const ShadowView = ({ children }: { children: React.ReactNode }) => {
         shadowRoot.adoptedStyleSheets = [...shadowRoot.adoptedStyleSheets, katexSheet];
       }
     },
-    [customCss]
+    [customCss],
   );
 
   React.useEffect(() => {
@@ -502,7 +545,7 @@ const ShadowView = ({ children }: { children: React.ReactNode }) => {
 
     observer.observe(document.documentElement, {
       attributes: true,
-      attributeFilter: ['data-theme', 'class'],
+      attributeFilter: ["data-theme", "class"],
     });
 
     return () => observer.disconnect();
@@ -513,12 +556,12 @@ const ShadowView = ({ children }: { children: React.ReactNode }) => {
       ref={(el: any) => {
         if (!el || el.__init__shadow) return;
         el.__init__shadow = true;
-        const shadowRoot = el.attachShadow({ mode: 'open' });
+        const shadowRoot = el.attachShadow({ mode: "open" });
         updateStyles(shadowRoot);
         setRoot(shadowRoot);
       }}
-      className='markdown-shadow'
-      style={{ width: '100%', flex: '1 1 auto', minWidth: 0 }}
+      className="markdown-shadow"
+      style={{ width: "100%", flex: "1 1 auto", minWidth: 0 }}
     >
       {root && ReactDOM.createPortal(children, root)}
     </div>
@@ -535,12 +578,19 @@ interface MarkdownViewProps {
   allowHtml?: boolean;
 }
 
-const MarkdownView: React.FC<MarkdownViewProps> = ({ hiddenCodeCopyButton, codeStyle, className, onRef, allowHtml, children: childrenProp }) => {
+const MarkdownView: React.FC<MarkdownViewProps> = ({
+  hiddenCodeCopyButton,
+  codeStyle,
+  className,
+  onRef,
+  allowHtml,
+  children: childrenProp,
+}) => {
   const { t } = useTranslation();
 
   const normalizedChildren = useMemo(() => {
-    if (typeof childrenProp === 'string') {
-      let text = childrenProp.replace(/file:\/\//g, '');
+    if (typeof childrenProp === "string") {
+      let text = childrenProp.replace(/file:\/\//g, "");
       text = convertLatexDelimiters(text);
       return text;
     }
@@ -548,19 +598,19 @@ const MarkdownView: React.FC<MarkdownViewProps> = ({ hiddenCodeCopyButton, codeS
   }, [childrenProp]);
 
   const isLocalFilePath = (src: string): boolean => {
-    if (src.startsWith('http://') || src.startsWith('https://')) {
+    if (src.startsWith("http://") || src.startsWith("https://")) {
       return false;
     }
-    if (src.startsWith('data:')) {
+    if (src.startsWith("data:")) {
       return false;
     }
     return true;
   };
 
   return (
-    <div className={classNames('relative w-full', className)}>
+    <div className={classNames("relative w-full", className)}>
       <ShadowView>
-        <div ref={onRef} className='markdown-shadow-body'>
+        <div ref={onRef} className="markdown-shadow-body">
           <ReactMarkdown
             remarkPlugins={[remarkGfm, remarkMath, remarkBreaks]}
             rehypePlugins={allowHtml ? [rehypeRaw, rehypeKatex] : [rehypeKatex]}
@@ -576,27 +626,27 @@ const MarkdownView: React.FC<MarkdownViewProps> = ({ hiddenCodeCopyButton, codeS
               a: ({ node: _node, ...props }) => (
                 <a
                   {...props}
-                  target='_blank'
-                  rel='noreferrer'
+                  target="_blank"
+                  rel="noreferrer"
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
                     if (!props.href) return;
                     openExternalUrl(props.href).catch((error) => {
-                      console.error(t('messages.openLinkFailed'), error);
+                      console.error(t("messages.openLinkFailed"), error);
                     });
                   }}
                 />
               ),
               table: ({ node: _node, ...props }) => (
-                <div style={{ overflowX: 'auto', maxWidth: '100%' }}>
+                <div style={{ overflowX: "auto", maxWidth: "100%" }}>
                   <table
                     {...props}
                     style={{
                       ...props.style,
-                      borderCollapse: 'collapse',
-                      border: '1px solid var(--bg-3)',
-                      minWidth: '100%',
+                      borderCollapse: "collapse",
+                      border: "1px solid var(--bg-3)",
+                      minWidth: "100%",
                     }}
                   />
                 </div>
@@ -606,16 +656,18 @@ const MarkdownView: React.FC<MarkdownViewProps> = ({ hiddenCodeCopyButton, codeS
                   {...props}
                   style={{
                     ...props.style,
-                    padding: '8px',
-                    border: '1px solid var(--bg-3)',
-                    minWidth: '120px',
+                    padding: "8px",
+                    border: "1px solid var(--bg-3)",
+                    minWidth: "120px",
                   }}
                 />
               ),
               img: ({ node: _node, ...props }) => {
-                if (isLocalFilePath(props.src || '')) {
-                  const src = decodeURIComponent(props.src || '');
-                  return <LocalImageView src={src} alt={props.alt || ''} className={props.className} />;
+                if (isLocalFilePath(props.src || "")) {
+                  const src = decodeURIComponent(props.src || "");
+                  return (
+                    <LocalImageView src={src} alt={props.alt || ""} className={props.className} />
+                  );
                 }
                 return <img {...props} />;
               },

@@ -101,29 +101,29 @@ triggers: Excel, 电子表格, .xlsx, 数据表, 预算, 财务模型, 图表, �
 
 ```javascript
 // 使用 exceljs for Node.js
-const ExcelJS = require('exceljs');
+const ExcelJS = require("exceljs");
 const workbook = new ExcelJS.Workbook();
-const sheet = workbook.addWorksheet('Sheet1');
+const sheet = workbook.addWorksheet("Sheet1");
 
 // 设置带样式的列标题
 sheet.columns = [
-  { header: '名称', key: 'name', width: 20 },
-  { header: '数值', key: 'value', width: 15 },
+  { header: "名称", key: "name", width: 20 },
+  { header: "数值", key: "value", width: 15 },
 ];
 
 // 添加数据行
-sheet.addRow({ name: '项目 1', value: 100 });
+sheet.addRow({ name: "项目 1", value: 100 });
 
 // 应用格式
 sheet.getRow(1).font = { bold: true };
 sheet.getRow(1).fill = {
-  type: 'pattern',
-  pattern: 'solid',
-  fgColor: { argb: 'FF4472C4' },
+  type: "pattern",
+  pattern: "solid",
+  fgColor: { argb: "FF4472C4" },
 };
 
 // 保存工作簿
-await workbook.xlsx.writeFile('output.xlsx');
+await workbook.xlsx.writeFile("output.xlsx");
 ```
 
 **最佳实践**:
@@ -180,50 +180,50 @@ triggers: PowerPoint, 演示文稿, .pptx, 幻灯片, slide deck, pitch deck, pp
 
 ```javascript
 // 使用 pptxgenjs for Node.js
-const pptxgen = require('pptxgenjs');
+const pptxgen = require("pptxgenjs");
 const pptx = new pptxgen();
 
 // 设置演示文稿属性
-pptx.author = 'Cowork';
-pptx.title = '演示文稿标题';
-pptx.subject = '主题';
+pptx.author = "Cowork";
+pptx.title = "演示文稿标题";
+pptx.subject = "主题";
 
 // 定义母版幻灯片
 pptx.defineSlideMaster({
-  title: 'MASTER_SLIDE',
-  background: { color: 'FFFFFF' },
-  objects: [{ text: { text: '公司名称', options: { x: 0.5, y: 7.0, fontSize: 10 } } }],
+  title: "MASTER_SLIDE",
+  background: { color: "FFFFFF" },
+  objects: [{ text: { text: "公司名称", options: { x: 0.5, y: 7.0, fontSize: 10 } } }],
 });
 
 // 创建标题幻灯片
 let slide = pptx.addSlide();
-slide.addText('演示文稿标题', {
+slide.addText("演示文稿标题", {
   x: 0.5,
   y: 2.5,
-  w: '90%',
+  w: "90%",
   fontSize: 44,
   bold: true,
-  color: '363636',
-  align: 'center',
+  color: "363636",
+  align: "center",
 });
 
 // 创建内容幻灯片
 slide = pptx.addSlide();
-slide.addText('章节标题', { x: 0.5, y: 0.5, fontSize: 28, bold: true });
+slide.addText("章节标题", { x: 0.5, y: 0.5, fontSize: 28, bold: true });
 slide.addText(
   [
-    { text: '要点 1', options: { bullet: true } },
-    { text: '要点 2', options: { bullet: true } },
-    { text: '要点 3', options: { bullet: true } },
+    { text: "要点 1", options: { bullet: true } },
+    { text: "要点 2", options: { bullet: true } },
+    { text: "要点 3", options: { bullet: true } },
   ],
-  { x: 0.5, y: 1.5, w: '90%', fontSize: 18 }
+  { x: 0.5, y: 1.5, w: "90%", fontSize: 18 },
 );
 
 // 添加图表
 slide.addChart(pptx.ChartType.bar, chartData, { x: 0.5, y: 3, w: 6, h: 3 });
 
 // 保存演示文稿
-await pptx.writeFile('presentation.pptx');
+await pptx.writeFile("presentation.pptx");
 ```
 
 **最佳实践**:
@@ -449,7 +449,19 @@ triggers: Word, 文档, .docx, 报告, 信函, 备忘录, 手稿, 论文, 文章
 
 ```javascript
 // 使用 docx 包 for Node.js
-const { Document, Packer, Paragraph, TextRun, HeadingLevel, Table, TableRow, TableCell, Header, Footer, PageNumber } = require('docx');
+const {
+  Document,
+  Packer,
+  Paragraph,
+  TextRun,
+  HeadingLevel,
+  Table,
+  TableRow,
+  TableCell,
+  Header,
+  Footer,
+  PageNumber,
+} = require("docx");
 
 const doc = new Document({
   sections: [
@@ -457,14 +469,14 @@ const doc = new Document({
       properties: {},
       headers: {
         default: new Header({
-          children: [new Paragraph({ text: '文档页眉' })],
+          children: [new Paragraph({ text: "文档页眉" })],
         }),
       },
       footers: {
         default: new Footer({
           children: [
             new Paragraph({
-              children: [new TextRun('第 '), new PageNumber(), new TextRun(' 页')],
+              children: [new TextRun("第 "), new PageNumber(), new TextRun(" 页")],
             }),
           ],
         }),
@@ -472,24 +484,30 @@ const doc = new Document({
       children: [
         // 标题
         new Paragraph({
-          text: '文档标题',
+          text: "文档标题",
           heading: HeadingLevel.TITLE,
         }),
 
         // 一级标题
         new Paragraph({
-          text: '第一节',
+          text: "第一节",
           heading: HeadingLevel.HEADING_1,
         }),
 
         // 正文
         new Paragraph({
-          children: [new TextRun({ text: '这是 ', bold: false }), new TextRun({ text: '粗体', bold: true }), new TextRun({ text: ' 和 ' }), new TextRun({ text: '斜体', italics: true }), new TextRun({ text: ' 文本。' })],
+          children: [
+            new TextRun({ text: "这是 ", bold: false }),
+            new TextRun({ text: "粗体", bold: true }),
+            new TextRun({ text: " 和 " }),
+            new TextRun({ text: "斜体", italics: true }),
+            new TextRun({ text: " 文本。" }),
+          ],
         }),
 
         // 项目列表
         new Paragraph({
-          text: '第一个要点',
+          text: "第一个要点",
           bullet: { level: 0 },
         }),
 
@@ -497,10 +515,16 @@ const doc = new Document({
         new Table({
           rows: [
             new TableRow({
-              children: [new TableCell({ children: [new Paragraph('表头 1')] }), new TableCell({ children: [new Paragraph('表头 2')] })],
+              children: [
+                new TableCell({ children: [new Paragraph("表头 1")] }),
+                new TableCell({ children: [new Paragraph("表头 2")] }),
+              ],
             }),
             new TableRow({
-              children: [new TableCell({ children: [new Paragraph('单元格 1')] }), new TableCell({ children: [new Paragraph('单元格 2')] })],
+              children: [
+                new TableCell({ children: [new Paragraph("单元格 1")] }),
+                new TableCell({ children: [new Paragraph("单元格 2")] }),
+              ],
             }),
           ],
         }),
@@ -511,7 +535,7 @@ const doc = new Document({
 
 // 保存文档
 const buffer = await Packer.toBuffer(doc);
-await fs.writeFile('document.docx', buffer);
+await fs.writeFile("document.docx", buffer);
 ```
 
 **最佳实践**:

@@ -4,11 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useCallback, useRef, useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import { Message } from '@arco-design/web-react';
-import type { FileMetadata } from '../services/FileService';
-import { isSupportedFile, FileService } from '../services/FileService';
+import { useCallback, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { Message } from "@arco-design/web-react";
+import type { FileMetadata } from "../services/FileService";
+import { isSupportedFile, FileService } from "../services/FileService";
 
 export interface UseDragUploadOptions {
   supportedExts?: string[];
@@ -32,7 +32,7 @@ export const useDragUpload = ({ supportedExts = [], onFilesAdded }: UseDragUploa
         dragCounter.current += 1;
       }
     },
-    [isFileDragging]
+    [isFileDragging],
   );
 
   const handleDragEnter = useCallback((e: React.DragEvent) => {
@@ -94,11 +94,11 @@ export const useDragUpload = ({ supportedExts = [], onFilesAdded }: UseDragUploa
           }
         }
       } catch (err) {
-        console.error('Failed to process dropped files:', err);
-        Message.error(t('conversation.workspace.dragFailed', 'Failed to process dropped files'));
+        console.error("Failed to process dropped files:", err);
+        Message.error(t("conversation.workspace.dragFailed", "Failed to process dropped files"));
       }
     },
-    [onFilesAdded, supportedExts, t]
+    [onFilesAdded, supportedExts, t],
   );
 
   const dragHandlers = {

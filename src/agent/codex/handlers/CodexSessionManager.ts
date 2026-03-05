@@ -4,11 +4,18 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { uuid } from '@/common/utils';
-import type { ICodexMessageEmitter } from '@/agent/codex/messaging/CodexMessageEmitter';
-import { randomBytes } from 'crypto';
+import { uuid } from "@/common/utils";
+import type { ICodexMessageEmitter } from "@/agent/codex/messaging/CodexMessageEmitter";
+import { randomBytes } from "crypto";
 
-export type CodexSessionStatus = 'initializing' | 'connecting' | 'connected' | 'authenticated' | 'session_active' | 'error' | 'disconnected';
+export type CodexSessionStatus =
+  | "initializing"
+  | "connecting"
+  | "connected"
+  | "authenticated"
+  | "session_active"
+  | "error"
+  | "disconnected";
 
 export interface CodexSessionConfig {
   conversation_id: string;
@@ -22,10 +29,10 @@ export interface CodexSessionConfig {
  * 提供统一的连接状态管理、会话生命周期和状态通知
  */
 // 全局状态管理，确保所有 Codex 会话共享状态
-const globalStatusMessageId: string = 'codex_status_global';
+const globalStatusMessageId: string = "codex_status_global";
 
 export class CodexSessionManager {
-  private status: CodexSessionStatus = 'initializing';
+  private status: CodexSessionStatus = "initializing";
   private sessionId: string | null = null;
   private isConnected: boolean = false;
   private hasActiveSession: boolean = false;
@@ -33,7 +40,7 @@ export class CodexSessionManager {
 
   constructor(
     private config: CodexSessionConfig,
-    private messageEmitter: ICodexMessageEmitter
+    private messageEmitter: ICodexMessageEmitter,
   ) {
     this.timeout = config.timeout || 30000; // 30秒默认超时
   }
@@ -45,7 +52,7 @@ export class CodexSessionManager {
     try {
       await this.performConnectionSequence();
     } catch (error) {
-      this.setStatus('error');
+      this.setStatus("error");
       throw error;
     }
   }
@@ -55,19 +62,19 @@ export class CodexSessionManager {
    */
   private async performConnectionSequence(): Promise<void> {
     // 1. 连接阶段
-    this.setStatus('connecting');
+    this.setStatus("connecting");
     await this.establishConnection();
 
     // 2. 认证阶段
-    this.setStatus('connected');
+    this.setStatus("connected");
     await this.performAuthentication();
 
     // 3. 会话创建阶段
-    this.setStatus('authenticated');
+    this.setStatus("authenticated");
     await this.createSession();
 
     // 4. 会话激活
-    this.setStatus('session_active');
+    this.setStatus("session_active");
   }
 
   /**
@@ -107,7 +114,7 @@ export class CodexSessionManager {
   private createSession(): Promise<void> {
     return new Promise((resolve, reject) => {
       const timeoutId = setTimeout(() => {
-        reject(new Error('Session creation timeout'));
+        reject(new Error("Session creation timeout"));
       }, this.timeout);
 
       setTimeout(() => {
@@ -126,7 +133,7 @@ export class CodexSessionManager {
     this.isConnected = false;
     this.hasActiveSession = false;
     this.sessionId = null;
-    this.setStatus('disconnected');
+    this.setStatus("disconnected");
     return Promise.resolve();
   }
 
@@ -134,7 +141,7 @@ export class CodexSessionManager {
    * 检查会话健康状态
    */
   checkSessionHealth(): boolean {
-    const isHealthy = this.isConnected && this.hasActiveSession && this.status === 'session_active';
+    const isHealthy = this.isConnected && this.hasActiveSession && this.status === "session_active";
     // Session health check
     return isHealthy;
   }
@@ -156,11 +163,11 @@ export class CodexSessionManager {
     // 更新本地状态即可，全局ID已确保唯一性
 
     this.messageEmitter.emitAndPersistMessage({
-      type: 'agent_status',
+      type: "agent_status",
       conversation_id: this.config.conversation_id,
       msg_id: globalStatusMessageId, // 使用全局状态消息ID
       data: {
-        backend: 'codex',
+        backend: "codex",
         status,
         sessionId: this.sessionId,
         isConnected: this.isConnected,
@@ -180,18 +187,18 @@ export class CodexSessionManager {
    * 生成加密安全的随机字符串
    */
   private generateSecureRandomString(length: number): string {
-    if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
+    if (typeof crypto !== "undefined" && crypto.getRandomValues) {
       // 浏览器环境
       const array = new Uint8Array(length);
       crypto.getRandomValues(array);
-      return Array.from(array, (byte) => byte.toString(36).padStart(2, '0'))
-        .join('')
+      return Array.from(array, (byte) => byte.toString(36).padStart(2, "0"))
+        .join("")
         .substring(0, length);
-    } else if (typeof require !== 'undefined') {
+    } else if (typeof require !== "undefined") {
       // Node.js环境
       try {
         return randomBytes(Math.ceil(length / 2))
-          .toString('hex')
+          .toString("hex")
           .substring(0, length);
       } catch (e) {
         // 回退方案
@@ -212,11 +219,11 @@ export class CodexSessionManager {
    */
   emitSessionEvent(eventType: string, data: unknown): void {
     this.messageEmitter.emitAndPersistMessage({
-      type: 'agent_status',
+      type: "agent_status",
       conversation_id: this.config.conversation_id,
       msg_id: uuid(),
       data: {
-        backend: 'codex',
+        backend: "codex",
         status: eventType, // Session event type as status
         eventType,
         sessionId: this.sessionId,
@@ -250,20 +257,20 @@ export class CodexSessionManager {
    */
   waitForReady(timeout: number = 30000): Promise<void> {
     return new Promise((resolve, reject) => {
-      if (this.status === 'session_active') {
+      if (this.status === "session_active") {
         resolve();
         return;
       }
 
       const checkInterval = setInterval(() => {
-        if (this.status === 'session_active') {
+        if (this.status === "session_active") {
           clearInterval(checkInterval);
           clearTimeout(timeoutId);
           resolve();
-        } else if (this.status === 'error') {
+        } else if (this.status === "error") {
           clearInterval(checkInterval);
           clearTimeout(timeoutId);
-          reject(new Error('Session failed to become ready'));
+          reject(new Error("Session failed to become ready"));
         }
       }, 100);
 

@@ -1,7 +1,7 @@
-import { isSlashCommandListEnabled } from '@/common/slash/availability';
-import type { SlashCommandItem } from '@/common/slash/types';
-import { ipcBridge } from '@/common';
-import { useEffect, useRef, useState } from 'react';
+import { isSlashCommandListEnabled } from "@/common/slash/availability";
+import type { SlashCommandItem } from "@/common/slash/types";
+import { ipcBridge } from "@/common";
+import { useEffect, useRef, useState } from "react";
 
 interface CacheEntry {
   commands: SlashCommandItem[];
@@ -89,7 +89,7 @@ export function useSlashCommands(conversationId: string, options: UseSlashComman
         if (isCancelled || requestId !== requestIdRef.current) {
           return;
         }
-        console.error('[useSlashCommands] Failed to load slash commands:', error);
+        console.error("[useSlashCommands] Failed to load slash commands:", error);
         setCommands([]);
       });
 

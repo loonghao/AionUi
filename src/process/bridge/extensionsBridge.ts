@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { ipcBridge } from '@/common';
-import { ExtensionRegistry } from '@/extensions';
+import { ipcBridge } from "@/common";
+import { ExtensionRegistry } from "@/extensions";
 
 /**
  * Initialize IPC bridge for extension system.
@@ -18,7 +18,7 @@ export function initExtensionsBridge(): void {
       const registry = ExtensionRegistry.getInstance();
       return registry.getThemes();
     } catch (error) {
-      console.error('[Extensions] Failed to get themes:', error);
+      console.error("[Extensions] Failed to get themes:", error);
       return [];
     }
   });
@@ -36,7 +36,7 @@ export function initExtensionsBridge(): void {
         directory: ext.directory,
       }));
     } catch (error) {
-      console.error('[Extensions] Failed to get loaded extensions:', error);
+      console.error("[Extensions] Failed to get loaded extensions:", error);
       return [];
     }
   });

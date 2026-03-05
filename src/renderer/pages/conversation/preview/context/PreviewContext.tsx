@@ -4,10 +4,18 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { ipcBridge } from '@/common';
-import type { PreviewContentType } from '@/common/types/preview';
-import { emitter } from '@/renderer/utils/emitter';
-import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { ipcBridge } from "@/common";
+import type { PreviewContentType } from "@/common/types/preview";
+import { emitter } from "@/renderer/utils/emitter";
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 
 /** DOM 片段数据结构 / DOM snippet data structure */
 export interface DomSnippet {
@@ -55,8 +63,16 @@ export interface PreviewContextValue {
   switchTab: (tabId: string) => void;
   updateContent: (content: string) => void;
   saveContent: (tabId?: string) => Promise<boolean>; // 保存内容 / Save content
-  findPreviewTab: (type: PreviewContentType, content?: string, metadata?: PreviewMetadata) => PreviewTab | null; // 查找匹配的 tab
-  closePreviewByIdentity: (type: PreviewContentType, content?: string, metadata?: PreviewMetadata) => void; // 根据内容关闭指定 tab
+  findPreviewTab: (
+    type: PreviewContentType,
+    content?: string,
+    metadata?: PreviewMetadata,
+  ) => PreviewTab | null; // 查找匹配的 tab
+  closePreviewByIdentity: (
+    type: PreviewContentType,
+    content?: string,
+    metadata?: PreviewMetadata,
+  ) => void; // 根据内容关闭指定 tab
 
   // 发送框集成 / Sendbox integration
   addToSendBox: (text: string) => void;
@@ -72,12 +88,16 @@ export interface PreviewContextValue {
 const PreviewContext = createContext<PreviewContextValue | null>(null);
 
 // 持久化 key / Persistence key
-const PREVIEW_STATE_KEY = 'aionui_preview_state';
+const PREVIEW_STATE_KEY = "aionui_preview_state";
 
 // 从 localStorage 恢复状态 / Restore state from localStorage
 // 注意：isOpen 不从 localStorage 恢复，新会话时预览面板默认关闭
 // Note: isOpen is not restored from localStorage, preview panel is closed by default for new sessions
-const loadPersistedState = (): { isOpen: boolean; tabs: PreviewTab[]; activeTabId: string | null } => {
+const loadPersistedState = (): {
+  isOpen: boolean;
+  tabs: PreviewTab[];
+  activeTabId: string | null;
+} => {
   try {
     const stored = localStorage.getItem(PREVIEW_STATE_KEY);
     if (stored) {
@@ -116,7 +136,7 @@ export const PreviewProvider: React.FC<{ children: React.ReactNode }> = ({ child
           isOpen,
           tabs,
           activeTabId,
-        })
+        }),
       );
     } catch {
       // 忽略存储错误（如存储空间不足）/ Ignore storage errors (e.g., quota exceeded)
@@ -131,7 +151,7 @@ export const PreviewProvider: React.FC<{ children: React.ReactNode }> = ({ child
     return tabs.find((tab) => tab.id === activeTabId) || null;
   }, [tabs]);
 
-  const normalize = useCallback((value?: string | null) => value?.trim() || '', []);
+  const normalize = useCallback((value?: string | null) => value?.trim() || "", []);
 
   // 从可能包含描述的字符串中提取文件名 / Extract filename from string that may contain description
   const extractFileName = useCallback((str?: string): string | undefined => {
@@ -176,12 +196,18 @@ export const PreviewProvider: React.FC<{ children: React.ReactNode }> = ({ child
           }
 
           // 再通过 title 匹配 / Then match by title
-          if (!normalizedFileName && normalizedTitle && tabTitle && normalizedTitle === tabTitle) return true;
+          if (!normalizedFileName && normalizedTitle && tabTitle && normalizedTitle === tabTitle)
+            return true;
 
           // 最后才通过 content 匹配（仅用于小文件）/ Finally match by content (only for small files)
           // 对于大文件（PPT/Excel/Word），不使用 content 比较，避免性能问题
           // For large files (PPT/Excel/Word), skip content comparison to avoid performance issues
-          if (!normalizedFileName && !normalizedTitle && !normalizedFilePath && content !== undefined) {
+          if (
+            !normalizedFileName &&
+            !normalizedTitle &&
+            !normalizedFilePath &&
+            content !== undefined
+          ) {
             // 只对小于 100KB 的内容进行比较 / Only compare content smaller than 100KB
             if (content.length < 100000 && tab.content === content) return true;
           }
@@ -190,14 +216,14 @@ export const PreviewProvider: React.FC<{ children: React.ReactNode }> = ({ child
         }) || null
       );
     },
-    [normalize]
+    [normalize],
   );
 
   const findPreviewTab = useCallback(
     (type: PreviewContentType, content?: string, meta?: PreviewMetadata) => {
       return findPreviewTabInList(tabs, type, content, meta);
     },
-    [findPreviewTabInList, tabs]
+    [findPreviewTabInList, tabs],
   );
 
   const openPreview = useCallback(
@@ -231,14 +257,15 @@ export const PreviewProvider: React.FC<{ children: React.ReactNode }> = ({ child
         // Tab title: Prefer fileName and extract actual filename from title
         const fallbackTitle = (() => {
           // 根据内容类型设置默认标题 / Set default title based on content type
-          if (type === 'markdown') return 'Markdown';
-          if (type === 'diff') return 'Diff';
-          if (type === 'code') return `${meta?.language || 'Code'}`;
-          if (type === 'image') return 'Image'; // 图片预览默认标题 / Default title for image preview
-          return 'Preview';
+          if (type === "markdown") return "Markdown";
+          if (type === "diff") return "Diff";
+          if (type === "code") return `${meta?.language || "Code"}`;
+          if (type === "image") return "Image"; // 图片预览默认标题 / Default title for image preview
+          return "Preview";
         })();
 
-        const title = extractFileName(meta?.fileName) || extractFileName(meta?.title) || fallbackTitle;
+        const title =
+          extractFileName(meta?.fileName) || extractFileName(meta?.title) || fallbackTitle;
 
         // 生成唯一 ID / Generate unique ID
         const tabId = `${type}-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
@@ -262,7 +289,7 @@ export const PreviewProvider: React.FC<{ children: React.ReactNode }> = ({ child
       }
       setIsOpen(true);
     },
-    [extractFileName, findPreviewTabInList]
+    [extractFileName, findPreviewTabInList],
   );
 
   const closePreview = useCallback(() => {
@@ -292,7 +319,7 @@ export const PreviewProvider: React.FC<{ children: React.ReactNode }> = ({ child
         return newTabs;
       });
     },
-    [activeTabId]
+    [activeTabId],
   );
 
   const closePreviewByIdentity = useCallback(
@@ -302,7 +329,7 @@ export const PreviewProvider: React.FC<{ children: React.ReactNode }> = ({ child
         closeTab(tab.id);
       }
     },
-    [findPreviewTab, closeTab]
+    [findPreviewTab, closeTab],
   );
 
   const updateContent = useCallback(
@@ -312,7 +339,7 @@ export const PreviewProvider: React.FC<{ children: React.ReactNode }> = ({ child
       }
 
       // 严格的类型检查，防止 Event 对象被错误传递 / Strict type checking to prevent Event object from being passed incorrectly
-      if (typeof newContent !== 'string') {
+      if (typeof newContent !== "string") {
         return;
       }
 
@@ -332,7 +359,7 @@ export const PreviewProvider: React.FC<{ children: React.ReactNode }> = ({ child
         // Silently ignore errors
       }
     },
-    [activeTabId]
+    [activeTabId],
   );
 
   const saveContent = useCallback(
@@ -364,7 +391,7 @@ export const PreviewProvider: React.FC<{ children: React.ReactNode }> = ({ child
                   return { ...t, isDirty: false, originalContent: t.content };
                 }
                 return t;
-              })
+              }),
             );
           }
 
@@ -385,7 +412,7 @@ export const PreviewProvider: React.FC<{ children: React.ReactNode }> = ({ child
       }
       return false;
     },
-    [activeTabId, tabs]
+    [activeTabId, tabs],
   );
 
   const addToSendBox = useCallback((text: string) => {
@@ -421,66 +448,68 @@ export const PreviewProvider: React.FC<{ children: React.ReactNode }> = ({ child
     // 防抖定时器映射：每个文件路径对应一个定时器 / Debounce timer map: one timer per file path
     const debounceTimers = new Map<string, NodeJS.Timeout>();
 
-    const unsubscribe = ipcBridge.fileStream.contentUpdate.on(({ filePath, content, operation }) => {
-      // 如果是删除操作，立即处理，不需要防抖 / If delete operation, handle immediately without debounce
-      if (operation === 'delete') {
-        // 清除该文件的防抖定时器 / Clear debounce timer for this file
+    const unsubscribe = ipcBridge.fileStream.contentUpdate.on(
+      ({ filePath, content, operation }) => {
+        // 如果是删除操作，立即处理，不需要防抖 / If delete operation, handle immediately without debounce
+        if (operation === "delete") {
+          // 清除该文件的防抖定时器 / Clear debounce timer for this file
+          const existingTimer = debounceTimers.get(filePath);
+          if (existingTimer) {
+            clearTimeout(existingTimer);
+            debounceTimers.delete(filePath);
+          }
+
+          setTabs((prevTabs) => {
+            const tabToClose = prevTabs.find((tab) => tab.metadata?.filePath === filePath);
+            if (tabToClose) {
+              closeTab(tabToClose.id);
+            }
+            return prevTabs;
+          });
+          return;
+        }
+
+        // 对写入操作进行防抖：500ms 内没有新的更新才真正更新内容
+        // Debounce write operations: Only update content if no new updates within 500ms
         const existingTimer = debounceTimers.get(filePath);
         if (existingTimer) {
           clearTimeout(existingTimer);
-          debounceTimers.delete(filePath);
         }
 
-        setTabs((prevTabs) => {
-          const tabToClose = prevTabs.find((tab) => tab.metadata?.filePath === filePath);
-          if (tabToClose) {
-            closeTab(tabToClose.id);
-          }
-          return prevTabs;
-        });
-        return;
-      }
+        const timer = setTimeout(() => {
+          // 使用函数式更新来访问最新的 tabs 状态 / Use functional update to access latest tabs state
+          setTabs((prevTabs) => {
+            // 查找受影响的 tabs / Find affected tabs
+            const affectedTabs = prevTabs.filter((tab) => tab.metadata?.filePath === filePath);
 
-      // 对写入操作进行防抖：500ms 内没有新的更新才真正更新内容
-      // Debounce write operations: Only update content if no new updates within 500ms
-      const existingTimer = debounceTimers.get(filePath);
-      if (existingTimer) {
-        clearTimeout(existingTimer);
-      }
-
-      const timer = setTimeout(() => {
-        // 使用函数式更新来访问最新的 tabs 状态 / Use functional update to access latest tabs state
-        setTabs((prevTabs) => {
-          // 查找受影响的 tabs / Find affected tabs
-          const affectedTabs = prevTabs.filter((tab) => tab.metadata?.filePath === filePath);
-
-          if (affectedTabs.length === 0) {
-            return prevTabs;
-          }
-
-          return prevTabs.map((tab) => {
-            if (tab.metadata?.filePath !== filePath) return tab;
-
-            // 如果正在保存或用户已编辑，不更新 / Don't update if saving or user has edited
-            if (savingFilesRef.current.has(filePath) || tab.isDirty) {
-              return tab;
+            if (affectedTabs.length === 0) {
+              return prevTabs;
             }
 
-            return {
-              ...tab,
-              content,
-              originalContent: content,
-              isDirty: false,
-            };
+            return prevTabs.map((tab) => {
+              if (tab.metadata?.filePath !== filePath) return tab;
+
+              // 如果正在保存或用户已编辑，不更新 / Don't update if saving or user has edited
+              if (savingFilesRef.current.has(filePath) || tab.isDirty) {
+                return tab;
+              }
+
+              return {
+                ...tab,
+                content,
+                originalContent: content,
+                isDirty: false,
+              };
+            });
           });
-        });
 
-        // 清除定时器 / Clean up timer
-        debounceTimers.delete(filePath);
-      }, 500); // 500ms 防抖时间 / 500ms debounce delay
+          // 清除定时器 / Clean up timer
+          debounceTimers.delete(filePath);
+        }, 500); // 500ms 防抖时间 / 500ms debounce delay
 
-      debounceTimers.set(filePath, timer);
-    });
+        debounceTimers.set(filePath, timer);
+      },
+    );
 
     return () => {
       unsubscribe();
@@ -493,27 +522,69 @@ export const PreviewProvider: React.FC<{ children: React.ReactNode }> = ({ child
   // 监听 preview.open 事件（用于 agent 打开网页预览）/ Listen to preview.open event (for agent to open web preview)
   // 同时监听 IPC 和 renderer emitter 两种方式 / Listen to both IPC and renderer emitter
   useEffect(() => {
-    const handlePreviewOpen = (data: { content: string; contentType: PreviewContentType; metadata?: PreviewMetadata }) => {
+    const handlePreviewOpen = (data: {
+      content: string;
+      contentType: PreviewContentType;
+      metadata?: PreviewMetadata;
+    }) => {
       if (data && data.content) {
         openPreview(data.content, data.contentType, data.metadata);
       }
     };
 
     // 监听 renderer emitter 事件 / Listen to renderer emitter event
-    emitter.on('preview.open', handlePreviewOpen);
+    emitter.on("preview.open", handlePreviewOpen);
 
     // 监听 IPC 事件（来自主进程，如 chrome-devtools MCP 导航）/ Listen to IPC event (from main process, e.g., chrome-devtools MCP navigation)
     const unsubscribeIpc = ipcBridge.preview.open.on(handlePreviewOpen);
 
     return () => {
-      emitter.off('preview.open', handlePreviewOpen);
+      emitter.off("preview.open", handlePreviewOpen);
       unsubscribeIpc();
     };
   }, [openPreview]);
 
   const previewContextValue = useMemo(() => {
-    return { isOpen, tabs, activeTabId, activeTab, openPreview, closePreview, closeTab, switchTab: setActiveTabId, updateContent, saveContent, findPreviewTab, closePreviewByIdentity, addToSendBox, setSendBoxHandler, domSnippets, addDomSnippet, removeDomSnippet, clearDomSnippets };
-  }, [isOpen, tabs, activeTabId, activeTab, openPreview, closePreview, closeTab, setActiveTabId, updateContent, saveContent, findPreviewTab, closePreviewByIdentity, addToSendBox, setSendBoxHandler, domSnippets, addDomSnippet, removeDomSnippet, clearDomSnippets]);
+    return {
+      isOpen,
+      tabs,
+      activeTabId,
+      activeTab,
+      openPreview,
+      closePreview,
+      closeTab,
+      switchTab: setActiveTabId,
+      updateContent,
+      saveContent,
+      findPreviewTab,
+      closePreviewByIdentity,
+      addToSendBox,
+      setSendBoxHandler,
+      domSnippets,
+      addDomSnippet,
+      removeDomSnippet,
+      clearDomSnippets,
+    };
+  }, [
+    isOpen,
+    tabs,
+    activeTabId,
+    activeTab,
+    openPreview,
+    closePreview,
+    closeTab,
+    setActiveTabId,
+    updateContent,
+    saveContent,
+    findPreviewTab,
+    closePreviewByIdentity,
+    addToSendBox,
+    setSendBoxHandler,
+    domSnippets,
+    addDomSnippet,
+    removeDomSnippet,
+    clearDomSnippets,
+  ]);
 
   return <PreviewContext.Provider value={previewContextValue}>{children}</PreviewContext.Provider>;
 };
@@ -521,7 +592,7 @@ export const PreviewProvider: React.FC<{ children: React.ReactNode }> = ({ child
 export const usePreviewContext = () => {
   const context = useContext(PreviewContext);
   if (!context) {
-    throw new Error('usePreviewContext must be used within PreviewProvider');
+    throw new Error("usePreviewContext must be used within PreviewProvider");
   }
   return context;
 };

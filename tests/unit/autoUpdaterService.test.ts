@@ -4,19 +4,19 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { autoUpdater } from 'electron-updater';
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { autoUpdater } from "electron-updater";
 
 // Mock electron modules
-vi.mock('electron', () => ({
+vi.mock("electron", () => ({
   app: {
-    getVersion: vi.fn(() => '1.0.0'),
+    getVersion: vi.fn(() => "1.0.0"),
     isPackaged: true,
   },
 }));
 
 // Mock electron-updater
-vi.mock('electron-updater', () => ({
+vi.mock("electron-updater", () => ({
   autoUpdater: {
     logger: null,
     autoDownload: true,
@@ -34,11 +34,11 @@ vi.mock('electron-updater', () => ({
 }));
 
 // Mock electron-log
-vi.mock('electron-log', () => ({
+vi.mock("electron-log", () => ({
   default: {
     transports: {
       file: {
-        level: 'info',
+        level: "info",
       },
     },
     info: vi.fn(),
@@ -47,7 +47,7 @@ vi.mock('electron-log', () => ({
   },
 }));
 
-describe('AutoUpdaterService', () => {
+describe("AutoUpdaterService", () => {
   let autoUpdaterService: any;
   let mockStatusBroadcast: ReturnType<typeof vi.fn>;
 
@@ -62,7 +62,7 @@ describe('AutoUpdaterService', () => {
     mockStatusBroadcast = vi.fn();
 
     // Import the service (after mocks are set up)
-    const module = await import('@/process/services/autoUpdaterService');
+    const module = await import("@/process/services/autoUpdaterService");
     autoUpdaterService = module.autoUpdaterService;
   });
 
@@ -72,8 +72,8 @@ describe('AutoUpdaterService', () => {
     vi.clearAllMocks();
   });
 
-  describe('initialize', () => {
-    it('should initialize with status broadcast callback', () => {
+  describe("initialize", () => {
+    it("should initialize with status broadcast callback", () => {
       expect(autoUpdaterService.isInitialized).toBe(false);
 
       autoUpdaterService.initialize(mockStatusBroadcast);
@@ -81,13 +81,13 @@ describe('AutoUpdaterService', () => {
       expect(autoUpdaterService.isInitialized).toBe(true);
     });
 
-    it('should initialize without callback (null)', () => {
+    it("should initialize without callback (null)", () => {
       autoUpdaterService.initialize();
 
       expect(autoUpdaterService.isInitialized).toBe(true);
     });
 
-    it('should set up event handlers only once', () => {
+    it("should set up event handlers only once", () => {
       autoUpdaterService.initialize(mockStatusBroadcast);
       const firstCallCount = vi.mocked(autoUpdater.on).mock.calls.length;
 
@@ -98,7 +98,7 @@ describe('AutoUpdaterService', () => {
       expect(vi.mocked(autoUpdater.on).mock.calls.length).toBe(firstCallCount);
     });
 
-    it('should not register handlers twice without reset', () => {
+    it("should not register handlers twice without reset", () => {
       autoUpdaterService.initialize(mockStatusBroadcast);
       const firstCallCount = vi.mocked(autoUpdater.on).mock.calls.length;
 
@@ -111,35 +111,35 @@ describe('AutoUpdaterService', () => {
     });
   });
 
-  describe('setStatusBroadcastCallback', () => {
-    it('should update status broadcast callback', () => {
+  describe("setStatusBroadcastCallback", () => {
+    it("should update status broadcast callback", () => {
       autoUpdaterService.initialize();
 
       const newCallback = vi.fn();
       autoUpdaterService.setStatusBroadcastCallback(newCallback);
 
       // Trigger an event to verify the new callback is used
-      autoUpdaterService.triggerEventForTest('checking-for-update');
+      autoUpdaterService.triggerEventForTest("checking-for-update");
 
-      expect(newCallback).toHaveBeenCalledWith({ status: 'checking' });
+      expect(newCallback).toHaveBeenCalledWith({ status: "checking" });
     });
   });
 
-  describe('checkForUpdates', () => {
-    it('should fail when not initialized', async () => {
+  describe("checkForUpdates", () => {
+    it("should fail when not initialized", async () => {
       const result = await autoUpdaterService.checkForUpdates();
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe('AutoUpdaterService not initialized');
+      expect(result.error).toBe("AutoUpdaterService not initialized");
     });
 
-    it('should check for updates successfully', async () => {
+    it("should check for updates successfully", async () => {
       autoUpdaterService.initialize(mockStatusBroadcast);
 
       const mockUpdateInfo = {
-        version: '2.0.0',
-        releaseDate: '2025-01-01',
-        releaseNotes: 'New features',
+        version: "2.0.0",
+        releaseDate: "2025-01-01",
+        releaseNotes: "New features",
       };
 
       vi.mocked(autoUpdater.checkForUpdates).mockResolvedValueOnce({
@@ -152,38 +152,38 @@ describe('AutoUpdaterService', () => {
       expect(result.updateInfo).toEqual(mockUpdateInfo);
     });
 
-    it('should handle check for updates error', async () => {
+    it("should handle check for updates error", async () => {
       autoUpdaterService.initialize(mockStatusBroadcast);
 
-      vi.mocked(autoUpdater.checkForUpdates).mockRejectedValueOnce(new Error('Network error'));
+      vi.mocked(autoUpdater.checkForUpdates).mockRejectedValueOnce(new Error("Network error"));
 
       const result = await autoUpdaterService.checkForUpdates();
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe('Network error');
+      expect(result.error).toBe("Network error");
     });
 
-    it('should handle non-Error thrown in checkForUpdates', async () => {
+    it("should handle non-Error thrown in checkForUpdates", async () => {
       autoUpdaterService.initialize(mockStatusBroadcast);
 
-      vi.mocked(autoUpdater.checkForUpdates).mockRejectedValueOnce('String error');
+      vi.mocked(autoUpdater.checkForUpdates).mockRejectedValueOnce("String error");
 
       const result = await autoUpdaterService.checkForUpdates();
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe('String error');
+      expect(result.error).toBe("String error");
     });
   });
 
-  describe('downloadUpdate', () => {
-    it('should fail when not initialized', async () => {
+  describe("downloadUpdate", () => {
+    it("should fail when not initialized", async () => {
       const result = await autoUpdaterService.downloadUpdate();
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe('AutoUpdaterService not initialized');
+      expect(result.error).toBe("AutoUpdaterService not initialized");
     });
 
-    it('should download update successfully', async () => {
+    it("should download update successfully", async () => {
       autoUpdaterService.initialize(mockStatusBroadcast);
 
       vi.mocked(autoUpdater.downloadUpdate).mockResolvedValueOnce([]);
@@ -193,39 +193,39 @@ describe('AutoUpdaterService', () => {
       expect(result.success).toBe(true);
     });
 
-    it('should handle download error', async () => {
+    it("should handle download error", async () => {
       autoUpdaterService.initialize(mockStatusBroadcast);
 
-      vi.mocked(autoUpdater.downloadUpdate).mockRejectedValueOnce(new Error('Download failed'));
+      vi.mocked(autoUpdater.downloadUpdate).mockRejectedValueOnce(new Error("Download failed"));
 
       const result = await autoUpdaterService.downloadUpdate();
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe('Download failed');
+      expect(result.error).toBe("Download failed");
     });
 
-    it('should handle non-Error thrown in downloadUpdate', async () => {
+    it("should handle non-Error thrown in downloadUpdate", async () => {
       autoUpdaterService.initialize(mockStatusBroadcast);
 
-      vi.mocked(autoUpdater.downloadUpdate).mockRejectedValueOnce('Download string error');
+      vi.mocked(autoUpdater.downloadUpdate).mockRejectedValueOnce("Download string error");
 
       const result = await autoUpdaterService.downloadUpdate();
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe('Download string error');
+      expect(result.error).toBe("Download string error");
     });
   });
 
-  describe('quitAndInstall', () => {
-    it('should call quitAndInstall on autoUpdater', () => {
+  describe("quitAndInstall", () => {
+    it("should call quitAndInstall on autoUpdater", () => {
       autoUpdaterService.quitAndInstall();
 
       expect(autoUpdater.quitAndInstall).toHaveBeenCalledWith(false, true);
     });
   });
 
-  describe('checkForUpdatesAndNotify', () => {
-    it('should call checkForUpdatesAndNotify', async () => {
+  describe("checkForUpdatesAndNotify", () => {
+    it("should call checkForUpdatesAndNotify", async () => {
       vi.mocked(autoUpdater.checkForUpdatesAndNotify).mockResolvedValueOnce(null);
 
       await autoUpdaterService.checkForUpdatesAndNotify();
@@ -233,16 +233,18 @@ describe('AutoUpdaterService', () => {
       expect(autoUpdater.checkForUpdatesAndNotify).toHaveBeenCalled();
     });
 
-    it('should handle checkForUpdatesAndNotify error gracefully', async () => {
-      vi.mocked(autoUpdater.checkForUpdatesAndNotify).mockRejectedValueOnce(new Error('Update check failed'));
+    it("should handle checkForUpdatesAndNotify error gracefully", async () => {
+      vi.mocked(autoUpdater.checkForUpdatesAndNotify).mockRejectedValueOnce(
+        new Error("Update check failed"),
+      );
 
       // Should not throw
       await expect(autoUpdaterService.checkForUpdatesAndNotify()).resolves.not.toThrow();
     });
   });
 
-  describe('setAllowPrerelease', () => {
-    it('should enable prerelease updates', () => {
+  describe("setAllowPrerelease", () => {
+    it("should enable prerelease updates", () => {
       autoUpdaterService.setAllowPrerelease(true);
 
       expect(autoUpdaterService.allowPrerelease).toBe(true);
@@ -250,7 +252,7 @@ describe('AutoUpdaterService', () => {
       expect(autoUpdater.allowDowngrade).toBe(true);
     });
 
-    it('should disable prerelease updates', () => {
+    it("should disable prerelease updates", () => {
       autoUpdaterService.setAllowPrerelease(false);
 
       expect(autoUpdaterService.allowPrerelease).toBe(false);
@@ -258,54 +260,54 @@ describe('AutoUpdaterService', () => {
     });
   });
 
-  describe('Event Emitter', () => {
-    it('should emit update-status event when checking for updates', () => {
+  describe("Event Emitter", () => {
+    it("should emit update-status event when checking for updates", () => {
       autoUpdaterService.initialize(mockStatusBroadcast);
 
       const statusListener = vi.fn();
-      autoUpdaterService.on('update-status', statusListener);
+      autoUpdaterService.on("update-status", statusListener);
 
-      autoUpdaterService.triggerEventForTest('checking-for-update');
+      autoUpdaterService.triggerEventForTest("checking-for-update");
 
-      expect(statusListener).toHaveBeenCalledWith({ status: 'checking' });
+      expect(statusListener).toHaveBeenCalledWith({ status: "checking" });
     });
 
-    it('should emit update-status event when update is available', () => {
+    it("should emit update-status event when update is available", () => {
       autoUpdaterService.initialize(mockStatusBroadcast);
 
       const statusListener = vi.fn();
-      autoUpdaterService.on('update-status', statusListener);
+      autoUpdaterService.on("update-status", statusListener);
 
-      autoUpdaterService.triggerEventForTest('update-available', {
-        version: '2.0.0',
-        releaseDate: '2025-01-01',
-        releaseNotes: 'New features',
+      autoUpdaterService.triggerEventForTest("update-available", {
+        version: "2.0.0",
+        releaseDate: "2025-01-01",
+        releaseNotes: "New features",
       });
 
       expect(statusListener).toHaveBeenCalledWith({
-        status: 'available',
-        version: '2.0.0',
-        releaseDate: '2025-01-01',
-        releaseNotes: 'New features',
+        status: "available",
+        version: "2.0.0",
+        releaseDate: "2025-01-01",
+        releaseNotes: "New features",
       });
     });
 
-    it('should emit update-status event when update is not available', () => {
+    it("should emit update-status event when update is not available", () => {
       autoUpdaterService.initialize(mockStatusBroadcast);
 
       const statusListener = vi.fn();
-      autoUpdaterService.on('update-status', statusListener);
+      autoUpdaterService.on("update-status", statusListener);
 
-      autoUpdaterService.triggerEventForTest('update-not-available');
+      autoUpdaterService.triggerEventForTest("update-not-available");
 
-      expect(statusListener).toHaveBeenCalledWith({ status: 'not-available' });
+      expect(statusListener).toHaveBeenCalledWith({ status: "not-available" });
     });
 
-    it('should emit update-status event with download progress', () => {
+    it("should emit update-status event with download progress", () => {
       autoUpdaterService.initialize(mockStatusBroadcast);
 
       const statusListener = vi.fn();
-      autoUpdaterService.on('update-status', statusListener);
+      autoUpdaterService.on("update-status", statusListener);
 
       const mockProgress = {
         bytesPerSecond: 1024 * 1024,
@@ -313,10 +315,10 @@ describe('AutoUpdaterService', () => {
         transferred: 50 * 1024 * 1024,
         total: 100 * 1024 * 1024,
       };
-      autoUpdaterService.triggerEventForTest('download-progress', mockProgress);
+      autoUpdaterService.triggerEventForTest("download-progress", mockProgress);
 
       expect(statusListener).toHaveBeenCalledWith({
-        status: 'downloading',
+        status: "downloading",
         progress: {
           bytesPerSecond: 1024 * 1024,
           percent: 50,
@@ -326,79 +328,81 @@ describe('AutoUpdaterService', () => {
       });
     });
 
-    it('should emit update-status event when update is downloaded', () => {
+    it("should emit update-status event when update is downloaded", () => {
       autoUpdaterService.initialize(mockStatusBroadcast);
 
       const statusListener = vi.fn();
-      autoUpdaterService.on('update-status', statusListener);
+      autoUpdaterService.on("update-status", statusListener);
 
-      autoUpdaterService.triggerEventForTest('update-downloaded', { version: '2.0.0' });
+      autoUpdaterService.triggerEventForTest("update-downloaded", { version: "2.0.0" });
 
       expect(statusListener).toHaveBeenCalledWith({
-        status: 'downloaded',
-        version: '2.0.0',
+        status: "downloaded",
+        version: "2.0.0",
       });
     });
 
-    it('should emit update-status event on error', () => {
+    it("should emit update-status event on error", () => {
       autoUpdaterService.initialize(mockStatusBroadcast);
 
       const statusListener = vi.fn();
-      autoUpdaterService.on('update-status', statusListener);
+      autoUpdaterService.on("update-status", statusListener);
 
-      autoUpdaterService.triggerEventForTest('error', new Error('Update failed'));
+      autoUpdaterService.triggerEventForTest("error", new Error("Update failed"));
 
       expect(statusListener).toHaveBeenCalledWith({
-        status: 'error',
-        error: 'Update failed',
+        status: "error",
+        error: "Update failed",
       });
     });
 
-    it('should handle non-string releaseNotes', () => {
+    it("should handle non-string releaseNotes", () => {
       autoUpdaterService.initialize(mockStatusBroadcast);
 
       const statusListener = vi.fn();
-      autoUpdaterService.on('update-status', statusListener);
+      autoUpdaterService.on("update-status", statusListener);
 
-      autoUpdaterService.triggerEventForTest('update-available', {
-        version: '2.0.0',
-        releaseDate: '2025-01-01',
-        releaseNotes: { some: 'object' }, // Non-string releaseNotes
+      autoUpdaterService.triggerEventForTest("update-available", {
+        version: "2.0.0",
+        releaseDate: "2025-01-01",
+        releaseNotes: { some: "object" }, // Non-string releaseNotes
       });
 
       expect(statusListener).toHaveBeenCalledWith({
-        status: 'available',
-        version: '2.0.0',
-        releaseDate: '2025-01-01',
+        status: "available",
+        version: "2.0.0",
+        releaseDate: "2025-01-01",
         releaseNotes: undefined,
       });
     });
 
-    it('should throw when triggering an event before initialize', () => {
+    it("should throw when triggering an event before initialize", () => {
       // Handler not registered yet — triggerEventForTest must throw a clear error
-      expect(() => autoUpdaterService.triggerEventForTest('checking-for-update')).toThrow('No handler registered for autoUpdater event "checking-for-update"');
+      expect(() => autoUpdaterService.triggerEventForTest("checking-for-update")).toThrow(
+        'No handler registered for autoUpdater event "checking-for-update"',
+      );
     });
   });
 
-  describe('Status Broadcast Callback', () => {
-    it('should call status broadcast callback on status change', () => {
+  describe("Status Broadcast Callback", () => {
+    it("should call status broadcast callback on status change", () => {
       autoUpdaterService.initialize(mockStatusBroadcast);
 
-      autoUpdaterService.triggerEventForTest('checking-for-update');
+      autoUpdaterService.triggerEventForTest("checking-for-update");
 
-      expect(mockStatusBroadcast).toHaveBeenCalledWith({ status: 'checking' });
+      expect(mockStatusBroadcast).toHaveBeenCalledWith({ status: "checking" });
     });
 
-    it('should not call callback if no callback registered', () => {
+    it("should not call callback if no callback registered", () => {
       autoUpdaterService.initialize(); // No callback
 
       // Should not throw
-      expect(() => autoUpdaterService.triggerEventForTest('checking-for-update')).not.toThrow();
+      expect(() => autoUpdaterService.triggerEventForTest("checking-for-update")).not.toThrow();
     });
   });
 
-  describe('reset vs resetForTest', () => {
-    it('reset() should not clear event handlers flag', () => {
+  describe("reset vs resetForTest", () => {
+    it("reset() should not clear event handlers flag", () => {
       autoUpdaterService.initialize(mockStatusBroadcast);
       const handlerCountAfterInit = vi.mocked(autoUpdater.on).mock.calls.length;
 
@@ -409,7 +413,7 @@ describe('AutoUpdaterService', () => {
       expect(vi.mocked(autoUpdater.on).mock.calls.length).toBe(handlerCountAfterInit);
     });
 
-    it('resetForTest() should clear event handlers flag', () => {
+    it("resetForTest() should clear event handlers flag", () => {
       autoUpdaterService.initialize(mockStatusBroadcast);
       const handlerCountAfterInit = vi.mocked(autoUpdater.on).mock.calls.length;
 
@@ -420,7 +424,7 @@ describe('AutoUpdaterService', () => {
       expect(vi.mocked(autoUpdater.on).mock.calls.length).toBe(handlerCountAfterInit * 2);
     });
 
-    it('resetForTest() should remove each registered handler from autoUpdater', () => {
+    it("resetForTest() should remove each registered handler from autoUpdater", () => {
       autoUpdaterService.initialize(mockStatusBroadcast);
 
       autoUpdaterService.resetForTest();
@@ -429,12 +433,14 @@ describe('AutoUpdaterService', () => {
       expect(vi.mocked(autoUpdater.removeListener).mock.calls.length).toBeGreaterThan(0);
     });
 
-    it('resetForTest() should prevent triggering events after reset', () => {
+    it("resetForTest() should prevent triggering events after reset", () => {
       autoUpdaterService.initialize(mockStatusBroadcast);
       autoUpdaterService.resetForTest();
 
       // After reset, handlers are gone — triggerEventForTest must throw
-      expect(() => autoUpdaterService.triggerEventForTest('checking-for-update')).toThrow('No handler registered for autoUpdater event "checking-for-update"');
+      expect(() => autoUpdaterService.triggerEventForTest("checking-for-update")).toThrow(
+        'No handler registered for autoUpdater event "checking-for-update"',
+      );
     });
   });
 });

@@ -31,7 +31,7 @@ export function convertLatexDelimiters(text: string): string {
     segments.push(replaceDelimiters(text.slice(pos)));
   }
 
-  return segments.join('');
+  return segments.join("");
 }
 
 function replaceDelimiters(text: string): string {

@@ -4,13 +4,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { CodexToolCallUpdate } from '@/common/chatLib';
-import { uuid } from '@/common/utils';
-import type { FileChange, McpInvocation, CodexEventMsg } from '@/common/codex/types';
-import { ToolRegistry } from '@/common/codex/utils';
-import type { ICodexMessageEmitter } from '@/agent/codex/messaging/CodexMessageEmitter';
-import type { IResponseMessage } from '@/common/ipcBridge';
-import { NavigationInterceptor } from '@/common/navigation';
+import type { CodexToolCallUpdate } from "@/common/chatLib";
+import { uuid } from "@/common/utils";
+import type { FileChange, McpInvocation, CodexEventMsg } from "@/common/codex/types";
+import { ToolRegistry } from "@/common/codex/utils";
+import type { ICodexMessageEmitter } from "@/agent/codex/messaging/CodexMessageEmitter";
+import type { IResponseMessage } from "@/common/ipcBridge";
+import { NavigationInterceptor } from "@/common/navigation";
 
 /**
  * Metadata for exec approval requests (for ApprovalStore)
@@ -32,31 +32,31 @@ export class CodexToolHandlers {
 
   constructor(
     private conversation_id: string,
-    private messageEmitter: ICodexMessageEmitter
+    private messageEmitter: ICodexMessageEmitter,
   ) {
     this.toolRegistry = new ToolRegistry();
   }
 
   // Command execution handlers
-  handleExecCommandBegin(msg: Extract<CodexEventMsg, { type: 'exec_command_begin' }>) {
+  handleExecCommandBegin(msg: Extract<CodexEventMsg, { type: "exec_command_begin" }>) {
     const callId = msg.call_id;
-    const cmd = Array.isArray(msg.command) ? msg.command.join(' ') : String(msg.command);
-    this.cmdBuffers.set(callId, { stdout: '', stderr: '', combined: '' });
+    const cmd = Array.isArray(msg.command) ? msg.command.join(" ") : String(msg.command);
+    this.cmdBuffers.set(callId, { stdout: "", stderr: "", combined: "" });
     // 试点启用确认流：先置为 Confirming
     this.pendingConfirmations.add(callId);
 
     // Use new CodexToolCall approach with subtype and original data
     this.emitCodexToolCall(callId, {
-      status: 'pending',
-      kind: 'execute',
-      subtype: 'exec_command_begin',
+      status: "pending",
+      kind: "execute",
+      subtype: "exec_command_begin",
       data: msg,
       description: cmd,
       startTime: Date.now(),
     });
   }
 
-  handleExecCommandOutputDelta(msg: Extract<CodexEventMsg, { type: 'exec_command_output_delta' }>) {
+  handleExecCommandOutputDelta(msg: Extract<CodexEventMsg, { type: "exec_command_output_delta" }>) {
     const callId = msg.call_id;
     const stream = msg.stream;
     let chunk = msg.chunk;
@@ -65,54 +65,54 @@ export class CodexToolHandlers {
     if (this.isValidBase64(chunk)) {
       try {
         // Decode base64 - Codex sends base64-encoded strings
-        chunk = Buffer.from(chunk, 'base64').toString('utf-8');
+        chunk = Buffer.from(chunk, "base64").toString("utf-8");
       } catch {
         // If base64 decoding fails, use the original string
       }
     }
-    const buf = this.cmdBuffers.get(callId) || { stdout: '', stderr: '', combined: '' };
-    if (stream === 'stderr') buf.stderr += chunk;
+    const buf = this.cmdBuffers.get(callId) || { stdout: "", stderr: "", combined: "" };
+    if (stream === "stderr") buf.stderr += chunk;
     else buf.stdout += chunk;
     buf.combined += chunk;
     this.cmdBuffers.set(callId, buf);
 
     // Use new CodexToolCall approach with subtype and original data
     this.emitCodexToolCall(callId, {
-      status: 'executing',
-      kind: 'execute',
-      subtype: 'exec_command_output_delta',
+      status: "executing",
+      kind: "execute",
+      subtype: "exec_command_output_delta",
       data: msg,
       content: [
         {
-          type: 'output',
+          type: "output",
           output: buf.combined,
         },
       ],
     });
   }
 
-  handleExecCommandEnd(msg: Extract<CodexEventMsg, { type: 'exec_command_end' }>) {
+  handleExecCommandEnd(msg: Extract<CodexEventMsg, { type: "exec_command_end" }>) {
     const callId = msg.call_id;
     const exitCode = msg.exit_code;
 
     // 获取累积的输出，优先使用缓存的数据，回退到消息中的数据
     const buf = this.cmdBuffers.get(callId);
-    const finalOutput = buf?.combined || msg.aggregated_output || '';
+    const finalOutput = buf?.combined || msg.aggregated_output || "";
 
     // 确定最终状态：exit_code 0 为成功，其他为错误
     const isSuccess = exitCode === 0;
-    const status = isSuccess ? 'success' : 'error';
+    const status = isSuccess ? "success" : "error";
 
     // Use new CodexToolCall approach with subtype and original data
     this.emitCodexToolCall(callId, {
       status,
-      kind: 'execute',
-      subtype: 'exec_command_end',
+      kind: "execute",
+      subtype: "exec_command_end",
       data: msg,
       endTime: Date.now(),
       content: [
         {
-          type: 'output',
+          type: "output",
           output: finalOutput,
         },
       ],
@@ -124,13 +124,13 @@ export class CodexToolHandlers {
   }
 
   // Patch handlers
-  handlePatchApplyBegin(msg: Extract<CodexEventMsg, { type: 'patch_apply_begin' }>) {
+  handlePatchApplyBegin(msg: Extract<CodexEventMsg, { type: "patch_apply_begin" }>) {
     const callId = msg.call_id || uuid();
-    const auto = msg.auto_approved ? 'true' : 'false';
+    const auto = msg.auto_approved ? "true" : "false";
     const summary = this.summarizePatch(msg.changes);
     // Cache both summary and raw changes for later application
     this.patchBuffers.set(callId, summary);
-    if (msg.changes && typeof msg.changes === 'object') {
+    if (msg.changes && typeof msg.changes === "object") {
       // msg.changes 已经有正确的类型定义，无需类型断言
       this.patchChanges.set(callId, msg.changes);
     }
@@ -138,15 +138,15 @@ export class CodexToolHandlers {
     if (!msg.auto_approved) this.pendingConfirmations.add(callId);
     // Use new CodexToolCall approach with subtype and original data
     this.emitCodexToolCall(callId, {
-      status: msg.auto_approved ? 'executing' : 'pending',
-      kind: 'execute',
-      subtype: 'patch_apply_begin',
+      status: msg.auto_approved ? "executing" : "pending",
+      kind: "execute",
+      subtype: "patch_apply_begin",
       data: msg,
       description: `apply_patch auto_approved=${auto}`,
       startTime: Date.now(),
       content: [
         {
-          type: 'output',
+          type: "output",
           output: summary,
         },
       ],
@@ -157,22 +157,22 @@ export class CodexToolHandlers {
     }
   }
 
-  handlePatchApplyEnd(msg: Extract<CodexEventMsg, { type: 'patch_apply_end' }>) {
+  handlePatchApplyEnd(msg: Extract<CodexEventMsg, { type: "patch_apply_end" }>) {
     const callId = msg.call_id;
     if (!callId) return;
     const ok = !!msg.success;
-    const summary = this.patchBuffers.get(callId) || '';
+    const summary = this.patchBuffers.get(callId) || "";
     // Use new CodexToolCall approach with subtype and original data
     this.emitCodexToolCall(callId, {
-      status: ok ? 'success' : 'error',
-      kind: 'execute',
-      subtype: 'patch_apply_end',
+      status: ok ? "success" : "error",
+      kind: "execute",
+      subtype: "patch_apply_end",
       data: msg,
-      description: ok ? 'Patch applied successfully' : 'Patch apply failed',
+      description: ok ? "Patch applied successfully" : "Patch apply failed",
       endTime: Date.now(),
       content: [
         {
-          type: 'output',
+          type: "output",
           output: summary,
         },
       ],
@@ -185,11 +185,11 @@ export class CodexToolHandlers {
   }
 
   // MCP tool handlers
-  handleMcpToolCallBegin(msg: Extract<CodexEventMsg, { type: 'mcp_tool_call_begin' }>) {
+  handleMcpToolCallBegin(msg: Extract<CodexEventMsg, { type: "mcp_tool_call_begin" }>) {
     // MCP events may or may not have call_id, generate one based on tool name if missing
     // MCP 事件可能有也可能没有 call_id，如果缺失则根据工具名称生成
     const inv = msg.invocation || {};
-    const toolName = String(inv.tool || inv.name || inv.method || 'unknown');
+    const toolName = String(inv.tool || inv.name || inv.method || "unknown");
     // Use type assertion since call_id may exist in runtime data but not in type definition
     // 使用类型断言，因为 call_id 可能在运行时数据中存在但不在类型定义中
     const callId = (msg as unknown as { call_id?: string }).call_id || `mcp_${toolName}_${uuid()}`;
@@ -200,10 +200,10 @@ export class CodexToolHandlers {
     const interceptionResult = NavigationInterceptor.intercept(
       {
         toolName,
-        server: String(inv.server || ''),
+        server: String(inv.server || ""),
         arguments: inv.arguments as Record<string, unknown>,
       },
-      this.conversation_id
+      this.conversation_id,
     );
 
     if (interceptionResult.intercepted && interceptionResult.previewMessage) {
@@ -216,43 +216,43 @@ export class CodexToolHandlers {
 
     // Use new CodexToolCall approach with subtype and original data
     this.emitCodexToolCall(callId, {
-      status: 'executing',
-      kind: 'execute',
-      subtype: 'mcp_tool_call_begin',
+      status: "executing",
+      kind: "execute",
+      subtype: "mcp_tool_call_begin",
       data: msg,
       description: `${title} (beginning)`,
       startTime: Date.now(),
     });
   }
 
-  handleMcpToolCallEnd(msg: Extract<CodexEventMsg, { type: 'mcp_tool_call_end' }>) {
+  handleMcpToolCallEnd(msg: Extract<CodexEventMsg, { type: "mcp_tool_call_end" }>) {
     // MCP events don't have call_id, generate one based on tool name
     const inv = msg.invocation || {};
-    const toolName = inv.tool || inv.name || inv.method || 'unknown';
+    const toolName = inv.tool || inv.name || inv.method || "unknown";
     const callId = `mcp_${toolName}_${uuid()}`;
     const title = this.formatMcpInvocation(inv);
     const result = msg.result;
 
     // 类型安全的错误检查，使用 in 操作符进行类型保护
     const isError = (() => {
-      if (typeof result === 'object' && result !== null) {
-        return 'Err' in result || ('is_error' in result && result.is_error === true);
+      if (typeof result === "object" && result !== null) {
+        return "Err" in result || ("is_error" in result && result.is_error === true);
       }
       return false;
     })();
 
     // Use new CodexToolCall approach with subtype and original data
     this.emitCodexToolCall(callId, {
-      status: isError ? 'error' : 'success',
-      kind: 'execute',
-      subtype: 'mcp_tool_call_end',
+      status: isError ? "error" : "success",
+      kind: "execute",
+      subtype: "mcp_tool_call_end",
       data: msg,
-      description: `${title} ${isError ? 'failed' : 'success'}`,
+      description: `${title} ${isError ? "failed" : "success"}`,
       endTime: Date.now(),
       content: [
         {
-          type: 'output',
-          output: typeof result === 'string' ? result : JSON.stringify(result, null, 2),
+          type: "output",
+          output: typeof result === "string" ? result : JSON.stringify(result, null, 2),
         },
       ],
     });
@@ -262,30 +262,30 @@ export class CodexToolHandlers {
   }
 
   // Web search handlers
-  handleWebSearchBegin(msg: Extract<CodexEventMsg, { type: 'web_search_begin' }>) {
+  handleWebSearchBegin(msg: Extract<CodexEventMsg, { type: "web_search_begin" }>) {
     const callId = msg.call_id;
-    this.cmdBuffers.set(callId, { stdout: '', stderr: '', combined: '' });
+    this.cmdBuffers.set(callId, { stdout: "", stderr: "", combined: "" });
     // 试点启用确认流：先置为 Confirming
     this.pendingConfirmations.add(callId);
     // Use new CodexToolCall approach with subtype and original data
     this.emitCodexToolCall(callId, {
-      status: 'pending',
-      kind: 'execute',
-      subtype: 'web_search_begin',
+      status: "pending",
+      kind: "execute",
+      subtype: "web_search_begin",
       data: msg,
       description: callId,
       startTime: Date.now(),
     });
   }
 
-  handleWebSearchEnd(msg: Extract<CodexEventMsg, { type: 'web_search_end' }>) {
+  handleWebSearchEnd(msg: Extract<CodexEventMsg, { type: "web_search_end" }>) {
     const callId = msg.call_id || uuid();
-    const query = msg.query || '';
+    const query = msg.query || "";
     // Use new CodexToolCall approach with subtype and original data
     this.emitCodexToolCall(callId, {
-      status: 'success',
-      kind: 'execute',
-      subtype: 'web_search_end',
+      status: "success",
+      kind: "execute",
+      subtype: "web_search_end",
       data: msg,
       description: `Web search completed: ${query}`,
       endTime: Date.now(),
@@ -308,13 +308,13 @@ export class CodexToolHandlers {
     }
 
     const toolCallMessage: IResponseMessage = {
-      type: 'codex_tool_call',
+      type: "codex_tool_call",
       conversation_id: this.conversation_id,
       msg_id: msgId,
       data: {
         toolCallId: callId,
-        status: 'pending',
-        kind: 'execute',
+        status: "pending",
+        kind: "execute",
         ...update,
       } as CodexToolCallUpdate,
     };
@@ -322,53 +322,53 @@ export class CodexToolHandlers {
     this.messageEmitter.emitAndPersistMessage(toolCallMessage);
 
     // Clean up mapping if tool call is completed
-    if (['success', 'error', 'canceled'].includes(update.status || '')) {
+    if (["success", "error", "canceled"].includes(update.status || "")) {
       this.activeToolCalls.delete(callId);
     }
   }
 
   // Turn diff handler
-  handleTurnDiff(msg: Extract<CodexEventMsg, { type: 'turn_diff' }>) {
+  handleTurnDiff(msg: Extract<CodexEventMsg, { type: "turn_diff" }>) {
     // Generate a unique call ID for turn_diff since it doesn't have one
     const callId = `turn_diff_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
 
     this.emitCodexToolCall(callId, {
-      status: 'success',
-      kind: 'patch', // Turn diff shows file changes, so use patch kind
-      subtype: 'turn_diff',
+      status: "success",
+      kind: "patch", // Turn diff shows file changes, so use patch kind
+      subtype: "turn_diff",
       data: msg,
-      description: 'File changes summary',
+      description: "File changes summary",
       startTime: Date.now(),
       endTime: Date.now(),
     });
   }
 
   private formatMcpInvocation(inv: McpInvocation | Record<string, unknown>): string {
-    const name = inv.method || inv.name || 'unknown';
+    const name = inv.method || inv.name || "unknown";
     return `MCP Tool: ${name}`;
   }
 
   private summarizePatch(changes: Record<string, FileChange> | undefined): string {
-    if (!changes || typeof changes !== 'object') return 'No changes';
+    if (!changes || typeof changes !== "object") return "No changes";
 
     const entries = Object.entries(changes);
-    if (entries.length === 0) return 'No changes';
+    if (entries.length === 0) return "No changes";
 
     return entries
       .map(([file, change]) => {
-        if (typeof change === 'object' && change !== null) {
-          let action: string = 'modify';
+        if (typeof change === "object" && change !== null) {
+          let action: string = "modify";
           // FileChange 有明确的 type 结构，直接使用类型安全的访问
-          if ('type' in change && typeof change.type === 'string') {
+          if ("type" in change && typeof change.type === "string") {
             action = change.type;
-          } else if ('action' in change && typeof change.action === 'string') {
+          } else if ("action" in change && typeof change.action === "string") {
             action = change.action;
           }
           return `${action}: ${file}`;
         }
         return `modify: ${file}`;
       })
-      .join('\n');
+      .join("\n");
   }
 
   private applyPatchChanges(callId: string): void {

@@ -7,11 +7,11 @@ name: Verify Homebrew Cask
 on:
   # Daily check at 08:00 UTC
   schedule:
-    - cron: '0 8 * * *'
+    - cron: "0 8 * * *"
   workflow_dispatch:
     inputs:
       version:
-        description: 'Version to verify (e.g., 1.8.20). Leave empty to use latest release.'
+        description: "Version to verify (e.g., 1.8.20). Leave empty to use latest release."
         required: false
         type: string
 

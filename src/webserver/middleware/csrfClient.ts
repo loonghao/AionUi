@@ -4,12 +4,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { CSRF_COOKIE_NAME, CSRF_HEADER_NAME } from '@/webserver/config/constants';
+import { CSRF_COOKIE_NAME, CSRF_HEADER_NAME } from "@/webserver/config/constants";
 
 // Read cookie by name in browser environment
 // 在浏览器环境中根据名称读取指定 Cookie
 function readCookie(name: string): string | null {
-  if (typeof document === 'undefined') {
+  if (typeof document === "undefined") {
     return null;
   }
 
@@ -18,11 +18,11 @@ function readCookie(name: string): string | null {
     return null;
   }
 
-  const cookies = cookieString.split(';');
+  const cookies = cookieString.split(";");
   for (const cookie of cookies) {
-    const [rawName, ...rawValueParts] = cookie.trim().split('=');
+    const [rawName, ...rawValueParts] = cookie.trim().split("=");
     if (rawName === name) {
-      return decodeURIComponent(rawValueParts.join('='));
+      return decodeURIComponent(rawValueParts.join("="));
     }
   }
 
@@ -50,12 +50,14 @@ export function withCsrfHeader(headers: HeadersInit = {}): HeadersInit {
 
   if (Array.isArray(headers)) {
     // [[name, value]] format
-    const normalized = headers.filter(([name]) => name.toLowerCase() !== CSRF_HEADER_NAME.toLowerCase());
+    const normalized = headers.filter(
+      ([name]) => name.toLowerCase() !== CSRF_HEADER_NAME.toLowerCase(),
+    );
     normalized.push([CSRF_HEADER_NAME, token]);
     return normalized;
   }
 
-  if (typeof headers === 'object' && headers !== null) {
+  if (typeof headers === "object" && headers !== null) {
     const plainHeaders: Record<string, string> = { ...(headers as Record<string, string>) };
     plainHeaders[CSRF_HEADER_NAME] = token;
     return plainHeaders;
@@ -79,7 +81,7 @@ export function withCsrfToken<T = unknown>(body: T): T & { _csrf?: string } {
     return { _csrf: token } as T & { _csrf?: string };
   }
 
-  if (typeof body === 'object' && !Array.isArray(body)) {
+  if (typeof body === "object" && !Array.isArray(body)) {
     return { ...body, _csrf: token };
   }
 

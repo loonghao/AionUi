@@ -4,9 +4,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { Context } from 'grammy';
-import type { Message, PhotoSize, User as TelegramUser } from 'grammy/types';
-import type { IUnifiedIncomingMessage, IUnifiedMessageContent, IUnifiedOutgoingMessage, IUnifiedUser } from '../../types';
+import type { Context } from "grammy";
+import type { Message, PhotoSize, User as TelegramUser } from "grammy/types";
+import type {
+  IUnifiedIncomingMessage,
+  IUnifiedMessageContent,
+  IUnifiedOutgoingMessage,
+  IUnifiedUser,
+} from "../../types";
 
 /**
  * TelegramAdapter - Converts between Telegram and Unified message formats
@@ -36,12 +41,12 @@ export function toUnifiedIncomingMessage(ctx: Context): IUnifiedIncomingMessage 
 
     return {
       id: callbackQuery.id,
-      platform: 'telegram',
+      platform: "telegram",
       chatId,
       user,
       content: {
-        type: 'action',
-        text: callbackQuery.data || '',
+        type: "action",
+        text: callbackQuery.data || "",
       },
       timestamp: Date.now(),
       raw: callbackQuery,
@@ -59,7 +64,7 @@ export function toUnifiedIncomingMessage(ctx: Context): IUnifiedIncomingMessage 
 
   return {
     id: message.message_id.toString(),
-    platform: 'telegram',
+    platform: "telegram",
     chatId: message.chat.id.toString(),
     user,
     content,
@@ -75,7 +80,10 @@ export function toUnifiedIncomingMessage(ctx: Context): IUnifiedIncomingMessage 
 export function toUnifiedUser(telegramUser: TelegramUser | undefined): IUnifiedUser | null {
   if (!telegramUser) return null;
 
-  const displayName = [telegramUser.first_name, telegramUser.last_name].filter(Boolean).join(' ') || telegramUser.username || `User ${telegramUser.id}`;
+  const displayName =
+    [telegramUser.first_name, telegramUser.last_name].filter(Boolean).join(" ") ||
+    telegramUser.username ||
+    `User ${telegramUser.id}`;
 
   return {
     id: telegramUser.id.toString(),
@@ -92,7 +100,7 @@ function extractMessageContent(message: Message): IUnifiedMessageContent {
   // Check for different content types
   if (message.text) {
     return {
-      type: 'text',
+      type: "text",
       text: message.text,
     };
   }
@@ -101,13 +109,13 @@ function extractMessageContent(message: Message): IUnifiedMessageContent {
     // Get the largest photo size
     const photo = getLargestPhoto(message.photo);
     return {
-      type: 'photo',
-      text: message.caption || '',
+      type: "photo",
+      text: message.caption || "",
       attachments: [
         {
-          type: 'photo',
+          type: "photo",
           fileId: photo.file_id,
-          mimeType: 'image/jpeg', // Telegram photos are always JPEG
+          mimeType: "image/jpeg", // Telegram photos are always JPEG
           size: photo.file_size,
         },
       ],
@@ -116,11 +124,11 @@ function extractMessageContent(message: Message): IUnifiedMessageContent {
 
   if (message.document) {
     return {
-      type: 'document',
-      text: message.caption || '',
+      type: "document",
+      text: message.caption || "",
       attachments: [
         {
-          type: 'document',
+          type: "document",
           fileId: message.document.file_id,
           fileName: message.document.file_name,
           mimeType: message.document.mime_type,
@@ -132,13 +140,13 @@ function extractMessageContent(message: Message): IUnifiedMessageContent {
 
   if (message.voice) {
     return {
-      type: 'voice',
-      text: '',
+      type: "voice",
+      text: "",
       attachments: [
         {
-          type: 'voice',
+          type: "voice",
           fileId: message.voice.file_id,
-          mimeType: message.voice.mime_type || 'audio/ogg',
+          mimeType: message.voice.mime_type || "audio/ogg",
           size: message.voice.file_size,
           duration: message.voice.duration,
         },
@@ -148,11 +156,11 @@ function extractMessageContent(message: Message): IUnifiedMessageContent {
 
   if (message.audio) {
     return {
-      type: 'audio',
-      text: message.caption || '',
+      type: "audio",
+      text: message.caption || "",
       attachments: [
         {
-          type: 'audio',
+          type: "audio",
           fileId: message.audio.file_id,
           fileName: message.audio.file_name,
           mimeType: message.audio.mime_type,
@@ -165,11 +173,11 @@ function extractMessageContent(message: Message): IUnifiedMessageContent {
 
   if (message.video) {
     return {
-      type: 'video',
-      text: message.caption || '',
+      type: "video",
+      text: message.caption || "",
       attachments: [
         {
-          type: 'video',
+          type: "video",
           fileId: message.video.file_id,
           fileName: message.video.file_name,
           mimeType: message.video.mime_type,
@@ -182,13 +190,13 @@ function extractMessageContent(message: Message): IUnifiedMessageContent {
 
   if (message.sticker) {
     return {
-      type: 'sticker',
-      text: message.sticker.emoji || '',
+      type: "sticker",
+      text: message.sticker.emoji || "",
       attachments: [
         {
-          type: 'sticker',
+          type: "sticker",
           fileId: message.sticker.file_id,
-          mimeType: message.sticker.is_animated ? 'application/x-tgsticker' : 'image/webp',
+          mimeType: message.sticker.is_animated ? "application/x-tgsticker" : "image/webp",
         },
       ],
     };
@@ -196,8 +204,8 @@ function extractMessageContent(message: Message): IUnifiedMessageContent {
 
   // Default to text type for unsupported content
   return {
-    type: 'text',
-    text: '',
+    type: "text",
+    text: "",
   };
 }
 
@@ -218,7 +226,7 @@ function getLargestPhoto(photos: PhotoSize[]): PhotoSize {
  * Options for sending messages via Telegram
  */
 export interface TelegramSendOptions {
-  parse_mode?: 'HTML' | 'MarkdownV2' | 'Markdown';
+  parse_mode?: "HTML" | "MarkdownV2" | "Markdown";
   reply_markup?: any;
   reply_to_message_id?: number;
   disable_notification?: boolean;
@@ -233,7 +241,7 @@ export function toTelegramSendParams(message: IUnifiedOutgoingMessage): {
   options: TelegramSendOptions;
 } {
   const options: TelegramSendOptions = {
-    parse_mode: message.parseMode || 'HTML',
+    parse_mode: message.parseMode || "HTML",
     disable_notification: message.silent,
   };
 
@@ -246,7 +254,7 @@ export function toTelegramSendParams(message: IUnifiedOutgoingMessage): {
   }
 
   return {
-    text: message.text || '',
+    text: message.text || "",
     options,
   };
 }
@@ -257,7 +265,7 @@ export function toTelegramSendParams(message: IUnifiedOutgoingMessage): {
  * Escape special characters for Telegram HTML format
  */
 export function escapeHtml(text: string): string {
-  return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
 /**
@@ -265,7 +273,7 @@ export function escapeHtml(text: string): string {
  */
 export function escapeMarkdownV2(text: string): string {
   // eslint-disable-next-line no-useless-escape
-  return text.replace(/[_*\[\]()~`>#+\-=|{}.!\\]/g, '\\$&');
+  return text.replace(/[_*\[\]()~`>#+\-=|{}.!\\]/g, "\\$&");
 }
 
 /**
@@ -276,18 +284,18 @@ export function markdownToTelegramHtml(text: string): string {
   let result = escapeHtml(text);
 
   // Bold: **text** or __text__
-  result = result.replace(/\*\*(.+?)\*\*/g, '<b>$1</b>');
-  result = result.replace(/__(.+?)__/g, '<b>$1</b>');
+  result = result.replace(/\*\*(.+?)\*\*/g, "<b>$1</b>");
+  result = result.replace(/__(.+?)__/g, "<b>$1</b>");
 
   // Italic: *text* or _text_
-  result = result.replace(/\*(.+?)\*/g, '<i>$1</i>');
-  result = result.replace(/_(.+?)_/g, '<i>$1</i>');
+  result = result.replace(/\*(.+?)\*/g, "<i>$1</i>");
+  result = result.replace(/_(.+?)_/g, "<i>$1</i>");
 
   // Code: `code`
-  result = result.replace(/`([^`]+)`/g, '<code>$1</code>');
+  result = result.replace(/`([^`]+)`/g, "<code>$1</code>");
 
   // Code block: ```code```
-  result = result.replace(/```(\w*)\n?([\s\S]*?)```/g, '<pre><code>$2</code></pre>');
+  result = result.replace(/```(\w*)\n?([\s\S]*?)```/g, "<pre><code>$2</code></pre>");
 
   // Links: [text](url)
   result = result.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>');
@@ -324,12 +332,12 @@ export function splitMessage(text: string, maxLength: number = TELEGRAM_MESSAGE_
 
     // Look for newline within the last 20% of the chunk
     const newlineSearchStart = Math.floor(maxLength * 0.8);
-    const lastNewline = remaining.lastIndexOf('\n', maxLength);
+    const lastNewline = remaining.lastIndexOf("\n", maxLength);
     if (lastNewline > newlineSearchStart) {
       splitIndex = lastNewline + 1;
     } else {
       // Look for space
-      const lastSpace = remaining.lastIndexOf(' ', maxLength);
+      const lastSpace = remaining.lastIndexOf(" ", maxLength);
       if (lastSpace > newlineSearchStart) {
         splitIndex = lastSpace + 1;
       }
@@ -348,7 +356,7 @@ export function splitMessage(text: string, maxLength: number = TELEGRAM_MESSAGE_
  * Parse callback query data
  */
 export function parseCallbackData(data: string): { action: string; params: string[] } {
-  const parts = data.split(':');
+  const parts = data.split(":");
   return {
     action: parts[0],
     params: parts.slice(1),
@@ -359,5 +367,5 @@ export function parseCallbackData(data: string): { action: string; params: strin
  * Build callback data string
  */
 export function buildCallbackData(action: string, ...params: string[]): string {
-  return [action, ...params].join(':');
+  return [action, ...params].join(":");
 }

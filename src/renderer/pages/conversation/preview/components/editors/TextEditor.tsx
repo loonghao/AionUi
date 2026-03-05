@@ -4,10 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useThemeContext } from '@/renderer/context/ThemeContext';
-import { EditorView } from '@codemirror/view';
-import CodeMirror from '@uiw/react-codemirror';
-import React, { useCallback, useMemo } from 'react';
+import { useThemeContext } from "@/renderer/context/ThemeContext";
+import { EditorView } from "@codemirror/view";
+import CodeMirror from "@uiw/react-codemirror";
+import React, { useCallback, useMemo } from "react";
 
 interface TextEditorProps {
   value: string; // 编辑器内容 / Editor content
@@ -24,7 +24,13 @@ interface TextEditorProps {
  * 基于 CodeMirror 实现，支持语法高亮和实时编辑
  * Based on CodeMirror, supports syntax highlighting and live editing
  */
-const TextEditor: React.FC<TextEditorProps> = ({ value, onChange, readOnly = false, containerRef, onScroll }) => {
+const TextEditor: React.FC<TextEditorProps> = ({
+  value,
+  onChange,
+  readOnly = false,
+  containerRef,
+  onScroll,
+}) => {
   const { theme } = useThemeContext();
 
   // 监听容器滚动事件 / Listen to container scroll events
@@ -36,8 +42,8 @@ const TextEditor: React.FC<TextEditorProps> = ({ value, onChange, readOnly = fal
       onScroll(container.scrollTop, container.scrollHeight, container.clientHeight);
     };
 
-    container.addEventListener('scroll', handleScroll);
-    return () => container.removeEventListener('scroll', handleScroll);
+    container.addEventListener("scroll", handleScroll);
+    return () => container.removeEventListener("scroll", handleScroll);
   }, [containerRef, onScroll]);
 
   // 使用 useCallback 包装 onChange，避免每次渲染都创建新函数 / Use useCallback to avoid creating new function on each render
@@ -45,7 +51,7 @@ const TextEditor: React.FC<TextEditorProps> = ({ value, onChange, readOnly = fal
     (val: string) => {
       onChange(val);
     },
-    [onChange]
+    [onChange],
   );
 
   // 缓存 basicSetup 配置，避免每次渲染都创建新对象 / Memoize basicSetup config
@@ -56,22 +62,31 @@ const TextEditor: React.FC<TextEditorProps> = ({ value, onChange, readOnly = fal
       highlightActiveLine: true, // 高亮当前行 / Highlight active line
       foldGutter: true, // 折叠功能 / Code folding
     }),
-    []
+    [],
   );
 
   // 缓存样式对象 / Memoize style object
   const editorStyle = useMemo(
     () => ({
-      fontSize: '14px',
-      height: '100%',
-      textAlign: 'left' as const, // 文本左对齐 / Text align left
+      fontSize: "14px",
+      height: "100%",
+      textAlign: "left" as const, // 文本左对齐 / Text align left
     }),
-    []
+    [],
   );
 
   return (
-    <div ref={containerRef} className='h-full w-full overflow-auto text-left'>
-      <CodeMirror value={value} height='100%' theme={theme === 'dark' ? 'dark' : 'light'} extensions={[EditorView.lineWrapping]} onChange={handleChange} readOnly={readOnly} basicSetup={basicSetupConfig} style={editorStyle} />
+    <div ref={containerRef} className="h-full w-full overflow-auto text-left">
+      <CodeMirror
+        value={value}
+        height="100%"
+        theme={theme === "dark" ? "dark" : "light"}
+        extensions={[EditorView.lineWrapping]}
+        onChange={handleChange}
+        readOnly={readOnly}
+        basicSetup={basicSetupConfig}
+        style={editorStyle}
+      />
     </div>
   );
 };

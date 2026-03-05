@@ -19,16 +19,16 @@
  * 4. Token Synchronization during concurrent requests / 并发请求时的 Token 同步
  */
 
-import { AuthType } from '@office-ai/aioncli-core';
+import { AuthType } from "@office-ai/aioncli-core";
 
 // Token State / Token 状态
 export enum TokenState {
-  VALID = 'valid',
-  EXPIRING_SOON = 'expiring_soon', // Expiring soon (within pre-refresh window) / 即将过期（在预刷新窗口内）
-  EXPIRED = 'expired',
-  REFRESHING = 'refreshing',
-  REFRESH_FAILED = 'refresh_failed',
-  UNKNOWN = 'unknown',
+  VALID = "valid",
+  EXPIRING_SOON = "expiring_soon", // Expiring soon (within pre-refresh window) / 即将过期（在预刷新窗口内）
+  EXPIRED = "expired",
+  REFRESHING = "refreshing",
+  REFRESH_FAILED = "refresh_failed",
+  UNKNOWN = "unknown",
 }
 
 // Token Information / Token 信息
@@ -74,7 +74,12 @@ export const DEFAULT_TOKEN_MANAGER_CONFIG: TokenManagerConfig = {
 };
 
 // Token Events / Token 事件
-export type TokenEvent = { type: 'token_expiring_soon'; expiryTime: number; remainingMs: number } | { type: 'token_refresh_started' } | { type: 'token_refresh_success'; newExpiryTime: number } | { type: 'token_refresh_failed'; error: string; retriesRemaining: number } | { type: 'token_expired' };
+export type TokenEvent =
+  | { type: "token_expiring_soon"; expiryTime: number; remainingMs: number }
+  | { type: "token_refresh_started" }
+  | { type: "token_refresh_success"; newExpiryTime: number }
+  | { type: "token_refresh_failed"; error: string; retriesRemaining: number }
+  | { type: "token_expired" };
 
 /**
  * OAuth Token Manager
@@ -89,7 +94,11 @@ export class OAuthTokenManager {
   private refreshCallback?: () => Promise<boolean>;
   private authType: AuthType;
 
-  constructor(authType: AuthType, config: Partial<TokenManagerConfig> = {}, onTokenEvent?: (event: TokenEvent) => void) {
+  constructor(
+    authType: AuthType,
+    config: Partial<TokenManagerConfig> = {},
+    onTokenEvent?: (event: TokenEvent) => void,
+  ) {
     this.authType = authType;
     this.config = { ...DEFAULT_TOKEN_MANAGER_CONFIG, ...config };
     this.onTokenEvent = onTokenEvent;
@@ -196,7 +205,7 @@ export class OAuthTokenManager {
 
       case TokenState.EXPIRING_SOON:
         this.onTokenEvent?.({
-          type: 'token_expiring_soon',
+          type: "token_expiring_soon",
           expiryTime: this.tokenInfo.expiryTime!,
           remainingMs: this.getRemainingValidTime(),
         });
@@ -205,7 +214,7 @@ export class OAuthTokenManager {
         return true;
 
       case TokenState.EXPIRED:
-        this.onTokenEvent?.({ type: 'token_expired' });
+        this.onTokenEvent?.({ type: "token_expired" });
         // Must refresh successfully to continue / 必须刷新成功才能继续
         return await this.triggerRefresh();
 
@@ -240,12 +249,12 @@ export class OAuthTokenManager {
     }
 
     if (!this.refreshCallback) {
-      console.warn('[OAuthTokenManager] No refresh callback set');
+      console.warn("[OAuthTokenManager] No refresh callback set");
       return false;
     }
 
     this.tokenInfo.state = TokenState.REFRESHING;
-    this.onTokenEvent?.({ type: 'token_refresh_started' });
+    this.onTokenEvent?.({ type: "token_refresh_started" });
 
     this.refreshPromise = this.executeRefresh();
 
@@ -261,11 +270,16 @@ export class OAuthTokenManager {
    * 执行刷新逻辑（带重试）
    */
   private async executeRefresh(): Promise<boolean> {
-    let lastError: string = 'Unknown error';
+    let lastError: string = "Unknown error";
 
     for (let attempt = 0; attempt < this.config.maxRefreshRetries; attempt++) {
       try {
-        const success = await Promise.race([this.refreshCallback!(), new Promise<boolean>((_, reject) => setTimeout(() => reject(new Error('Refresh timeout')), this.config.refreshTimeoutMs))]);
+        const success = await Promise.race([
+          this.refreshCallback!(),
+          new Promise<boolean>((_, reject) =>
+            setTimeout(() => reject(new Error("Refresh timeout")), this.config.refreshTimeoutMs),
+          ),
+        ]);
 
         if (success) {
           this.tokenInfo.state = TokenState.VALID;
@@ -273,7 +287,7 @@ export class OAuthTokenManager {
           this.tokenInfo.lastRefreshError = undefined;
 
           this.onTokenEvent?.({
-            type: 'token_refresh_success',
+            type: "token_refresh_success",
             newExpiryTime: this.tokenInfo.expiryTime || Date.now() + 3600000,
           });
 
@@ -284,7 +298,7 @@ export class OAuthTokenManager {
         const retriesRemaining = this.config.maxRefreshRetries - attempt - 1;
 
         this.onTokenEvent?.({
-          type: 'token_refresh_failed',
+          type: "token_refresh_failed",
           error: lastError,
           retriesRemaining,
         });
@@ -349,7 +363,7 @@ let globalTokenManager: OAuthTokenManager | null = null;
  * 获取全局 Token 管理器
  */
 export function getGlobalTokenManager(authType: AuthType): OAuthTokenManager {
-  if (!globalTokenManager || globalTokenManager['authType'] !== authType) {
+  if (!globalTokenManager || globalTokenManager["authType"] !== authType) {
     globalTokenManager = new OAuthTokenManager(authType);
   }
   return globalTokenManager;

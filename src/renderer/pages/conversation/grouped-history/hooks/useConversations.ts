@@ -4,17 +4,17 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { ipcBridge } from '@/common';
-import type { TChatConversation } from '@/common/storage';
-import { addEventListener } from '@/renderer/utils/emitter';
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import { useParams } from 'react-router-dom';
+import { ipcBridge } from "@/common";
+import type { TChatConversation } from "@/common/storage";
+import { addEventListener } from "@/renderer/utils/emitter";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { useParams } from "react-router-dom";
 
-import type { GroupedHistoryResult } from '../types';
-import { buildGroupedHistory } from '../utils/groupingHelpers';
+import type { GroupedHistoryResult } from "../types";
+import { buildGroupedHistory } from "../utils/groupingHelpers";
 
-const EXPANSION_STORAGE_KEY = 'aionui_workspace_expansion';
+const EXPANSION_STORAGE_KEY = "aionui_workspace_expansion";
 
 export const useConversations = () => {
   const [conversations, setConversations] = useState<TChatConversation[]>([]);
@@ -40,29 +40,32 @@ export const useConversations = () => {
         .then((data) => {
           if (data && Array.isArray(data)) {
             // 只过滤显式标记的健康检测临时会话，避免误伤用户自定义同名前缀会话
-            const filteredData = data.filter((conv) => (conv.extra as { isHealthCheck?: boolean } | undefined)?.isHealthCheck !== true);
+            const filteredData = data.filter(
+              (conv) =>
+                (conv.extra as { isHealthCheck?: boolean } | undefined)?.isHealthCheck !== true,
+            );
             setConversations(filteredData);
           } else {
             setConversations([]);
           }
         })
         .catch((error) => {
-          console.error('[WorkspaceGroupedHistory] Failed to load conversations:', error);
+          console.error("[WorkspaceGroupedHistory] Failed to load conversations:", error);
           setConversations([]);
         });
     };
 
     refresh();
-    return addEventListener('chat.history.refresh', refresh);
+    return addEventListener("chat.history.refresh", refresh);
   }, []);
 
   // Scroll active conversation into view
   useEffect(() => {
     if (!id) return;
     const rafId = requestAnimationFrame(() => {
-      const element = document.getElementById('c-' + id);
+      const element = document.getElementById("c-" + id);
       if (element) {
-        element.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        element.scrollIntoView({ behavior: "smooth", block: "nearest" });
       }
     });
     return () => cancelAnimationFrame(rafId);
@@ -89,7 +92,7 @@ export const useConversations = () => {
     const allWorkspaces: string[] = [];
     timelineSections.forEach((section) => {
       section.items.forEach((item) => {
-        if (item.type === 'workspace' && item.workspaceGroup) {
+        if (item.type === "workspace" && item.workspaceGroup) {
           allWorkspaces.push(item.workspaceGroup.workspace);
         }
       });

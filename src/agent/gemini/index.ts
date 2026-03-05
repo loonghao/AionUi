@@ -5,32 +5,53 @@
  */
 
 // Re-export GeminiApprovalStore for use in other modules
-export { GeminiApprovalStore } from './GeminiApprovalStore';
+export { GeminiApprovalStore } from "./GeminiApprovalStore";
 
 // src/core/ConfigManager.ts
-import { AIONUI_FILES_MARKER } from '@/common/constants';
-import { NavigationInterceptor } from '@/common/navigation';
-import type { TProviderWithModel } from '@/common/storage';
-import { uuid } from '@/common/utils';
-import { getProviderAuthType } from '@/common/utils/platformAuthType';
-import { isNewApiPlatform } from '@/common/utils/platformConstants';
-import { normalizeNewApiBaseUrl } from '@/common/ClientFactory';
-import type { CompletedToolCall, Config, GeminiClient, ServerGeminiStreamEvent, ToolCall, ToolCallRequestInfo, Turn } from '@office-ai/aioncli-core';
-import { AuthType, clearOauthClientCache, CoreToolScheduler, FileDiscoveryService, refreshServerHierarchicalMemory, sessionId } from '@office-ai/aioncli-core';
-import fs from 'fs';
-import { ApiKeyManager } from '../../common/ApiKeyManager';
-import { handleAtCommand } from './cli/atCommandProcessor';
-import { loadCliConfig } from './cli/config';
-import { loadExtensions } from './cli/extension';
-import { getGlobalTokenManager } from './cli/oauthTokenManager';
-import type { Settings } from './cli/settings';
-import { loadSettings } from './cli/settings';
-import { globalToolCallGuard, type StreamConnectionEvent } from './cli/streamResilience';
-import { ConversationToolConfig } from './cli/tools/conversation-tool-config';
-import { mapToDisplay, type TrackedToolCall } from './cli/useReactToolScheduler';
-import { compactToolResponsesInHistory, getPromptCount, handleCompletedTools, processGeminiStreamEvents, startNewPrompt } from './utils';
-import path from 'path';
-import os from 'os';
+import { AIONUI_FILES_MARKER } from "@/common/constants";
+import { NavigationInterceptor } from "@/common/navigation";
+import type { TProviderWithModel } from "@/common/storage";
+import { uuid } from "@/common/utils";
+import { getProviderAuthType } from "@/common/utils/platformAuthType";
+import { isNewApiPlatform } from "@/common/utils/platformConstants";
+import { normalizeNewApiBaseUrl } from "@/common/ClientFactory";
+import type {
+  CompletedToolCall,
+  Config,
+  GeminiClient,
+  ServerGeminiStreamEvent,
+  ToolCall,
+  ToolCallRequestInfo,
+  Turn,
+} from "@office-ai/aioncli-core";
+import {
+  AuthType,
+  clearOauthClientCache,
+  CoreToolScheduler,
+  FileDiscoveryService,
+  refreshServerHierarchicalMemory,
+  sessionId,
+} from "@office-ai/aioncli-core";
+import fs from "fs";
+import { ApiKeyManager } from "../../common/ApiKeyManager";
+import { handleAtCommand } from "./cli/atCommandProcessor";
+import { loadCliConfig } from "./cli/config";
+import { loadExtensions } from "./cli/extension";
+import { getGlobalTokenManager } from "./cli/oauthTokenManager";
+import type { Settings } from "./cli/settings";
+import { loadSettings } from "./cli/settings";
+import { globalToolCallGuard, type StreamConnectionEvent } from "./cli/streamResilience";
+import { ConversationToolConfig } from "./cli/tools/conversation-tool-config";
+import { mapToDisplay, type TrackedToolCall } from "./cli/useReactToolScheduler";
+import {
+  compactToolResponsesInHistory,
+  getPromptCount,
+  handleCompletedTools,
+  processGeminiStreamEvents,
+  startNewPrompt,
+} from "./utils";
+import path from "path";
+import os from "os";
 
 // Global registry for current agent instance (used by flashFallbackHandler)
 let currentGeminiAgent: GeminiAgent | null = null;
@@ -46,11 +67,11 @@ let currentGeminiAgent: GeminiAgent | null = null;
  */
 function hasGoogleOAuthCredentials(): boolean {
   try {
-    const credentialsPath = path.join(os.homedir(), '.gemini', 'oauth_creds.json');
+    const credentialsPath = path.join(os.homedir(), ".gemini", "oauth_creds.json");
     if (!fs.existsSync(credentialsPath)) {
       return false;
     }
-    const content = fs.readFileSync(credentialsPath, 'utf-8');
+    const content = fs.readFileSync(credentialsPath, "utf-8");
     const creds = JSON.parse(content);
     // Check if credentials have the required fields
     // 检查凭证是否包含必要字段
@@ -65,7 +86,7 @@ interface GeminiAgent2Options {
   proxy?: string;
   model: TProviderWithModel;
   imageGenerationModel?: TProviderWithModel;
-  webSearchEngine?: 'google' | 'default';
+  webSearchEngine?: "google" | "default";
   yoloMode?: boolean;
   GOOGLE_CLOUD_PROJECT?: string;
   mcpServers?: Record<string, unknown>;
@@ -86,7 +107,7 @@ export class GeminiAgent {
   private proxy: string | null = null;
   private model: TProviderWithModel | null = null;
   private imageGenerationModel: TProviderWithModel | null = null;
-  private webSearchEngine: 'google' | 'default' | null = null;
+  private webSearchEngine: "google" | "default" | null = null;
   private yoloMode: boolean = false;
   private googleCloudProject: string | null = null;
   private mcpServers: Record<string, unknown> = {};
@@ -120,7 +141,7 @@ export class GeminiAgent {
     this.proxy = options.proxy;
     this.model = options.model;
     this.imageGenerationModel = options.imageGenerationModel;
-    this.webSearchEngine = options.webSearchEngine || 'default';
+    this.webSearchEngine = options.webSearchEngine || "default";
     this.yoloMode = options.yoloMode || false;
     this.googleCloudProject = options.GOOGLE_CLOUD_PROJECT;
     this.mcpServers = options.mcpServers || {};
@@ -149,10 +170,10 @@ export class GeminiAgent {
 
   private initClientEnv() {
     const fallbackValue = (key: string, value1: string, value2?: string) => {
-      if (value1 && value1 !== 'undefined') {
+      if (value1 && value1 !== "undefined") {
         process.env[key] = value1;
       }
-      if (value2 && value2 !== 'undefined') {
+      if (value2 && value2 !== "undefined") {
         process.env[key] = value2;
       }
     };
@@ -189,16 +210,17 @@ export class GeminiAgent {
     // 对 new-api 网关进行 URL 规范化（不同协议需要不同的 URL 格式）
     // Normalize URL for new-api gateway (different protocols need different URL formats)
     const isNewApi = isNewApiPlatform(this.model.platform);
-    const getBaseUrl = () => (isNewApi ? normalizeNewApiBaseUrl(this.model.baseUrl, this.authType) : this.model.baseUrl);
+    const getBaseUrl = () =>
+      isNewApi ? normalizeNewApiBaseUrl(this.model.baseUrl, this.authType) : this.model.baseUrl;
 
     if (this.authType === AuthType.USE_GEMINI) {
-      fallbackValue('GEMINI_API_KEY', getCurrentApiKey());
-      fallbackValue('GOOGLE_GEMINI_BASE_URL', getBaseUrl());
+      fallbackValue("GEMINI_API_KEY", getCurrentApiKey());
+      fallbackValue("GOOGLE_GEMINI_BASE_URL", getBaseUrl());
       return;
     }
     if (this.authType === AuthType.USE_VERTEX_AI) {
-      fallbackValue('GOOGLE_API_KEY', getCurrentApiKey());
-      process.env.GOOGLE_GENAI_USE_VERTEXAI = 'true';
+      fallbackValue("GOOGLE_API_KEY", getCurrentApiKey());
+      process.env.GOOGLE_GENAI_USE_VERTEXAI = "true";
       return;
     }
     if (this.authType === AuthType.LOGIN_WITH_GOOGLE) {
@@ -216,34 +238,34 @@ export class GeminiAgent {
       return;
     }
     if (this.authType === AuthType.USE_OPENAI) {
-      fallbackValue('OPENAI_BASE_URL', getBaseUrl());
-      fallbackValue('OPENAI_API_KEY', getCurrentApiKey());
+      fallbackValue("OPENAI_BASE_URL", getBaseUrl());
+      fallbackValue("OPENAI_API_KEY", getCurrentApiKey());
       return;
     }
     if (this.authType === AuthType.USE_ANTHROPIC) {
-      fallbackValue('ANTHROPIC_BASE_URL', getBaseUrl());
-      fallbackValue('ANTHROPIC_API_KEY', getCurrentApiKey());
+      fallbackValue("ANTHROPIC_BASE_URL", getBaseUrl());
+      fallbackValue("ANTHROPIC_API_KEY", getCurrentApiKey());
       return;
     }
     if (this.authType === AuthType.USE_BEDROCK) {
       const bedrockConfig = this.model.bedrockConfig;
 
       if (!bedrockConfig) {
-        throw new Error('Bedrock configuration missing');
+        throw new Error("Bedrock configuration missing");
       }
 
       // Set region (required)
       process.env.AWS_REGION = bedrockConfig.region;
 
-      if (bedrockConfig.authMethod === 'accessKey') {
+      if (bedrockConfig.authMethod === "accessKey") {
         if (!bedrockConfig.accessKeyId || !bedrockConfig.secretAccessKey) {
-          throw new Error('AWS credentials missing for access key authentication');
+          throw new Error("AWS credentials missing for access key authentication");
         }
         process.env.AWS_ACCESS_KEY_ID = bedrockConfig.accessKeyId;
         process.env.AWS_SECRET_ACCESS_KEY = bedrockConfig.secretAccessKey;
-      } else if (bedrockConfig.authMethod === 'profile') {
+      } else if (bedrockConfig.authMethod === "profile") {
         if (!bedrockConfig.profile) {
-          throw new Error('AWS profile name missing');
+          throw new Error("AWS profile name missing");
         }
         process.env.AWS_PROFILE = bedrockConfig.profile;
         // Clear access keys to ensure profile is used
@@ -256,12 +278,16 @@ export class GeminiAgent {
 
   private initializeMultiKeySupport(): void {
     const apiKey = this.model?.apiKey;
-    if (!apiKey || (!apiKey.includes(',') && !apiKey.includes('\n'))) {
+    if (!apiKey || (!apiKey.includes(",") && !apiKey.includes("\n"))) {
       return; // Single key or no key, skip multi-key setup
     }
 
     // Only initialize for supported auth types
-    if (this.authType === AuthType.USE_OPENAI || this.authType === AuthType.USE_GEMINI || this.authType === AuthType.USE_ANTHROPIC) {
+    if (
+      this.authType === AuthType.USE_OPENAI ||
+      this.authType === AuthType.USE_GEMINI ||
+      this.authType === AuthType.USE_ANTHROPIC
+    ) {
       this.apiKeyManager = new ApiKeyManager(apiKey, this.authType);
     }
   }
@@ -281,14 +307,23 @@ export class GeminiAgent {
   private enrichErrorMessage(errorMessage: string): string {
     const reportMatch = errorMessage.match(/Full report available at:\s*(.+?\.json)/i);
     const lowerMessage = errorMessage.toLowerCase();
-    if (lowerMessage.includes('model_capacity_exhausted') || lowerMessage.includes('no capacity available') || lowerMessage.includes('resource_exhausted') || lowerMessage.includes('ratelimitexceeded')) {
+    if (
+      lowerMessage.includes("model_capacity_exhausted") ||
+      lowerMessage.includes("no capacity available") ||
+      lowerMessage.includes("resource_exhausted") ||
+      lowerMessage.includes("ratelimitexceeded")
+    ) {
       return `${errorMessage}\nQuota exhausted on this model.`;
     }
     if (!reportMatch?.[1]) return errorMessage;
     try {
-      const reportContent = fs.readFileSync(reportMatch[1], 'utf-8');
+      const reportContent = fs.readFileSync(reportMatch[1], "utf-8");
       const reportLower = reportContent.toLowerCase();
-      if (reportLower.includes('quota') || reportLower.includes('resource_exhausted') || reportLower.includes('exhausted')) {
+      if (
+        reportLower.includes("quota") ||
+        reportLower.includes("resource_exhausted") ||
+        reportLower.includes("exhausted")
+      ) {
         return `${errorMessage}\nQuota exhausted on this model.`;
       }
     } catch {
@@ -335,7 +370,9 @@ export class GeminiAgent {
     if (this.enabledSkills && this.enabledSkills.length > 0) {
       const enabledSet = new Set(this.enabledSkills);
       this.config.getSkillManager().filterSkills((skill) => enabledSet.has(skill.name));
-      console.log(`[GeminiAgent] Filtered skills after initialize: ${this.enabledSkills.join(', ')}`);
+      console.log(
+        `[GeminiAgent] Filtered skills after initialize: ${this.enabledSkills.join(", ")}`,
+      );
     } else {
       // Non-preset agent: clear all optional skills (cron is injected via system instructions)
       this.config.getSkillManager().filterSkills(() => false);
@@ -350,8 +387,12 @@ export class GeminiAgent {
         // Throw auth error to let UI layer handle auto-switching
         // 错误信息包含 "authentication" 关键字以触发 GeminiSendBox 的 API 错误检测和自动切换
         // Error message contains "authentication" keyword to trigger GeminiSendBox API error detection and auto-switch
-        console.error('[GeminiAgent] Google OAuth credentials not found. User needs to authenticate via Gemini CLI first.');
-        throw new Error('Google OAuth authentication not configured. Please run "gemini" CLI to authenticate first, or switch to an API key-based agent.');
+        console.error(
+          "[GeminiAgent] Google OAuth credentials not found. User needs to authenticate via Gemini CLI first.",
+        );
+        throw new Error(
+          'Google OAuth authentication not configured. Please run "gemini" CLI to authenticate first, or switch to an API key-based agent.',
+        );
       }
       // 凭证存在时才清除缓存并刷新
       // Only clear cache and refresh when credentials exist
@@ -365,7 +406,9 @@ export class GeminiAgent {
     // 对于 USE_OPENAI, USE_GEMINI, USE_ANTHROPIC 等，会创建相应的 Generator 但不会触发 OAuth
     // For USE_OPENAI, USE_GEMINI, USE_ANTHROPIC, etc., corresponding Generator is created without OAuth
     await this.config.refreshAuth(this.authType);
-    console.log(`[GeminiAgent] After refreshAuth — config.getModel(): "${this.config.getModel()}", authType used: ${this.authType}`);
+    console.log(
+      `[GeminiAgent] After refreshAuth — config.getModel(): "${this.config.getModel()}", authType used: ${this.authType}`,
+    );
 
     this.geminiClient = this.config.getGeminiClient();
 
@@ -379,7 +422,9 @@ export class GeminiAgent {
       const rulesSection = `[Assistant System Rules]\n${this.presetRules}`;
       const combined = currentMemory ? `${rulesSection}\n\n${currentMemory}` : rulesSection;
       this.config.setUserMemory(combined);
-      console.log(`[GeminiAgent] Injected presetRules into userMemory, total length: ${combined.length}`);
+      console.log(
+        `[GeminiAgent] Injected presetRules into userMemory, total length: ${combined.length}`,
+      );
     } else {
       console.log(`[GeminiAgent] No presetRules to inject`);
     }
@@ -409,14 +454,22 @@ export class GeminiAgent {
               // It automatically gets ExtensionLoader from config and updates memory
               await refreshServerHierarchicalMemory(this.config);
             };
-            const response = handleCompletedTools(completedToolCalls, this.geminiClient, refreshMemory);
+            const response = handleCompletedTools(
+              completedToolCalls,
+              this.geminiClient,
+              refreshMemory,
+            );
             if (response.length > 0) {
               const geminiTools = completedToolCalls.filter((tc) => {
-                const isTerminalState = tc.status === 'success' || tc.status === 'error' || tc.status === 'cancelled';
+                const isTerminalState =
+                  tc.status === "success" || tc.status === "error" || tc.status === "cancelled";
 
                 if (isTerminalState) {
                   const completedOrCancelledCall = tc;
-                  return completedOrCancelledCall.response?.responseParts !== undefined && !tc.request.isClientInitiated;
+                  return (
+                    completedOrCancelledCall.response?.responseParts !== undefined &&
+                    !tc.request.isClientInitiated
+                  );
                 }
                 return false;
               });
@@ -429,8 +482,8 @@ export class GeminiAgent {
           }
         } catch (e) {
           this.onStreamEvent({
-            type: 'error',
-            data: 'handleCompletedTools error: ' + (e.message || JSON.stringify(e)),
+            type: "error",
+            data: "handleCompletedTools error: " + (e.message || JSON.stringify(e)),
             msg_id: this.activeMsgId ?? uuid(),
           });
         }
@@ -439,7 +492,9 @@ export class GeminiAgent {
         try {
           const prevTrackedCalls = this.trackedCalls || [];
           const toolCalls: TrackedToolCall[] = updatedCoreToolCalls.map((coreTc) => {
-            const existingTrackedCall = prevTrackedCalls.find((ptc) => ptc.request.callId === coreTc.request.callId);
+            const existingTrackedCall = prevTrackedCalls.find(
+              (ptc) => ptc.request.callId === coreTc.request.callId,
+            );
             const newTrackedCall: TrackedToolCall = {
               ...coreTc,
               responseSubmittedToGemini: existingTrackedCall?.responseSubmittedToGemini ?? false,
@@ -448,14 +503,14 @@ export class GeminiAgent {
           });
           const display = mapToDisplay(toolCalls);
           this.onStreamEvent({
-            type: 'tool_group',
+            type: "tool_group",
             data: display.tools,
             msg_id: this.activeMsgId ?? uuid(),
           });
         } catch (e) {
           this.onStreamEvent({
-            type: 'error',
-            data: 'tool_calls_update error: ' + (e.message || JSON.stringify(e)),
+            type: "error",
+            data: "tool_calls_update error: " + (e.message || JSON.stringify(e)),
             msg_id: this.activeMsgId ?? uuid(),
           });
         }
@@ -463,7 +518,7 @@ export class GeminiAgent {
       // onEditorClose 回调在 aioncli-core v0.18.4 中已移除 / callback was removed in aioncli-core v0.18.4
       // approvalMode: this.config.getApprovalMode(),
       getPreferredEditor() {
-        return 'vscode';
+        return "vscode";
       },
       config: this.config,
     });
@@ -479,7 +534,13 @@ export class GeminiAgent {
    * @param abortController - 中止控制器 / Abort controller
    * @param retryCount - 当前重试次数 / Current retry count
    */
-  private handleMessage(stream: AsyncGenerator<ServerGeminiStreamEvent, Turn, unknown>, msg_id: string, abortController: AbortController, query?: unknown, retryCount: number = 0): Promise<void> {
+  private handleMessage(
+    stream: AsyncGenerator<ServerGeminiStreamEvent, Turn, unknown>,
+    msg_id: string,
+    abortController: AbortController,
+    query?: unknown,
+    retryCount: number = 0,
+  ): Promise<void> {
     const MAX_INVALID_STREAM_RETRIES = 2; // 最多重试 2 次 / Max 2 retries
     const RETRY_DELAY_MS = 1000; // 重试延迟 1 秒 / 1 second retry delay
 
@@ -490,15 +551,17 @@ export class GeminiAgent {
     // 流连接事件处理
     // Stream connection event handler
     const onConnectionEvent = (event: StreamConnectionEvent) => {
-      if (event.type === 'heartbeat_timeout') {
-        console.warn(`[GeminiAgent] Stream heartbeat timeout at ${new Date(event.lastEventTime).toISOString()}`);
+      if (event.type === "heartbeat_timeout") {
+        console.warn(
+          `[GeminiAgent] Stream heartbeat timeout at ${new Date(event.lastEventTime).toISOString()}`,
+        );
         if (!heartbeatWarned) {
           heartbeatWarned = true;
         }
-      } else if (event.type === 'state_change' && event.state === 'failed') {
+      } else if (event.type === "state_change" && event.state === "failed") {
         console.error(`[GeminiAgent] Stream connection failed: ${event.reason}`);
         this.onStreamEvent({
-          type: 'error',
+          type: "error",
           data: `Connection lost: ${event.reason}. Please try again.`,
           msg_id,
         });
@@ -509,7 +572,7 @@ export class GeminiAgent {
       stream,
       this.config,
       (data) => {
-        if (data.type === 'tool_call_request') {
+        if (data.type === "tool_call_request") {
           const toolRequest = data.data as ToolCallRequestInfo;
           toolCallRequests.push(toolRequest);
           // 立即保护工具调用，防止被取消
@@ -520,15 +583,22 @@ export class GeminiAgent {
 
         // 检测 invalid_stream 事件
         // Detect invalid_stream event
-        if (data.type === ('invalid_stream' as string)) {
+        if (data.type === ("invalid_stream" as string)) {
           invalidStreamDetected = true;
           const eventData = data.data as { message: string; retryable: boolean };
-          if (eventData.retryable && retryCount < MAX_INVALID_STREAM_RETRIES && query && !abortController.signal.aborted) {
-            console.warn(`[GeminiAgent] Invalid stream detected, will retry (attempt ${retryCount + 1}/${MAX_INVALID_STREAM_RETRIES})`);
+          if (
+            eventData.retryable &&
+            retryCount < MAX_INVALID_STREAM_RETRIES &&
+            query &&
+            !abortController.signal.aborted
+          ) {
+            console.warn(
+              `[GeminiAgent] Invalid stream detected, will retry (attempt ${retryCount + 1}/${MAX_INVALID_STREAM_RETRIES})`,
+            );
             // 向用户显示重试提示
             // Show retry hint to user
             this.onStreamEvent({
-              type: 'info',
+              type: "info",
               data: `Stream interrupted, retrying... (${retryCount + 1}/${MAX_INVALID_STREAM_RETRIES})`,
               msg_id,
             });
@@ -541,12 +611,17 @@ export class GeminiAgent {
           msg_id,
         });
       },
-      { onConnectionEvent }
+      { onConnectionEvent },
     )
       .then(async () => {
         // 如果检测到 invalid_stream 且可以重试，执行重试
         // If invalid_stream detected and can retry, perform retry
-        if (invalidStreamDetected && retryCount < MAX_INVALID_STREAM_RETRIES && query && !abortController.signal.aborted) {
+        if (
+          invalidStreamDetected &&
+          retryCount < MAX_INVALID_STREAM_RETRIES &&
+          query &&
+          !abortController.signal.aborted
+        ) {
           console.log(`[GeminiAgent] Retrying after invalid stream (attempt ${retryCount + 1})`);
 
           // 延迟后重试
@@ -559,8 +634,12 @@ export class GeminiAgent {
 
           // 重新发送消息
           // Re-send message
-          const prompt_id = this.config.getSessionId() + '########' + getPromptCount();
-          const newStream = this.geminiClient.sendMessageStream(query, abortController.signal, prompt_id);
+          const prompt_id = this.config.getSessionId() + "########" + getPromptCount();
+          const newStream = this.geminiClient.sendMessageStream(
+            query,
+            abortController.signal,
+            prompt_id,
+          );
           return this.handleMessage(newStream, msg_id, abortController, query, retryCount + 1);
         }
 
@@ -568,8 +647,8 @@ export class GeminiAgent {
         // If invalid_stream detected but can't retry, show final error
         if (invalidStreamDetected && retryCount >= MAX_INVALID_STREAM_RETRIES) {
           this.onStreamEvent({
-            type: 'error',
-            data: 'Invalid response stream detected after multiple retries. Please try again.',
+            type: "error",
+            data: "Invalid response stream detected after multiple retries. Please try again.",
             msg_id,
           });
           return;
@@ -603,7 +682,7 @@ export class GeminiAgent {
           globalToolCallGuard.unprotect(req.callId);
         }
         this.onStreamEvent({
-          type: 'error',
+          type: "error",
           data: errorMessage,
           msg_id,
         });
@@ -629,21 +708,26 @@ export class GeminiAgent {
    * Agent 需要 chrome-devtools 来获取网页内容，所以我们只发送预览事件在预览面板中显示 URL，
    * 同时让工具正常执行。
    */
-  private emitPreviewForNavigationTools(toolCallRequests: ToolCallRequestInfo[], _msg_id: string): void {
+  private emitPreviewForNavigationTools(
+    toolCallRequests: ToolCallRequestInfo[],
+    _msg_id: string,
+  ): void {
     for (const request of toolCallRequests) {
-      const toolName = request.name || '';
+      const toolName = request.name || "";
 
       if (this.isNavigationTool(toolName)) {
         const args = request.args || {};
-        const url = NavigationInterceptor.extractUrl({ arguments: args as Record<string, unknown> });
+        const url = NavigationInterceptor.extractUrl({
+          arguments: args as Record<string, unknown>,
+        });
         if (url) {
           // Emit preview_open event to show URL in preview panel
           // 发送 preview_open 事件在预览面板中显示 URL
           this.onStreamEvent({
-            type: 'preview_open',
+            type: "preview_open",
             data: {
               content: url,
-              contentType: 'url',
+              contentType: "url",
               metadata: {
                 title: url,
               },
@@ -662,13 +746,13 @@ export class GeminiAgent {
     options?: {
       prompt_id?: string;
       isContinuation?: boolean;
-    }
+    },
   ): string | undefined {
     try {
       this.activeMsgId = msg_id;
       let prompt_id = options?.prompt_id;
       if (!prompt_id) {
-        prompt_id = this.config.getSessionId() + '########' + getPromptCount();
+        prompt_id = this.config.getSessionId() + "########" + getPromptCount();
       }
       if (!options?.isContinuation) {
         startNewPrompt();
@@ -678,7 +762,7 @@ export class GeminiAgent {
 
       // Send start event immediately when stream is created
       // 流创建后立即发送 start 事件，确保 UI 显示停止按钮
-      this.onStreamEvent({ type: 'start', data: '', msg_id });
+      this.onStreamEvent({ type: "start", data: "", msg_id });
 
       // Pass query to handleMessage for potential retry on invalid stream
       // 将 query 传递给 handleMessage 以便在 invalid stream 时重试
@@ -686,31 +770,31 @@ export class GeminiAgent {
         .catch((e: unknown) => {
           const errorMessage = e instanceof Error ? e.message : JSON.stringify(e);
           this.onStreamEvent({
-            type: 'error',
+            type: "error",
             data: errorMessage,
             msg_id,
           });
         })
         .finally(() => {
           this.onStreamEvent({
-            type: 'finish',
-            data: '',
+            type: "finish",
+            data: "",
             msg_id,
           });
         });
-      return '';
+      return "";
     } catch (e) {
       const rawMessage = e instanceof Error ? e.message : JSON.stringify(e);
       const errorMessage = this.enrichErrorMessage(rawMessage);
       this.onStreamEvent({
-        type: 'error',
+        type: "error",
         data: errorMessage,
         msg_id,
       });
     }
   }
 
-  async send(message: string | Array<{ text: string }>, msg_id = '', files?: string[]) {
+  async send(message: string | Array<{ text: string }>, msg_id = "", files?: string[]) {
     await this.bootstrap;
     const abortController = this.createAbortController();
 
@@ -724,19 +808,19 @@ export class GeminiAgent {
       if (message[0]?.text) {
         message[0].text = stripFilesMarker(message[0].text);
       }
-    } else if (typeof message === 'string') {
+    } else if (typeof message === "string") {
       message = stripFilesMarker(message);
     }
 
     // 将 files 参数中的文件路径作为 @ 引用添加到消息末尾
     // Append files from files parameter as @ references to the message
     if (files && files.length > 0) {
-      const fileRefs = files.map((filePath) => `@${filePath}`).join(' ');
+      const fileRefs = files.map((filePath) => `@${filePath}`).join(" ");
       if (Array.isArray(message)) {
         if (message[0]?.text) {
           message[0].text = `${message[0].text} ${fileRefs}`;
         }
-      } else if (typeof message === 'string') {
+      } else if (typeof message === "string") {
         message = `${message} ${fileRefs}`;
       }
     }
@@ -748,10 +832,10 @@ export class GeminiAgent {
         const tokenManager = getGlobalTokenManager(this.authType);
         const isTokenValid = await tokenManager.checkAndRefreshIfNeeded();
         if (!isTokenValid) {
-          console.warn('[GeminiAgent] OAuth token validation failed, proceeding anyway');
+          console.warn("[GeminiAgent] OAuth token validation failed, proceeding anyway");
         }
       } catch (tokenError) {
-        console.warn('[GeminiAgent] OAuth token check error:', tokenError);
+        console.warn("[GeminiAgent] OAuth token check error:", tokenError);
         // 继续执行，让后续流程处理认证错误
       }
     }
@@ -760,9 +844,9 @@ export class GeminiAgent {
     if (this.historyPrefix && !this.historyUsedOnce) {
       if (Array.isArray(message)) {
         const first = message[0];
-        const original = first?.text ?? '';
+        const original = first?.text ?? "";
         message = [{ text: `${this.historyPrefix}${original}` }];
-      } else if (typeof message === 'string') {
+      } else if (typeof message === "string") {
         message = `${this.historyPrefix}${message}`;
       }
       this.historyUsedOnce = true;
@@ -770,7 +854,7 @@ export class GeminiAgent {
 
     // Skills 通过 SkillManager 加载，索引已在系统指令中
     // Skills are loaded via SkillManager, index is already in system instruction
-    let skillsPrefix = '';
+    let skillsPrefix = "";
 
     if (!this.skillsIndexPrependedOnce) {
       // 优先使用 presetRules，否则回退到 contextContent
@@ -783,7 +867,7 @@ export class GeminiAgent {
 
       // 注入前缀到消息 / Inject prefix into message
       if (skillsPrefix) {
-        const prefix = skillsPrefix + '[User Request]\n';
+        const prefix = skillsPrefix + "[User Request]\n";
         if (Array.isArray(message)) {
           if (message[0]) message[0].text = prefix + message[0].text;
         } else {
@@ -800,9 +884,9 @@ export class GeminiAgent {
       config: this.config,
       addItem: (item: unknown) => {
         // Capture error messages from @ command processing
-        if (item && typeof item === 'object' && 'type' in item) {
+        if (item && typeof item === "object" && "type" in item) {
           const typedItem = item as { type: string; text?: string };
-          if (typedItem.type === 'error' && typedItem.text) {
+          if (typedItem.type === "error" && typedItem.text) {
             atCommandError = typedItem.text;
           }
         }
@@ -822,21 +906,21 @@ export class GeminiAgent {
       // 如果 @ 命令处理失败，向用户发送错误消息
       if (atCommandError) {
         this.onStreamEvent({
-          type: 'error',
+          type: "error",
           data: atCommandError,
           msg_id,
         });
       } else if (!abortController.signal.aborted) {
         // Generic error if we don't have specific error message
         this.onStreamEvent({
-          type: 'error',
-          data: 'Failed to process @ file reference. The file may not exist or is not accessible.',
+          type: "error",
+          data: "Failed to process @ file reference. The file may not exist or is not accessible.",
           msg_id,
         });
       }
       // Send finish event so UI can reset state
       this.onStreamEvent({
-        type: 'finish',
+        type: "finish",
         data: null,
         msg_id,
       });

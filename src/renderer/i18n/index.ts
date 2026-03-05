@@ -1,34 +1,40 @@
-import i18n from 'i18next';
-import LanguageDetector from 'i18next-browser-languagedetector';
-import { initReactI18next } from 'react-i18next';
+import i18n from "i18next";
+import LanguageDetector from "i18next-browser-languagedetector";
+import { initReactI18next } from "react-i18next";
 
-import { ConfigStorage } from '@/common/storage';
-import i18nConfig from '@/shared/i18n-config.json';
-import { DEFAULT_LANGUAGE, normalizeLanguageCode, mergeWithFallback, ensureAndSwitch, type LocaleData } from '@/common/i18n';
+import { ConfigStorage } from "@/common/storage";
+import i18nConfig from "@/shared/i18n-config.json";
+import {
+  DEFAULT_LANGUAGE,
+  normalizeLanguageCode,
+  mergeWithFallback,
+  ensureAndSwitch,
+  type LocaleData,
+} from "@/common/i18n";
 
 // Static imports for all locales to ensure packaged app can always switch language.
-import enUS from './locales/en-US/index';
-import zhCN from './locales/zh-CN/index';
-import jaJP from './locales/ja-JP/index';
-import zhTW from './locales/zh-TW/index';
-import koKR from './locales/ko-KR/index';
-import trTR from './locales/tr-TR/index';
+import enUS from "./locales/en-US/index";
+import zhCN from "./locales/zh-CN/index";
+import jaJP from "./locales/ja-JP/index";
+import zhTW from "./locales/zh-TW/index";
+import koKR from "./locales/ko-KR/index";
+import trTR from "./locales/tr-TR/index";
 
-export type { I18nKey, I18nModule } from './i18n-keys';
+export type { I18nKey, I18nModule } from "./i18n-keys";
 
 // Re-exports
-export { normalizeLanguageCode } from '@/common/i18n';
-export type { SupportedLanguage } from '@/common/i18n';
+export { normalizeLanguageCode } from "@/common/i18n";
+export type { SupportedLanguage } from "@/common/i18n";
 
 export const supportedLanguages = i18nConfig.supportedLanguages;
 
 const localeData: LocaleData = {
-  'en-US': enUS,
-  'zh-CN': zhCN,
-  'ja-JP': jaJP,
-  'zh-TW': zhTW,
-  'ko-KR': koKR,
-  'tr-TR': trTR,
+  "en-US": enUS,
+  "zh-CN": zhCN,
+  "ja-JP": jaJP,
+  "zh-TW": zhTW,
+  "ko-KR": koKR,
+  "tr-TR": trTR,
 };
 
 const fallbackLocale = localeData[DEFAULT_LANGUAGE] ?? {};
@@ -70,33 +76,33 @@ i18n
     debug: false,
     interpolation: { escapeValue: false },
     detection: {
-      order: ['localStorage', 'navigator'],
-      caches: ['localStorage'],
+      order: ["localStorage", "navigator"],
+      caches: ["localStorage"],
     },
   })
   .catch((error: Error) => {
-    console.error('Failed to initialize i18n:', error);
+    console.error("Failed to initialize i18n:", error);
   });
 
 // Load initial language
 async function initLanguage(): Promise<void> {
   try {
-    const savedLanguage = await ConfigStorage.get('language');
+    const savedLanguage = await ConfigStorage.get("language");
     const language = savedLanguage || i18n.language || DEFAULT_LANGUAGE;
     await ensureAndSwitch(i18n, language, loadLocaleModules);
   } catch (error) {
-    console.error('Failed to initialize language:', error);
+    console.error("Failed to initialize language:", error);
   }
 }
 
 // Listen for language changes and lazy load translations
-i18n.on('languageChanged', async (lang: string) => {
+i18n.on("languageChanged", async (lang: string) => {
   const normalizedLang = normalizeLanguageCode(lang);
-  if (i18n.hasResourceBundle(normalizedLang, 'translation')) return;
+  if (i18n.hasResourceBundle(normalizedLang, "translation")) return;
 
   try {
     const translation = await loadLocaleModules(normalizedLang);
-    i18n.addResourceBundle(normalizedLang, 'translation', translation, true, true);
+    i18n.addResourceBundle(normalizedLang, "translation", translation, true, true);
   } catch (error) {
     console.error(`Failed to load language ${normalizedLang}:`, error);
   }
@@ -110,7 +116,7 @@ void initLanguage();
  */
 export async function changeLanguage(lang: string): Promise<void> {
   await ensureAndSwitch(i18n, lang, loadLocaleModules);
-  await ConfigStorage.set('language', normalizeLanguageCode(lang));
+  await ConfigStorage.set("language", normalizeLanguageCode(lang));
 }
 
 // Clear translation cache (useful for development/testing)

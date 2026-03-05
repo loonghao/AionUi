@@ -58,8 +58,8 @@ function serializeKey(key: AcpApprovalKey): string {
   }
 
   return JSON.stringify({
-    kind: key.kind || 'unknown',
-    title: key.title || '',
+    kind: key.kind || "unknown",
+    title: key.title || "",
     rawInput: normalizedInput,
   });
 }
@@ -83,7 +83,7 @@ export class AcpApprovalStore {
    * Only stores allow_always decisions (the only type worth caching)
    */
   put(key: AcpApprovalKey, optionId: string): void {
-    if (optionId === 'allow_always') {
+    if (optionId === "allow_always") {
       const serialized = serializeKey(key);
       this.map.set(serialized, optionId);
     }
@@ -93,7 +93,7 @@ export class AcpApprovalStore {
    * Check if key has allow_always status
    */
   isApprovedForSession(key: AcpApprovalKey): boolean {
-    return this.get(key) === 'allow_always';
+    return this.get(key) === "allow_always";
   }
 
   /**
@@ -114,10 +114,14 @@ export class AcpApprovalStore {
 /**
  * Create an AcpApprovalKey from permission request data
  */
-export function createAcpApprovalKey(toolCall: { kind?: string; title?: string; rawInput?: Record<string, unknown> }): AcpApprovalKey {
+export function createAcpApprovalKey(toolCall: {
+  kind?: string;
+  title?: string;
+  rawInput?: Record<string, unknown>;
+}): AcpApprovalKey {
   return {
-    kind: toolCall.kind || 'unknown',
-    title: toolCall.title || '',
-    rawInput: toolCall.rawInput as AcpApprovalKey['rawInput'],
+    kind: toolCall.kind || "unknown",
+    title: toolCall.title || "",
+    rawInput: toolCall.rawInput as AcpApprovalKey["rawInput"],
   };
 }

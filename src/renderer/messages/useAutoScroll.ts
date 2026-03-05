@@ -9,9 +9,9 @@
  * Uses Virtuoso's native followOutput for streaming auto-scroll,
  * only calls scrollToIndex for user-initiated actions (send message, click button).
  */
-import { useCallback, useEffect, useRef, useState } from 'react';
-import type { VirtuosoHandle } from 'react-virtuoso';
-import type { TMessage } from '@/common/chatLib';
+import { useCallback, useEffect, useRef, useState } from "react";
+import type { VirtuosoHandle } from "react-virtuoso";
+import type { TMessage } from "@/common/chatLib";
 
 // Ignore scroll events within this window after a programmatic scroll (ms)
 const PROGRAMMATIC_SCROLL_GUARD_MS = 150;
@@ -31,11 +31,11 @@ interface UseAutoScrollReturn {
   /** Virtuoso atBottomStateChange callback */
   handleAtBottomStateChange: (atBottom: boolean) => void;
   /** Virtuoso followOutput callback for streaming auto-scroll */
-  handleFollowOutput: (isAtBottom: boolean) => false | 'auto';
+  handleFollowOutput: (isAtBottom: boolean) => false | "auto";
   /** Whether to show scroll-to-bottom button */
   showScrollButton: boolean;
   /** Manually scroll to bottom (e.g., when clicking button) */
-  scrollToBottom: (behavior?: 'smooth' | 'auto') => void;
+  scrollToBottom: (behavior?: "smooth" | "auto") => void;
   /** Hide the scroll button */
   hideScrollButton: () => void;
 }
@@ -52,24 +52,24 @@ export function useAutoScroll({ messages, itemCount }: UseAutoScrollOptions): Us
 
   // Scroll to bottom helper - only for user messages and button clicks
   const scrollToBottom = useCallback(
-    (behavior: 'smooth' | 'auto' = 'smooth') => {
+    (behavior: "smooth" | "auto" = "smooth") => {
       if (!virtuosoRef.current) return;
 
       lastProgrammaticScrollTimeRef.current = Date.now();
       virtuosoRef.current.scrollToIndex({
         index: itemCount - 1,
         behavior,
-        align: 'end',
+        align: "end",
       });
     },
-    [itemCount]
+    [itemCount],
   );
 
   // Virtuoso native followOutput - handles streaming auto-scroll internally
   // without external scrollToIndex calls that cause jitter
-  const handleFollowOutput = useCallback((isAtBottom: boolean): false | 'auto' => {
+  const handleFollowOutput = useCallback((isAtBottom: boolean): false | "auto" => {
     if (userScrolledRef.current || !isAtBottom) return false;
-    return 'auto';
+    return "auto";
   }, []);
 
   // Reliable bottom state detection from Virtuoso
@@ -114,7 +114,7 @@ export function useAutoScroll({ messages, itemCount }: UseAutoScrollOptions): Us
     const lastMessage = messages[messages.length - 1];
 
     // User sent a message - force scroll regardless of userScrolled state
-    if (lastMessage?.position === 'right') {
+    if (lastMessage?.position === "right") {
       userScrolledRef.current = false;
       // Use double RAF to ensure DOM is updated before scrolling (#977)
       // 使用双 RAF 确保 DOM 更新后再滚动
@@ -125,9 +125,9 @@ export function useAutoScroll({ messages, itemCount }: UseAutoScrollOptions): Us
             // Use scrollTo with bottom alignment for reliable scroll to end
             // 使用 scrollTo 并设置 bottom 对齐以确保可靠滚动到底部
             virtuosoRef.current.scrollToIndex({
-              index: 'LAST',
-              behavior: 'auto',
-              align: 'end',
+              index: "LAST",
+              behavior: "auto",
+              align: "end",
             });
           }
         });

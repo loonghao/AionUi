@@ -5,14 +5,14 @@
  */
 
 // hooks/useColorScheme.ts - Color Scheme Management Hook 配色方案管理
-import { ConfigStorage } from '@/common/storage';
-import { useCallback, useEffect, useState } from 'react';
+import { ConfigStorage } from "@/common/storage";
+import { useCallback, useEffect, useState } from "react";
 
 // Supported color schemes 支持的配色方案类型
-export type ColorScheme = 'default';
+export type ColorScheme = "default";
 
-const DEFAULT_COLOR_SCHEME: ColorScheme = 'default';
-const COLOR_SCHEME_CACHE_KEY = '__aionui_colorScheme';
+const DEFAULT_COLOR_SCHEME: ColorScheme = "default";
+const COLOR_SCHEME_CACHE_KEY = "__aionui_colorScheme";
 
 /**
  * Initialize color scheme immediately when module loads
@@ -20,9 +20,9 @@ const COLOR_SCHEME_CACHE_KEY = '__aionui_colorScheme';
  */
 const initColorScheme = async () => {
   try {
-    const scheme = (await ConfigStorage.get('colorScheme')) as ColorScheme;
+    const scheme = (await ConfigStorage.get("colorScheme")) as ColorScheme;
     const initialScheme = scheme || DEFAULT_COLOR_SCHEME;
-    document.documentElement.setAttribute('data-color-scheme', initialScheme);
+    document.documentElement.setAttribute("data-color-scheme", initialScheme);
     try {
       localStorage.setItem(COLOR_SCHEME_CACHE_KEY, initialScheme);
     } catch (_e) {
@@ -30,15 +30,15 @@ const initColorScheme = async () => {
     }
     return initialScheme;
   } catch (error) {
-    console.error('Failed to load initial color scheme:', error);
-    document.documentElement.setAttribute('data-color-scheme', DEFAULT_COLOR_SCHEME);
+    console.error("Failed to load initial color scheme:", error);
+    document.documentElement.setAttribute("data-color-scheme", DEFAULT_COLOR_SCHEME);
     return DEFAULT_COLOR_SCHEME;
   }
 };
 
 // Run color scheme initialization immediately 立即运行配色方案初始化
 let initialColorSchemePromise: Promise<ColorScheme> | null = null;
-if (typeof window !== 'undefined') {
+if (typeof window !== "undefined") {
   initialColorSchemePromise = initColorScheme();
 }
 
@@ -54,7 +54,7 @@ const useColorScheme = (): [ColorScheme, (scheme: ColorScheme) => Promise<void>]
    * Switch CSS variables by setting data-color-scheme attribute 通过设置 data-color-scheme 属性切换 CSS 变量
    */
   const applyColorScheme = useCallback((newScheme: ColorScheme) => {
-    document.documentElement.setAttribute('data-color-scheme', newScheme);
+    document.documentElement.setAttribute("data-color-scheme", newScheme);
     try {
       localStorage.setItem(COLOR_SCHEME_CACHE_KEY, newScheme);
     } catch (_e) {
@@ -71,15 +71,15 @@ const useColorScheme = (): [ColorScheme, (scheme: ColorScheme) => Promise<void>]
       try {
         setColorSchemeState(newScheme);
         applyColorScheme(newScheme);
-        await ConfigStorage.set('colorScheme', newScheme);
+        await ConfigStorage.set("colorScheme", newScheme);
       } catch (error) {
-        console.error('Failed to save color scheme:', error);
+        console.error("Failed to save color scheme:", error);
         // Revert on error 保存失败时回滚
         setColorSchemeState(colorScheme);
         applyColorScheme(colorScheme);
       }
     },
-    [colorScheme, applyColorScheme]
+    [colorScheme, applyColorScheme],
   );
 
   /**
@@ -93,7 +93,7 @@ const useColorScheme = (): [ColorScheme, (scheme: ColorScheme) => Promise<void>]
           setColorSchemeState(initialScheme);
         })
         .catch((error) => {
-          console.error('Failed to initialize color scheme:', error);
+          console.error("Failed to initialize color scheme:", error);
         });
     }
   }, []);

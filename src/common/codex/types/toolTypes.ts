@@ -6,34 +6,34 @@
 
 // 工具类别枚举
 export enum ToolCategory {
-  EXECUTION = 'execution', // shell, bash, python等
-  FILE_OPS = 'file_ops', // 读写、编辑、搜索文件
-  SEARCH = 'search', // 各种搜索方式
-  ANALYSIS = 'analysis', // 代码分析、图表生成
-  COMMUNICATION = 'communication', // 网络请求、API调用
-  CUSTOM = 'custom', // MCP工具等自定义工具
+  EXECUTION = "execution", // shell, bash, python等
+  FILE_OPS = "file_ops", // 读写、编辑、搜索文件
+  SEARCH = "search", // 各种搜索方式
+  ANALYSIS = "analysis", // 代码分析、图表生成
+  COMMUNICATION = "communication", // 网络请求、API调用
+  CUSTOM = "custom", // MCP工具等自定义工具
 }
 
 // 输出格式枚举
 export enum OutputFormat {
-  TEXT = 'text',
-  MARKDOWN = 'markdown',
-  JSON = 'json',
-  IMAGE = 'image',
-  CHART = 'chart',
-  DIAGRAM = 'diagram',
-  TABLE = 'table',
+  TEXT = "text",
+  MARKDOWN = "markdown",
+  JSON = "json",
+  IMAGE = "image",
+  CHART = "chart",
+  DIAGRAM = "diagram",
+  TABLE = "table",
 }
 
 // 渲染器类型枚举
 export enum RendererType {
-  STANDARD = 'standard', // 标准文本渲染
-  MARKDOWN = 'markdown', // Markdown渲染
-  CODE = 'code', // 代码高亮渲染
-  CHART = 'chart', // 图表渲染
-  IMAGE = 'image', // 图像渲染
-  INTERACTIVE = 'interactive', // 交互式渲染
-  COMPOSITE = 'composite', // 复合渲染
+  STANDARD = "standard", // 标准文本渲染
+  MARKDOWN = "markdown", // Markdown渲染
+  CODE = "code", // 代码高亮渲染
+  CHART = "chart", // 图表渲染
+  IMAGE = "image", // 图像渲染
+  INTERACTIVE = "interactive", // 交互式渲染
+  COMPOSITE = "composite", // 复合渲染
 }
 
 // 工具可用性配置

@@ -1,5 +1,5 @@
-import { type ICssTheme } from '@/common/storage';
-import { DEFAULT_THEME_ID, PRESET_THEMES } from '@/renderer/components/CssThemeSettings/presets';
+import { type ICssTheme } from "@/common/storage";
+import { DEFAULT_THEME_ID, PRESET_THEMES } from "@/renderer/components/CssThemeSettings/presets";
 
 export const CSS_SYNC_RECENT_UPDATE_WINDOW_MS = 2000;
 
@@ -37,17 +37,24 @@ export const resolveCssByActiveTheme = (activeThemeId: string, userThemes: ICssT
   const allThemes = [...PRESET_THEMES, ...extensionThemesCache, ...(userThemes || [])];
   const resolvedId = activeThemeId || DEFAULT_THEME_ID;
   const match = allThemes.find((theme) => theme.id === resolvedId);
-  if (match) return match.css || '';
+  if (match) return match.css || "";
   // Theme not found (e.g., extension removed) → fall back to default theme
   if (resolvedId !== DEFAULT_THEME_ID) {
-    return allThemes.find((theme) => theme.id === DEFAULT_THEME_ID)?.css || '';
+    return allThemes.find((theme) => theme.id === DEFAULT_THEME_ID)?.css || "";
   }
-  return '';
+  return "";
 };
 
-export const computeCssSyncDecision = ({ savedCss, activeThemeId, savedThemes, currentUiCss, lastUiCssUpdateAt, now = Date.now() }: ComputeCssSyncDecisionParams): ComputeCssSyncDecisionResult => {
-  const normalizedSavedCss = savedCss || '';
-  const expectedCss = resolveCssByActiveTheme(activeThemeId || '', savedThemes || []);
+export const computeCssSyncDecision = ({
+  savedCss,
+  activeThemeId,
+  savedThemes,
+  currentUiCss,
+  lastUiCssUpdateAt,
+  now = Date.now(),
+}: ComputeCssSyncDecisionParams): ComputeCssSyncDecisionResult => {
+  const normalizedSavedCss = savedCss || "";
+  const expectedCss = resolveCssByActiveTheme(activeThemeId || "", savedThemes || []);
 
   if (Boolean(activeThemeId) && normalizedSavedCss !== expectedCss) {
     return {

@@ -4,17 +4,17 @@
  * Small utilities that wrap common multi-step assertions so test files
  * remain concise and consistent.
  */
-import type { Page } from '@playwright/test';
-import { expect } from '../fixtures';
+import type { Page } from "@playwright/test";
+import { expect } from "../fixtures";
 
 /**
  * Assert that the page body contains at least one of the given strings
  * (case-sensitive).  Useful for i18n-agnostic checks.
  */
 export async function expectBodyContainsAny(page: Page, candidates: string[]): Promise<void> {
-  const content = await page.locator('body').textContent();
+  const content = await page.locator("body").textContent();
   const found = candidates.some((c) => content?.includes(c));
-  expect(found, `Expected body to contain one of: ${candidates.join(', ')}`).toBeTruthy();
+  expect(found, `Expected body to contain one of: ${candidates.join(", ")}`).toBeTruthy();
 }
 
 /**
@@ -31,9 +31,9 @@ export async function expectUrlContains(page: Page, substring: string): Promise<
  */
 export function createErrorCollector(page: Page): { errors: string[]; critical: () => string[] } {
   const errors: string[] = [];
-  page.on('pageerror', (err) => errors.push(err.message));
+  page.on("pageerror", (err) => errors.push(err.message));
 
-  const IGNORED_PATTERNS = ['ResizeObserver', 'net::ERR_'];
+  const IGNORED_PATTERNS = ["ResizeObserver", "net::ERR_"];
   return {
     errors,
     critical: () => errors.filter((e) => !IGNORED_PATTERNS.some((p) => e.includes(p))),

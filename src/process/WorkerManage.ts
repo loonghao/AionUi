@@ -4,16 +4,16 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { TChatConversation } from '@/common/storage';
-import AcpAgentManager from './task/AcpAgentManager';
-import { CodexAgentManager } from '@/agent/codex';
-import NanoBotAgentManager from './task/NanoBotAgentManager';
-import OpenClawAgentManager from './task/OpenClawAgentManager';
+import type { TChatConversation } from "@/common/storage";
+import AcpAgentManager from "./task/AcpAgentManager";
+import { CodexAgentManager } from "@/agent/codex";
+import NanoBotAgentManager from "./task/NanoBotAgentManager";
+import OpenClawAgentManager from "./task/OpenClawAgentManager";
 // import type { AcpAgentTask } from './task/AcpAgentTask';
-import { ProcessChat } from './initStorage';
-import type AgentBaseTask from './task/BaseAgentManager';
-import { GeminiAgentManager } from './task/GeminiAgentManager';
-import { getDatabase } from './database/export';
+import { ProcessChat } from "./initStorage";
+import type AgentBaseTask from "./task/BaseAgentManager";
+import { GeminiAgentManager } from "./task/GeminiAgentManager";
+import { getDatabase } from "./database/export";
 
 const taskList: {
   id: string;
@@ -45,7 +45,7 @@ const buildConversation = (conversation: TChatConversation, options?: BuildConve
   }
 
   switch (conversation.type) {
-    case 'gemini': {
+    case "gemini": {
       const task = new GeminiAgentManager(
         {
           workspace: conversation.extra.workspace,
@@ -62,7 +62,7 @@ const buildConversation = (conversation: TChatConversation, options?: BuildConve
           // Persisted session mode for resume / 持久化的会话模式用于恢复
           sessionMode: conversation.extra.sessionMode,
         },
-        conversation.model
+        conversation.model,
       );
       // Only cache if not skipping cache
       if (!options?.skipCache) {
@@ -70,7 +70,7 @@ const buildConversation = (conversation: TChatConversation, options?: BuildConve
       }
       return task;
     }
-    case 'acp': {
+    case "acp": {
       const task = new AcpAgentManager({
         ...conversation.extra,
         conversation_id: conversation.id,
@@ -82,7 +82,7 @@ const buildConversation = (conversation: TChatConversation, options?: BuildConve
       }
       return task;
     }
-    case 'codex': {
+    case "codex": {
       const task = new CodexAgentManager({
         ...conversation.extra,
         conversation_id: conversation.id,
@@ -96,7 +96,7 @@ const buildConversation = (conversation: TChatConversation, options?: BuildConve
       }
       return task;
     }
-    case 'openclaw-gateway': {
+    case "openclaw-gateway": {
       const task = new OpenClawAgentManager({
         ...conversation.extra,
         conversation_id: conversation.id,
@@ -108,7 +108,7 @@ const buildConversation = (conversation: TChatConversation, options?: BuildConve
       }
       return task;
     }
-    case 'nanobot': {
+    case "nanobot": {
       const task = new NanoBotAgentManager({
         ...conversation.extra,
         conversation_id: conversation.id,
@@ -125,8 +125,13 @@ const buildConversation = (conversation: TChatConversation, options?: BuildConve
   }
 };
 
-const getTaskByIdRollbackBuild = async (id: string, options?: BuildConversationOptions): Promise<AgentBaseTask<unknown>> => {
-  console.log(`[WorkerManage] getTaskByIdRollbackBuild: id=${id}, options=${JSON.stringify(options)}`);
+const getTaskByIdRollbackBuild = async (
+  id: string,
+  options?: BuildConversationOptions,
+): Promise<AgentBaseTask<unknown>> => {
+  console.log(
+    `[WorkerManage] getTaskByIdRollbackBuild: id=${id}, options=${JSON.stringify(options)}`,
+  );
 
   // If not skipping cache, check for existing task
   if (!options?.skipCache) {
@@ -140,7 +145,9 @@ const getTaskByIdRollbackBuild = async (id: string, options?: BuildConversationO
   // Try to load from database first
   const db = getDatabase();
   const dbResult = db.getConversation(id);
-  console.log(`[WorkerManage] Database lookup result: success=${dbResult.success}, hasData=${!!dbResult.data}`);
+  console.log(
+    `[WorkerManage] Database lookup result: success=${dbResult.success}, hasData=${!!dbResult.data}`,
+  );
 
   if (dbResult.success && dbResult.data) {
     console.log(`[WorkerManage] Building conversation from database: ${id}`);
@@ -148,15 +155,15 @@ const getTaskByIdRollbackBuild = async (id: string, options?: BuildConversationO
   }
 
   // Fallback to file storage
-  const list = (await ProcessChat.get('chat.history')) as TChatConversation[] | undefined;
+  const list = (await ProcessChat.get("chat.history")) as TChatConversation[] | undefined;
   const conversation = list?.find((item) => item.id === id);
   if (conversation) {
     console.log(`[WorkerManage] Building conversation from file storage: ${id}`);
     return buildConversation(conversation, options);
   }
 
-  console.error('[WorkerManage] Conversation not found in database or file storage:', id);
-  return Promise.reject(new Error('Conversation not found'));
+  console.error("[WorkerManage] Conversation not found in database or file storage:", id);
+  return Promise.reject(new Error("Conversation not found"));
 };
 
 const kill = (id: string) => {

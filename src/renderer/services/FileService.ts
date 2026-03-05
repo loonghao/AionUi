@@ -4,15 +4,15 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { ipcBridge } from '@/common';
+import { ipcBridge } from "@/common";
 // Simple formatBytes implementation moved from deleted updateConfig
 function formatBytes(bytes: number, decimals = 2): string {
-  if (bytes === 0) return '0 Bytes';
+  if (bytes === 0) return "0 Bytes";
   const k = 1024;
   const dm = decimals < 0 ? 0 : decimals;
-  const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+  const sizes = ["Bytes", "KB", "MB", "GB", "TB"];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + " " + sizes[i];
 }
 
 // ===== 文件类型支持配置 =====
@@ -20,13 +20,40 @@ function formatBytes(bytes: number, decimals = 2): string {
 // 以下常量为将来可能的文件类型过滤功能预留
 
 /** 支持的图片文件扩展名 */
-export const imageExts = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp', '.svg'];
+export const imageExts = [".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp", ".svg"];
 
 /** 支持的文档文件扩展名 */
-export const documentExts = ['.pdf', '.doc', '.docx', '.pptx', '.xlsx', '.odt', '.odp', '.ods'];
+export const documentExts = [".pdf", ".doc", ".docx", ".pptx", ".xlsx", ".odt", ".odp", ".ods"];
 
 /** 支持的文本文件扩展名 */
-export const textExts = ['.txt', '.md', '.json', '.xml', '.csv', '.log', '.js', '.ts', '.jsx', '.tsx', '.html', '.css', '.scss', '.py', '.java', '.cpp', '.c', '.h', '.go', '.rs', '.yml', '.yaml', '.toml', '.ini', '.conf', '.config'];
+export const textExts = [
+  ".txt",
+  ".md",
+  ".json",
+  ".xml",
+  ".csv",
+  ".log",
+  ".js",
+  ".ts",
+  ".jsx",
+  ".tsx",
+  ".html",
+  ".css",
+  ".scss",
+  ".py",
+  ".java",
+  ".cpp",
+  ".c",
+  ".h",
+  ".go",
+  ".rs",
+  ".yml",
+  ".yaml",
+  ".toml",
+  ".ini",
+  ".conf",
+  ".config",
+];
 
 /** 所有支持的文件扩展名（预先设计，当前实际接受所有文件类型） */
 export const allSupportedExts = [...imageExts, ...documentExts, ...textExts];
@@ -55,20 +82,20 @@ export function isSupportedFile(_fileName: string, _supportedExts: string[]): bo
 
 // 获取文件扩展名
 export function getFileExtension(fileName: string): string {
-  const lastDotIndex = fileName.lastIndexOf('.');
-  return lastDotIndex > -1 ? fileName.substring(lastDotIndex).toLowerCase() : '';
+  const lastDotIndex = fileName.lastIndexOf(".");
+  return lastDotIndex > -1 ? fileName.substring(lastDotIndex).toLowerCase() : "";
 }
 
-import { AIONUI_TIMESTAMP_REGEX } from '@/common/constants';
+import { AIONUI_TIMESTAMP_REGEX } from "@/common/constants";
 
 // 清理AionUI时间戳后缀，返回原始文件名
 export function cleanAionUITimestamp(fileName: string): string {
-  return fileName.replace(AIONUI_TIMESTAMP_REGEX, '$1');
+  return fileName.replace(AIONUI_TIMESTAMP_REGEX, "$1");
 }
 
 // 从文件路径获取清理后的文件名（用于UI显示）
 export function getCleanFileName(filePath: string): string {
-  const fileName = filePath.split(/[\\/]/).pop() || '';
+  const fileName = filePath.split(/[\\/]/).pop() || "";
   return cleanAionUITimestamp(fileName);
 }
 
@@ -86,7 +113,10 @@ export function getCleanFileNames(filePaths: string[]): string[] {
  * @param supportedExts 支持的文件扩展名数组（预留参数）
  * @returns 当前返回所有文件，未进行过滤
  */
-export function filterSupportedFiles(files: FileMetadata[], supportedExts: string[]): FileMetadata[] {
+export function filterSupportedFiles(
+  files: FileMetadata[],
+  supportedExts: string[],
+): FileMetadata[] {
   return files.filter((file) => isSupportedFile(file.name, supportedExts));
 }
 
@@ -105,7 +135,7 @@ export function getFilesFromDropEvent(event: DragEvent): FileMetadata[] {
 
     files.push({
       name: file.name,
-      path: electronFile.path || '', // 原始路径，可能为空
+      path: electronFile.path || "", // 原始路径，可能为空
       size: file.size,
       type: file.type,
       lastModified: file.lastModified,
@@ -117,7 +147,7 @@ export function getFilesFromDropEvent(event: DragEvent): FileMetadata[] {
 
 // 从拖拽事件中提取文本
 export function getTextFromDropEvent(event: DragEvent): string {
-  return event.dataTransfer?.getData('text/plain') || '';
+  return event.dataTransfer?.getData("text/plain") || "";
 }
 
 // 格式化文件大小（使用统一的formatBytes实现）
@@ -167,7 +197,7 @@ class FileServiceClass {
       // In Electron environment, dragged files have additional path property
       const electronFile = file as File & { path?: string };
 
-      let filePath = electronFile.path || '';
+      let filePath = electronFile.path || "";
 
       // If no valid path (some dragged files may not have paths), create temporary file
       if (!filePath) {
@@ -183,7 +213,7 @@ class FileServiceClass {
             filePath = tempPath;
           }
         } catch (error) {
-          console.error('Failed to create temp file for dragged file:', error);
+          console.error("Failed to create temp file for dragged file:", error);
           // Skip failed files instead of using invalid paths
           continue;
         }

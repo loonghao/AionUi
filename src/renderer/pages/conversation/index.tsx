@@ -1,11 +1,11 @@
-import { ipcBridge } from '@/common';
-import { Spin } from '@arco-design/web-react';
-import React, { useEffect, useRef } from 'react';
-import { useParams } from 'react-router-dom';
-import useSWR from 'swr';
-import ChatConversation from './ChatConversation';
-import { usePreviewContext } from '@/renderer/pages/conversation/preview';
-import { useConversationTabs } from './context/ConversationTabsContext';
+import { ipcBridge } from "@/common";
+import { Spin } from "@arco-design/web-react";
+import React, { useEffect, useRef } from "react";
+import { useParams } from "react-router-dom";
+import useSWR from "swr";
+import ChatConversation from "./ChatConversation";
+import { usePreviewContext } from "@/renderer/pages/conversation/preview";
+import { useConversationTabs } from "./context/ConversationTabsContext";
 
 const ChatConversationIndex: React.FC = () => {
   const { id } = useParams();

@@ -209,7 +209,7 @@ const {
 ### 基础用法
 
 ```tsx
-import ChatWorkspace from './workspace';
+import ChatWorkspace from "./workspace";
 
 function ConversationPage() {
   const [messageApi, messageContext] = Message.useMessage();
@@ -217,7 +217,12 @@ function ConversationPage() {
   return (
     <>
       {messageContext}
-      <ChatWorkspace conversation_id={conversationId} workspace={workspacePath} eventPrefix='gemini' messageApi={messageApi} />
+      <ChatWorkspace
+        conversation_id={conversationId}
+        workspace={workspacePath}
+        eventPrefix="gemini"
+        messageApi={messageApi}
+      />
     </>
   );
 }
@@ -226,19 +231,19 @@ function ConversationPage() {
 ### 监听文件选中事件
 
 ```tsx
-import { emitter } from '@/renderer/utils/emitter';
-import { useEffect } from 'react';
+import { emitter } from "@/renderer/utils/emitter";
+import { useEffect } from "react";
 
 function MyComponent() {
   useEffect(() => {
     const handleFileSelected = (items: Array<{ path: string; name: string; isFile: boolean }>) => {
-      console.log('选中的文件:', items);
+      console.log("选中的文件:", items);
     };
 
-    emitter.on('gemini.selected.file', handleFileSelected);
+    emitter.on("gemini.selected.file", handleFileSelected);
 
     return () => {
-      emitter.off('gemini.selected.file', handleFileSelected);
+      emitter.off("gemini.selected.file", handleFileSelected);
     };
   }, []);
 }
@@ -247,11 +252,11 @@ function MyComponent() {
 ### 手动刷新工作空间
 
 ```tsx
-import { emitter } from '@/renderer/utils/emitter';
+import { emitter } from "@/renderer/utils/emitter";
 
 function RefreshButton() {
   const handleRefresh = () => {
-    emitter.emit('gemini.workspace.refresh');
+    emitter.emit("gemini.workspace.refresh");
   };
 
   return <button onClick={handleRefresh}>刷新</button>;
@@ -261,11 +266,11 @@ function RefreshButton() {
 ### 清空文件选择
 
 ```tsx
-import { emitter } from '@/renderer/utils/emitter';
+import { emitter } from "@/renderer/utils/emitter";
 
 function ClearButton() {
   const handleClear = () => {
-    emitter.emit('gemini.selected.file.clear');
+    emitter.emit("gemini.selected.file.clear");
   };
 
   return <button onClick={handleClear}>清空选择</button>;
@@ -289,7 +294,7 @@ function ClearButton() {
 Workspace 依赖 `PreviewContext` 来实现文件预览:
 
 ```tsx
-import { PreviewProvider } from '../preview';
+import { PreviewProvider } from "../preview";
 
 function Layout() {
   return (
@@ -306,10 +311,10 @@ function Layout() {
 
 ```typescript
 // 禁用粘贴确认
-await ConfigStorage.set('workspace.pasteConfirm', true);
+await ConfigStorage.set("workspace.pasteConfirm", true);
 
 // 启用粘贴确认（默认）
-await ConfigStorage.set('workspace.pasteConfirm', false);
+await ConfigStorage.set("workspace.pasteConfirm", false);
 ```
 
 ## 性能优化
@@ -336,7 +341,7 @@ const onSearch = useDebounce(
     void treeHook.loadWorkspace(workspace, value);
   },
   200,
-  [workspace, treeHook.loadWorkspace]
+  [workspace, treeHook.loadWorkspace],
 );
 ```
 
@@ -357,10 +362,10 @@ const selectedNodeRef = useRef<SelectedNodeRef | null>(null);
 try {
   const result = await operation();
   if (!result.success) {
-    messageApi.error(result.msg || t('defaultErrorMessage'));
+    messageApi.error(result.msg || t("defaultErrorMessage"));
   }
 } catch (error) {
-  messageApi.error(t('unknownError'));
+  messageApi.error(t("unknownError"));
 }
 ```
 
@@ -392,8 +397,8 @@ index.tsx (容器组件)
 在 `useWorkspaceFileOps` 的 `handlePreviewFile` 函数中添加新的扩展名判断:
 
 ```typescript
-if (['new', 'ext'].includes(ext)) {
-  contentType = 'newType';
+if (["new", "ext"].includes(ext)) {
+  contentType = "newType";
 }
 ```
 
@@ -410,7 +415,7 @@ if (['new', 'ext'].includes(ext)) {
 用户可以在粘贴确认对话框中勾选"不再询问"，或者通过代码设置:
 
 ```typescript
-await ConfigStorage.set('workspace.pasteConfirm', true);
+await ConfigStorage.set("workspace.pasteConfirm", true);
 ```
 
 ## 相关链接

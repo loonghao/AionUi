@@ -4,23 +4,23 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import AionModal from '@/renderer/components/base/AionModal';
-import AionScrollArea from '@/renderer/components/base/AionScrollArea';
-import { iconColors } from '@/renderer/theme/colors';
-import { isElectronDesktop } from '@/renderer/utils/platform';
-import { Tabs } from '@arco-design/web-react';
-import { Computer, Earth, Gemini, Info, LinkCloud, Toolkit } from '@icon-park/react';
-import classNames from 'classnames';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import AboutModalContent from './contents/AboutModalContent';
-import AgentModalContent from './contents/AgentModalContent';
-import GeminiModalContent from './contents/GeminiModalContent';
-import ModelModalContent from './contents/ModelModalContent';
-import SystemModalContent from './contents/SystemModalContent';
-import ToolsModalContent from './contents/ToolsModalContent';
-import WebuiModalContent from './contents/WebuiModalContent';
-import { SettingsViewModeProvider } from './settingsViewContext';
+import AionModal from "@/renderer/components/base/AionModal";
+import AionScrollArea from "@/renderer/components/base/AionScrollArea";
+import { iconColors } from "@/renderer/theme/colors";
+import { isElectronDesktop } from "@/renderer/utils/platform";
+import { Tabs } from "@arco-design/web-react";
+import { Computer, Earth, Gemini, Info, LinkCloud, Toolkit } from "@icon-park/react";
+import classNames from "classnames";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
+import AboutModalContent from "./contents/AboutModalContent";
+import AgentModalContent from "./contents/AgentModalContent";
+import GeminiModalContent from "./contents/GeminiModalContent";
+import ModelModalContent from "./contents/ModelModalContent";
+import SystemModalContent from "./contents/SystemModalContent";
+import ToolsModalContent from "./contents/ToolsModalContent";
+import WebuiModalContent from "./contents/WebuiModalContent";
+import { SettingsViewModeProvider } from "./settingsViewContext";
 
 // ==================== 常量定义 / Constants ====================
 
@@ -38,8 +38,8 @@ const MODAL_WIDTH = {
 
 /** Modal 高度配置 / Modal height configuration */
 const MODAL_HEIGHT = {
-  mobile: '90vh',
-  mobileContent: 'calc(90vh - 80px)',
+  mobile: "90vh",
+  mobileContent: "calc(90vh - 80px)",
   desktop: 459,
 } as const;
 
@@ -51,7 +51,7 @@ const RESIZE_DEBOUNCE_DELAY = 150;
 /**
  * 设置标签页类型 / Settings tab type
  */
-export type SettingTab = 'gemini' | 'model' | 'agent' | 'tools' | 'webui' | 'system' | 'about';
+export type SettingTab = "gemini" | "model" | "agent" | "tools" | "webui" | "system" | "about";
 
 /**
  * 设置弹窗组件属性 / Settings modal component props
@@ -92,8 +92,17 @@ interface SubModalProps {
  */
 export const SubModal: React.FC<SubModalProps> = ({ visible, onCancel, title, children }) => {
   return (
-    <AionModal visible={visible} onCancel={onCancel} footer={null} className='settings-sub-modal' size='medium' title={title}>
-      <AionScrollArea className='h-full px-20px pb-16px text-14px text-t-primary'>{children}</AionScrollArea>
+    <AionModal
+      visible={visible}
+      onCancel={onCancel}
+      footer={null}
+      className="settings-sub-modal"
+      size="medium"
+      title={title}
+    >
+      <AionScrollArea className="h-full px-20px pb-16px text-14px text-t-primary">
+        {children}
+      </AionScrollArea>
     </AionModal>
   );
 };
@@ -116,7 +125,11 @@ export const SubModal: React.FC<SubModalProps> = ({ visible, onCancel, title, ch
  * openSettings('system');
  * ```
  */
-const SettingsModal: React.FC<SettingsModalProps> = ({ visible, onCancel, defaultTab = 'gemini' }) => {
+const SettingsModal: React.FC<SettingsModalProps> = ({
+  visible,
+  onCancel,
+  defaultTab = "gemini",
+}) => {
   const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<SettingTab>(defaultTab);
   const [isMobile, setIsMobile] = useState(false);
@@ -143,9 +156,9 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ visible, onCancel, defaul
       resizeTimerRef.current = window.setTimeout(handleResize, RESIZE_DEBOUNCE_DELAY);
     };
 
-    window.addEventListener('resize', debouncedResize);
+    window.addEventListener("resize", debouncedResize);
     return () => {
-      window.removeEventListener('resize', debouncedResize);
+      window.removeEventListener("resize", debouncedResize);
       if (resizeTimerRef.current) {
         window.clearTimeout(resizeTimerRef.current);
       }
@@ -157,68 +170,77 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ visible, onCancel, defaul
 
   // 菜单项配置 / Menu items configuration
   // WebUI 选项仅在桌面端显示，防止越权访问 / WebUI option only shown on desktop to prevent unauthorized access
-  const menuItems = useMemo((): Array<{ key: SettingTab; label: string; icon: React.ReactNode }> => {
+  const menuItems = useMemo((): Array<{
+    key: SettingTab;
+    label: string;
+    icon: React.ReactNode;
+  }> => {
     const items: Array<{ key: SettingTab; label: string; icon: React.ReactNode }> = [
       {
-        key: 'gemini',
-        label: t('settings.gemini'),
-        icon: <Gemini theme='outline' size='20' fill={iconColors.secondary} />,
+        key: "gemini",
+        label: t("settings.gemini"),
+        icon: <Gemini theme="outline" size="20" fill={iconColors.secondary} />,
       },
       {
-        key: 'model',
-        label: t('settings.model'),
-        icon: <LinkCloud theme='outline' size='20' fill={iconColors.secondary} />,
+        key: "model",
+        label: t("settings.model"),
+        icon: <LinkCloud theme="outline" size="20" fill={iconColors.secondary} />,
       },
       {
-        key: 'tools',
-        label: t('settings.tools'),
-        icon: <Toolkit theme='outline' size='20' fill={iconColors.secondary} />,
+        key: "tools",
+        label: t("settings.tools"),
+        icon: <Toolkit theme="outline" size="20" fill={iconColors.secondary} />,
       },
     ];
 
     // 仅在桌面端添加 WebUI 选项（包含 Assistant 配置）/ Only add WebUI option on desktop (includes Assistant config)
     if (isDesktop) {
       items.push({
-        key: 'webui',
-        label: t('settings.webui'),
-        icon: <Earth theme='outline' size='20' fill={iconColors.secondary} />,
+        key: "webui",
+        label: t("settings.webui"),
+        icon: <Earth theme="outline" size="20" fill={iconColors.secondary} />,
       });
     }
 
     items.push(
       {
-        key: 'system',
-        label: t('settings.system'),
-        icon: <Computer theme='outline' size='20' fill={iconColors.secondary} />,
+        key: "system",
+        label: t("settings.system"),
+        icon: <Computer theme="outline" size="20" fill={iconColors.secondary} />,
       },
       {
-        key: 'about',
-        label: t('settings.about'),
-        icon: <Info theme='outline' size='20' fill={iconColors.secondary} />,
-      }
+        key: "about",
+        label: t("settings.about"),
+        icon: <Info theme="outline" size="20" fill={iconColors.secondary} />,
+      },
     );
 
     return items;
   }, [t, isDesktop]);
 
-  console.log('%c [  ]-211', 'font-size:13px; background:pink; color:#bf2c9f;', isDesktop, menuItems);
+  console.log(
+    "%c [  ]-211",
+    "font-size:13px; background:pink; color:#bf2c9f;",
+    isDesktop,
+    menuItems,
+  );
 
   // 渲染当前选中的设置内容 / Render current selected settings content
   const renderContent = () => {
     switch (activeTab) {
-      case 'gemini':
+      case "gemini":
         return <GeminiModalContent />;
-      case 'model':
+      case "model":
         return <ModelModalContent />;
-      case 'agent':
+      case "agent":
         return <AgentModalContent />;
-      case 'tools':
+      case "tools":
         return <ToolsModalContent />;
-      case 'webui':
+      case "webui":
         return <WebuiModalContent />;
-      case 'system':
+      case "system":
         return <SystemModalContent />;
-      case 'about':
+      case "about":
         return <AboutModalContent />;
       default:
         return null;
@@ -235,8 +257,14 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ visible, onCancel, defaul
 
   // 移动端菜单（Tabs切换）/ Mobile menu (Tabs)
   const mobileMenu = (
-    <div className='mt-16px mb-20px overflow-x-auto'>
-      <Tabs activeTab={activeTab} onChange={handleTabChange} type='line' size='default' className='settings-mobile-tabs [&_.arco-tabs-nav]:border-b-0'>
+    <div className="mt-16px mb-20px overflow-x-auto">
+      <Tabs
+        activeTab={activeTab}
+        onChange={handleTabChange}
+        type="line"
+        size="default"
+        className="settings-mobile-tabs [&_.arco-tabs-nav]:border-b-0"
+      >
         {menuItems.map((item) => (
           <Tabs.TabPane key={item.key} title={item.label} />
         ))}
@@ -246,19 +274,25 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ visible, onCancel, defaul
 
   // 桌面端菜单（侧边栏）/ Desktop menu (sidebar)
   const desktopMenu = (
-    <AionScrollArea className='flex-shrink-0 b-color-border-2 scrollbar-hide' style={{ width: `${SIDEBAR_WIDTH}px` }}>
-      <div className='flex flex-col gap-2px'>
+    <AionScrollArea
+      className="flex-shrink-0 b-color-border-2 scrollbar-hide"
+      style={{ width: `${SIDEBAR_WIDTH}px` }}
+    >
+      <div className="flex flex-col gap-2px">
         {menuItems.map((item) => (
           <div
             key={item.key}
-            className={classNames('flex items-center px-14px py-10px rd-8px cursor-pointer transition-all duration-150 select-none', {
-              'bg-aou-2 text-t-primary': activeTab === item.key,
-              'text-t-secondary hover:bg-fill-1': activeTab !== item.key,
-            })}
+            className={classNames(
+              "flex items-center px-14px py-10px rd-8px cursor-pointer transition-all duration-150 select-none",
+              {
+                "bg-aou-2 text-t-primary": activeTab === item.key,
+                "text-t-secondary hover:bg-fill-1": activeTab !== item.key,
+              },
+            )}
             onClick={() => setActiveTab(item.key)}
           >
-            <span className='mr-12px text-16px line-height-[10px]'>{item.icon}</span>
-            <span className='text-14px font-500 flex-1 lh-22px'>{item.label}</span>
+            <span className="mr-12px text-16px line-height-[10px]">{item.icon}</span>
+            <span className="text-14px font-500 flex-1 lh-22px">{item.label}</span>
           </div>
         ))}
       </div>
@@ -266,29 +300,41 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ visible, onCancel, defaul
   );
 
   return (
-    <SettingsViewModeProvider value='modal'>
+    <SettingsViewModeProvider value="modal">
       <AionModal
         visible={visible}
         onCancel={onCancel}
         footer={null}
-        className='settings-modal'
+        className="settings-modal"
         style={{
-          width: isMobile ? `min(calc(100vw - 32px), ${MODAL_WIDTH.mobile}px)` : `clamp(var(--app-min-width, 360px), 100vw, ${MODAL_WIDTH.desktop}px)`,
+          width: isMobile
+            ? `min(calc(100vw - 32px), ${MODAL_WIDTH.mobile}px)`
+            : `clamp(var(--app-min-width, 360px), 100vw, ${MODAL_WIDTH.desktop}px)`,
           maxHeight: isMobile ? MODAL_HEIGHT.mobile : undefined,
-          borderRadius: '16px',
+          borderRadius: "16px",
         }}
-        contentStyle={{ padding: isMobile ? '16px' : '24px 24px 32px' }}
-        title={t('settings.title')}
+        contentStyle={{ padding: isMobile ? "16px" : "24px 24px 32px" }}
+        title={t("settings.title")}
       >
         <div
-          className={classNames('overflow-hidden gap-0', isMobile ? 'flex flex-col min-h-0' : 'flex mt-20px')}
+          className={classNames(
+            "overflow-hidden gap-0",
+            isMobile ? "flex flex-col min-h-0" : "flex mt-20px",
+          )}
           style={{
             height: isMobile ? MODAL_HEIGHT.mobileContent : `${MODAL_HEIGHT.desktop}px`,
           }}
         >
           {isMobile ? mobileMenu : desktopMenu}
 
-          <AionScrollArea className={classNames('flex-1 min-h-0', isMobile ? 'overflow-y-auto' : 'flex flex-col pl-24px gap-16px')}>{renderContent()}</AionScrollArea>
+          <AionScrollArea
+            className={classNames(
+              "flex-1 min-h-0",
+              isMobile ? "overflow-y-auto" : "flex flex-col pl-24px gap-16px",
+            )}
+          >
+            {renderContent()}
+          </AionScrollArea>
         </div>
       </AionModal>
     </SettingsViewModeProvider>

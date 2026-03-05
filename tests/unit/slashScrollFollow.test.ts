@@ -1,8 +1,8 @@
-import { describe, expect, it } from 'vitest';
-import { getScrollTopForActiveItem } from '@/renderer/hooks/useSlashCommandController';
+import { describe, expect, it } from "vitest";
+import { getScrollTopForActiveItem } from "@/renderer/hooks/useSlashCommandController";
 
-describe('getScrollTopForActiveItem', () => {
-  it('keeps scroll position when active item is already visible', () => {
+describe("getScrollTopForActiveItem", () => {
+  it("keeps scroll position when active item is already visible", () => {
     const next = getScrollTopForActiveItem({
       containerScrollTop: 80,
       containerHeight: 200,
@@ -13,7 +13,7 @@ describe('getScrollTopForActiveItem', () => {
     expect(next).toBe(80);
   });
 
-  it('scrolls up when active item is above viewport', () => {
+  it("scrolls up when active item is above viewport", () => {
     const next = getScrollTopForActiveItem({
       containerScrollTop: 120,
       containerHeight: 200,
@@ -24,7 +24,7 @@ describe('getScrollTopForActiveItem', () => {
     expect(next).toBe(40);
   });
 
-  it('scrolls down when active item is below viewport', () => {
+  it("scrolls down when active item is below viewport", () => {
     const next = getScrollTopForActiveItem({
       containerScrollTop: 100,
       containerHeight: 200,

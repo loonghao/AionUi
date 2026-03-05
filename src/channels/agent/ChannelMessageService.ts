@@ -4,12 +4,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import WorkerManage from '@/process/WorkerManage';
-import { getDatabase } from '@/process/database';
-import type BaseAgentManager from '@/process/task/BaseAgentManager';
-import { composeMessage, transformMessage, type TMessage } from '../../common/chatLib';
-import { uuid } from '../../common/utils';
-import { channelEventBus, type IAgentMessageEvent } from './ChannelEventBus';
+import WorkerManage from "@/process/WorkerManage";
+import { getDatabase } from "@/process/database";
+import type BaseAgentManager from "@/process/task/BaseAgentManager";
+import { composeMessage, transformMessage, type TMessage } from "../../common/chatLib";
+import { uuid } from "../../common/utils";
+import { channelEventBus, type IAgentMessageEvent } from "./ChannelEventBus";
 
 /**
  * Streaming callback for progress updates
@@ -97,14 +97,14 @@ export class ChannelMessageService {
     // Track 'start' events to count multi-turn continuations (e.g., tool call → model response).
     // The Gemini agent emits a new 'start' for each submitQuery turn, including continuations
     // triggered by onAllToolCallsComplete. We must wait for all turns to finish.
-    if (event.type === 'start') {
+    if (event.type === "start") {
       stream.turnCount++;
       return;
     }
 
     // Detect stream completion: only resolve when all turns have finished.
     // When turnCount is 0 (no 'start' received, e.g., error-only flows), resolve immediately.
-    if (event.type === 'finish') {
+    if (event.type === "finish") {
       stream.finishCount++;
       if (stream.turnCount === 0 || stream.finishCount >= stream.turnCount) {
         this.activeStreams.delete(conversationId);
@@ -131,7 +131,7 @@ export class ChannelMessageService {
       // insert: true 表示新消息，false 表示更新现有消息
       // insert: true means new message, false means update existing message
 
-      const isInsert = type === 'insert';
+      const isInsert = type === "insert";
       stream.callback(msg, isInsert);
     });
     this.messageListMap.set(conversationId, messageList.slice(-20));
@@ -146,7 +146,12 @@ export class ChannelMessageService {
    * @param onStream - Callback for streaming updates
    * @returns Promise that resolves when streaming is complete
    */
-  async sendMessage(_sessionId: string, conversationId: string, message: string, onStream: StreamCallback): Promise<string> {
+  async sendMessage(
+    _sessionId: string,
+    conversationId: string,
+    message: string,
+    onStream: StreamCallback,
+  ): Promise<string> {
     // 确保服务已初始化
     // Ensure service is initialized
     this.initialize();
@@ -163,25 +168,29 @@ export class ChannelMessageService {
       // Check conversation source, enable yoloMode if it's from a Channel
       const db = getDatabase();
       const dbResult = db.getConversation(conversationId);
-      const isFromChannel = dbResult.success && (dbResult.data?.source === 'lark' || dbResult.data?.source === 'telegram' || dbResult.data?.source === 'dingtalk');
+      const isFromChannel =
+        dbResult.success &&
+        (dbResult.data?.source === "lark" ||
+          dbResult.data?.source === "telegram" ||
+          dbResult.data?.source === "dingtalk");
 
       task = await WorkerManage.getTaskByIdRollbackBuild(conversationId, {
         yoloMode: isFromChannel,
       });
     } catch (error) {
-      const errorMsg = error instanceof Error ? error.message : 'Failed to get conversation task';
+      const errorMsg = error instanceof Error ? error.message : "Failed to get conversation task";
       console.error(`[ChannelMessageService] Failed to get task:`, errorMsg);
       onStream(
         {
-          type: 'tips',
+          type: "tips",
           id: uuid(),
           conversation_id: conversationId,
           content: {
-            type: 'error',
+            type: "error",
             content: `Error: ${errorMsg}`,
           },
         },
-        true
+        true,
       );
       throw error;
     }
@@ -192,7 +201,7 @@ export class ChannelMessageService {
       this.activeStreams.set(conversationId, {
         msgId,
         callback: onStream,
-        buffer: '',
+        buffer: "",
         resolve,
         reject,
         turnCount: 0,
@@ -201,12 +210,25 @@ export class ChannelMessageService {
 
       // Build payload based on agent type.
       // Gemini expects { input }, ACP/Codex expect { content }.
-      const payload: { input?: string; content?: string; msg_id: string } = task.type === 'gemini' ? { input: message, msg_id: msgId } : task.type === 'acp' || task.type === 'codex' ? { content: message, msg_id: msgId } : { content: message, msg_id: msgId };
+      const payload: { input?: string; content?: string; msg_id: string } =
+        task.type === "gemini"
+          ? { input: message, msg_id: msgId }
+          : task.type === "acp" || task.type === "codex"
+            ? { content: message, msg_id: msgId }
+            : { content: message, msg_id: msgId };
 
       task.sendMessage(payload).catch((error: Error) => {
-        const errorMessage = `Error: ${error.message || 'Failed to send message'}`;
+        const errorMessage = `Error: ${error.message || "Failed to send message"}`;
         console.error(`[ChannelMessageService] Send error:`, error);
-        onStream({ type: 'tips', id: uuid(), conversation_id: conversationId, content: { type: 'error', content: errorMessage } }, true);
+        onStream(
+          {
+            type: "tips",
+            id: uuid(),
+            conversation_id: conversationId,
+            content: { type: "error", content: errorMessage },
+          },
+          true,
+        );
         this.activeStreams.delete(conversationId);
         reject(error);
       });
@@ -310,4 +332,7 @@ export function getChannelMessageService(): ChannelMessageService {
 
 // Backward compatibility export
 // 向后兼容的导出
-export { ChannelMessageService as ChannelGeminiService, getChannelMessageService as getChannelGeminiService };
+export {
+  ChannelMessageService as ChannelGeminiService,
+  getChannelMessageService as getChannelGeminiService,
+};

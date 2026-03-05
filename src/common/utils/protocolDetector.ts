@@ -18,7 +18,7 @@
  * 支持的协议类型
  * Supported protocol types
  */
-export type ProtocolType = 'openai' | 'gemini' | 'anthropic' | 'unknown';
+export type ProtocolType = "openai" | "gemini" | "anthropic" | "unknown";
 
 /**
  * 协议检测结果
@@ -109,7 +109,7 @@ export interface ProtocolDetectionResponse {
   /** 建议操作 / Suggested action */
   suggestion?: {
     /** 建议类型 / Suggestion type */
-    type: 'switch_platform' | 'fix_url' | 'check_key' | 'none';
+    type: "switch_platform" | "fix_url" | "check_key" | "none";
     /** 建议消息 / Suggestion message */
     message: string;
     /** 建议的平台 / Suggested platform */
@@ -135,7 +135,7 @@ interface ProtocolSignature {
   /** 测试端点模板 / Test endpoint templates */
   endpoints: Array<{
     path: string;
-    method: 'GET' | 'POST';
+    method: "GET" | "POST";
     /** 请求头 / Headers */
     headers?: (apiKey: string) => Record<string, string>;
     /** 请求体（POST 请求）/ Request body for POST */
@@ -159,7 +159,7 @@ interface ProtocolSignature {
 export const PROTOCOL_SIGNATURES: ProtocolSignature[] = [
   // Gemini 协议
   {
-    protocol: 'gemini',
+    protocol: "gemini",
     // Gemini API Key 格式：AIza 开头，后跟 35 个字符
     // Gemini API Key format: starts with AIza, followed by 35 characters
     keyPattern: /^AIza[A-Za-z0-9_-]{35}$/,
@@ -171,8 +171,8 @@ export const PROTOCOL_SIGNATURES: ProtocolSignature[] = [
     ],
     endpoints: [
       {
-        path: '/v1beta/models',
-        method: 'GET',
+        path: "/v1beta/models",
+        method: "GET",
         headers: () => ({}),
         validator: (response, status) => {
           if (status !== 200) return false;
@@ -180,8 +180,8 @@ export const PROTOCOL_SIGNATURES: ProtocolSignature[] = [
         },
       },
       {
-        path: '/v1/models',
-        method: 'GET',
+        path: "/v1/models",
+        method: "GET",
         headers: () => ({}),
         validator: (response, status) => {
           if (status !== 200) return false;
@@ -192,7 +192,7 @@ export const PROTOCOL_SIGNATURES: ProtocolSignature[] = [
   },
   // OpenAI 协议（包括兼容服务）
   {
-    protocol: 'openai',
+    protocol: "openai",
     // OpenAI Key 格式多样：
     // - 标准格式: sk-xxx
     // - 项目 Key: sk-proj-xxx
@@ -226,8 +226,8 @@ export const PROTOCOL_SIGNATURES: ProtocolSignature[] = [
     ],
     endpoints: [
       {
-        path: '/models',
-        method: 'GET',
+        path: "/models",
+        method: "GET",
         headers: (apiKey) => ({
           Authorization: `Bearer ${apiKey}`,
         }),
@@ -237,8 +237,8 @@ export const PROTOCOL_SIGNATURES: ProtocolSignature[] = [
         },
       },
       {
-        path: '/v1/models',
-        method: 'GET',
+        path: "/v1/models",
+        method: "GET",
         headers: (apiKey) => ({
           Authorization: `Bearer ${apiKey}`,
         }),
@@ -251,7 +251,7 @@ export const PROTOCOL_SIGNATURES: ProtocolSignature[] = [
   },
   // Anthropic 协议
   {
-    protocol: 'anthropic',
+    protocol: "anthropic",
     // Anthropic Key 格式：sk-ant- 开头
     keyPattern: /^sk-ant-[A-Za-z0-9-]{80,}$/,
     urlPatterns: [
@@ -262,17 +262,17 @@ export const PROTOCOL_SIGNATURES: ProtocolSignature[] = [
       {
         // Anthropic 没有 models 端点，使用 messages 端点测试
         // Anthropic doesn't have models endpoint, use messages endpoint
-        path: '/v1/messages',
-        method: 'POST',
+        path: "/v1/messages",
+        method: "POST",
         headers: (apiKey) => ({
-          'x-api-key': apiKey,
-          'anthropic-version': '2023-06-01',
-          'Content-Type': 'application/json',
+          "x-api-key": apiKey,
+          "anthropic-version": "2023-06-01",
+          "Content-Type": "application/json",
         }),
         body: {
-          model: 'claude-3-haiku-20240307',
+          model: "claude-3-haiku-20240307",
           max_tokens: 1,
-          messages: [{ role: 'user', content: 'test' }],
+          messages: [{ role: "user", content: "test" }],
         },
         validator: (_response, status) => {
           // 200 或 400（参数错误但认证成功）都认为是有效的
@@ -291,14 +291,18 @@ export const PROTOCOL_SIGNATURES: ProtocolSignature[] = [
  * 这些服务使用 OpenAI 协议，但 Key 格式不同
  * These services use OpenAI protocol but with different key formats
  */
-export const THIRD_PARTY_KEY_PATTERNS: Array<{ pattern: RegExp; name: string; protocol: ProtocolType }> = [
-  { pattern: /^sk-[A-Za-z0-9-_]{20,}$/, name: 'OpenAI/Compatible', protocol: 'openai' },
-  { pattern: /^AIza[A-Za-z0-9_-]{35}$/, name: 'Google/Gemini', protocol: 'gemini' },
-  { pattern: /^sk-ant-[A-Za-z0-9-]{80,}$/, name: 'Anthropic', protocol: 'anthropic' },
-  { pattern: /^gsk_[A-Za-z0-9]{52}$/, name: 'Groq', protocol: 'openai' },
-  { pattern: /^pplx-[A-Za-z0-9]{48}$/, name: 'Perplexity', protocol: 'openai' },
-  { pattern: /^[A-Za-z0-9]{32}$/, name: 'DeepSeek/Moonshot', protocol: 'openai' },
-  { pattern: /^[A-Za-z0-9]{64}$/, name: 'SiliconFlow/Together', protocol: 'openai' },
+export const THIRD_PARTY_KEY_PATTERNS: Array<{
+  pattern: RegExp;
+  name: string;
+  protocol: ProtocolType;
+}> = [
+  { pattern: /^sk-[A-Za-z0-9-_]{20,}$/, name: "OpenAI/Compatible", protocol: "openai" },
+  { pattern: /^AIza[A-Za-z0-9_-]{35}$/, name: "Google/Gemini", protocol: "gemini" },
+  { pattern: /^sk-ant-[A-Za-z0-9-]{80,}$/, name: "Anthropic", protocol: "anthropic" },
+  { pattern: /^gsk_[A-Za-z0-9]{52}$/, name: "Groq", protocol: "openai" },
+  { pattern: /^pplx-[A-Za-z0-9]{48}$/, name: "Perplexity", protocol: "openai" },
+  { pattern: /^[A-Za-z0-9]{32}$/, name: "DeepSeek/Moonshot", protocol: "openai" },
+  { pattern: /^[A-Za-z0-9]{64}$/, name: "SiliconFlow/Together", protocol: "openai" },
 ];
 
 /**
@@ -318,7 +322,7 @@ export function parseApiKeys(apiKeyString: string): string[] {
  * Mask API key for display
  */
 export function maskApiKey(apiKey: string): string {
-  if (apiKey.length <= 8) return '***';
+  if (apiKey.length <= 8) return "***";
   return `${apiKey.substring(0, 4)}...${apiKey.substring(apiKey.length - 4)}`;
 }
 
@@ -331,19 +335,19 @@ export function maskApiKey(apiKey: string): string {
  */
 export const API_PATH_SUFFIXES = [
   // Gemini 路径
-  '/v1beta/models',
-  '/v1/models',
-  '/models',
+  "/v1beta/models",
+  "/v1/models",
+  "/models",
   // OpenAI 路径
-  '/v1/chat/completions',
-  '/chat/completions',
-  '/v1/completions',
-  '/completions',
-  '/v1/embeddings',
-  '/embeddings',
+  "/v1/chat/completions",
+  "/chat/completions",
+  "/v1/completions",
+  "/completions",
+  "/v1/embeddings",
+  "/embeddings",
   // Anthropic 路径
-  '/v1/messages',
-  '/messages',
+  "/v1/messages",
+  "/messages",
 ];
 
 /**
@@ -354,10 +358,10 @@ export const API_PATH_SUFFIXES = [
  * Only removes trailing slashes, does not modify path
  */
 export function normalizeBaseUrl(baseUrl: string): string {
-  if (!baseUrl) return '';
+  if (!baseUrl) return "";
   let url = baseUrl.trim();
   // 移除末尾斜杠
-  url = url.replace(/\/+$/, '');
+  url = url.replace(/\/+$/, "");
   return url;
 }
 
@@ -367,13 +371,13 @@ export function normalizeBaseUrl(baseUrl: string): string {
  */
 export function removeApiPathSuffix(baseUrl: string): string | null {
   if (!baseUrl) return null;
-  const url = baseUrl.replace(/\/+$/, '');
+  const url = baseUrl.replace(/\/+$/, "");
 
   // 按长度降序排列，先匹配更长的路径
   const sortedSuffixes = [...API_PATH_SUFFIXES].sort((a, b) => b.length - a.length);
   for (const suffix of sortedSuffixes) {
     if (url.toLowerCase().endsWith(suffix.toLowerCase())) {
-      return url.slice(0, -suffix.length).replace(/\/+$/, '');
+      return url.slice(0, -suffix.length).replace(/\/+$/, "");
     }
   }
 
@@ -444,10 +448,10 @@ export function identifyProviderFromKey(apiKey: string): string | null {
  */
 export function getProtocolDisplayName(protocol: ProtocolType): string {
   const names: Record<ProtocolType, string> = {
-    openai: 'OpenAI',
-    gemini: 'Gemini',
-    anthropic: 'Anthropic',
-    unknown: 'Unknown',
+    openai: "OpenAI",
+    gemini: "Gemini",
+    anthropic: "Anthropic",
+    unknown: "Unknown",
   };
   return names[protocol] || protocol;
 }
@@ -459,8 +463,8 @@ export function getProtocolDisplayName(protocol: ProtocolType): string {
 export function getRecommendedPlatform(protocol: ProtocolType): string | null {
   const platforms: Record<ProtocolType, string | null> = {
     openai: null, // OpenAI 协议是当前项目通过 custom 支持的
-    gemini: 'gemini',
-    anthropic: 'Anthropic',
+    gemini: "gemini",
+    anthropic: "Anthropic",
     unknown: null,
   };
   return platforms[protocol];

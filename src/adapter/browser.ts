@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { bridge, logger } from '@office-ai/platform';
-import type { ElectronBridgeAPI } from '@/types/electron';
+import { bridge, logger } from "@office-ai/platform";
+import type { ElectronBridgeAPI } from "@/types/electron";
 
 interface CustomWindow extends Window {
   electronAPI?: ElectronBridgeAPI;
@@ -32,7 +32,7 @@ if (win.electronAPI) {
           const { name, data } = JSON.parse(value);
           emitter.emit(name, data);
         } catch (e) {
-          console.warn('JSON parsing error:', e);
+          console.warn("JSON parsing error:", e);
         }
       });
     },
@@ -40,7 +40,7 @@ if (win.electronAPI) {
 } else {
   // Web 环境 - 使用 WebSocket 通信，并在登录后自动补上已获取 Cookie 的连接
   // Web runtime bridge: ensure the socket reconnects after login so session cookie can be sent
-  const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+  const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
   const defaultHost = `${window.location.hostname}:25808`;
   const socketUrl = `${protocol}//${window.location.host || defaultHost}`;
 
@@ -83,7 +83,10 @@ if (win.electronAPI) {
 
   // 3.建立 WebSocket 连接（或复用已有的 OPEN/CONNECTING 状态）
   const connect = () => {
-    if (socket && (socket.readyState === WebSocket.OPEN || socket.readyState === WebSocket.CONNECTING)) {
+    if (
+      socket &&
+      (socket.readyState === WebSocket.OPEN || socket.readyState === WebSocket.CONNECTING)
+    ) {
       return;
     }
 
@@ -94,12 +97,12 @@ if (win.electronAPI) {
       return;
     }
 
-    socket.addEventListener('open', () => {
+    socket.addEventListener("open", () => {
       reconnectDelay = 500;
       flushQueue();
     });
 
-    socket.addEventListener('message', (event: MessageEvent) => {
+    socket.addEventListener("message", (event: MessageEvent) => {
       if (!emitterRef) {
         return;
       }
@@ -109,17 +112,17 @@ if (win.electronAPI) {
 
         // 处理服务端心跳 ping，立即回复 pong 以保持连接
         // Handle server heartbeat ping - respond with pong immediately to keep connection alive
-        if (payload.name === 'ping') {
+        if (payload.name === "ping") {
           if (socket && socket.readyState === WebSocket.OPEN) {
-            socket.send(JSON.stringify({ name: 'pong', data: { timestamp: Date.now() } }));
+            socket.send(JSON.stringify({ name: "pong", data: { timestamp: Date.now() } }));
           }
           return;
         }
 
         // 处理认证过期 - 停止重连并跳转到登录页
         // Handle auth expiration - stop reconnecting and redirect to login
-        if (payload.name === 'auth-expired') {
-          console.warn('[WebSocket] Authentication expired, stopping reconnection');
+        if (payload.name === "auth-expired") {
+          console.warn("[WebSocket] Authentication expired, stopping reconnection");
           shouldReconnect = false;
 
           // 清除所有待执行的重连定时器
@@ -135,14 +138,14 @@ if (win.electronAPI) {
 
           // 已在登录页则不再重定向，防止无限刷新循环
           // Skip redirect if already on login page to prevent infinite reload loop
-          if (window.location.pathname === '/login' || window.location.hash.includes('/login')) {
+          if (window.location.pathname === "/login" || window.location.hash.includes("/login")) {
             return;
           }
 
           // 短暂延迟后跳转到登录页，以便显示 UI 反馈
           // Redirect to login page after a short delay to show any UI feedback
           setTimeout(() => {
-            window.location.href = '/login';
+            window.location.href = "/login";
           }, 1000);
 
           return;
@@ -154,7 +157,7 @@ if (win.electronAPI) {
       }
     });
 
-    socket.addEventListener('close', (event: CloseEvent) => {
+    socket.addEventListener("close", (event: CloseEvent) => {
       socket = null;
 
       // Detect auth failure from close code (server sends 1008 for token issues).
@@ -164,7 +167,9 @@ if (win.electronAPI) {
         return; // Already handled by auth-expired message handler
       }
       if (event.code === 1008) {
-        console.warn('[WebSocket] Connection rejected by server (policy violation), redirecting to login');
+        console.warn(
+          "[WebSocket] Connection rejected by server (policy violation), redirecting to login",
+        );
         shouldReconnect = false;
         if (reconnectTimer !== null) {
           window.clearTimeout(reconnectTimer);
@@ -172,11 +177,11 @@ if (win.electronAPI) {
         }
         // 已在登录页则不再重定向，防止无限刷新循环
         // Skip redirect if already on login page to prevent infinite reload loop
-        if (window.location.pathname === '/login' || window.location.hash.includes('/login')) {
+        if (window.location.pathname === "/login" || window.location.hash.includes("/login")) {
           return;
         }
         setTimeout(() => {
-          window.location.href = '/login';
+          window.location.href = "/login";
         }, 500);
         return;
       }
@@ -184,14 +189,18 @@ if (win.electronAPI) {
       scheduleReconnect();
     });
 
-    socket.addEventListener('error', () => {
+    socket.addEventListener("error", () => {
       socket?.close();
     });
   };
 
   // 4.确保在发送/订阅前已经发起连接
   const ensureSocket = () => {
-    if (!socket || socket.readyState === WebSocket.CLOSED || socket.readyState === WebSocket.CLOSING) {
+    if (
+      !socket ||
+      socket.readyState === WebSocket.CLOSED ||
+      socket.readyState === WebSocket.CLOSING
+    ) {
       connect();
     }
   };
@@ -239,9 +248,9 @@ if (win.electronAPI) {
 
 logger.provider({
   log(log) {
-    console.log('process.log', log.type, ...log.logs);
+    console.log("process.log", log.type, ...log.logs);
   },
   path() {
-    return Promise.resolve('');
+    return Promise.resolve("");
   },
 });

@@ -4,27 +4,27 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useCallback, useRef, useState } from 'react';
-import type { DragEvent } from 'react';
-import type { TFunction } from 'i18next';
-import { ipcBridge } from '@/common';
-import { FileService } from '@/renderer/services/FileService';
-import type { MessageApi } from '../types';
+import { useCallback, useRef, useState } from "react";
+import type { DragEvent } from "react";
+import type { TFunction } from "i18next";
+import { ipcBridge } from "@/common";
+import { FileService } from "@/renderer/services/FileService";
+import type { MessageApi } from "../types";
 
 interface UseWorkspaceDragImportOptions {
   onFilesDropped: (files: Array<{ path: string; name: string }>) => Promise<void> | void;
   messageApi: MessageApi;
-  t: TFunction<'translation'>;
+  t: TFunction<"translation">;
 }
 
 interface DroppedItem {
   path: string;
   name: string;
-  kind: 'file' | 'directory';
+  kind: "file" | "directory";
 }
 
 const getBaseName = (targetPath: string): string => {
-  const parts = targetPath.replace(/[\\/]+$/, '').split(/[\\/]/);
+  const parts = targetPath.replace(/[\\/]+$/, "").split(/[\\/]/);
   return parts.pop() || targetPath;
 };
 
@@ -38,7 +38,11 @@ const dedupeItems = (items: DroppedItem[]): DroppedItem[] => {
   return Array.from(map.values());
 };
 
-export function useWorkspaceDragImport({ onFilesDropped, messageApi, t }: UseWorkspaceDragImportOptions) {
+export function useWorkspaceDragImport({
+  onFilesDropped,
+  messageApi,
+  t,
+}: UseWorkspaceDragImportOptions) {
   const [isDragging, setIsDragging] = useState(false);
   const dragCounterRef = useRef(0);
 
@@ -62,7 +66,7 @@ export function useWorkspaceDragImport({ onFilesDropped, messageApi, t }: UseWor
         setIsDragging(true);
       }
     },
-    [isDragging]
+    [isDragging],
   );
 
   const handleDragLeave = useCallback((event: DragEvent) => {
@@ -82,7 +86,7 @@ export function useWorkspaceDragImport({ onFilesDropped, messageApi, t }: UseWor
     }) as unknown as FileList;
 
     const processed = await FileService.processDroppedFiles(pseudoList);
-    return processed.map((meta) => ({ path: meta.path, name: meta.name, kind: 'file' }));
+    return processed.map((meta) => ({ path: meta.path, name: meta.name, kind: "file" }));
   }, []);
 
   /**
@@ -96,12 +100,12 @@ export function useWorkspaceDragImport({ onFilesDropped, messageApi, t }: UseWor
       try {
         const metadata = await ipcBridge.fs.getFileMetadata.invoke({ path: item.path });
         const itemName = metadata.name || item.name || getBaseName(item.path);
-        const kind = metadata.isDirectory ? 'directory' : 'file';
+        const kind = metadata.isDirectory ? "directory" : "file";
         unique.set(item.path, { path: item.path, name: itemName, kind });
       } catch (error) {
-        console.warn('[WorkspaceDragImport] Failed to inspect dropped path:', item.path, error);
+        console.warn("[WorkspaceDragImport] Failed to inspect dropped path:", item.path, error);
         const fallbackName = item.name || getBaseName(item.path);
-        unique.set(item.path, { path: item.path, name: fallbackName, kind: 'file' });
+        unique.set(item.path, { path: item.path, name: fallbackName, kind: "file" });
       }
     }
 
@@ -129,7 +133,7 @@ export function useWorkspaceDragImport({ onFilesDropped, messageApi, t }: UseWor
             try {
               filePath = window.electronAPI.getPathForFile(file);
             } catch (err) {
-              console.warn('[WorkspaceDragImport] getPathForFile failed:', err);
+              console.warn("[WorkspaceDragImport] getPathForFile failed:", err);
             }
           }
 
@@ -142,7 +146,7 @@ export function useWorkspaceDragImport({ onFilesDropped, messageApi, t }: UseWor
 
           if (filePath) {
             const name = file.name || getBaseName(filePath);
-            itemsWithPath.push({ path: filePath, name, kind: 'file' });
+            itemsWithPath.push({ path: filePath, name, kind: "file" });
           } else {
             // 没有 path 属性，可能是从浏览器拖拽或非 Electron 环境
             // 检查是否是目录（通过 webkitGetAsEntry）
@@ -152,7 +156,10 @@ export function useWorkspaceDragImport({ onFilesDropped, messageApi, t }: UseWor
             const entry = item?.webkitGetAsEntry?.();
             if (entry?.isDirectory) {
               // 目录但没有 path，无法处理
-              console.warn('[WorkspaceDragImport] Directory without path property, cannot process:', entry.name);
+              console.warn(
+                "[WorkspaceDragImport] Directory without path property, cannot process:",
+                entry.name,
+              );
             } else {
               // 普通文件，需要创建临时文件
               filesWithoutPath.push(file);
@@ -166,18 +173,19 @@ export function useWorkspaceDragImport({ onFilesDropped, messageApi, t }: UseWor
         try {
           tempItems = await createTempItemsFromFiles(filesWithoutPath);
         } catch (error) {
-          console.error('[WorkspaceDragImport] Failed to create temp files:', error);
+          console.error("[WorkspaceDragImport] Failed to create temp files:", error);
         }
       }
 
       const dedupedWithPath = dedupeItems(itemsWithPath);
-      const targets = dedupedWithPath.length > 0 ? await resolveDroppedItems(dedupedWithPath) : tempItems;
+      const targets =
+        dedupedWithPath.length > 0 ? await resolveDroppedItems(dedupedWithPath) : tempItems;
 
       if (targets.length === 0) {
         messageApi.warning(
-          t('conversation.workspace.dragNoFiles', {
-            defaultValue: 'No valid files detected. Please drag from Finder/Explorer.',
-          })
+          t("conversation.workspace.dragNoFiles", {
+            defaultValue: "No valid files detected. Please drag from Finder/Explorer.",
+          }),
         );
         return;
       }
@@ -185,15 +193,15 @@ export function useWorkspaceDragImport({ onFilesDropped, messageApi, t }: UseWor
       try {
         await onFilesDropped(targets.map(({ path, name }) => ({ path, name })));
       } catch (error) {
-        console.error('Failed to import dropped files:', error);
+        console.error("Failed to import dropped files:", error);
         messageApi.error(
-          t('conversation.workspace.dragFailed', {
-            defaultValue: 'Failed to import dropped files.',
-          })
+          t("conversation.workspace.dragFailed", {
+            defaultValue: "Failed to import dropped files.",
+          }),
         );
       }
     },
-    [resolveDroppedItems, createTempItemsFromFiles, messageApi, onFilesDropped, resetDragState, t]
+    [resolveDroppedItems, createTempItemsFromFiles, messageApi, onFilesDropped, resetDragState, t],
   );
 
   const dragHandlers = {

@@ -11,7 +11,7 @@ const state = {
 };
 
 function addEvent(event) {
-  const type = event && event.type ? String(event.type) : 'unknown';
+  const type = event && event.type ? String(event.type) : "unknown";
   state.events.push({
     ...event,
     type,
@@ -26,7 +26,7 @@ function addEvent(event) {
 }
 
 module.exports = async function extFeishuCollector(req, res) {
-  if (req.method === 'POST') {
+  if (req.method === "POST") {
     addEvent(req.body || {});
     return res.json({ ok: true, total: state.events.length });
   }

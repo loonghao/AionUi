@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { createContext, useContext } from 'react';
+import React, { createContext, useContext } from "react";
 
 /**
  * Conversation context interface
@@ -27,7 +27,7 @@ export interface ConversationContextValue {
    * Conversation type
    * 会话类型
    */
-  type: 'gemini' | 'acp' | 'codex' | 'openclaw-gateway' | 'nanobot';
+  type: "gemini" | "acp" | "codex" | "openclaw-gateway" | "nanobot";
 }
 
 /**
@@ -54,7 +54,7 @@ export const ConversationProvider: React.FC<{
 export const useConversationContext = (): ConversationContextValue => {
   const context = useContext(ConversationContext);
   if (!context) {
-    throw new Error('useConversationContext must be used within ConversationProvider');
+    throw new Error("useConversationContext must be used within ConversationProvider");
   }
   return context;
 };

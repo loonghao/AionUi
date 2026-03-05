@@ -5,8 +5,8 @@
  */
 
 // 复用现有的业务类型定义
-import type { TChatConversation, IConfigStorageRefer } from '@/common/storage';
-import type { TMessage } from '@/common/chatLib';
+import type { TChatConversation, IConfigStorageRefer } from "@/common/storage";
+import type { TMessage } from "@/common/chatLib";
 
 /**
  * ======================
@@ -70,11 +70,11 @@ export interface IConversationRow {
   id: string;
   user_id: string;
   name: string;
-  type: 'gemini' | 'acp' | 'codex' | 'openclaw-gateway' | 'nanobot';
+  type: "gemini" | "acp" | "codex" | "openclaw-gateway" | "nanobot";
   extra: string; // JSON string of extra data
   model?: string; // JSON string of TProviderWithModel (gemini type has this)
-  status?: 'pending' | 'running' | 'finished';
-  source?: 'aionui' | 'telegram' | 'lark' | 'dingtalk'; // 会话来源 / Conversation source
+  status?: "pending" | "running" | "finished";
+  source?: "aionui" | "telegram" | "lark" | "dingtalk"; // 会话来源 / Conversation source
   channel_chat_id?: string; // Channel chat isolation ID (e.g. user:xxx or group:xxx)
   created_at: number;
   updated_at: number;
@@ -89,8 +89,8 @@ export interface IMessageRow {
   msg_id?: string; // 消息来源ID
   type: string; // TMessage['type']
   content: string; // JSON string of message content
-  position?: 'left' | 'right' | 'center' | 'pop';
-  status?: 'finish' | 'pending' | 'error' | 'work';
+  position?: "left" | "right" | "center" | "pop";
+  status?: "finish" | "pending" | "error" | "work";
   created_at: number;
 }
 
@@ -112,14 +112,17 @@ export interface IConfigRow {
 /**
  * Convert TChatConversation to database row
  */
-export function conversationToRow(conversation: TChatConversation, userId: string): IConversationRow {
+export function conversationToRow(
+  conversation: TChatConversation,
+  userId: string,
+): IConversationRow {
   return {
     id: conversation.id,
     user_id: userId,
     name: conversation.name,
     type: conversation.type,
     extra: JSON.stringify(conversation.extra),
-    model: 'model' in conversation ? JSON.stringify(conversation.model) : undefined,
+    model: "model" in conversation ? JSON.stringify(conversation.model) : undefined,
     status: conversation.status,
     source: conversation.source,
     channel_chat_id: conversation.channelChatId,
@@ -144,47 +147,47 @@ export function rowToConversation(row: IConversationRow): TChatConversation {
   };
 
   // Gemini type has model field
-  if (row.type === 'gemini' && row.model) {
+  if (row.type === "gemini" && row.model) {
     return {
       ...base,
-      type: 'gemini' as const,
+      type: "gemini" as const,
       extra: JSON.parse(row.extra),
       model: JSON.parse(row.model),
     } as TChatConversation;
   }
 
   // ACP type
-  if (row.type === 'acp') {
+  if (row.type === "acp") {
     return {
       ...base,
-      type: 'acp' as const,
+      type: "acp" as const,
       extra: JSON.parse(row.extra),
     } as TChatConversation;
   }
 
   // Codex type
-  if (row.type === 'codex') {
+  if (row.type === "codex") {
     return {
       ...base,
-      type: 'codex' as const,
+      type: "codex" as const,
       extra: JSON.parse(row.extra),
     } as TChatConversation;
   }
 
   // OpenClaw Gateway type
-  if (row.type === 'openclaw-gateway') {
+  if (row.type === "openclaw-gateway") {
     return {
       ...base,
-      type: 'openclaw-gateway' as const,
+      type: "openclaw-gateway" as const,
       extra: JSON.parse(row.extra),
     } as TChatConversation;
   }
 
   // Nanobot type
-  if (row.type === 'nanobot') {
+  if (row.type === "nanobot") {
     return {
       ...base,
-      type: 'nanobot' as const,
+      type: "nanobot" as const,
       extra: JSON.parse(row.extra),
     } as TChatConversation;
   }
@@ -217,7 +220,7 @@ export function rowToMessage(row: IMessageRow): TMessage {
     id: row.id,
     conversation_id: row.conversation_id,
     msg_id: row.msg_id,
-    type: row.type as TMessage['type'],
+    type: row.type as TMessage["type"],
     content: JSON.parse(row.content),
     position: row.position,
     status: row.status,

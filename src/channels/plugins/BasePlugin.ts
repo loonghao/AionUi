@@ -4,7 +4,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { IChannelPluginConfig, IUnifiedIncomingMessage, IUnifiedOutgoingMessage, PluginType, PluginStatus } from '../types';
+import type {
+  IChannelPluginConfig,
+  IUnifiedIncomingMessage,
+  IUnifiedOutgoingMessage,
+  PluginType,
+  PluginStatus,
+} from "../types";
 
 /**
  * Plugin event handler type
@@ -19,7 +25,12 @@ export type PluginMessageHandler = (message: IUnifiedIncomingMessage) => Promise
  * @param callId - Tool call ID
  * @param value - Confirmation value
  */
-export type PluginConfirmHandler = (userId: string, platform: string, callId: string, value: string) => Promise<void>;
+export type PluginConfirmHandler = (
+  userId: string,
+  platform: string,
+  callId: string,
+  value: string,
+) => Promise<void>;
 
 /**
  * BasePlugin - Abstract base class for all platform plugins
@@ -45,7 +56,7 @@ export abstract class BasePlugin {
   /**
    * Current plugin status
    */
-  protected _status: PluginStatus = 'created';
+  protected _status: PluginStatus = "created";
 
   /**
    * Plugin configuration
@@ -89,7 +100,9 @@ export abstract class BasePlugin {
     const oldStatus = this._status;
     this._status = status;
     this.errorMessage = error ?? null;
-    console.log(`[${this.type}Plugin] Status: ${oldStatus} → ${status}${error ? ` (${error})` : ''}`);
+    console.log(
+      `[${this.type}Plugin] Status: ${oldStatus} → ${status}${error ? ` (${error})` : ""}`,
+    );
   }
 
   /**
@@ -106,14 +119,14 @@ export abstract class BasePlugin {
    * @param config Plugin configuration from database
    */
   async initialize(config: IChannelPluginConfig): Promise<void> {
-    this.setStatus('initializing');
+    this.setStatus("initializing");
     this.config = config;
 
     try {
       await this.onInitialize(config);
-      this.setStatus('ready');
+      this.setStatus("ready");
     } catch (error: any) {
-      this.setStatus('error', error.message);
+      this.setStatus("error", error.message);
       throw error;
     }
   }
@@ -122,17 +135,17 @@ export abstract class BasePlugin {
    * Start the plugin (connect to platform)
    */
   async start(): Promise<void> {
-    if (this._status !== 'ready' && this._status !== 'stopped') {
+    if (this._status !== "ready" && this._status !== "stopped") {
       throw new Error(`Cannot start plugin in status: ${this._status}`);
     }
 
-    this.setStatus('starting');
+    this.setStatus("starting");
 
     try {
       await this.onStart();
-      this.setStatus('running');
+      this.setStatus("running");
     } catch (error: any) {
-      this.setStatus('error', error.message);
+      this.setStatus("error", error.message);
       throw error;
     }
   }
@@ -141,17 +154,17 @@ export abstract class BasePlugin {
    * Stop the plugin (disconnect from platform)
    */
   async stop(): Promise<void> {
-    if (this._status !== 'running' && this._status !== 'error') {
+    if (this._status !== "running" && this._status !== "error") {
       return; // Already stopped or not started
     }
 
-    this.setStatus('stopping');
+    this.setStatus("stopping");
 
     try {
       await this.onStop();
-      this.setStatus('stopped');
+      this.setStatus("stopped");
     } catch (error: any) {
-      this.setStatus('error', error.message);
+      this.setStatus("error", error.message);
       throw error;
     }
   }
@@ -219,7 +232,11 @@ export abstract class BasePlugin {
    * @param messageId Message ID returned from sendMessage
    * @param message Updated message content
    */
-  abstract editMessage(chatId: string, messageId: string, message: IUnifiedOutgoingMessage): Promise<void>;
+  abstract editMessage(
+    chatId: string,
+    messageId: string,
+    message: IUnifiedOutgoingMessage,
+  ): Promise<void>;
 
   /**
    * Get the number of active users connected through this plugin
@@ -238,7 +255,9 @@ export abstract class BasePlugin {
    * Test connection with the given token
    * Used to validate configuration before saving
    */
-  static async testConnection(_token: string): Promise<{ success: boolean; botUsername?: string; error?: string }> {
-    return { success: false, error: 'Not implemented' };
+  static async testConnection(
+    _token: string,
+  ): Promise<{ success: boolean; botUsername?: string; error?: string }> {
+    return { success: false, error: "Not implemented" };
   }
 }

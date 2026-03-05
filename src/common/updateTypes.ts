@@ -46,7 +46,7 @@ export interface UpdateDownloadResult {
   filePath: string;
 }
 
-export type UpdateDownloadStatus = 'starting' | 'downloading' | 'completed' | 'error' | 'cancelled';
+export type UpdateDownloadStatus = "starting" | "downloading" | "completed" | "error" | "cancelled";
 
 export interface UpdateDownloadProgressEvent {
   downloadId: string;
@@ -60,7 +60,14 @@ export interface UpdateDownloadProgressEvent {
 }
 
 // Auto-updater status types (electron-updater)
-export type AutoUpdateStatusType = 'checking' | 'available' | 'not-available' | 'downloading' | 'downloaded' | 'error' | 'cancelled';
+export type AutoUpdateStatusType =
+  | "checking"
+  | "available"
+  | "not-available"
+  | "downloading"
+  | "downloaded"
+  | "error"
+  | "cancelled";
 
 export interface AutoUpdateProgress {
   bytesPerSecond: number;

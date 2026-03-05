@@ -58,18 +58,18 @@ openclaw cron add "0 9 * * *" --message "生成每日报告" --agent main
 {
   agents: {
     list: [
-      { id: 'work', workspace: '~/.openclaw/workspace-work' },
-      { id: 'personal', workspace: '~/.openclaw/workspace-personal' },
+      { id: "work", workspace: "~/.openclaw/workspace-work" },
+      { id: "personal", workspace: "~/.openclaw/workspace-personal" },
     ],
   },
   bindings: [
     {
-      match: { channel: 'slack', accountId: 'work-account' },
-      agent: 'work',
+      match: { channel: "slack", accountId: "work-account" },
+      agent: "work",
     },
     {
-      match: { channel: 'telegram' },
-      agent: 'personal',
+      match: { channel: "telegram" },
+      agent: "personal",
     },
   ],
 }

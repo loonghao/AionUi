@@ -4,17 +4,18 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { ipcBridge } from '@/common';
+import { ipcBridge } from "@/common";
 
 // Default Bedrock model for connection testing
-const DEFAULT_BEDROCK_MODEL = 'anthropic.claude-sonnet-4-5-20250929-v1:0';
+const DEFAULT_BEDROCK_MODEL = "anthropic.claude-sonnet-4-5-20250929-v1:0";
 
 export function initBedrockBridge(): void {
   // Test AWS Bedrock connection with provided credentials
   ipcBridge.bedrock.testConnection.provider(async ({ bedrockConfig }) => {
     try {
       // Dynamically import BedrockContentGenerator to avoid loading unnecessary dependencies
-      const { BedrockContentGenerator } = await import('@office-ai/aioncli-core/dist/src/core/bedrockContentGenerator.js');
+      const { BedrockContentGenerator } =
+        await import("@office-ai/aioncli-core/dist/src/core/bedrockContentGenerator.js");
 
       // Store original environment variables to restore later
       const originalEnv = {
@@ -26,16 +27,16 @@ export function initBedrockBridge(): void {
 
       try {
         // Set environment variables based on auth method
-        if (bedrockConfig.authMethod === 'accessKey') {
+        if (bedrockConfig.authMethod === "accessKey") {
           if (!bedrockConfig.accessKeyId || !bedrockConfig.secretAccessKey) {
-            throw new Error('AWS credentials missing for access key authentication');
+            throw new Error("AWS credentials missing for access key authentication");
           }
           process.env.AWS_ACCESS_KEY_ID = bedrockConfig.accessKeyId;
           process.env.AWS_SECRET_ACCESS_KEY = bedrockConfig.secretAccessKey;
           delete process.env.AWS_PROFILE;
-        } else if (bedrockConfig.authMethod === 'profile') {
+        } else if (bedrockConfig.authMethod === "profile") {
           if (!bedrockConfig.profile) {
-            throw new Error('AWS profile name missing');
+            throw new Error("AWS profile name missing");
           }
           process.env.AWS_PROFILE = bedrockConfig.profile;
           delete process.env.AWS_ACCESS_KEY_ID;
@@ -52,12 +53,12 @@ export function initBedrockBridge(): void {
         // Test connection with countTokens (lightweight, no quota usage)
         await client.countTokens({
           model: DEFAULT_BEDROCK_MODEL,
-          contents: 'test',
+          contents: "test",
         });
 
         return {
           success: true,
-          msg: 'Connection successful! AWS credentials are valid.',
+          msg: "Connection successful! AWS credentials are valid.",
         };
       } finally {
         // Restore original environment variables

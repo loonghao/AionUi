@@ -4,9 +4,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useCallback, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { ipcBridge } from '@/common';
+import { useCallback, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { ipcBridge } from "@/common";
 
 /**
  * Deep link event payload from main process
@@ -48,7 +48,7 @@ export const useDeepLink = () => {
   const handler = useCallback(
     (payload: DeepLinkPayload) => {
       // Support both formats: "add-provider" and "provider/add" (one-api style)
-      if (payload.action === 'add-provider' || payload.action === 'provider/add') {
+      if (payload.action === "add-provider" || payload.action === "provider/add") {
         pendingDeepLinkData = {
           baseUrl: payload.params.baseUrl || payload.params.base_url,
           apiKey: payload.params.apiKey || payload.params.api_key || payload.params.key,
@@ -57,10 +57,10 @@ export const useDeepLink = () => {
         };
 
         // Navigate to model settings page; ModelModalContent will pick up the pending data
-        void navigate('/settings/model');
+        void navigate("/settings/model");
       }
     },
-    [navigate]
+    [navigate],
   );
 
   useEffect(() => {

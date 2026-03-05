@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from "react";
 
 // 选中文本的位置信息 / Selection position information
 export interface SelectionPosition {
@@ -22,17 +22,17 @@ export interface SelectionPosition {
  * @returns 选中的文本、位置信息和清除函数 / Selected text, position info, and clear function
  */
 export const useTextSelection = (containerRef: React.RefObject<HTMLElement>) => {
-  const [selectedText, setSelectedText] = useState('');
+  const [selectedText, setSelectedText] = useState("");
   const [selectionPosition, setSelectionPosition] = useState<SelectionPosition | null>(null);
 
   // 处理选择变化事件 / Handle selection change event
   const handleSelectionChange = useCallback(() => {
     const selection = window.getSelection();
-    const text = selection?.toString().trim() || '';
+    const text = selection?.toString().trim() || "";
 
     // 如果没有选中文本，清空状态 / Clear state if no text selected
     if (!text) {
-      setSelectedText('');
+      setSelectedText("");
       setSelectionPosition(null);
       return;
     }
@@ -43,7 +43,7 @@ export const useTextSelection = (containerRef: React.RefObject<HTMLElement>) => 
       const container = containerRef.current;
 
       if (!container.contains(range.commonAncestorContainer)) {
-        setSelectedText('');
+        setSelectedText("");
         setSelectionPosition(null);
         return;
       }
@@ -57,7 +57,7 @@ export const useTextSelection = (containerRef: React.RefObject<HTMLElement>) => 
   const handleMouseUp = useCallback(
     (e: MouseEvent) => {
       const selection = window.getSelection();
-      const text = selection?.toString().trim() || '';
+      const text = selection?.toString().trim() || "";
 
       if (!text || !containerRef.current || !selection || selection.rangeCount === 0) {
         return;
@@ -76,23 +76,23 @@ export const useTextSelection = (containerRef: React.RefObject<HTMLElement>) => 
         height: 0,
       });
     },
-    [containerRef]
+    [containerRef],
   );
 
   // 监听选择变化事件 / Listen to selection change events
   useEffect(() => {
-    document.addEventListener('selectionchange', handleSelectionChange);
-    document.addEventListener('mouseup', handleMouseUp);
+    document.addEventListener("selectionchange", handleSelectionChange);
+    document.addEventListener("mouseup", handleMouseUp);
 
     return () => {
-      document.removeEventListener('selectionchange', handleSelectionChange);
-      document.removeEventListener('mouseup', handleMouseUp);
+      document.removeEventListener("selectionchange", handleSelectionChange);
+      document.removeEventListener("mouseup", handleMouseUp);
     };
   }, [handleSelectionChange, handleMouseUp]);
 
   // 清除选择 / Clear selection
   const clearSelection = useCallback(() => {
-    setSelectedText('');
+    setSelectedText("");
     setSelectionPosition(null);
     window.getSelection()?.removeAllRanges();
   }, []);

@@ -11,9 +11,9 @@
  * as AionUi Channels, and warns the user about the conflict.
  */
 
-import fs from 'node:fs';
-import os from 'node:os';
-import path from 'node:path';
+import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
 
 interface OpenClawChannelAccount {
   enabled: boolean;
@@ -40,7 +40,7 @@ interface OpenClawConfig {
 }
 
 interface ConflictInfo {
-  platform: 'lark' | 'telegram';
+  platform: "lark" | "telegram";
   openclawEnabled: boolean;
   credentialMatch: boolean;
   openclawCredential: string; // appId or botToken
@@ -60,9 +60,15 @@ function findOpenClawConfigPath(): string | null {
   }
 
   // Check state directory
-  const stateDir = process.env.OPENCLAW_STATE_DIR?.replace(/^~/, os.homedir()) || path.join(os.homedir(), '.openclaw');
+  const stateDir =
+    process.env.OPENCLAW_STATE_DIR?.replace(/^~/, os.homedir()) ||
+    path.join(os.homedir(), ".openclaw");
 
-  const candidates = [path.join(stateDir, 'openclaw.json'), path.join(stateDir, 'clawdbot.json'), path.join(os.homedir(), '.clawdbot', 'clawdbot.json')];
+  const candidates = [
+    path.join(stateDir, "openclaw.json"),
+    path.join(stateDir, "clawdbot.json"),
+    path.join(os.homedir(), ".clawdbot", "clawdbot.json"),
+  ];
 
   for (const candidate of candidates) {
     if (fs.existsSync(candidate)) {
@@ -83,10 +89,10 @@ function readOpenClawConfig(): OpenClawConfig | null {
   }
 
   try {
-    const content = fs.readFileSync(configPath, 'utf8');
+    const content = fs.readFileSync(configPath, "utf8");
     return JSON.parse(content) as OpenClawConfig;
   } catch (error) {
-    console.warn('[OpenClawConflictDetector] Failed to read OpenClaw config:', error);
+    console.warn("[OpenClawConflictDetector] Failed to read OpenClaw config:", error);
     return null;
   }
 }
@@ -108,9 +114,11 @@ export function detectLarkConflict(aionuiAppId: string): ConflictInfo | null {
   // Check all accounts
   for (const [accountName, account] of Object.entries(feishu.accounts)) {
     if (account.enabled && account.appId === aionuiAppId) {
-      console.warn(`[OpenClawConflictDetector] Lark conflict detected: OpenClaw account "${accountName}" uses same appId: ${aionuiAppId}`);
+      console.warn(
+        `[OpenClawConflictDetector] Lark conflict detected: OpenClaw account "${accountName}" uses same appId: ${aionuiAppId}`,
+      );
       return {
-        platform: 'lark',
+        platform: "lark",
         openclawEnabled: true,
         credentialMatch: true,
         openclawCredential: aionuiAppId,
@@ -136,12 +144,14 @@ export function detectTelegramConflict(aionuiBotToken: string): ConflictInfo | n
   }
 
   if (telegram.botToken === aionuiBotToken) {
-    console.warn(`[OpenClawConflictDetector] Telegram conflict detected: OpenClaw uses same bot token`);
+    console.warn(
+      `[OpenClawConflictDetector] Telegram conflict detected: OpenClaw uses same bot token`,
+    );
     return {
-      platform: 'telegram',
+      platform: "telegram",
       openclawEnabled: true,
       credentialMatch: true,
-      openclawCredential: aionuiBotToken.substring(0, 20) + '...',
+      openclawCredential: aionuiBotToken.substring(0, 20) + "...",
     };
   }
 
@@ -173,9 +183,9 @@ export function getOpenClawConfigPath(): string | null {
 /**
  * Suggest resolution steps
  */
-export function getConflictResolutionSteps(platform: 'lark' | 'telegram'): string[] {
+export function getConflictResolutionSteps(platform: "lark" | "telegram"): string[] {
   const configPath = findOpenClawConfigPath();
-  const platformName = platform === 'lark' ? 'Feishu' : 'Telegram';
+  const platformName = platform === "lark" ? "Feishu" : "Telegram";
 
   return [
     `Detected conflict: OpenClaw ${platformName} channel is using the same credentials as AionUi.`,
@@ -187,7 +197,7 @@ export function getConflictResolutionSteps(platform: 'lark' | 'telegram'): strin
     ``,
     `Option 1: Disable OpenClaw ${platformName} channel`,
     `  - Edit: ${configPath}`,
-    `  - Set channels.${platform === 'lark' ? 'feishu' : 'telegram'}.enabled = false`,
+    `  - Set channels.${platform === "lark" ? "feishu" : "telegram"}.enabled = false`,
     `  - Restart OpenClaw`,
     ``,
     `Option 2: Use different credentials`,

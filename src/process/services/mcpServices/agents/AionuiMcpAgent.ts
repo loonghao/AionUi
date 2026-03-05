@@ -4,10 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { McpOperationResult } from '../McpProtocol';
-import { AbstractMcpAgent } from '../McpProtocol';
-import type { IMcpServer } from '../../../../common/storage';
-import { ProcessConfig } from '../../../initStorage';
+import type { McpOperationResult } from "../McpProtocol";
+import { AbstractMcpAgent } from "../McpProtocol";
+import type { IMcpServer } from "../../../../common/storage";
+import { ProcessConfig } from "../../../initStorage";
 
 /**
  * AionUi 本地 MCP 代理实现
@@ -27,13 +27,13 @@ export class AionuiMcpAgent extends AbstractMcpAgent {
   constructor() {
     // 使用 'aionui' 作为 backend type 来区分真实的 Gemini CLI
     // 虽然配置最终被 GeminiAgentManager 使用，但在 MCP 管理层面它是独立的 agent
-    super('aionui');
+    super("aionui");
   }
 
   getSupportedTransports(): string[] {
     // @office-ai/aioncli-core 支持 stdio, sse, http (streamable_http maps to http)
     // 参考: node_modules/@office-ai/aioncli-core/dist/src/config/config.d.ts -> MCPServerConfig
-    return ['stdio', 'sse', 'http', 'streamable_http'];
+    return ["stdio", "sse", "http", "streamable_http"];
   }
 
   /**
@@ -42,7 +42,7 @@ export class AionuiMcpAgent extends AbstractMcpAgent {
    */
   async detectMcpServers(_cliPath?: string): Promise<IMcpServer[]> {
     try {
-      const mcpConfig = await ProcessConfig.get('mcp.config');
+      const mcpConfig = await ProcessConfig.get("mcp.config");
       if (!mcpConfig || !Array.isArray(mcpConfig)) {
         return [];
       }
@@ -54,7 +54,7 @@ export class AionuiMcpAgent extends AbstractMcpAgent {
         return supportedTypes.includes(server.transport.type);
       });
     } catch (error) {
-      console.warn('[AionuiMcpAgent] Failed to detect MCP servers:', error);
+      console.warn("[AionuiMcpAgent] Failed to detect MCP servers:", error);
       return [];
     }
   }
@@ -66,7 +66,7 @@ export class AionuiMcpAgent extends AbstractMcpAgent {
   async installMcpServers(mcpServers: IMcpServer[]): Promise<McpOperationResult> {
     try {
       // 读取当前配置
-      const currentConfig = (await ProcessConfig.get('mcp.config')) || [];
+      const currentConfig = (await ProcessConfig.get("mcp.config")) || [];
       const existingServers = Array.isArray(currentConfig) ? currentConfig : [];
 
       // 合并新服务器（去重，以 name 为key）
@@ -86,18 +86,23 @@ export class AionuiMcpAgent extends AbstractMcpAgent {
             updatedAt: Date.now(),
           });
         } else {
-          console.warn(`[AionuiMcpAgent] Skipping ${server.name}: unsupported transport type ${server.transport.type}`);
+          console.warn(
+            `[AionuiMcpAgent] Skipping ${server.name}: unsupported transport type ${server.transport.type}`,
+          );
         }
       });
 
       // 转换回数组并保存
       const mergedServers = Array.from(serverMap.values());
-      await ProcessConfig.set('mcp.config', mergedServers);
+      await ProcessConfig.set("mcp.config", mergedServers);
 
-      console.log('[AionuiMcpAgent] Installed MCP servers:', mcpServers.map((s) => s.name).join(', '));
+      console.log(
+        "[AionuiMcpAgent] Installed MCP servers:",
+        mcpServers.map((s) => s.name).join(", "),
+      );
       return { success: true };
     } catch (error) {
-      console.error('[AionuiMcpAgent] Failed to install MCP servers:', error);
+      console.error("[AionuiMcpAgent] Failed to install MCP servers:", error);
       return { success: false, error: error instanceof Error ? error.message : String(error) };
     }
   }

@@ -4,11 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useDragUpload } from '@/renderer/hooks/useDragUpload';
-import { usePasteService } from '@/renderer/hooks/usePasteService';
-import { allSupportedExts, type FileMetadata } from '@/renderer/services/FileService';
-import { measureCaretTop, scrollCaretToLastLine } from '../utils/caretUtils';
-import { useCallback, useEffect, useState } from 'react';
+import { useDragUpload } from "@/renderer/hooks/useDragUpload";
+import { usePasteService } from "@/renderer/hooks/usePasteService";
+import { allSupportedExts, type FileMetadata } from "@/renderer/services/FileService";
+import { measureCaretTop, scrollCaretToLastLine } from "../utils/caretUtils";
+import { useCallback, useEffect, useState } from "react";
 
 export type GuidInputResult = {
   input: string;
@@ -25,9 +25,9 @@ export type GuidInputResult = {
   handleRemoveFile: (targetPath: string) => void;
   handleTextareaFocus: () => void;
   handleTextareaBlur: () => void;
-  onPaste: ReturnType<typeof usePasteService>['onPaste'];
+  onPaste: ReturnType<typeof usePasteService>["onPaste"];
   isFileDragging: boolean;
-  dragHandlers: ReturnType<typeof useDragUpload>['dragHandlers'];
+  dragHandlers: ReturnType<typeof useDragUpload>["dragHandlers"];
 };
 
 type UseGuidInputOptions = {
@@ -38,9 +38,9 @@ type UseGuidInputOptions = {
  * Hook that manages input state, file handling, and drag/paste for the Guid page.
  */
 export const useGuidInput = ({ locationState }: UseGuidInputOptions): GuidInputResult => {
-  const [input, setInput] = useState('');
+  const [input, setInput] = useState("");
   const [files, setFiles] = useState<string[]>([]);
-  const [dir, setDir] = useState<string>('');
+  const [dir, setDir] = useState<string>("");
   const [isInputFocused, setIsInputFocused] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -55,7 +55,7 @@ export const useGuidInput = ({ locationState }: UseGuidInputOptions): GuidInputR
   const handleFilesPasted = useCallback((pastedFiles: FileMetadata[]) => {
     const filePaths = pastedFiles.map((file) => file.path);
     setFiles((prevFiles) => [...prevFiles, ...filePaths]);
-    setDir('');
+    setDir("");
   }, []);
 
   // Handle files uploaded via dialog (append mode)
@@ -79,7 +79,7 @@ export const useGuidInput = ({ locationState }: UseGuidInputOptions): GuidInputR
     onFilesAdded: handleFilesPasted,
     onTextPaste: (text: string) => {
       const textarea = document.activeElement as HTMLTextAreaElement | null;
-      if (textarea && textarea.tagName === 'TEXTAREA') {
+      if (textarea && textarea.tagName === "TEXTAREA") {
         const start = textarea.selectionStart ?? textarea.value.length;
         const end = textarea.selectionEnd ?? start;
         const currentValue = textarea.value;

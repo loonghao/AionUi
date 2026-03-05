@@ -12,27 +12,27 @@
  */
 
 // Export types
-export * from './types';
+export * from "./types";
 
 // Core exports
-export { ChannelManager, getChannelManager } from './core/ChannelManager';
-export { SessionManager } from './core/SessionManager';
+export { ChannelManager, getChannelManager } from "./core/ChannelManager";
+export { SessionManager } from "./core/SessionManager";
 
 // Gateway exports
-export { ActionExecutor } from './gateway/ActionExecutor';
-export { PluginManager, registerPlugin } from './gateway/PluginManager';
+export { ActionExecutor } from "./gateway/ActionExecutor";
+export { PluginManager, registerPlugin } from "./gateway/PluginManager";
 
 // Plugin exports
-export { BasePlugin } from './plugins/BasePlugin';
-export type { PluginMessageHandler } from './plugins/BasePlugin';
-export { TelegramPlugin } from './plugins/telegram/TelegramPlugin';
-export { DingTalkPlugin } from './plugins/dingtalk/DingTalkPlugin';
+export { BasePlugin } from "./plugins/BasePlugin";
+export type { PluginMessageHandler } from "./plugins/BasePlugin";
+export { TelegramPlugin } from "./plugins/telegram/TelegramPlugin";
+export { DingTalkPlugin } from "./plugins/dingtalk/DingTalkPlugin";
 
 // Pairing exports
-export { getPairingService, PairingService } from './pairing/PairingService';
+export { getPairingService, PairingService } from "./pairing/PairingService";
 
 // Action exports
-export * from './actions';
+export * from "./actions";
 
 // Agent exports
-export { ChannelMessageService, getChannelMessageService } from './agent/ChannelMessageService';
+export { ChannelMessageService, getChannelMessageService } from "./agent/ChannelMessageService";

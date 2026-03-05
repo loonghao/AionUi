@@ -1,19 +1,26 @@
-import type { IMcpServer } from '@/common/storage';
-import { acpConversation } from '@/common/ipcBridge';
-import React, { useEffect, useState } from 'react';
-import JsonImportModal from './JsonImportModal';
-import OneClickImportModal from './OneClickImportModal';
+import type { IMcpServer } from "@/common/storage";
+import { acpConversation } from "@/common/ipcBridge";
+import React, { useEffect, useState } from "react";
+import JsonImportModal from "./JsonImportModal";
+import OneClickImportModal from "./OneClickImportModal";
 
 interface AddMcpServerModalProps {
   visible: boolean;
   server?: IMcpServer;
   onCancel: () => void;
-  onSubmit: (server: Omit<IMcpServer, 'id' | 'createdAt' | 'updatedAt'>) => void;
-  onBatchImport?: (servers: Omit<IMcpServer, 'id' | 'createdAt' | 'updatedAt'>[]) => void;
-  importMode?: 'json' | 'oneclick';
+  onSubmit: (server: Omit<IMcpServer, "id" | "createdAt" | "updatedAt">) => void;
+  onBatchImport?: (servers: Omit<IMcpServer, "id" | "createdAt" | "updatedAt">[]) => void;
+  importMode?: "json" | "oneclick";
 }
 
-const AddMcpServerModal: React.FC<AddMcpServerModalProps> = ({ visible, server, onCancel, onSubmit, onBatchImport, importMode = 'json' }) => {
+const AddMcpServerModal: React.FC<AddMcpServerModalProps> = ({
+  visible,
+  server,
+  onCancel,
+  onSubmit,
+  onBatchImport,
+  importMode = "json",
+}) => {
   const [showJsonModal, setShowJsonModal] = useState(false);
   const [showOneClickModal, setShowOneClickModal] = useState(false);
 
@@ -25,21 +32,24 @@ const AddMcpServerModal: React.FC<AddMcpServerModalProps> = ({ visible, server, 
           const response = await acpConversation.getAvailableAgents.invoke();
 
           if (response.success && response.data) {
-            const agents = response.data.map((agent) => ({ backend: agent.backend, name: agent.name }));
+            const agents = response.data.map((agent) => ({
+              backend: agent.backend,
+              name: agent.name,
+            }));
 
             // 根据检测到的agents数量和importMode决定显示哪个模态框
             if (agents.length === 0) {
               setShowJsonModal(true);
-            } else if (importMode === 'json') {
+            } else if (importMode === "json") {
               setShowJsonModal(true);
-            } else if (importMode === 'oneclick') {
+            } else if (importMode === "oneclick") {
               setShowOneClickModal(true);
             }
           } else {
             setShowJsonModal(true);
           }
         } catch (error) {
-          console.error('[AddMcpServerModal] Failed to load agents:', error);
+          console.error("[AddMcpServerModal] Failed to load agents:", error);
           setShowJsonModal(true);
         }
       };
@@ -64,8 +74,18 @@ const AddMcpServerModal: React.FC<AddMcpServerModalProps> = ({ visible, server, 
 
   return (
     <>
-      <JsonImportModal visible={showJsonModal} server={server} onCancel={handleModalCancel} onSubmit={onSubmit} onBatchImport={onBatchImport} />
-      <OneClickImportModal visible={showOneClickModal} onCancel={handleModalCancel} onBatchImport={onBatchImport} />
+      <JsonImportModal
+        visible={showJsonModal}
+        server={server}
+        onCancel={handleModalCancel}
+        onSubmit={onSubmit}
+        onBatchImport={onBatchImport}
+      />
+      <OneClickImportModal
+        visible={showOneClickModal}
+        onCancel={handleModalCancel}
+        onBatchImport={onBatchImport}
+      />
     </>
   );
 };

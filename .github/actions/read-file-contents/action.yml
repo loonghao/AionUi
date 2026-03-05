@@ -1,16 +1,16 @@
-name: 'Read File Contents'
-description: 'Read changed file contents for cross-file analysis. Requires checkout and gather-pr-diff to have run first.'
+name: "Read File Contents"
+description: "Read changed file contents for cross-file analysis. Requires checkout and gather-pr-diff to have run first."
 
 outputs:
   contents_truncated:
-    description: 'Whether file contents were truncated'
-    value: '${{ steps.read.outputs.contents_truncated }}'
+    description: "Whether file contents were truncated"
+    value: "${{ steps.read.outputs.contents_truncated }}"
 
 runs:
-  using: 'composite'
+  using: "composite"
   steps:
-    - id: 'read'
-      uses: 'actions/github-script@v7'
+    - id: "read"
+      uses: "actions/github-script@v7"
       with:
         script: |
           const fs = require('fs');

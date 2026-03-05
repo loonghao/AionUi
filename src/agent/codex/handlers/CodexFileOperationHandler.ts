@@ -4,19 +4,19 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { uuid } from '@/common/utils';
-import type { ICodexMessageEmitter } from '@/agent/codex/messaging/CodexMessageEmitter';
-import type { FileChange } from '@/common/codex/types';
-import { ipcBridge } from '@/common';
-import fs from 'fs/promises';
-import path from 'path';
+import { uuid } from "@/common/utils";
+import type { ICodexMessageEmitter } from "@/agent/codex/messaging/CodexMessageEmitter";
+import type { FileChange } from "@/common/codex/types";
+import { ipcBridge } from "@/common";
+import fs from "fs/promises";
+import path from "path";
 
 export interface FileOperation {
   method: string;
   path: string;
   filename?: string;
   content?: string;
-  action?: 'create' | 'write' | 'delete' | 'read';
+  action?: "create" | "write" | "delete" | "read";
   metadata?: Record<string, unknown>;
 }
 
@@ -25,13 +25,16 @@ export interface FileOperation {
  * 提供统一的文件读写、权限管理和操作反馈
  */
 export class CodexFileOperationHandler {
-  private readonly pendingOperations = new Map<string, { resolve: (result: unknown) => void; reject: (error: unknown) => void }>();
+  private readonly pendingOperations = new Map<
+    string,
+    { resolve: (result: unknown) => void; reject: (error: unknown) => void }
+  >();
   private readonly workingDirectory: string;
 
   constructor(
     workingDirectory: string,
     private conversation_id: string,
-    private messageEmitter: ICodexMessageEmitter
+    private messageEmitter: ICodexMessageEmitter,
   ) {
     this.workingDirectory = path.resolve(workingDirectory);
   }
@@ -42,25 +45,27 @@ export class CodexFileOperationHandler {
   async handleFileOperation(operation: FileOperation): Promise<unknown> {
     // Validate inputs
     if (!operation.filename && !operation.path) {
-      throw new Error('File operation requires either filename or path');
+      throw new Error("File operation requires either filename or path");
     }
 
     try {
       switch (operation.method) {
-        case 'fs/write_text_file':
-        case 'file_write':
+        case "fs/write_text_file":
+        case "file_write":
           return await this.handleFileWrite(operation);
-        case 'fs/read_text_file':
-        case 'file_read':
+        case "fs/read_text_file":
+        case "file_read":
           return await this.handleFileRead(operation);
-        case 'fs/delete_file':
-        case 'file_delete':
+        case "fs/delete_file":
+        case "file_delete":
           return await this.handleFileDelete(operation);
         default:
           return this.handleGenericFileOperation(operation);
       }
     } catch (error) {
-      this.emitErrorMessage(`File operation failed: ${error instanceof Error ? error.message : String(error)}`);
+      this.emitErrorMessage(
+        `File operation failed: ${error instanceof Error ? error.message : String(error)}`,
+      );
       throw error;
     }
   }
@@ -70,14 +75,14 @@ export class CodexFileOperationHandler {
    */
   private async handleFileWrite(operation: FileOperation): Promise<void> {
     const fullPath = this.resolveFilePath(operation.path);
-    const content = operation.content || '';
+    const content = operation.content || "";
 
     // 确保目录存在
     const dir = path.dirname(fullPath);
     await fs.mkdir(dir, { recursive: true });
 
     // 写入文件
-    await fs.writeFile(fullPath, content, 'utf-8');
+    await fs.writeFile(fullPath, content, "utf-8");
 
     // 发送流式内容更新事件到预览面板（用于实时更新）
     // Send streaming content update to preview panel (for real-time updates)
@@ -87,17 +92,17 @@ export class CodexFileOperationHandler {
         content: content,
         workspace: this.workingDirectory,
         relativePath: operation.path,
-        operation: 'write' as const,
+        operation: "write" as const,
       };
 
       ipcBridge.fileStream.contentUpdate.emit(eventData);
     } catch (error) {
-      console.error('[CodexFileOperationHandler] ❌ Failed to emit file stream update:', error);
+      console.error("[CodexFileOperationHandler] ❌ Failed to emit file stream update:", error);
     }
 
     // 发送操作反馈消息
     this.emitFileOperationMessage({
-      method: 'fs/write_text_file',
+      method: "fs/write_text_file",
       path: operation.path,
       content: content,
     });
@@ -110,17 +115,17 @@ export class CodexFileOperationHandler {
     const fullPath = this.resolveFilePath(operation.path);
 
     try {
-      const content = await fs.readFile(fullPath, 'utf-8');
+      const content = await fs.readFile(fullPath, "utf-8");
 
       // 发送操作反馈消息
       this.emitFileOperationMessage({
-        method: 'fs/read_text_file',
+        method: "fs/read_text_file",
         path: operation.path,
       });
 
       return content;
     } catch (error) {
-      if (error && typeof error === 'object' && 'code' in error && error.code === 'ENOENT') {
+      if (error && typeof error === "object" && "code" in error && error.code === "ENOENT") {
         throw new Error(`File not found: ${operation.path}`);
       }
       throw error;
@@ -141,22 +146,22 @@ export class CodexFileOperationHandler {
       try {
         ipcBridge.fileStream.contentUpdate.emit({
           filePath: fullPath,
-          content: '',
+          content: "",
           workspace: this.workingDirectory,
           relativePath: operation.path,
-          operation: 'delete',
+          operation: "delete",
         });
       } catch (error) {
-        console.error('[CodexFileOperationHandler] Failed to emit file stream delete:', error);
+        console.error("[CodexFileOperationHandler] Failed to emit file stream delete:", error);
       }
 
       // 发送操作反馈消息
       this.emitFileOperationMessage({
-        method: 'fs/delete_file',
+        method: "fs/delete_file",
         path: operation.path,
       });
     } catch (error) {
-      if (error && typeof error === 'object' && 'code' in error && error.code === 'ENOENT') {
+      if (error && typeof error === "object" && "code" in error && error.code === "ENOENT") {
         return; // 文件不存在，视为成功
       }
       throw error;
@@ -186,7 +191,7 @@ export class CodexFileOperationHandler {
    * 处理智能文件引用 - 参考 ACP 的 @filename 处理
    */
   processFileReferences(content: string, files?: string[]): string {
-    if (!files || files.length === 0 || !content.includes('@')) {
+    if (!files || files.length === 0 || !content.includes("@")) {
       return content;
     }
 
@@ -194,14 +199,17 @@ export class CodexFileOperationHandler {
 
     // 获取实际文件名
     const actualFilenames = files.map((filePath) => {
-      return filePath.split('/').pop() || filePath;
+      return filePath.split("/").pop() || filePath;
     });
 
     // 替换 @actualFilename 为 actualFilename
     actualFilenames.forEach((filename) => {
       const atFilename = `@${filename}`;
       if (processedContent.includes(atFilename)) {
-        processedContent = processedContent.replace(new RegExp(atFilename.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'), filename);
+        processedContent = processedContent.replace(
+          new RegExp(atFilename.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "g"),
+          filename,
+        );
       }
     });
 
@@ -215,7 +223,7 @@ export class CodexFileOperationHandler {
     const formattedMessage = this.formatFileOperationMessage(operation);
 
     this.messageEmitter.emitAndPersistMessage({
-      type: 'content',
+      type: "content",
       conversation_id: this.conversation_id,
       msg_id: uuid(),
       data: formattedMessage,
@@ -227,17 +235,18 @@ export class CodexFileOperationHandler {
    */
   private formatFileOperationMessage(operation: FileOperation): string {
     switch (operation.method) {
-      case 'fs/write_text_file':
-      case 'file_write': {
-        const content = operation.content || '';
-        const previewContent = content.length > 500 ? content.substring(0, 500) + '\n... (truncated)' : content;
+      case "fs/write_text_file":
+      case "file_write": {
+        const content = operation.content || "";
+        const previewContent =
+          content.length > 500 ? content.substring(0, 500) + "\n... (truncated)" : content;
         return `📝 **File written:** \`${operation.path}\`\n\n\`\`\`\n${previewContent}\n\`\`\``;
       }
-      case 'fs/read_text_file':
-      case 'file_read':
+      case "fs/read_text_file":
+      case "file_read":
         return `📖 **File read:** \`${operation.path}\``;
-      case 'fs/delete_file':
-      case 'file_delete':
+      case "fs/delete_file":
+      case "file_delete":
         return `🗑️ **File deleted:** \`${operation.path}\``;
       default:
         return `🔧 **File operation:** \`${operation.path}\` (${operation.method})`;
@@ -249,7 +258,7 @@ export class CodexFileOperationHandler {
    */
   private emitErrorMessage(error: string): void {
     this.messageEmitter.emitAndPersistMessage({
-      type: 'error',
+      type: "error",
       conversation_id: this.conversation_id,
       msg_id: uuid(),
       data: error,
@@ -263,11 +272,11 @@ export class CodexFileOperationHandler {
     const operations: Promise<void>[] = [];
 
     for (const [filePath, change] of Object.entries(changes)) {
-      if (typeof change === 'object' && change !== null) {
+      if (typeof change === "object" && change !== null) {
         const action = this.getChangeAction(change);
         const content = this.getChangeContent(change);
         const operation: FileOperation = {
-          method: action === 'delete' ? 'fs/delete_file' : 'fs/write_text_file',
+          method: action === "delete" ? "fs/delete_file" : "fs/write_text_file",
           path: filePath,
           content,
           action,
@@ -279,31 +288,41 @@ export class CodexFileOperationHandler {
     await Promise.all(operations);
   }
 
-  private getChangeAction(change: FileChange): 'create' | 'write' | 'delete' {
+  private getChangeAction(change: FileChange): "create" | "write" | "delete" {
     // 现代 FileChange 结构检查
-    if (typeof change === 'object' && change !== null && 'type' in change) {
+    if (typeof change === "object" && change !== null && "type" in change) {
       const type = change.type;
-      if (type === 'add') return 'create';
-      if (type === 'delete') return 'delete';
-      if (type === 'update') return 'write';
+      if (type === "add") return "create";
+      if (type === "delete") return "delete";
+      if (type === "update") return "write";
     }
 
     // 兼容旧格式 - 类型安全的检查
-    if (typeof change === 'object' && change !== null && 'action' in change) {
+    if (typeof change === "object" && change !== null && "action" in change) {
       const action = change.action;
-      if (action === 'create' || action === 'modify' || action === 'delete' || action === 'rename') {
-        return action === 'create' ? 'create' : action === 'delete' ? 'delete' : 'write';
+      if (
+        action === "create" ||
+        action === "modify" ||
+        action === "delete" ||
+        action === "rename"
+      ) {
+        return action === "create" ? "create" : action === "delete" ? "delete" : "write";
       }
     }
 
-    return 'write';
+    return "write";
   }
 
   private getChangeContent(change: FileChange): string {
-    if (typeof change === 'object' && change !== null && 'content' in change && typeof change.content === 'string') {
+    if (
+      typeof change === "object" &&
+      change !== null &&
+      "content" in change &&
+      typeof change.content === "string"
+    ) {
       return change.content;
     }
-    return '';
+    return "";
   }
 
   /**
@@ -312,7 +331,7 @@ export class CodexFileOperationHandler {
   cleanup(): void {
     // 拒绝所有待处理的操作
     for (const [_operationId, { reject }] of this.pendingOperations) {
-      reject(new Error('File operation handler is being cleaned up'));
+      reject(new Error("File operation handler is being cleaned up"));
     }
     this.pendingOperations.clear();
   }

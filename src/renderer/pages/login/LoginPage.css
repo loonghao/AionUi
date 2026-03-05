@@ -4,7 +4,9 @@
   align-items: center;
   justify-content: center;
   min-height: 100vh;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif;
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans",
+    sans-serif;
   background: linear-gradient(135deg, #97a0c5 0%, #596590 100%);
   overflow: hidden;
 }
@@ -258,7 +260,7 @@ body.login-page-active {
   margin-top: -6px;
 }
 
-.login-page__checkbox input[type='checkbox'] {
+.login-page__checkbox input[type="checkbox"] {
   width: 16px;
   height: 16px;
   cursor: pointer;

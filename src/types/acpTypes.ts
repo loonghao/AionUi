@@ -18,7 +18,7 @@
  * 预设助手的主 Agent 类型，用于决定创建哪种类型的对话
  * The primary agent type for preset assistants, used to determine which conversation type to create.
  */
-export type PresetAgentType = 'gemini' | 'claude' | 'codex' | 'codebuddy' | 'opencode' | 'qwen';
+export type PresetAgentType = "gemini" | "claude" | "codex" | "codebuddy" | "opencode" | "qwen";
 
 /**
  * 使用 ACP 协议的预设 Agent 类型（需要通过 ACP 后端路由）
@@ -27,7 +27,13 @@ export type PresetAgentType = 'gemini' | 'claude' | 'codex' | 'codebuddy' | 'ope
  * 这些类型会在创建对话时使用对应的 ACP 后端，而不是 Gemini 原生对话
  * These types will use corresponding ACP backend when creating conversation, instead of native Gemini
  */
-export const ACP_ROUTED_PRESET_TYPES: readonly PresetAgentType[] = ['claude', 'codebuddy', 'opencode', 'codex', 'qwen'] as const;
+export const ACP_ROUTED_PRESET_TYPES: readonly PresetAgentType[] = [
+  "claude",
+  "codebuddy",
+  "opencode",
+  "codex",
+  "qwen",
+] as const;
 
 /**
  * 检查预设 Agent 类型是否需要通过 ACP 后端路由
@@ -39,23 +45,23 @@ export function isAcpRoutedPresetType(type: PresetAgentType | undefined): boolea
 
 // 全部后端类型定义 - 包括暂时不支持的 / All backend types - including temporarily unsupported ones
 export type AcpBackendAll =
-  | 'claude' // Claude ACP
-  | 'gemini' // Google Gemini ACP
-  | 'qwen' // Qwen Code ACP
-  | 'iflow' // iFlow CLI ACP
-  | 'codex' // OpenAI Codex ACP (via codex-acp bridge)
-  | 'codebuddy' // Tencent CodeBuddy Code CLI
-  | 'droid' // Factory Droid CLI (ACP via `droid exec --output-format acp`)
-  | 'goose' // Block's Goose CLI
-  | 'auggie' // Augment Code CLI
-  | 'kimi' // Kimi CLI (Moonshot)
-  | 'opencode' // OpenCode CLI
-  | 'copilot' // GitHub Copilot CLI
-  | 'qoder' // Qoder CLI
-  | 'openclaw-gateway' // OpenClaw Gateway WebSocket
-  | 'vibe' // Mistral Vibe CLI
-  | 'nanobot' // nanobot CLI
-  | 'custom'; // User-configured custom ACP agent
+  | "claude" // Claude ACP
+  | "gemini" // Google Gemini ACP
+  | "qwen" // Qwen Code ACP
+  | "iflow" // iFlow CLI ACP
+  | "codex" // OpenAI Codex ACP (via codex-acp bridge)
+  | "codebuddy" // Tencent CodeBuddy Code CLI
+  | "droid" // Factory Droid CLI (ACP via `droid exec --output-format acp`)
+  | "goose" // Block's Goose CLI
+  | "auggie" // Augment Code CLI
+  | "kimi" // Kimi CLI (Moonshot)
+  | "opencode" // OpenCode CLI
+  | "copilot" // GitHub Copilot CLI
+  | "qoder" // Qoder CLI
+  | "openclaw-gateway" // OpenClaw Gateway WebSocket
+  | "vibe" // Mistral Vibe CLI
+  | "nanobot" // nanobot CLI
+  | "custom"; // User-configured custom ACP agent
 
 /**
  * 潜在的 ACP CLI 工具列表
@@ -78,7 +84,7 @@ export interface PotentialAcpCli {
 }
 
 /** 默认的 ACP 启动参数 / Default ACP launch arguments */
-const DEFAULT_ACP_ARGS = ['--experimental-acp'];
+const DEFAULT_ACP_ARGS = ["--experimental-acp"];
 
 /**
  * 从 ACP_BACKENDS_ALL 生成可检测的 CLI 列表
@@ -94,7 +100,7 @@ function generatePotentialAcpClis(): PotentialAcpCli[] {
       // 排除没有 CLI 命令的后端（gemini 内置，custom 用户配置）
       // Exclude backends without CLI command (gemini is built-in, custom is user-configured)
       if (!config.cliCommand) return false;
-      if (id === 'gemini' || id === 'custom') return false;
+      if (id === "gemini" || id === "custom") return false;
       return config.enabled;
     })
     .map(([id, config]) => ({
@@ -118,8 +124,8 @@ export const POTENTIAL_ACP_CLIS: PotentialAcpCli[] = new Proxy([] as PotentialAc
     if (_potentialAcpClis === null) {
       _potentialAcpClis = generatePotentialAcpClis();
     }
-    if (prop === 'length') return _potentialAcpClis.length;
-    if (typeof prop === 'string' && !isNaN(Number(prop))) {
+    if (prop === "length") return _potentialAcpClis.length;
+    if (typeof prop === "string" && !isNaN(Number(prop))) {
       return _potentialAcpClis[Number(prop)];
     }
     if (prop === Symbol.iterator) {
@@ -127,9 +133,9 @@ export const POTENTIAL_ACP_CLIS: PotentialAcpCli[] = new Proxy([] as PotentialAc
         yield* _potentialAcpClis!;
       };
     }
-    if (prop === 'map') return _potentialAcpClis.map.bind(_potentialAcpClis);
-    if (prop === 'filter') return _potentialAcpClis.filter.bind(_potentialAcpClis);
-    if (prop === 'forEach') return _potentialAcpClis.forEach.bind(_potentialAcpClis);
+    if (prop === "map") return _potentialAcpClis.map.bind(_potentialAcpClis);
+    if (prop === "filter") return _potentialAcpClis.filter.bind(_potentialAcpClis);
+    if (prop === "forEach") return _potentialAcpClis.forEach.bind(_potentialAcpClis);
     return Reflect.get(_potentialAcpClis, prop);
   },
 });
@@ -285,152 +291,152 @@ export interface AcpBackendConfig {
 // 所有后端配置 - 包括暂时禁用的 / All backend configurations - including temporarily disabled ones
 export const ACP_BACKENDS_ALL: Record<AcpBackendAll, AcpBackendConfig> = {
   claude: {
-    id: 'claude',
-    name: 'Claude Code',
-    cliCommand: 'claude',
+    id: "claude",
+    name: "Claude Code",
+    cliCommand: "claude",
     authRequired: true,
     enabled: true,
     supportsStreaming: false,
   },
   gemini: {
-    id: 'gemini',
-    name: 'Google CLI',
-    cliCommand: 'gemini',
+    id: "gemini",
+    name: "Google CLI",
+    cliCommand: "gemini",
     authRequired: true,
     enabled: false,
     supportsStreaming: true,
   },
   qwen: {
-    id: 'qwen',
-    name: 'Qwen Code',
-    cliCommand: 'qwen',
-    defaultCliPath: 'npx @qwen-code/qwen-code',
+    id: "qwen",
+    name: "Qwen Code",
+    cliCommand: "qwen",
+    defaultCliPath: "npx @qwen-code/qwen-code",
     authRequired: true,
     enabled: true, // ✅ 已验证支持：Qwen CLI v0.0.10+ 支持 --acp
     supportsStreaming: true,
-    acpArgs: ['--acp'], // Use --acp instead of deprecated --experimental-acp
+    acpArgs: ["--acp"], // Use --acp instead of deprecated --experimental-acp
   },
   iflow: {
-    id: 'iflow',
-    name: 'iFlow CLI',
-    cliCommand: 'iflow',
+    id: "iflow",
+    name: "iFlow CLI",
+    cliCommand: "iflow",
     authRequired: true,
     enabled: true,
     supportsStreaming: false,
   },
   codex: {
-    id: 'codex',
-    name: 'Codex',
-    cliCommand: 'codex', // Detect local codex CLI (codex-acp bridge invokes it)
-    defaultCliPath: 'npx @zed-industries/codex-acp@0.9.4',
+    id: "codex",
+    name: "Codex",
+    cliCommand: "codex", // Detect local codex CLI (codex-acp bridge invokes it)
+    defaultCliPath: "npx @zed-industries/codex-acp@0.9.4",
     authRequired: true, // Needs OPENAI_API_KEY or ChatGPT auth
     enabled: true, // ✅ Codex via codex-acp ACP bridge
     supportsStreaming: false,
     acpArgs: [], // codex-acp is ACP by default, no flag needed
   },
   codebuddy: {
-    id: 'codebuddy',
-    name: 'CodeBuddy',
-    cliCommand: 'codebuddy',
-    defaultCliPath: 'npx @tencent-ai/codebuddy-code',
+    id: "codebuddy",
+    name: "CodeBuddy",
+    cliCommand: "codebuddy",
+    defaultCliPath: "npx @tencent-ai/codebuddy-code",
     authRequired: true,
     enabled: true, // ✅ Tencent CodeBuddy Code CLI，使用 `codebuddy --acp` 启动
     supportsStreaming: false,
-    acpArgs: ['--acp'], // codebuddy 使用 --acp flag
+    acpArgs: ["--acp"], // codebuddy 使用 --acp flag
   },
   goose: {
-    id: 'goose',
-    name: 'Goose',
-    cliCommand: 'goose',
+    id: "goose",
+    name: "Goose",
+    cliCommand: "goose",
     authRequired: false,
     enabled: true, // ✅ Block's Goose CLI，使用 `goose acp` 启动
     supportsStreaming: false,
-    acpArgs: ['acp'], // goose 使用子命令而非 flag
+    acpArgs: ["acp"], // goose 使用子命令而非 flag
   },
   auggie: {
-    id: 'auggie',
-    name: 'Augment Code',
-    cliCommand: 'auggie',
+    id: "auggie",
+    name: "Augment Code",
+    cliCommand: "auggie",
     authRequired: false,
     enabled: true, // ✅ Augment Code CLI，使用 `auggie --acp` 启动
     supportsStreaming: false,
-    acpArgs: ['--acp'], // auggie 使用 --acp flag
+    acpArgs: ["--acp"], // auggie 使用 --acp flag
   },
   kimi: {
-    id: 'kimi',
-    name: 'Kimi CLI',
-    cliCommand: 'kimi',
+    id: "kimi",
+    name: "Kimi CLI",
+    cliCommand: "kimi",
     authRequired: false,
     enabled: true, // ✅ Kimi CLI (Moonshot)，使用 `kimi acp` 启动
     supportsStreaming: false,
-    acpArgs: ['acp'], // kimi 使用 acp 子命令
+    acpArgs: ["acp"], // kimi 使用 acp 子命令
   },
   opencode: {
-    id: 'opencode',
-    name: 'OpenCode',
-    cliCommand: 'opencode',
+    id: "opencode",
+    name: "OpenCode",
+    cliCommand: "opencode",
     authRequired: false,
     enabled: true, // ✅ OpenCode CLI，使用 `opencode acp` 启动
     supportsStreaming: false,
-    acpArgs: ['acp'], // opencode 使用 acp 子命令
+    acpArgs: ["acp"], // opencode 使用 acp 子命令
   },
   droid: {
-    id: 'droid',
-    name: 'Factory Droid',
-    cliCommand: 'droid',
+    id: "droid",
+    name: "Factory Droid",
+    cliCommand: "droid",
     // Droid uses FACTORY_API_KEY from environment, not an interactive auth flow.
     authRequired: false,
     enabled: true, // ✅ Factory docs: `droid exec --output-format acp` (JetBrains/Zed ACP integration)
     supportsStreaming: false,
-    acpArgs: ['exec', '--output-format', 'acp'],
+    acpArgs: ["exec", "--output-format", "acp"],
   },
   copilot: {
-    id: 'copilot',
-    name: 'GitHub Copilot',
-    cliCommand: 'copilot',
+    id: "copilot",
+    name: "GitHub Copilot",
+    cliCommand: "copilot",
     authRequired: false,
     enabled: true, // ✅ GitHub Copilot CLI，使用 `copilot --acp --stdio` 启动
     supportsStreaming: false,
-    acpArgs: ['--acp', '--stdio'], // copilot 使用 --acp --stdio 启动 ACP mode
+    acpArgs: ["--acp", "--stdio"], // copilot 使用 --acp --stdio 启动 ACP mode
   },
   qoder: {
-    id: 'qoder',
-    name: 'Qoder CLI',
-    cliCommand: 'qodercli',
+    id: "qoder",
+    name: "Qoder CLI",
+    cliCommand: "qodercli",
     authRequired: false,
     enabled: true, // ✅ Qoder CLI，使用 `qodercli --acp` 启动
     supportsStreaming: false,
-    acpArgs: ['--acp'], // qoder 使用 --acp flag
+    acpArgs: ["--acp"], // qoder 使用 --acp flag
   },
   vibe: {
-    id: 'vibe',
-    name: 'Mistral Vibe',
-    cliCommand: 'vibe-acp',
+    id: "vibe",
+    name: "Mistral Vibe",
+    cliCommand: "vibe-acp",
     authRequired: false,
     enabled: true, // ✅ Mistral Vibe CLI，使用 `vibe-acp` 启动
     supportsStreaming: false,
     acpArgs: [],
   },
-  'openclaw-gateway': {
-    id: 'openclaw-gateway',
-    name: 'OpenClaw',
-    cliCommand: 'openclaw',
+  "openclaw-gateway": {
+    id: "openclaw-gateway",
+    name: "OpenClaw",
+    cliCommand: "openclaw",
     authRequired: false,
     enabled: true, // ✅ OpenClaw Gateway WebSocket mode
     supportsStreaming: true,
-    acpArgs: ['gateway'], // openclaw gateway command (for detection)
+    acpArgs: ["gateway"], // openclaw gateway command (for detection)
   },
   nanobot: {
-    id: 'nanobot',
-    name: 'Nano Bot',
-    cliCommand: 'nanobot',
+    id: "nanobot",
+    name: "Nano Bot",
+    cliCommand: "nanobot",
     authRequired: false,
     enabled: true,
     supportsStreaming: false,
   },
   custom: {
-    id: 'custom',
-    name: 'Custom Agent',
+    id: "custom",
+    name: "Custom Agent",
     cliCommand: undefined, // User-configured via settings
     authRequired: false,
     enabled: true,
@@ -439,7 +445,9 @@ export const ACP_BACKENDS_ALL: Record<AcpBackendAll, AcpBackendConfig> = {
 };
 
 // 仅启用的后端配置 / Enabled backends only
-export const ACP_ENABLED_BACKENDS: Record<string, AcpBackendConfig> = Object.fromEntries(Object.entries(ACP_BACKENDS_ALL).filter(([_, config]) => config.enabled));
+export const ACP_ENABLED_BACKENDS: Record<string, AcpBackendConfig> = Object.fromEntries(
+  Object.entries(ACP_BACKENDS_ALL).filter(([_, config]) => config.enabled),
+);
 
 // 当前启用的后端类型 / Currently enabled backend types
 export type AcpBackend = keyof typeof ACP_BACKENDS_ALL;
@@ -471,13 +479,13 @@ export function isAcpBackendEnabled(backend: AcpBackendAll): boolean {
 
 // ACP 错误类型系统 - 优雅的错误处理 / ACP Error Type System - Elegant error handling
 export enum AcpErrorType {
-  CONNECTION_NOT_READY = 'CONNECTION_NOT_READY',
-  AUTHENTICATION_FAILED = 'AUTHENTICATION_FAILED',
-  SESSION_EXPIRED = 'SESSION_EXPIRED',
-  NETWORK_ERROR = 'NETWORK_ERROR',
-  TIMEOUT = 'TIMEOUT',
-  PERMISSION_DENIED = 'PERMISSION_DENIED',
-  UNKNOWN = 'UNKNOWN',
+  CONNECTION_NOT_READY = "CONNECTION_NOT_READY",
+  AUTHENTICATION_FAILED = "AUTHENTICATION_FAILED",
+  SESSION_EXPIRED = "SESSION_EXPIRED",
+  NETWORK_ERROR = "NETWORK_ERROR",
+  TIMEOUT = "TIMEOUT",
+  PERMISSION_DENIED = "PERMISSION_DENIED",
+  UNKNOWN = "UNKNOWN",
 }
 
 export interface AcpError {
@@ -489,10 +497,17 @@ export interface AcpError {
 }
 
 // ACP 结果类型 - 类型安全的结果处理 / ACP Result Type - Type-safe result handling
-export type AcpResult<T = unknown> = { success: true; data: T } | { success: false; error: AcpError };
+export type AcpResult<T = unknown> =
+  | { success: true; data: T }
+  | { success: false; error: AcpError };
 
 // 创建 ACP 错误的辅助函数 / Helper function to create ACP errors
-export function createAcpError(type: AcpErrorType, message: string, retryable: boolean = false, details?: unknown): AcpError {
+export function createAcpError(
+  type: AcpErrorType,
+  message: string,
+  retryable: boolean = false,
+  details?: unknown,
+): AcpError {
   return {
     type,
     code: type.toString(),
@@ -507,7 +522,7 @@ export function isRetryableError(error: AcpError): boolean {
 }
 
 // ACP JSON-RPC 协议类型 / ACP JSON-RPC Protocol Types
-export const JSONRPC_VERSION = '2.0' as const;
+export const JSONRPC_VERSION = "2.0" as const;
 
 export interface AcpRequest {
   jsonrpc: typeof JSONRPC_VERSION;
@@ -540,9 +555,9 @@ export interface BaseSessionUpdate {
 // Agent 消息块更新 / Agent message chunk update
 export interface AgentMessageChunkUpdate extends BaseSessionUpdate {
   update: {
-    sessionUpdate: 'agent_message_chunk';
+    sessionUpdate: "agent_message_chunk";
     content: {
-      type: 'text' | 'image';
+      type: "text" | "image";
       text?: string;
       data?: string;
       mimeType?: string;
@@ -554,9 +569,9 @@ export interface AgentMessageChunkUpdate extends BaseSessionUpdate {
 // Agent 思考块更新 / Agent thought chunk update
 export interface AgentThoughtChunkUpdate extends BaseSessionUpdate {
   update: {
-    sessionUpdate: 'agent_thought_chunk';
+    sessionUpdate: "agent_thought_chunk";
     content: {
-      type: 'text';
+      type: "text";
       text: string;
     };
   };
@@ -566,9 +581,9 @@ export interface AgentThoughtChunkUpdate extends BaseSessionUpdate {
 
 /** Tool call 内容项类型 / Tool call content item type */
 export interface ToolCallContentItem {
-  type: 'content' | 'diff';
+  type: "content" | "diff";
   content?: {
-    type: 'text';
+    type: "text";
     text: string;
   };
   path?: string;
@@ -584,11 +599,11 @@ export interface ToolCallLocationItem {
 // 工具调用更新 / Tool call update
 export interface ToolCallUpdate extends BaseSessionUpdate {
   update: {
-    sessionUpdate: 'tool_call';
+    sessionUpdate: "tool_call";
     toolCallId: string;
-    status: 'pending' | 'in_progress' | 'completed' | 'failed';
+    status: "pending" | "in_progress" | "completed" | "failed";
     title: string;
-    kind: 'read' | 'edit' | 'execute';
+    kind: "read" | "edit" | "execute";
     rawInput?: Record<string, unknown>;
     content?: ToolCallContentItem[];
     locations?: ToolCallLocationItem[];
@@ -598,16 +613,16 @@ export interface ToolCallUpdate extends BaseSessionUpdate {
 // 工具调用状态更新 / Tool call update (status change)
 export interface ToolCallUpdateStatus extends BaseSessionUpdate {
   update: {
-    sessionUpdate: 'tool_call_update';
+    sessionUpdate: "tool_call_update";
     toolCallId: string;
-    status: 'completed' | 'failed';
+    status: "completed" | "failed";
     // rawInput may arrive in tool_call_update with complete data (after streaming completes)
     // This happens when input_json_delta finishes and the full input is available
     rawInput?: Record<string, unknown>;
     content?: Array<{
-      type: 'content';
+      type: "content";
       content: {
-        type: 'text';
+        type: "text";
         text: string;
       };
     }>;
@@ -617,11 +632,11 @@ export interface ToolCallUpdateStatus extends BaseSessionUpdate {
 // 计划更新 / Plan update
 export interface PlanUpdate extends BaseSessionUpdate {
   update: {
-    sessionUpdate: 'plan';
+    sessionUpdate: "plan";
     entries: Array<{
       content: string;
-      status: 'pending' | 'in_progress' | 'completed';
-      priority?: 'low' | 'medium' | 'high';
+      status: "pending" | "in_progress" | "completed";
+      priority?: "low" | "medium" | "high";
     }>;
   };
 }
@@ -629,7 +644,7 @@ export interface PlanUpdate extends BaseSessionUpdate {
 // 可用命令更新 / Available commands update
 export interface AvailableCommandsUpdate extends BaseSessionUpdate {
   update: {
-    sessionUpdate: 'available_commands_update';
+    sessionUpdate: "available_commands_update";
     availableCommands: Array<{
       name: string;
       description: string;
@@ -643,9 +658,9 @@ export interface AvailableCommandsUpdate extends BaseSessionUpdate {
 // 用户消息块更新 / User message chunk update
 export interface UserMessageChunkUpdate extends BaseSessionUpdate {
   update: {
-    sessionUpdate: 'user_message_chunk';
+    sessionUpdate: "user_message_chunk";
     content: {
-      type: 'text' | 'image';
+      type: "text" | "image";
       text?: string;
       data?: string;
       mimeType?: string;
@@ -670,7 +685,7 @@ export interface AcpSessionConfigOption {
   label?: string; // Some agents may use label instead of name
   description?: string;
   category?: string;
-  type: 'select' | 'boolean' | 'string';
+  type: "select" | "boolean" | "string";
   currentValue?: string;
   selectedValue?: string; // Some agents may use selectedValue instead of currentValue
   options?: AcpConfigSelectOption[];
@@ -679,7 +694,7 @@ export interface AcpSessionConfigOption {
 /** Config options update notification (within session/update) */
 export interface ConfigOptionsUpdatePayload extends BaseSessionUpdate {
   update: {
-    sessionUpdate: 'config_option_update';
+    sessionUpdate: "config_option_update";
     configOptions: AcpSessionConfigOption[];
   };
 }
@@ -712,19 +727,27 @@ export interface AcpModelInfo {
   /** Whether the user can switch models */
   canSwitch: boolean;
   /** Source of the model info: 'configOption' (stable) or 'models' (unstable) */
-  source: 'configOption' | 'models';
+  source: "configOption" | "models";
   /** Config option ID (only when source is 'configOption') */
   configOptionId?: string;
 }
 
 // 所有会话更新的联合类型 / Union type for all session updates
-export type AcpSessionUpdate = AgentMessageChunkUpdate | AgentThoughtChunkUpdate | ToolCallUpdate | ToolCallUpdateStatus | PlanUpdate | AvailableCommandsUpdate | UserMessageChunkUpdate | ConfigOptionsUpdatePayload;
+export type AcpSessionUpdate =
+  | AgentMessageChunkUpdate
+  | AgentThoughtChunkUpdate
+  | ToolCallUpdate
+  | ToolCallUpdateStatus
+  | PlanUpdate
+  | AvailableCommandsUpdate
+  | UserMessageChunkUpdate
+  | ConfigOptionsUpdatePayload;
 
 // 当前的 ACP 权限请求接口 / Current ACP permission request interface
 export interface AcpPermissionOption {
   optionId: string;
   name: string;
-  kind: 'allow_once' | 'allow_always' | 'reject_once' | 'reject_always';
+  kind: "allow_once" | "allow_always" | "reject_once" | "reject_always";
 }
 export interface AcpPermissionRequest {
   sessionId: string;
@@ -771,7 +794,7 @@ export type AcpMessage = AcpRequest | AcpNotification | AcpResponse | AcpSession
 
 // 文件操作请求类型 / File Operation Request Types
 export interface AcpFileWriteRequest extends AcpRequest {
-  method: 'fs/write_text_file';
+  method: "fs/write_text_file";
   params: {
     sessionId: string;
     path: string;
@@ -780,7 +803,7 @@ export interface AcpFileWriteRequest extends AcpRequest {
 }
 
 export interface AcpFileReadRequest extends AcpRequest {
-  method: 'fs/read_text_file';
+  method: "fs/read_text_file";
   params: {
     sessionId: string;
     path: string;
@@ -794,11 +817,11 @@ export interface AcpFileReadRequest extends AcpRequest {
 // Source: Existing code implementation (no official protocol docs, sync changes if updated).
 
 export const ACP_METHODS = {
-  SESSION_UPDATE: 'session/update',
-  REQUEST_PERMISSION: 'session/request_permission',
-  READ_TEXT_FILE: 'fs/read_text_file',
-  WRITE_TEXT_FILE: 'fs/write_text_file',
-  SET_CONFIG_OPTION: 'session/set_config_option',
+  SESSION_UPDATE: "session/update",
+  REQUEST_PERMISSION: "session/request_permission",
+  READ_TEXT_FILE: "fs/read_text_file",
+  WRITE_TEXT_FILE: "fs/write_text_file",
+  SET_CONFIG_OPTION: "session/set_config_option",
 } as const;
 
 export type AcpMethod = (typeof ACP_METHODS)[keyof typeof ACP_METHODS];
@@ -852,4 +875,8 @@ export interface AcpFileWriteMessage {
  * ACP incoming message union type.
  * TypeScript can automatically narrow the type based on the method field.
  */
-export type AcpIncomingMessage = AcpSessionUpdateNotification | AcpPermissionRequestMessage | AcpFileReadMessage | AcpFileWriteMessage;
+export type AcpIncomingMessage =
+  | AcpSessionUpdateNotification
+  | AcpPermissionRequestMessage
+  | AcpFileReadMessage
+  | AcpFileWriteMessage;

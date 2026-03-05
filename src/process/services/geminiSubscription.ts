@@ -4,12 +4,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { UserTierId } from '@office-ai/aioncli-core';
-import { getOauthInfoWithCache } from '@office-ai/aioncli-core';
+import type { UserTierId } from "@office-ai/aioncli-core";
+import { getOauthInfoWithCache } from "@office-ai/aioncli-core";
 
 export interface GeminiSubscriptionStatus {
   isSubscriber: boolean;
-  tier?: UserTierId | 'unknown';
+  tier?: UserTierId | "unknown";
   lastChecked: number;
   message?: string;
 }
@@ -40,9 +40,9 @@ async function fetchSubscriptionStatus(proxy?: string): Promise<GeminiSubscripti
       // No valid cached credentials, return unknown status
       return {
         isSubscriber: false,
-        tier: 'unknown',
+        tier: "unknown",
         lastChecked: Date.now(),
-        message: 'No valid cached credentials',
+        message: "No valid cached credentials",
       };
     }
 
@@ -52,13 +52,13 @@ async function fetchSubscriptionStatus(proxy?: string): Promise<GeminiSubscripti
     // For now, assume users with valid credentials are standard users
     return {
       isSubscriber: false,
-      tier: 'unknown',
+      tier: "unknown",
       lastChecked: Date.now(),
     };
   } catch (error) {
     return {
       isSubscriber: false,
-      tier: 'unknown',
+      tier: "unknown",
       lastChecked: Date.now(),
       message: error instanceof Error ? error.message : String(error),
     };
@@ -66,8 +66,10 @@ async function fetchSubscriptionStatus(proxy?: string): Promise<GeminiSubscripti
 }
 
 // 对外接口：自动复用缓存/并发请求，返回订阅态。Public helper that reuses cache/de-duplicates calls.
-export async function getGeminiSubscriptionStatus(proxy?: string): Promise<GeminiSubscriptionStatus> {
-  const cacheKey = proxy || 'default';
+export async function getGeminiSubscriptionStatus(
+  proxy?: string,
+): Promise<GeminiSubscriptionStatus> {
+  const cacheKey = proxy || "default";
   const cached = statusCache.get(cacheKey);
   const now = Date.now();
 

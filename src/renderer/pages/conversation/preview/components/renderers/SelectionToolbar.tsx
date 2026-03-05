@@ -4,11 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React from 'react';
-import { useFloating, offset, flip, shift, autoUpdate } from '@floating-ui/react';
-import { usePreviewContext } from '../../context/PreviewContext';
-import type { SelectionPosition } from '@/renderer/hooks/useTextSelection';
-import { useTranslation } from 'react-i18next';
+import React from "react";
+import { useFloating, offset, flip, shift, autoUpdate } from "@floating-ui/react";
+import { usePreviewContext } from "../../context/PreviewContext";
+import type { SelectionPosition } from "@/renderer/hooks/useTextSelection";
+import { useTranslation } from "react-i18next";
 
 interface SelectionToolbarProps {
   selectedText: string; // 选中的文本 / Selected text
@@ -29,7 +29,7 @@ const SelectionToolbar: React.FC<SelectionToolbarProps> = ({ selectedText, posit
 
   // 使用 Floating UI 定位工具栏（跟随鼠标位置）/ Use Floating UI to position toolbar (follow mouse position)
   const { refs, floatingStyles } = useFloating({
-    placement: 'bottom-start', // 显示在鼠标下方 / Display below mouse
+    placement: "bottom-start", // 显示在鼠标下方 / Display below mouse
     middleware: [
       offset(8), // 与鼠标的距离 / Distance from mouse
       flip(), // 自动翻转避免溢出 / Auto flip to avoid overflow
@@ -71,8 +71,13 @@ const SelectionToolbar: React.FC<SelectionToolbarProps> = ({ selectedText, posit
 
   return (
     <div ref={refs.setFloating} style={{ ...floatingStyles, zIndex: 99999 }}>
-      <div className='flex items-center px-12px py-8px bg-white dark:bg-gray-800 rd-8px shadow-lg border-1 border-solid border-gray-200 dark:border-gray-700 cursor-pointer hover:opacity-80 transition-opacity' onMouseDown={handleMouseDown}>
-        <span className='text-13px text-t-primary font-medium whitespace-nowrap leading-16px'>{t('preview.addToChat')}</span>
+      <div
+        className="flex items-center px-12px py-8px bg-white dark:bg-gray-800 rd-8px shadow-lg border-1 border-solid border-gray-200 dark:border-gray-700 cursor-pointer hover:opacity-80 transition-opacity"
+        onMouseDown={handleMouseDown}
+      >
+        <span className="text-13px text-t-primary font-medium whitespace-nowrap leading-16px">
+          {t("preview.addToChat")}
+        </span>
       </div>
     </div>
   );

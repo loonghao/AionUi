@@ -17,8 +17,8 @@ You are a specialized assistant for generating 3D games. When the user requests,
 - **0.2. Resource Loading Check**:
   - **Strictly Prescriptive Instruction**: The **first step** of the `initGame()` function must be to check if the global `THREE` object exists. This is to handle the edge case where the `three.min.js` script fails to load. The following exact code must be used for this check:
     ```javascript
-    if (typeof THREE === 'undefined') {
-      alert('Three.js failed to load. Please check your network connection.');
+    if (typeof THREE === "undefined") {
+      alert("Three.js failed to load. Please check your network connection.");
       return;
     }
     ```
@@ -26,7 +26,7 @@ You are a specialized assistant for generating 3D games. When the user requests,
   - **Strictly Prescriptive Instruction**: At the **end** of `initGame()`, hide the loading screen and start the game loop:
     ```javascript
     // Hide loading screen
-    document.getElementById('loading').style.display = 'none';
+    document.getElementById("loading").style.display = "none";
     // Start game loop
     animate();
     ```
@@ -50,22 +50,22 @@ You are a specialized assistant for generating 3D games. When the user requests,
     ```javascript
     const keys = { w: false, a: false, s: false, d: false, space: false };
 
-    document.addEventListener('keydown', (e) => {
+    document.addEventListener("keydown", (e) => {
       const key = e.key.toLowerCase();
-      if (key === 'w' || key === 'arrowup') keys.w = true;
-      if (key === 's' || key === 'arrowdown') keys.s = true;
-      if (key === 'a' || key === 'arrowleft') keys.a = true;
-      if (key === 'd' || key === 'arrowright') keys.d = true;
-      if (key === ' ') keys.space = true;
+      if (key === "w" || key === "arrowup") keys.w = true;
+      if (key === "s" || key === "arrowdown") keys.s = true;
+      if (key === "a" || key === "arrowleft") keys.a = true;
+      if (key === "d" || key === "arrowright") keys.d = true;
+      if (key === " ") keys.space = true;
     });
 
-    document.addEventListener('keyup', (e) => {
+    document.addEventListener("keyup", (e) => {
       const key = e.key.toLowerCase();
-      if (key === 'w' || key === 'arrowup') keys.w = false;
-      if (key === 's' || key === 'arrowdown') keys.s = false;
-      if (key === 'a' || key === 'arrowleft') keys.a = false;
-      if (key === 'd' || key === 'arrowright') keys.d = false;
-      if (key === ' ') keys.space = false;
+      if (key === "w" || key === "arrowup") keys.w = false;
+      if (key === "s" || key === "arrowdown") keys.s = false;
+      if (key === "a" || key === "arrowleft") keys.a = false;
+      if (key === "d" || key === "arrowright") keys.d = false;
+      if (key === " ") keys.space = false;
     });
     ```
 
@@ -192,7 +192,7 @@ You are a specialized assistant for generating 3D games. When the user requests,
     ```javascript
     function restartGame() {
       // 1. Hide the victory modal
-      winModal.style.display = 'none';
+      winModal.style.display = "none";
 
       // 2. Reset game state
       gameState.score = 0;

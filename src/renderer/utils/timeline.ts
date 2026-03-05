@@ -9,7 +9,7 @@
  * 会话历史分组的时间线工具函数
  */
 
-import type { TChatConversation } from '@/common/storage';
+import type { TChatConversation } from "@/common/storage";
 
 /**
  * Calculate the difference in days between two timestamps
@@ -40,13 +40,17 @@ export const getActivityTime = (conversation: TChatConversation): number => {
  * @param currentTime - The current timestamp (usually Date.now())
  * @param t - The i18n translation function
  */
-export const getTimelineLabel = (time: number, currentTime: number, t: (key: string) => string): string => {
+export const getTimelineLabel = (
+  time: number,
+  currentTime: number,
+  t: (key: string) => string,
+): string => {
   const daysDiff = diffDay(currentTime, time);
 
-  if (daysDiff === 0) return t('conversation.history.today');
-  if (daysDiff === 1) return t('conversation.history.yesterday');
-  if (daysDiff < 7) return t('conversation.history.recent7Days');
-  return t('conversation.history.earlier');
+  if (daysDiff === 0) return t("conversation.history.today");
+  if (daysDiff === 1) return t("conversation.history.yesterday");
+  if (daysDiff < 7) return t("conversation.history.recent7Days");
+  return t("conversation.history.earlier");
 };
 
 /**
@@ -61,10 +65,10 @@ export const createTimelineGrouper = (t: (key: string) => string) => {
   let prevTime: number;
 
   const format = (time: number) => {
-    if (diffDay(current, time) === 0) return t('conversation.history.today');
-    if (diffDay(current, time) === 1) return t('conversation.history.yesterday');
-    if (diffDay(current, time) < 7) return t('conversation.history.recent7Days');
-    return t('conversation.history.earlier');
+    if (diffDay(current, time) === 0) return t("conversation.history.today");
+    if (diffDay(current, time) === 1) return t("conversation.history.yesterday");
+    if (diffDay(current, time) < 7) return t("conversation.history.recent7Days");
+    return t("conversation.history.earlier");
   };
 
   return (conversation: TChatConversation) => {
@@ -73,6 +77,6 @@ export const createTimelineGrouper = (t: (key: string) => string) => {
     const prevFormatStr = prevTime !== undefined ? format(prevTime) : undefined;
     prevTime = time;
     // Only return label if different from previous (for grouping headers)
-    return formatStr !== prevFormatStr ? formatStr : '';
+    return formatStr !== prevFormatStr ? formatStr : "";
   };
 };

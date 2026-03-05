@@ -209,7 +209,7 @@ Check workspace.pasteConfirm config
 ### Basic Usage
 
 ```tsx
-import ChatWorkspace from './workspace';
+import ChatWorkspace from "./workspace";
 
 function ConversationPage() {
   const [messageApi, messageContext] = Message.useMessage();
@@ -217,7 +217,12 @@ function ConversationPage() {
   return (
     <>
       {messageContext}
-      <ChatWorkspace conversation_id={conversationId} workspace={workspacePath} eventPrefix='gemini' messageApi={messageApi} />
+      <ChatWorkspace
+        conversation_id={conversationId}
+        workspace={workspacePath}
+        eventPrefix="gemini"
+        messageApi={messageApi}
+      />
     </>
   );
 }
@@ -226,19 +231,19 @@ function ConversationPage() {
 ### Listen to File Selection Events
 
 ```tsx
-import { emitter } from '@/renderer/utils/emitter';
-import { useEffect } from 'react';
+import { emitter } from "@/renderer/utils/emitter";
+import { useEffect } from "react";
 
 function MyComponent() {
   useEffect(() => {
     const handleFileSelected = (items: Array<{ path: string; name: string; isFile: boolean }>) => {
-      console.log('Selected files:', items);
+      console.log("Selected files:", items);
     };
 
-    emitter.on('gemini.selected.file', handleFileSelected);
+    emitter.on("gemini.selected.file", handleFileSelected);
 
     return () => {
-      emitter.off('gemini.selected.file', handleFileSelected);
+      emitter.off("gemini.selected.file", handleFileSelected);
     };
   }, []);
 }
@@ -247,11 +252,11 @@ function MyComponent() {
 ### Manually Refresh Workspace
 
 ```tsx
-import { emitter } from '@/renderer/utils/emitter';
+import { emitter } from "@/renderer/utils/emitter";
 
 function RefreshButton() {
   const handleRefresh = () => {
-    emitter.emit('gemini.workspace.refresh');
+    emitter.emit("gemini.workspace.refresh");
   };
 
   return <button onClick={handleRefresh}>Refresh</button>;
@@ -261,11 +266,11 @@ function RefreshButton() {
 ### Clear File Selection
 
 ```tsx
-import { emitter } from '@/renderer/utils/emitter';
+import { emitter } from "@/renderer/utils/emitter";
 
 function ClearButton() {
   const handleClear = () => {
-    emitter.emit('gemini.selected.file.clear');
+    emitter.emit("gemini.selected.file.clear");
   };
 
   return <button onClick={handleClear}>Clear Selection</button>;
@@ -289,7 +294,7 @@ Event naming convention: `${eventPrefix}.${eventName}`
 Workspace depends on `PreviewContext` for file preview:
 
 ```tsx
-import { PreviewProvider } from '../preview';
+import { PreviewProvider } from "../preview";
 
 function Layout() {
   return (
@@ -306,10 +311,10 @@ Control whether to show paste confirmation dialog via `workspace.pasteConfirm` c
 
 ```typescript
 // Disable paste confirmation
-await ConfigStorage.set('workspace.pasteConfirm', true);
+await ConfigStorage.set("workspace.pasteConfirm", true);
 
 // Enable paste confirmation (default)
-await ConfigStorage.set('workspace.pasteConfirm', false);
+await ConfigStorage.set("workspace.pasteConfirm", false);
 ```
 
 ## Performance Optimizations
@@ -336,7 +341,7 @@ const onSearch = useDebounce(
     void treeHook.loadWorkspace(workspace, value);
   },
   200,
-  [workspace, treeHook.loadWorkspace]
+  [workspace, treeHook.loadWorkspace],
 );
 ```
 
@@ -357,10 +362,10 @@ All file operations include comprehensive error handling:
 try {
   const result = await operation();
   if (!result.success) {
-    messageApi.error(result.msg || t('defaultErrorMessage'));
+    messageApi.error(result.msg || t("defaultErrorMessage"));
   }
 } catch (error) {
-  messageApi.error(t('unknownError'));
+  messageApi.error(t("unknownError"));
 }
 ```
 
@@ -392,8 +397,8 @@ index.tsx (Container Component)
 Add new extension detection in the `handlePreviewFile` function in `useWorkspaceFileOps`:
 
 ```typescript
-if (['new', 'ext'].includes(ext)) {
-  contentType = 'newType';
+if (["new", "ext"].includes(ext)) {
+  contentType = "newType";
 }
 ```
 
@@ -410,7 +415,7 @@ The 200ms delay ensures the file system operation completes, avoiding reading st
 Users can check "do not ask again" in the paste confirmation dialog, or set it programmatically:
 
 ```typescript
-await ConfigStorage.set('workspace.pasteConfirm', true);
+await ConfigStorage.set("workspace.pasteConfirm", true);
 ```
 
 ## Related Links

@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React from 'react';
-import styles from '../index.module.css';
+import React from "react";
+import styles from "../index.module.css";
 
 /**
  * Skeleton placeholder for the AgentPillBar while agents are loading.
@@ -13,20 +13,24 @@ import styles from '../index.module.css';
  */
 export const AgentPillBarSkeleton: React.FC = () => {
   return (
-    <div className='w-full flex justify-center'>
+    <div className="w-full flex justify-center">
       <div
-        className='inline-flex items-center bg-fill-2'
+        className="inline-flex items-center bg-fill-2"
         style={{
           marginBottom: 16,
-          padding: '4px',
-          borderRadius: '30px',
+          padding: "4px",
+          borderRadius: "30px",
           gap: 12,
         }}
       >
         {/* First pill is wider to mimic the selected state */}
         <div className={styles.skeleton} style={{ width: 48, height: 28, borderRadius: 20 }} />
         {[28, 28, 28, 28].map((size, i) => (
-          <div key={i} className={styles.skeleton} style={{ width: size, height: size, borderRadius: '50%' }} />
+          <div
+            key={i}
+            className={styles.skeleton}
+            style={{ width: size, height: size, borderRadius: "50%" }}
+          />
         ))}
       </div>
     </div>
@@ -40,8 +44,8 @@ export const AgentPillBarSkeleton: React.FC = () => {
 export const AssistantsSkeleton: React.FC = () => {
   const widths = [80, 100, 90];
   return (
-    <div className='mt-16px w-full'>
-      <div className='flex flex-wrap gap-8px justify-center'>
+    <div className="mt-16px w-full">
+      <div className="flex flex-wrap gap-8px justify-center">
         {widths.map((w, i) => (
           <div key={i} className={styles.skeletonPill} style={{ width: w, height: 28 }} />
         ))}

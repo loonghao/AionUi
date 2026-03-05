@@ -199,7 +199,6 @@ _7/24 AI asistanınız — AionUi'ye herhangi bir cihazdan, her yerden erişin._
 
 <p align="center"><em>Agent'ınızı uzaktan kontrol edin ve izleyin — Claude, Gemini, Codex. Tarayıcı veya telefondan, Claude Code remote gibi.</em></p>
 
-
 > [Uzaktan İnternet Erişimi Öğreticisi](https://github.com/iOfficeAI/AionUi/wiki/Remote-Internet-Access-Guide-Chinese)
 
 ## ✨ Cowork Eylemde
@@ -624,6 +623,7 @@ prek run --from-ref origin/main --to-ref HEAD
 ```
 
 #### Derleme Sistemi
+
 AionUi hızlı paketleme için **electron-vite** kullanır:
 
 - **Ana süreç**: Vite ile paketlenir (ESM)

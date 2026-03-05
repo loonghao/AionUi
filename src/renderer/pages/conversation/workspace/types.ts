@@ -4,9 +4,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { IDirOrFile } from '@/common/ipcBridge';
-import type { NodeInstance } from '@arco-design/web-react/es/Tree/interface';
-import type { Message } from '@arco-design/web-react';
+import type { IDirOrFile } from "@/common/ipcBridge";
+import type { NodeInstance } from "@arco-design/web-react/es/Tree/interface";
+import type { Message } from "@arco-design/web-react";
 
 export type MessageApi = ReturnType<typeof Message.useMessage>[0];
 
@@ -17,7 +17,7 @@ export type MessageApi = ReturnType<typeof Message.useMessage>[0];
 export interface WorkspaceProps {
   workspace: string;
   conversation_id: string;
-  eventPrefix?: 'gemini' | 'acp' | 'codex';
+  eventPrefix?: "gemini" | "acp" | "codex";
   messageApi?: MessageApi;
 }
 

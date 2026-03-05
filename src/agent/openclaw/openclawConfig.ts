@@ -11,17 +11,17 @@
  * to get gateway auth settings.
  */
 
-import fs from 'node:fs';
-import os from 'node:os';
-import path from 'node:path';
+import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
 
 // Config file paths
-const DEFAULT_STATE_DIR = path.join(os.homedir(), '.openclaw');
-const CONFIG_FILENAME = 'openclaw.json';
-const LEGACY_CONFIG_FILENAMES = ['clawdbot.json', 'moltbot.json', 'moldbot.json'];
+const DEFAULT_STATE_DIR = path.join(os.homedir(), ".openclaw");
+const CONFIG_FILENAME = "openclaw.json";
+const LEGACY_CONFIG_FILENAMES = ["clawdbot.json", "moltbot.json", "moldbot.json"];
 
 interface OpenClawGatewayAuth {
-  mode?: 'none' | 'token' | 'password';
+  mode?: "none" | "token" | "password";
   token?: string;
   password?: string;
 }
@@ -45,7 +45,9 @@ function resolveStateDir(): string {
   }
 
   const newDir = DEFAULT_STATE_DIR;
-  const legacyDirs = ['.clawdbot', '.moltbot', '.moldbot'].map((dir) => path.join(os.homedir(), dir));
+  const legacyDirs = [".clawdbot", ".moltbot", ".moldbot"].map((dir) =>
+    path.join(os.homedir(), dir),
+  );
 
   if (fs.existsSync(newDir)) {
     return newDir;
@@ -74,7 +76,7 @@ function resolveUserPath(input: string): string {
   if (!trimmed) {
     return trimmed;
   }
-  if (trimmed.startsWith('~')) {
+  if (trimmed.startsWith("~")) {
     const expanded = trimmed.replace(/^~(?=$|[\\/])/, os.homedir());
     return path.resolve(expanded);
   }
@@ -91,7 +93,9 @@ function findConfigPath(): string | null {
   }
 
   const stateDir = resolveStateDir();
-  const candidates = [CONFIG_FILENAME, ...LEGACY_CONFIG_FILENAMES].map((name) => path.join(stateDir, name));
+  const candidates = [CONFIG_FILENAME, ...LEGACY_CONFIG_FILENAMES].map((name) =>
+    path.join(stateDir, name),
+  );
 
   for (const candidate of candidates) {
     if (fs.existsSync(candidate)) {
@@ -112,17 +116,20 @@ export function readOpenClawConfig(): OpenClawConfig | null {
   }
 
   try {
-    const content = fs.readFileSync(configPath, 'utf8');
+    const content = fs.readFileSync(configPath, "utf8");
     try {
       return JSON.parse(content) as OpenClawConfig;
     } catch {
       // If standard parse fails, try removing comments (JSONC style)
       // Use a string-aware approach: skip // and /* */ only outside quoted strings
-      const cleanContent = content.replace(/"(?:[^"\\]|\\.)*"|\/\/.*$|\/\*[\s\S]*?\*\//gm, (match) => (match.startsWith('"') ? match : match.startsWith('/*') ? '' : ''));
+      const cleanContent = content.replace(
+        /"(?:[^"\\]|\\.)*"|\/\/.*$|\/\*[\s\S]*?\*\//gm,
+        (match) => (match.startsWith('"') ? match : match.startsWith("/*") ? "" : ""),
+      );
       return JSON.parse(cleanContent) as OpenClawConfig;
     }
   } catch (error) {
-    console.warn('[OpenClawConfig] Failed to read config:', error);
+    console.warn("[OpenClawConfig] Failed to read config:", error);
     return null;
   }
 }
@@ -140,7 +147,7 @@ export function getGatewayAuthFromConfig(): OpenClawGatewayAuth | null {
  */
 export function getGatewayAuthToken(): string | null {
   const auth = getGatewayAuthFromConfig();
-  if (auth?.mode === 'token' && auth.token) {
+  if (auth?.mode === "token" && auth.token) {
     return auth.token;
   }
   return null;
@@ -151,7 +158,7 @@ export function getGatewayAuthToken(): string | null {
  */
 export function getGatewayAuthPassword(): string | null {
   const auth = getGatewayAuthFromConfig();
-  if (auth?.mode === 'password' && auth.password) {
+  if (auth?.mode === "password" && auth.password) {
     return auth.password;
   }
   return null;
@@ -163,7 +170,7 @@ export function getGatewayAuthPassword(): string | null {
 export function getGatewayPort(): number {
   const config = readOpenClawConfig();
   const port = config?.gateway?.port;
-  if (typeof port === 'number' && Number.isFinite(port) && port > 0) {
+  if (typeof port === "number" && Number.isFinite(port) && port > 0) {
     return port;
   }
   return 18789; // Default port

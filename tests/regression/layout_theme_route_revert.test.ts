@@ -1,18 +1,21 @@
-import { describe, it, expect } from 'vitest';
-import { CSS_SYNC_RECENT_UPDATE_WINDOW_MS, computeCssSyncDecision } from '@/renderer/utils/themeCssSync';
+import { describe, it, expect } from "vitest";
+import {
+  CSS_SYNC_RECENT_UPDATE_WINDOW_MS,
+  computeCssSyncDecision,
+} from "@/renderer/utils/themeCssSync";
 
-const NEW_CSS = '.new-theme-flag { color: rgb(1, 2, 3); }';
-const OLD_CSS = '.old-theme-flag { color: rgb(3, 2, 1); }';
+const NEW_CSS = ".new-theme-flag { color: rgb(1, 2, 3); }";
+const OLD_CSS = ".old-theme-flag { color: rgb(3, 2, 1); }";
 
-describe('layout css sync decision', () => {
-  it('heals stale customCss from active theme mapping', () => {
+describe("layout css sync decision", () => {
+  it("heals stale customCss from active theme mapping", () => {
     const decision = computeCssSyncDecision({
       savedCss: OLD_CSS,
-      activeThemeId: 'new-theme',
+      activeThemeId: "new-theme",
       savedThemes: [
         {
-          id: 'new-theme',
-          name: 'New Theme',
+          id: "new-theme",
+          name: "New Theme",
           css: NEW_CSS,
           isPreset: false,
           createdAt: Date.now(),
@@ -26,14 +29,14 @@ describe('layout css sync decision', () => {
 
     expect(decision.shouldSkipApply).toBe(false);
     expect(decision.shouldHealStorage).toBe(true);
-    expect(decision.effectiveCss).toContain('.new-theme-flag');
+    expect(decision.effectiveCss).toContain(".new-theme-flag");
   });
 
-  it('skips stale storage apply immediately after UI theme update', () => {
+  it("skips stale storage apply immediately after UI theme update", () => {
     const now = Date.now();
     const decision = computeCssSyncDecision({
       savedCss: OLD_CSS,
-      activeThemeId: '',
+      activeThemeId: "",
       savedThemes: [],
       currentUiCss: NEW_CSS,
       lastUiCssUpdateAt: now - 100,
@@ -44,11 +47,11 @@ describe('layout css sync decision', () => {
     expect(decision.shouldHealStorage).toBe(false);
   });
 
-  it('allows storage apply after recent-update window expires', () => {
+  it("allows storage apply after recent-update window expires", () => {
     const now = Date.now();
     const decision = computeCssSyncDecision({
       savedCss: OLD_CSS,
-      activeThemeId: '',
+      activeThemeId: "",
       savedThemes: [],
       currentUiCss: NEW_CSS,
       lastUiCssUpdateAt: now - CSS_SYNC_RECENT_UPDATE_WINDOW_MS - 10,
@@ -57,6 +60,6 @@ describe('layout css sync decision', () => {
 
     expect(decision.shouldSkipApply).toBe(false);
     expect(decision.shouldHealStorage).toBe(false);
-    expect(decision.effectiveCss).toContain('.old-theme-flag');
+    expect(decision.effectiveCss).toContain(".old-theme-flag");
   });
 });

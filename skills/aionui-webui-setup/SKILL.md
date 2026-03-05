@@ -1,6 +1,6 @@
 ---
 name: aionui-webui-setup
-description: 'AionUi WebUI configuration expert: Helps users configure AionUi WebUI mode for remote access through the settings interface. Supports LAN connection, Tailscale VPN, and server deployment. Use when users need to set up AionUi WebUI, configure remote access, troubleshoot WebUI issues, or deploy AionUi on servers.'
+description: "AionUi WebUI configuration expert: Helps users configure AionUi WebUI mode for remote access through the settings interface. Supports LAN connection, Tailscale VPN, and server deployment. Use when users need to set up AionUi WebUI, configure remote access, troubleshoot WebUI issues, or deploy AionUi on servers."
 ---
 
 # AionUi WebUI 配置专家

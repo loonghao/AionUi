@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { TChatConversation } from '@/common/storage';
+import type { TChatConversation } from "@/common/storage";
 
 export type WorkspaceGroup = {
   workspace: string;
@@ -13,7 +13,7 @@ export type WorkspaceGroup = {
 };
 
 export type TimelineItem = {
-  type: 'workspace' | 'conversation';
+  type: "workspace" | "conversation";
   time: number;
   workspaceGroup?: WorkspaceGroup;
   conversation?: TChatConversation;
@@ -35,7 +35,10 @@ export type ExportZipFile = {
   sourcePath?: string;
 };
 
-export type ExportTask = { mode: 'single'; conversation: TChatConversation } | { mode: 'batch'; conversationIds: string[] } | null;
+export type ExportTask =
+  | { mode: "single"; conversation: TChatConversation }
+  | { mode: "batch"; conversationIds: string[] }
+  | null;
 
 export type ConversationRowProps = {
   conversation: TChatConversation;

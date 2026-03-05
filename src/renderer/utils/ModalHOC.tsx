@@ -1,5 +1,5 @@
-import type { ModalProps } from '@arco-design/web-react';
-import React, { useMemo, useState } from 'react';
+import type { ModalProps } from "@arco-design/web-react";
+import React, { useMemo, useState } from "react";
 
 type TUseModalReturn<Props extends Record<string, any> = {}> = [
   {
@@ -17,7 +17,7 @@ const ModalHOC = <Props extends Record<string, any> = {}>(
       modalProps: ModalProps;
     }
   >,
-  defaultModalProps?: ModalProps
+  defaultModalProps?: ModalProps,
 ) => {
   const ModalComponent: React.FC<
     Props & {
@@ -38,7 +38,13 @@ const ModalHOC = <Props extends Record<string, any> = {}>(
         ...modalProps,
       };
     }, [defaultModalProps, modalProps]);
-    return <ModalBodyComponent {...(props as unknown as Props)} modalCtrl={modalCtrl} modalProps={mergeModalProps}></ModalBodyComponent>;
+    return (
+      <ModalBodyComponent
+        {...(props as unknown as Props)}
+        modalCtrl={modalCtrl}
+        modalProps={mergeModalProps}
+      ></ModalBodyComponent>
+    );
   };
 
   const useModal = (props: Props): TUseModalReturn<Props> => {
@@ -65,7 +71,15 @@ const ModalHOC = <Props extends Record<string, any> = {}>(
       };
     }, []);
 
-    return [ctrl, <ModalComponent {...props} {...modalProps} modalProps={{ visible }} modalCtrl={modalCtrl}></ModalComponent>];
+    return [
+      ctrl,
+      <ModalComponent
+        {...props}
+        {...modalProps}
+        modalProps={{ visible }}
+        modalCtrl={modalCtrl}
+      ></ModalComponent>,
+    ];
   };
   ModalComponent.useModal = useModal;
   return ModalComponent;
@@ -80,7 +94,7 @@ ModalHOC.Extra = <Props extends Record<string, any> = {}>(defaultModalProps?: Mo
           close(): void;
         };
       }
-    >
+    >,
   ) => {
     return ModalHOC<Props>(ModalBodyComponent, defaultModalProps);
   };

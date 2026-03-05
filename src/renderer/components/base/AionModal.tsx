@@ -4,26 +4,26 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { ModalProps } from '@arco-design/web-react';
-import { Modal, Button } from '@arco-design/web-react';
-import { Close } from '@icon-park/react';
-import classNames from 'classnames';
-import type { CSSProperties } from 'react';
-import React from 'react';
-import { useThemeContext } from '@/renderer/context/ThemeContext';
+import type { ModalProps } from "@arco-design/web-react";
+import { Modal, Button } from "@arco-design/web-react";
+import { Close } from "@icon-park/react";
+import classNames from "classnames";
+import type { CSSProperties } from "react";
+import React from "react";
+import { useThemeContext } from "@/renderer/context/ThemeContext";
 
 // ==================== 类型定义导出 ====================
 
 /** 预设尺寸类型 */
-export type ModalSize = 'small' | 'medium' | 'large' | 'xlarge' | 'full';
+export type ModalSize = "small" | "medium" | "large" | "xlarge" | "full";
 
 /** 预设尺寸配置 */
 export const MODAL_SIZES: Record<ModalSize, { width: string; height?: string }> = {
-  small: { width: '400px', height: '300px' },
-  medium: { width: '600px', height: '400px' },
-  large: { width: '800px', height: '600px' },
-  xlarge: { width: '1000px', height: '700px' },
-  full: { width: '90vw', height: '90vh' },
+  small: { width: "400px", height: "300px" },
+  medium: { width: "600px", height: "400px" },
+  large: { width: "800px", height: "600px" },
+  xlarge: { width: "1000px", height: "700px" },
+  full: { width: "90vw", height: "90vh" },
 };
 
 /** Header 配置 */
@@ -61,7 +61,7 @@ export interface ModalContentStyleConfig {
   /** 内边距，默认 0 */
   padding?: string | number;
   /** 内容区域滚动行为，默认 auto */
-  overflow?: 'auto' | 'scroll' | 'hidden' | 'visible';
+  overflow?: "auto" | "scroll" | "hidden" | "visible";
   /** 内容区域高度（支持 number 或 px 字符串） */
   height?: string | number;
   /** 内容区域最小高度 */
@@ -71,7 +71,7 @@ export interface ModalContentStyleConfig {
 }
 
 /** AionModal 组件 Props */
-export interface AionModalProps extends Omit<ModalProps, 'title' | 'footer'> {
+export interface AionModalProps extends Omit<ModalProps, "title" | "footer"> {
   children?: React.ReactNode;
 
   /** 预设尺寸，会被 style 中的 width/height 覆盖 */
@@ -95,10 +95,11 @@ export interface AionModalProps extends Omit<ModalProps, 'title' | 'footer'> {
 
 // ==================== 样式常量 / Style Constants ====================
 
-const HEADER_BASE_CLASS = 'flex items-center justify-between pb-20px';
-const TITLE_BASE_CLASS = 'text-18px font-500 text-t-primary m-0';
-const CLOSE_BUTTON_CLASS = 'w-32px h-32px flex items-center justify-center rd-8px transition-colors duration-200 cursor-pointer border-0 bg-transparent p-0 hover:bg-2 focus:outline-none';
-const FOOTER_BASE_CLASS = 'flex-shrink-0 bg-transparent';
+const HEADER_BASE_CLASS = "flex items-center justify-between pb-20px";
+const TITLE_BASE_CLASS = "text-18px font-500 text-t-primary m-0";
+const CLOSE_BUTTON_CLASS =
+  "w-32px h-32px flex items-center justify-center rd-8px transition-colors duration-200 cursor-pointer border-0 bg-transparent p-0 hover:bg-2 focus:outline-none";
+const FOOTER_BASE_CLASS = "flex-shrink-0 bg-transparent";
 
 /**
  * 自定义模态框组件 / Custom modal component
@@ -152,12 +153,19 @@ const FOOTER_BASE_CLASS = 'flex-shrink-0 bg-transparent';
  * </AionModal>
  * ```
  */
-const dimensionKeys = ['width', 'minWidth', 'maxWidth', 'height', 'minHeight', 'maxHeight'] as const;
+const dimensionKeys = [
+  "width",
+  "minWidth",
+  "maxWidth",
+  "height",
+  "minHeight",
+  "maxHeight",
+] as const;
 type DimensionKey = (typeof dimensionKeys)[number];
 
 const formatDimensionValue = (value?: string | number) => {
   if (value === undefined || value === null) return undefined;
-  return typeof value === 'number' ? `${value}px` : value;
+  return typeof value === "number" ? `${value}px` : value;
 };
 
 const AionModal: React.FC<AionModalProps> = ({
@@ -170,25 +178,26 @@ const AionModal: React.FC<AionModalProps> = ({
   title,
   showCustomClose = true,
   onCancel,
-  className = '',
+  className = "",
   style,
   ...props
 }) => {
   const { fontScale } = useThemeContext();
   // 处理 contentStyle 配置，转换为 CSS 变量
-  const contentBg = contentStyle?.background || 'var(--bg-1)';
-  const contentBorderRadius = contentStyle?.borderRadius || '16px';
-  const contentPadding = contentStyle?.padding || '0';
-  const contentOverflow = contentStyle?.overflow || 'auto';
+  const contentBg = contentStyle?.background || "var(--bg-1)";
+  const contentBorderRadius = contentStyle?.borderRadius || "16px";
+  const contentPadding = contentStyle?.padding || "0";
+  const contentOverflow = contentStyle?.overflow || "auto";
 
-  const borderRadiusVal = typeof contentBorderRadius === 'number' ? `${contentBorderRadius}px` : contentBorderRadius;
-  const paddingVal = typeof contentPadding === 'number' ? `${contentPadding}px` : contentPadding;
+  const borderRadiusVal =
+    typeof contentBorderRadius === "number" ? `${contentBorderRadius}px` : contentBorderRadius;
+  const paddingVal = typeof contentPadding === "number" ? `${contentPadding}px` : contentPadding;
 
   const safeScale = fontScale > 0 ? fontScale : 1;
 
-  const scaleDimension = (value: CSSProperties['width']): CSSProperties['width'] => {
+  const scaleDimension = (value: CSSProperties["width"]): CSSProperties["width"] => {
     if (value === undefined || value === null) return value;
-    if (typeof value === 'number') {
+    if (typeof value === "number") {
       return Number((value / safeScale).toFixed(2));
     }
     const match = /^([0-9]+(?:\.[0-9]+)?)px$/i.exec(value.trim());
@@ -211,7 +220,9 @@ const AionModal: React.FC<AionModalProps> = ({
   dimensionKeys.forEach((key) => {
     const raw = baseStyle[key];
     if (raw !== undefined) {
-      scaledStyle[key] = scaleDimension(raw as CSSProperties['width']) as CSSProperties[DimensionKey];
+      scaledStyle[key] = scaleDimension(
+        raw as CSSProperties["width"],
+      ) as CSSProperties[DimensionKey];
     }
   });
 
@@ -221,7 +232,7 @@ const AionModal: React.FC<AionModalProps> = ({
   };
 
   // 自动设置最大宽高以适应视口 / Auto set max dimensions to fit viewport
-  if (typeof window !== 'undefined') {
+  if (typeof window !== "undefined") {
     const viewportGap = 32;
     if (!mergedStyle.maxWidth) {
       mergedStyle.maxWidth = `calc(100vw - ${viewportGap}px)`;
@@ -233,7 +244,7 @@ const AionModal: React.FC<AionModalProps> = ({
 
   const finalStyle: CSSProperties = {
     ...mergedStyle,
-    borderRadius: mergedStyle.borderRadius ?? '16px',
+    borderRadius: mergedStyle.borderRadius ?? "16px",
   };
 
   const bodyInlineStyle = React.useMemo<CSSProperties>(() => {
@@ -242,7 +253,7 @@ const AionModal: React.FC<AionModalProps> = ({
       overflow: contentOverflow,
     };
 
-    (['height', 'minHeight', 'maxHeight'] as const).forEach((key) => {
+    (["height", "minHeight", "maxHeight"] as const).forEach((key) => {
       const value = contentStyle?.[key];
       if (value !== undefined) {
         style[key] = formatDimensionValue(value);
@@ -250,14 +261,21 @@ const AionModal: React.FC<AionModalProps> = ({
     });
 
     return style;
-  }, [contentBg, paddingVal, contentOverflow, contentStyle?.height, contentStyle?.maxHeight, contentStyle?.minHeight]);
+  }, [
+    contentBg,
+    paddingVal,
+    contentOverflow,
+    contentStyle?.height,
+    contentStyle?.maxHeight,
+    contentStyle?.minHeight,
+  ]);
 
   // 处理 Header 配置（向后兼容）
   const headerConfig: ModalHeaderConfig = React.useMemo(() => {
     // 如果使用新的 header 配置
     if (header !== undefined) {
       // 如果是字符串或 ReactNode，转换为 title 配置
-      if (typeof header === 'string' || React.isValidElement(header)) {
+      if (typeof header === "string" || React.isValidElement(header)) {
         return {
           title: header,
           showClose: true,
@@ -281,17 +299,23 @@ const AionModal: React.FC<AionModalProps> = ({
 
     // 未提供 footer 时，使用默认模板
     if (footer === undefined) {
-      const cancelLabel = props.cancelText ?? 'Cancel';
-      const okLabel = props.okText ?? 'Confirm';
+      const cancelLabel = props.cancelText ?? "Cancel";
+      const okLabel = props.okText ?? "Confirm";
       return {
         render: () => (
-          <div className='flex justify-end gap-10px mt-10px'>
+          <div className="flex justify-end gap-10px mt-10px">
             {/* 默认按钮提供统一圆角，文案可通过 cancelText/okText 覆盖 */}
             {/* Default buttons ship with rounded corners; text can be overridden via cancelText/okText */}
-            <Button onClick={onCancel} className='px-20px min-w-80px' style={{ borderRadius: 8 }}>
+            <Button onClick={onCancel} className="px-20px min-w-80px" style={{ borderRadius: 8 }}>
               {cancelLabel}
             </Button>
-            <Button type='primary' onClick={props.onOk} loading={props.confirmLoading} className='px-20px min-w-80px' style={{ borderRadius: 8 }}>
+            <Button
+              type="primary"
+              onClick={props.onOk}
+              loading={props.confirmLoading}
+              className="px-20px min-w-80px"
+              style={{ borderRadius: 8 }}
+            >
               {okLabel}
             </Button>
           </div>
@@ -328,7 +352,7 @@ const AionModal: React.FC<AionModalProps> = ({
     const headerClassName = classNames(HEADER_BASE_CLASS, headerConfig.className);
 
     const headerStyle: CSSProperties = {
-      borderBottom: '1px solid var(--bg-3)',
+      borderBottom: "1px solid var(--bg-3)",
       ...headerConfig.style,
     };
 
@@ -336,8 +360,8 @@ const AionModal: React.FC<AionModalProps> = ({
       <div className={headerClassName} style={headerStyle}>
         {headerConfig.title && <h3 className={TITLE_BASE_CLASS}>{headerConfig.title}</h3>}
         {headerConfig.showClose && (
-          <button onClick={onCancel} className={CLOSE_BUTTON_CLASS} aria-label='Close'>
-            {headerConfig.closeIcon || <Close size={20} fill='#86909c' />}
+          <button onClick={onCancel} className={CLOSE_BUTTON_CLASS} aria-label="Close">
+            {headerConfig.closeIcon || <Close size={20} fill="#86909c" />}
           </button>
         )}
       </div>
@@ -363,10 +387,19 @@ const AionModal: React.FC<AionModalProps> = ({
   };
 
   return (
-    <Modal {...props} title={null} closable={false} footer={null} onCancel={onCancel} className={`aionui-modal ${className}`} style={finalStyle} getPopupContainer={() => document.body}>
-      <div className='aionui-modal-wrapper' style={{ borderRadius: borderRadiusVal }}>
+    <Modal
+      {...props}
+      title={null}
+      closable={false}
+      footer={null}
+      onCancel={onCancel}
+      className={`aionui-modal ${className}`}
+      style={finalStyle}
+      getPopupContainer={() => document.body}
+    >
+      <div className="aionui-modal-wrapper" style={{ borderRadius: borderRadiusVal }}>
         {renderHeader()}
-        <div className='aionui-modal-body-content' style={bodyInlineStyle}>
+        <div className="aionui-modal-body-content" style={bodyInlineStyle}>
           {children}
         </div>
         {renderFooter()}
@@ -375,6 +408,6 @@ const AionModal: React.FC<AionModalProps> = ({
   );
 };
 
-AionModal.displayName = 'AionModal';
+AionModal.displayName = "AionModal";
 
 export default AionModal;

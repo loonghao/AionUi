@@ -54,48 +54,48 @@ files:
   - node_modules/web-tree-sitter/**/*
   - node_modules/tree-sitter-bash/**/*
   # CRITICAL: Exclude ALL tree-sitter native binaries to prevent signing issues
-  - '!**/node_modules/tree-sitter-*/prebuilds/**'
-  - '!**/node_modules/tree-sitter-*/build/**'
-  - '!**/node_modules/tree-sitter-*/src/**'
-  - '!**/node_modules/tree-sitter-*/**/*.node'
-  - '!**/node_modules/tree-sitter-*/**/*.obj'
-  - '!**/node_modules/tree-sitter-*/**/*.o'
-  - '!**/node_modules/tree-sitter-*/**/*.cc'
-  - '!**/node_modules/tree-sitter-*/**/*.c'
+  - "!**/node_modules/tree-sitter-*/prebuilds/**"
+  - "!**/node_modules/tree-sitter-*/build/**"
+  - "!**/node_modules/tree-sitter-*/src/**"
+  - "!**/node_modules/tree-sitter-*/**/*.node"
+  - "!**/node_modules/tree-sitter-*/**/*.obj"
+  - "!**/node_modules/tree-sitter-*/**/*.o"
+  - "!**/node_modules/tree-sitter-*/**/*.cc"
+  - "!**/node_modules/tree-sitter-*/**/*.c"
   # Exclude dev/test files
-  - '!**/node_modules/*/{CHANGELOG.md,README.md,README,readme.md,readme}'
-  - '!**/node_modules/*/{test,__tests__,tests,powered-test,example,examples}'
-  - '!**/node_modules/*/{*.test.js,*.spec.js,*.test.ts,*.spec.ts}'
-  - '!**/node_modules/*.d.ts'
-  - '!**/node_modules/.bin'
-  - '!**/node_modules/*/{docs,documentation,doc}'
+  - "!**/node_modules/*/{CHANGELOG.md,README.md,README,readme.md,readme}"
+  - "!**/node_modules/*/{test,__tests__,tests,powered-test,example,examples}"
+  - "!**/node_modules/*/{*.test.js,*.spec.js,*.test.ts,*.spec.ts}"
+  - "!**/node_modules/*.d.ts"
+  - "!**/node_modules/.bin"
+  - "!**/node_modules/*/{docs,documentation,doc}"
   # Exclude system files
-  - '!**/{.DS_Store,.git,.gitignore,.gitattributes}'
-  - '!**/{__pycache__,thumbs.db,.flowconfig,.idea,.vs,.nyc_output}'
-  - '!**/{appveyor.yml,.travis.yml,circle.yml}'
-  - '!**/{npm-debug.log,yarn.lock,.yarn-metadata.json,yarn-error.log}'
+  - "!**/{.DS_Store,.git,.gitignore,.gitattributes}"
+  - "!**/{__pycache__,thumbs.db,.flowconfig,.idea,.vs,.nyc_output}"
+  - "!**/{appveyor.yml,.travis.yml,circle.yml}"
+  - "!**/{npm-debug.log,yarn.lock,.yarn-metadata.json,yarn-error.log}"
   # Exclude large packages
-  - '!**/node_modules/{@img,@emnapi}/**'
-  - '!**/node_modules/@img/sharp-*/**'
-  - '!**/node_modules/@anthropic-ai/claude-code/vendor/**'
-  - '!**/node_modules/@anthropic-ai/claude-agent-sdk/vendor/**'
+  - "!**/node_modules/{@img,@emnapi}/**"
+  - "!**/node_modules/@img/sharp-*/**"
+  - "!**/node_modules/@anthropic-ai/claude-code/vendor/**"
+  - "!**/node_modules/@anthropic-ai/claude-agent-sdk/vendor/**"
   # Exclude JAR files and JNI libraries that cause notarization issues
-  - '!**/*.jar'
-  - '!**/*.jnilib'
+  - "!**/*.jar"
+  - "!**/*.jnilib"
   # Exclude all vendor directories to prevent unsigned binaries
-  - '!**/node_modules/*/vendor/**'
-  - '!**/node_modules/@*/*/vendor/**'
+  - "!**/node_modules/*/vendor/**"
+  - "!**/node_modules/@*/*/vendor/**"
   # Re-include vendor dirs for native modules that need them (if any)
-  - 'node_modules/better-sqlite3/vendor/**'
-  - 'node_modules/bcrypt/vendor/**'
-  - 'node_modules/node-pty/vendor/**'
+  - "node_modules/better-sqlite3/vendor/**"
+  - "node_modules/bcrypt/vendor/**"
+  - "node_modules/node-pty/vendor/**"
   # Exclude vite source maps
-  - '!**/*.map'
+  - "!**/*.map"
   # Exclude syntax highlighter languages (keep common ones)
-  - '!**/out/**/react-syntax-highlighter_languages_highlight_*'
-  - 'out/**/react-syntax-highlighter_languages_highlight_{javascript,typescript,python,java,cpp,c,html,css,json,xml,yaml,shell,bash,dockerfile,sql,markdown,go,rust,php}'
+  - "!**/out/**/react-syntax-highlighter_languages_highlight_*"
+  - "out/**/react-syntax-highlighter_languages_highlight_{javascript,typescript,python,java,cpp,c,html,css,json,xml,yaml,shell,bash,dockerfile,sql,markdown,go,rust,php}"
   # Ensure vendor chunks from manual splitting are included
-  - 'out/renderer/**/vendor-*.js'
+  - "out/renderer/**/vendor-*.js"
 
 extraResources:
   - from: public
@@ -104,7 +104,7 @@ extraResources:
 win:
   target:
     - nsis
-#    - msi
+    #    - msi
     - zip
   # icon: resources/app.ico  # Temporarily disabled - current ico is 32x32, need 256x256+
   artifactName: ${productName}-${version}-${os}-${arch}.${ext}

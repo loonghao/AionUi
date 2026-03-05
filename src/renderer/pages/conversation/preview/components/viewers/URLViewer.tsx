@@ -4,9 +4,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import { Left, Right, Refresh, Loading } from '@icon-park/react';
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { Left, Right, Refresh, Loading } from "@icon-park/react";
 
 interface URLViewerProps {
   /** URL to display */
@@ -76,7 +76,7 @@ const URLViewer: React.FC<URLViewerProps> = ({ url }) => {
 
       webviewEl.src = targetUrl;
     },
-    [currentUrl]
+    [currentUrl],
   );
 
   // 监听 webview 事件 / Listen to webview events
@@ -135,7 +135,7 @@ const URLViewer: React.FC<URLViewerProps> = ({ url }) => {
           }, true);
         })();
         true;
-      `
+      `,
         )
         .catch(() => {
           // 忽略注入失败 / Ignore injection failure
@@ -144,9 +144,9 @@ const URLViewer: React.FC<URLViewerProps> = ({ url }) => {
 
     // 监听来自 webview 的消息 / Listen to messages from webview
     const handleIpcMessage = (event: Electron.IpcMessageEvent) => {
-      if (event.channel === 'navigate') {
+      if (event.channel === "navigate") {
         const url = event.args?.[0];
-        if (url && typeof url === 'string') {
+        if (url && typeof url === "string") {
           navigateToWithHistory(url);
         }
       }
@@ -156,7 +156,7 @@ const URLViewer: React.FC<URLViewerProps> = ({ url }) => {
     const handleConsoleMessage = (event: Electron.ConsoleMessageEvent) => {
       // 检查是否是我们的导航消息 / Check if it's our navigation message
       try {
-        if (event.message.includes('__URL_VIEWER_NAVIGATE__')) {
+        if (event.message.includes("__URL_VIEWER_NAVIGATE__")) {
           const match = event.message.match(/"url":"([^"]+)"/);
           if (match && match[1]) {
             navigateToWithHistory(match[1]);
@@ -196,7 +196,7 @@ const URLViewer: React.FC<URLViewerProps> = ({ url }) => {
           }
         })();
         true;
-      `
+      `,
         )
         .catch(() => {});
 
@@ -210,27 +210,27 @@ const URLViewer: React.FC<URLViewerProps> = ({ url }) => {
           }
         });
         true;
-      `
+      `,
         )
         .catch(() => {});
     };
 
-    webviewEl.addEventListener('did-start-loading', handleStartLoading);
-    webviewEl.addEventListener('did-stop-loading', handleStopLoading);
-    webviewEl.addEventListener('dom-ready', handleDomReady);
-    webviewEl.addEventListener('did-navigate', handleDidNavigate as EventListener);
-    webviewEl.addEventListener('did-navigate-in-page', handleDidNavigate as EventListener);
-    webviewEl.addEventListener('ipc-message', handleIpcMessage as EventListener);
-    webviewEl.addEventListener('console-message', handleConsoleMessage as EventListener);
+    webviewEl.addEventListener("did-start-loading", handleStartLoading);
+    webviewEl.addEventListener("did-stop-loading", handleStopLoading);
+    webviewEl.addEventListener("dom-ready", handleDomReady);
+    webviewEl.addEventListener("did-navigate", handleDidNavigate as EventListener);
+    webviewEl.addEventListener("did-navigate-in-page", handleDidNavigate as EventListener);
+    webviewEl.addEventListener("ipc-message", handleIpcMessage as EventListener);
+    webviewEl.addEventListener("console-message", handleConsoleMessage as EventListener);
 
     return () => {
-      webviewEl.removeEventListener('did-start-loading', handleStartLoading);
-      webviewEl.removeEventListener('did-stop-loading', handleStopLoading);
-      webviewEl.removeEventListener('dom-ready', handleDomReady);
-      webviewEl.removeEventListener('did-navigate', handleDidNavigate as EventListener);
-      webviewEl.removeEventListener('did-navigate-in-page', handleDidNavigate as EventListener);
-      webviewEl.removeEventListener('ipc-message', handleIpcMessage as EventListener);
-      webviewEl.removeEventListener('console-message', handleConsoleMessage as EventListener);
+      webviewEl.removeEventListener("did-start-loading", handleStartLoading);
+      webviewEl.removeEventListener("did-stop-loading", handleStopLoading);
+      webviewEl.removeEventListener("dom-ready", handleDomReady);
+      webviewEl.removeEventListener("did-navigate", handleDidNavigate as EventListener);
+      webviewEl.removeEventListener("did-navigate-in-page", handleDidNavigate as EventListener);
+      webviewEl.removeEventListener("ipc-message", handleIpcMessage as EventListener);
+      webviewEl.removeEventListener("console-message", handleConsoleMessage as EventListener);
     };
   }, [navigateToWithHistory, currentUrl]);
 
@@ -305,59 +305,89 @@ const URLViewer: React.FC<URLViewerProps> = ({ url }) => {
 
       // 自动补全协议 / Auto-complete protocol
       if (!/^https?:\/\//i.test(targetUrl)) {
-        targetUrl = 'https://' + targetUrl;
+        targetUrl = "https://" + targetUrl;
       }
 
       navigateToWithHistory(targetUrl);
     },
-    [inputUrl, navigateToWithHistory]
+    [inputUrl, navigateToWithHistory],
   );
 
   // 地址栏按键处理 / URL bar key handling
   const handleUrlKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLInputElement>) => {
-      if (e.key === 'Escape') {
+      if (e.key === "Escape") {
         setInputUrl(currentUrl);
         (e.target as HTMLInputElement).blur();
       }
     },
-    [currentUrl]
+    [currentUrl],
   );
 
   return (
-    <div ref={containerRef} className='h-full w-full flex flex-col bg-bg-1'>
+    <div ref={containerRef} className="h-full w-full flex flex-col bg-bg-1">
       {/* 导航栏 / Navigation bar */}
-      <div className='flex items-center gap-4px h-36px px-8px bg-bg-2 border-b border-border-1 flex-shrink-0'>
+      <div className="flex items-center gap-4px h-36px px-8px bg-bg-2 border-b border-border-1 flex-shrink-0">
         {/* 后退按钮 / Back button */}
-        <button onClick={handleGoBack} disabled={!canGoBack} className={`flex items-center justify-center w-28px h-28px transition-colors ${canGoBack ? 'hover:bg-bg-3 cursor-pointer text-t-secondary' : 'cursor-not-allowed text-t-quaternary'}`} title={t('common.back', { defaultValue: 'Back' })}>
-          <Left theme='outline' size={16} />
+        <button
+          onClick={handleGoBack}
+          disabled={!canGoBack}
+          className={`flex items-center justify-center w-28px h-28px transition-colors ${canGoBack ? "hover:bg-bg-3 cursor-pointer text-t-secondary" : "cursor-not-allowed text-t-quaternary"}`}
+          title={t("common.back", { defaultValue: "Back" })}
+        >
+          <Left theme="outline" size={16} />
         </button>
 
         {/* 前进按钮 / Forward button */}
-        <button onClick={handleGoForward} disabled={!canGoForward} className={`flex items-center justify-center w-28px h-28px transition-colors ${canGoForward ? 'hover:bg-bg-3 cursor-pointer text-t-secondary' : 'cursor-not-allowed text-t-quaternary'}`} title={t('common.forward')}>
-          <Right theme='outline' size={16} />
+        <button
+          onClick={handleGoForward}
+          disabled={!canGoForward}
+          className={`flex items-center justify-center w-28px h-28px transition-colors ${canGoForward ? "hover:bg-bg-3 cursor-pointer text-t-secondary" : "cursor-not-allowed text-t-quaternary"}`}
+          title={t("common.forward")}
+        >
+          <Right theme="outline" size={16} />
         </button>
 
         {/* 刷新按钮 / Refresh button */}
-        <button onClick={handleRefresh} className='flex items-center justify-center w-28px h-28px hover:bg-bg-3 transition-colors cursor-pointer text-t-secondary' title={t('common.reload', { defaultValue: 'Refresh' })}>
-          {isLoading ? <Loading theme='outline' size={16} className='animate-spin' /> : <Refresh theme='outline' size={16} />}
+        <button
+          onClick={handleRefresh}
+          className="flex items-center justify-center w-28px h-28px hover:bg-bg-3 transition-colors cursor-pointer text-t-secondary"
+          title={t("common.reload", { defaultValue: "Refresh" })}
+        >
+          {isLoading ? (
+            <Loading theme="outline" size={16} className="animate-spin" />
+          ) : (
+            <Refresh theme="outline" size={16} />
+          )}
         </button>
 
         {/* 地址栏 / URL bar */}
-        <form onSubmit={handleUrlSubmit} className='flex-1 ml-4px'>
-          <input type='text' value={inputUrl} onChange={(e) => setInputUrl(e.target.value)} onKeyDown={handleUrlKeyDown} onFocus={(e) => e.target.select()} className='w-full h-26px pl-4px pr-0 rd-4px bg-bg-3 border border-border-1 text-12px text-t-primary outline-none focus:border-primary transition-colors' placeholder='Enter URL...' />
+        <form onSubmit={handleUrlSubmit} className="flex-1 ml-4px">
+          <input
+            type="text"
+            value={inputUrl}
+            onChange={(e) => setInputUrl(e.target.value)}
+            onKeyDown={handleUrlKeyDown}
+            onFocus={(e) => e.target.select()}
+            className="w-full h-26px pl-4px pr-0 rd-4px bg-bg-3 border border-border-1 text-12px text-t-primary outline-none focus:border-primary transition-colors"
+            placeholder="Enter URL..."
+          />
         </form>
       </div>
 
       {/* Webview 内容区域 / Webview content area */}
-      <div ref={contentRef} className='flex-1 overflow-hidden bg-white relative' style={{ minHeight: 0 }}>
+      <div
+        ref={contentRef}
+        className="flex-1 overflow-hidden bg-white relative"
+        style={{ minHeight: 0 }}
+      >
         <webview
           ref={webviewRef as any}
           src={currentUrl}
-          className='border-0 absolute left-0 top-0'
+          className="border-0 absolute left-0 top-0"
           // @ts-expect-error webview attributes not typed
-          allowpopups='false'
-          webpreferences='contextIsolation=no, nodeIntegration=no, nativeWindowOpen=no'
+          allowpopups="false"
+          webpreferences="contextIsolation=no, nodeIntegration=no, nativeWindowOpen=no"
         />
       </div>
     </div>

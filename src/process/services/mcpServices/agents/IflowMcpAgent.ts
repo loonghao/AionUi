@@ -4,14 +4,16 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { McpOperationResult } from '../McpProtocol';
-import { AbstractMcpAgent } from '../McpProtocol';
-import type { IMcpServer } from '../../../../common/storage';
-import { getEnhancedEnv } from '@process/utils/shellEnv';
-import { safeExec } from '@process/utils/safeExec';
+import type { McpOperationResult } from "../McpProtocol";
+import { AbstractMcpAgent } from "../McpProtocol";
+import type { IMcpServer } from "../../../../common/storage";
+import { getEnhancedEnv } from "@process/utils/shellEnv";
+import { safeExec } from "@process/utils/safeExec";
 
 /** Env options for exec calls — ensures CLI is found from Finder/launchd launches */
-const getExecEnv = () => ({ env: { ...getEnhancedEnv(), NODE_OPTIONS: '', TERM: 'dumb', NO_COLOR: '1' } as NodeJS.ProcessEnv });
+const getExecEnv = () => ({
+  env: { ...getEnhancedEnv(), NODE_OPTIONS: "", TERM: "dumb", NO_COLOR: "1" } as NodeJS.ProcessEnv,
+});
 
 /**
  * iFlow CLI MCP代理实现
@@ -19,12 +21,12 @@ const getExecEnv = () => ({ env: { ...getEnhancedEnv(), NODE_OPTIONS: '', TERM: 
  */
 export class IflowMcpAgent extends AbstractMcpAgent {
   constructor() {
-    super('iflow');
+    super("iflow");
   }
 
   getSupportedTransports(): string[] {
     // iFlow CLI 支持 stdio, sse, http 传输类型 (streamable_http maps to http)
-    return ['stdio', 'sse', 'http', 'streamable_http'];
+    return ["stdio", "sse", "http", "streamable_http"];
   }
 
   /**
@@ -33,27 +35,32 @@ export class IflowMcpAgent extends AbstractMcpAgent {
   private async detectMcpServersInternal(_cliPath?: string): Promise<IMcpServer[]> {
     try {
       // 使用iFlow CLI list命令获取MCP配置
-      const { stdout: result } = await safeExec('iflow mcp list', { timeout: this.timeout, ...getExecEnv() });
+      const { stdout: result } = await safeExec("iflow mcp list", {
+        timeout: this.timeout,
+        ...getExecEnv(),
+      });
 
       // 如果没有配置任何MCP服务器，返回空数组
-      if (result.trim() === 'No MCP servers configured.' || !result.trim()) {
+      if (result.trim() === "No MCP servers configured." || !result.trim()) {
         return [];
       }
 
       // 解析文本输出
       const mcpServers: IMcpServer[] = [];
-      const lines = result.split('\n');
+      const lines = result.split("\n");
 
       for (const line of lines) {
         // 清除 ANSI 颜色代码 (支持多种格式)
         /* eslint-disable no-control-regex */
         const cleanLine = line
-          .replace(/\u001b\[[0-9;]*m/g, '')
-          .replace(/\[[0-9;]*m/g, '')
+          .replace(/\u001b\[[0-9;]*m/g, "")
+          .replace(/\[[0-9;]*m/g, "")
           .trim();
         /* eslint-enable no-control-regex */
         // 查找格式如: "✓ Bazi: npx bazi-mcp (stdio) - Connected" 或 "✓ Bazi: npx bazi-mcp (stdio) - 已连接"
-        const match = cleanLine.match(/[✓✗]\s+([^:]+):\s+(.+?)\s+\(([^)]+)\)\s*-\s*(Connected|Disconnected|已连接|已断开)/);
+        const match = cleanLine.match(
+          /[✓✗]\s+([^:]+):\s+(.+?)\s+\(([^)]+)\)\s*-\s*(Connected|Disconnected|已连接|已断开)/,
+        );
         if (match) {
           const [, name, commandStr, transport, statusRaw] = match;
           const commandParts = commandStr.trim().split(/\s+/);
@@ -61,32 +68,37 @@ export class IflowMcpAgent extends AbstractMcpAgent {
           const args = commandParts.slice(1);
 
           // 将中文状态映射为英文
-          const status = statusRaw === '已连接' ? 'Connected' : statusRaw === '已断开' ? 'Disconnected' : statusRaw;
+          const status =
+            statusRaw === "已连接"
+              ? "Connected"
+              : statusRaw === "已断开"
+                ? "Disconnected"
+                : statusRaw;
 
-          const transportType = transport as 'stdio' | 'sse' | 'http';
+          const transportType = transport as "stdio" | "sse" | "http";
 
           // 构建transport对象
           const transportObj: any =
-            transportType === 'stdio'
+            transportType === "stdio"
               ? {
-                  type: 'stdio',
+                  type: "stdio",
                   command: command,
                   args: args,
                   env: {},
                 }
-              : transportType === 'sse'
+              : transportType === "sse"
                 ? {
-                    type: 'sse',
+                    type: "sse",
                     url: commandStr.trim(),
                   }
                 : {
-                    type: 'http',
+                    type: "http",
                     url: commandStr.trim(),
                   };
 
           // 尝试获取tools信息（对所有已连接的服务器）
           let tools: Array<{ name: string; description?: string }> = [];
-          if (status === 'Connected') {
+          if (status === "Connected") {
             try {
               const testResult = await this.testMcpConnection(transportObj);
               tools = testResult.tools || [];
@@ -102,15 +114,15 @@ export class IflowMcpAgent extends AbstractMcpAgent {
             transport: transportObj,
             tools: tools,
             enabled: true,
-            status: status === 'Connected' ? 'connected' : 'disconnected',
+            status: status === "Connected" ? "connected" : "disconnected",
             createdAt: Date.now(),
             updatedAt: Date.now(),
-            description: '',
+            description: "",
             originalJson: JSON.stringify(
               {
                 mcpServers: {
                   [name.trim()]:
-                    transportType === 'stdio'
+                    transportType === "stdio"
                       ? {
                           command: command,
                           args: args,
@@ -124,7 +136,7 @@ export class IflowMcpAgent extends AbstractMcpAgent {
                 },
               },
               null,
-              2
+              2,
             ),
           });
         }
@@ -133,7 +145,7 @@ export class IflowMcpAgent extends AbstractMcpAgent {
       console.log(`[IflowMcpAgent] Detection complete: found ${mcpServers.length} server(s)`);
       return mcpServers;
     } catch (error) {
-      console.warn('[IflowMcpAgent] Failed to get iFlow CLI MCP config:', error);
+      console.warn("[IflowMcpAgent] Failed to get iFlow CLI MCP config:", error);
       return [];
     }
   }
@@ -166,12 +178,12 @@ export class IflowMcpAgent extends AbstractMcpAgent {
             let addCommand = `iflow mcp add "${server.name}"`;
 
             // 根据传输类型构建命令
-            if (server.transport.type === 'stdio' && 'command' in server.transport) {
+            if (server.transport.type === "stdio" && "command" in server.transport) {
               addCommand += ` "${server.transport.command}"`;
               if (server.transport.args && server.transport.args.length > 0) {
-                addCommand += ` ${server.transport.args.map((arg: string) => `"${arg}"`).join(' ')}`;
+                addCommand += ` ${server.transport.args.map((arg: string) => `"${arg}"`).join(" ")}`;
               }
-              addCommand += ' --transport stdio';
+              addCommand += " --transport stdio";
 
               // 添加环境变量 (仅stdio支持)
               if (server.transport.env) {
@@ -180,9 +192,15 @@ export class IflowMcpAgent extends AbstractMcpAgent {
                   addCommand += ` --env "${key}=${value}"`;
                 }
               }
-            } else if ((server.transport.type === 'sse' || server.transport.type === 'http' || server.transport.type === 'streamable_http') && 'url' in server.transport) {
+            } else if (
+              (server.transport.type === "sse" ||
+                server.transport.type === "http" ||
+                server.transport.type === "streamable_http") &&
+              "url" in server.transport
+            ) {
               // iFlow CLI 使用 --transport http 处理 HTTP 和 Streamable HTTP
-              const transportFlag = server.transport.type === 'streamable_http' ? 'http' : server.transport.type;
+              const transportFlag =
+                server.transport.type === "streamable_http" ? "http" : server.transport.type;
               addCommand += ` "${server.transport.url}"`;
               addCommand += ` --transport ${transportFlag}`;
 
@@ -200,7 +218,7 @@ export class IflowMcpAgent extends AbstractMcpAgent {
             }
 
             // 添加作用域参数，使用user作用域
-            addCommand += ' -s user';
+            addCommand += " -s user";
 
             // 执行添加命令
             await safeExec(addCommand, { timeout: 10000, ...getExecEnv() });
@@ -216,7 +234,7 @@ export class IflowMcpAgent extends AbstractMcpAgent {
       }
     };
 
-    Object.defineProperty(installOperation, 'name', { value: 'installMcpServers' });
+    Object.defineProperty(installOperation, "name", { value: "installMcpServers" });
     return this.withLock(installOperation);
   }
 
@@ -239,17 +257,24 @@ export class IflowMcpAgent extends AbstractMcpAgent {
             const { stdout } = await safeExec(removeCommand, { timeout: 5000, ...getExecEnv() });
 
             // 检查输出是否包含"not found"，如果是则继续尝试user作用域
-            if (stdout && stdout.includes('not found')) {
-              throw new Error('Server not found in project settings');
+            if (stdout && stdout.includes("not found")) {
+              throw new Error("Server not found in project settings");
             }
 
             return { success: true };
           } catch (projectError) {
             // 如果服务器不存在，也认为是成功的
-            if (userError instanceof Error && (userError.message.includes('not found') || userError.message.includes('does not exist'))) {
+            if (
+              userError instanceof Error &&
+              (userError.message.includes("not found") ||
+                userError.message.includes("does not exist"))
+            ) {
               return { success: true };
             }
-            return { success: false, error: userError instanceof Error ? userError.message : String(userError) };
+            return {
+              success: false,
+              error: userError instanceof Error ? userError.message : String(userError),
+            };
           }
         }
       } catch (error) {
@@ -257,7 +282,7 @@ export class IflowMcpAgent extends AbstractMcpAgent {
       }
     };
 
-    Object.defineProperty(removeOperation, 'name', { value: 'removeMcpServer' });
+    Object.defineProperty(removeOperation, "name", { value: "removeMcpServer" });
     return this.withLock(removeOperation);
   }
 }

@@ -4,12 +4,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { CUSTOM_AVATAR_IMAGE_MAP } from '../constants';
-import type { AcpBackendConfig, AvailableAgent } from '../types';
-import { IconClose } from '@arco-design/web-react/icon';
-import { Robot } from '@icon-park/react';
-import React from 'react';
-import styles from '../index.module.css';
+import { CUSTOM_AVATAR_IMAGE_MAP } from "../constants";
+import type { AcpBackendConfig, AvailableAgent } from "../types";
+import { IconClose } from "@arco-design/web-react/icon";
+import { Robot } from "@icon-park/react";
+import React from "react";
+import styles from "../index.module.css";
 
 type PresetAgentTagProps = {
   agentInfo: AvailableAgent;
@@ -18,7 +18,12 @@ type PresetAgentTagProps = {
   onClose: () => void;
 };
 
-const PresetAgentTag: React.FC<PresetAgentTagProps> = ({ agentInfo, customAgents, localeKey, onClose }) => {
+const PresetAgentTag: React.FC<PresetAgentTagProps> = ({
+  agentInfo,
+  customAgents,
+  localeKey,
+  onClose,
+}) => {
   const avatarValue = agentInfo.avatar?.trim();
   const avatarImage = avatarValue ? CUSTOM_AVATAR_IMAGE_MAP[avatarValue] : undefined;
   const agent = customAgents.find((a) => a.id === agentInfo.customAgentId);
@@ -26,7 +31,19 @@ const PresetAgentTag: React.FC<PresetAgentTagProps> = ({ agentInfo, customAgents
 
   return (
     <div className={styles.presetAgentTag} onClick={() => {}}>
-      {avatarImage ? <img src={avatarImage} alt='' width={16} height={16} style={{ objectFit: 'contain', flexShrink: 0 }} /> : avatarValue ? <span style={{ fontSize: 14, lineHeight: '16px', flexShrink: 0 }}>{avatarValue}</span> : <Robot theme='outline' size={16} style={{ flexShrink: 0 }} />}
+      {avatarImage ? (
+        <img
+          src={avatarImage}
+          alt=""
+          width={16}
+          height={16}
+          style={{ objectFit: "contain", flexShrink: 0 }}
+        />
+      ) : avatarValue ? (
+        <span style={{ fontSize: 14, lineHeight: "16px", flexShrink: 0 }}>{avatarValue}</span>
+      ) : (
+        <Robot theme="outline" size={16} style={{ flexShrink: 0 }} />
+      )}
       <span className={styles.presetAgentTagName}>{name}</span>
       <div
         className={styles.presetAgentTagClose}
@@ -35,7 +52,7 @@ const PresetAgentTag: React.FC<PresetAgentTagProps> = ({ agentInfo, customAgents
           onClose();
         }}
       >
-        <IconClose style={{ fontSize: 12, color: 'var(--color-text-3)' }} />
+        <IconClose style={{ fontSize: 12, color: "var(--color-text-3)" }} />
       </div>
     </div>
   );

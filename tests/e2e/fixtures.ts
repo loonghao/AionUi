@@ -12,10 +12,10 @@
  *
  * Set `E2E_PACKAGED=1` to force packaged mode, or `E2E_DEV=1` to force dev mode.
  */
-import { test as base, expect, type ElectronApplication, type Page } from '@playwright/test';
-import { _electron as electron } from 'playwright';
-import path from 'path';
-import fs from 'fs';
+import { test as base, expect, type ElectronApplication, type Page } from "@playwright/test";
+import { _electron as electron } from "playwright";
+import path from "path";
+import fs from "fs";
 
 type Fixtures = {
   electronApp: ElectronApplication;
@@ -27,26 +27,26 @@ let app: ElectronApplication | null = null;
 let mainPage: Page | null = null;
 
 function isDevToolsWindow(page: Page): boolean {
-  return page.url().startsWith('devtools://');
+  return page.url().startsWith("devtools://");
 }
 
 async function resolveMainWindow(electronApp: ElectronApplication): Promise<Page> {
   const existingMainWindow = electronApp.windows().find((win) => !isDevToolsWindow(win));
   if (existingMainWindow) {
-    await existingMainWindow.waitForLoadState('domcontentloaded');
+    await existingMainWindow.waitForLoadState("domcontentloaded");
     return existingMainWindow;
   }
 
   const deadline = Date.now() + 30_000;
   while (Date.now() < deadline) {
-    const win = await electronApp.waitForEvent('window', { timeout: 1_000 }).catch(() => null);
+    const win = await electronApp.waitForEvent("window", { timeout: 1_000 }).catch(() => null);
     if (win && !isDevToolsWindow(win)) {
-      await win.waitForLoadState('domcontentloaded');
+      await win.waitForLoadState("domcontentloaded");
       return win;
     }
   }
 
-  throw new Error('Failed to resolve main renderer window (non-DevTools).');
+  throw new Error("Failed to resolve main renderer window (non-DevTools).");
 }
 
 /**
@@ -54,36 +54,36 @@ async function resolveMainWindow(electronApp: ElectronApplication): Promise<Page
  * Returns { executablePath, cwd } or null if not found.
  */
 function resolvePackagedApp(): { executablePath: string; cwd: string } | null {
-  const projectRoot = path.resolve(__dirname, '../..');
-  const outDir = path.join(projectRoot, 'out');
+  const projectRoot = path.resolve(__dirname, "../..");
+  const outDir = path.join(projectRoot, "out");
   if (!fs.existsSync(outDir)) return null;
 
   const platform = process.platform;
 
-  if (platform === 'win32') {
+  if (platform === "win32") {
     // out/win-unpacked/AionUi.exe  or  out/win-x64-unpacked/AionUi.exe
-    for (const dir of ['win-unpacked', 'win-x64-unpacked', 'win-arm64-unpacked']) {
-      const exe = path.join(outDir, dir, 'AionUi.exe');
+    for (const dir of ["win-unpacked", "win-x64-unpacked", "win-arm64-unpacked"]) {
+      const exe = path.join(outDir, dir, "AionUi.exe");
       if (fs.existsSync(exe)) return { executablePath: exe, cwd: path.join(outDir, dir) };
     }
-  } else if (platform === 'darwin') {
+  } else if (platform === "darwin") {
     // out/mac-arm64/AionUi.app/Contents/MacOS/AionUi  or  out/mac/AionUi.app/...
-    for (const dir of ['mac-arm64', 'mac-x64', 'mac', 'mac-universal']) {
+    for (const dir of ["mac-arm64", "mac-x64", "mac", "mac-universal"]) {
       const macDir = path.join(outDir, dir);
       if (!fs.existsSync(macDir)) continue;
-      const appBundle = fs.readdirSync(macDir).find((f) => f.endsWith('.app'));
+      const appBundle = fs.readdirSync(macDir).find((f) => f.endsWith(".app"));
       if (appBundle) {
-        const exe = path.join(macDir, appBundle, 'Contents', 'MacOS', 'AionUi');
+        const exe = path.join(macDir, appBundle, "Contents", "MacOS", "AionUi");
         if (fs.existsSync(exe)) return { executablePath: exe, cwd: macDir };
       }
     }
   } else {
     // Linux: out/linux-unpacked/aionui  (lowercase executable name)
-    for (const dir of ['linux-unpacked', 'linux-x64-unpacked', 'linux-arm64-unpacked']) {
+    for (const dir of ["linux-unpacked", "linux-x64-unpacked", "linux-arm64-unpacked"]) {
       const dirPath = path.join(outDir, dir);
       if (!fs.existsSync(dirPath)) continue;
       // Try common executable names
-      for (const name of ['aionui', 'AionUi']) {
+      for (const name of ["aionui", "AionUi"]) {
         const exe = path.join(dirPath, name);
         if (fs.existsSync(exe)) return { executablePath: exe, cwd: dirPath };
       }
@@ -94,39 +94,40 @@ function resolvePackagedApp(): { executablePath: string; cwd: string } | null {
 }
 
 function shouldUsePackagedMode(): boolean {
-  if (process.env.E2E_PACKAGED === '1') return true;
-  if (process.env.E2E_DEV === '1') return false;
+  if (process.env.E2E_PACKAGED === "1") return true;
+  if (process.env.E2E_DEV === "1") return false;
   // Default: packaged in CI, dev locally
   return !!process.env.CI;
 }
 
 async function launchApp(): Promise<ElectronApplication> {
-  const projectRoot = path.resolve(__dirname, '../..');
+  const projectRoot = path.resolve(__dirname, "../..");
   const usePackaged = shouldUsePackagedMode();
 
   const commonEnv = {
     ...process.env,
-    AIONUI_EXTENSIONS_PATH: process.env.AIONUI_EXTENSIONS_PATH || path.join(projectRoot, 'examples'),
-    AIONUI_DISABLE_AUTO_UPDATE: '1',
-    AIONUI_DISABLE_DEVTOOLS: '1',
-    AIONUI_E2E_TEST: '1',
-    AIONUI_CDP_PORT: '0',
+    AIONUI_EXTENSIONS_PATH:
+      process.env.AIONUI_EXTENSIONS_PATH || path.join(projectRoot, "examples"),
+    AIONUI_DISABLE_AUTO_UPDATE: "1",
+    AIONUI_DISABLE_DEVTOOLS: "1",
+    AIONUI_E2E_TEST: "1",
+    AIONUI_CDP_PORT: "0",
   };
 
   if (usePackaged) {
     const packaged = resolvePackagedApp();
     if (!packaged) {
       throw new Error(
-        'E2E packaged mode: could not find packaged app under out/. ' +
-          'Run `node scripts/build-with-builder.js auto --<platform> --pack-only` first.',
+        "E2E packaged mode: could not find packaged app under out/. " +
+          "Run `node scripts/build-with-builder.js auto --<platform> --pack-only` first.",
       );
     }
 
     console.log(`[E2E] Launching PACKAGED app: ${packaged.executablePath}`);
 
     const launchArgs: string[] = [];
-    if (process.platform === 'linux' && process.env.CI) {
-      launchArgs.push('--no-sandbox');
+    if (process.platform === "linux" && process.env.CI) {
+      launchArgs.push("--no-sandbox");
     }
 
     const electronApp = await electron.launch({
@@ -135,7 +136,7 @@ async function launchApp(): Promise<ElectronApplication> {
       cwd: packaged.cwd,
       env: {
         ...commonEnv,
-        NODE_ENV: 'production',
+        NODE_ENV: "production",
       },
       timeout: 60_000,
     });
@@ -146,9 +147,9 @@ async function launchApp(): Promise<ElectronApplication> {
   // Dev mode: launch via electron .
   console.log(`[E2E] Launching DEV app from: ${projectRoot}`);
 
-  const launchArgs = ['.'];
-  if (process.platform === 'linux' && process.env.CI) {
-    launchArgs.push('--no-sandbox');
+  const launchArgs = ["."];
+  if (process.platform === "linux" && process.env.CI) {
+    launchArgs.push("--no-sandbox");
   }
 
   const electronApp = await electron.launch({
@@ -156,7 +157,7 @@ async function launchApp(): Promise<ElectronApplication> {
     cwd: projectRoot,
     env: {
       ...commonEnv,
-      NODE_ENV: 'development',
+      NODE_ENV: "development",
     },
     timeout: 60_000,
   });
@@ -180,7 +181,7 @@ export const test = base.extend<Fixtures>({
     // Extra guard: wait briefly then re-check in case Electron replaces
     // the window during startup (e.g. splash → main transition).
     try {
-      await mainPage.waitForLoadState('domcontentloaded', { timeout: 10_000 });
+      await mainPage.waitForLoadState("domcontentloaded", { timeout: 10_000 });
     } catch {
       // Page may have been replaced – resolve again
       mainPage = await resolveMainWindow(electronApp);

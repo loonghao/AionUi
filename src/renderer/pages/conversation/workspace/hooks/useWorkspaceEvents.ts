@@ -4,15 +4,15 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { ipcBridge } from '@/common';
-import type { IDirOrFile } from '@/common/ipcBridge';
-import { emitter, useAddEventListener } from '@/renderer/utils/emitter';
-import { useEffect } from 'react';
-import type { ContextMenuState } from '../types';
+import { ipcBridge } from "@/common";
+import type { IDirOrFile } from "@/common/ipcBridge";
+import { emitter, useAddEventListener } from "@/renderer/utils/emitter";
+import { useEffect } from "react";
+import type { ContextMenuState } from "../types";
 
 interface UseWorkspaceEventsOptions {
   conversation_id: string;
-  eventPrefix: 'gemini' | 'acp' | 'codex';
+  eventPrefix: "gemini" | "acp" | "codex";
 
   // Dependencies from useWorkspaceTree
   refreshWorkspace: () => void;
@@ -36,7 +36,22 @@ interface UseWorkspaceEventsOptions {
  * Manage all event listeners
  */
 export function useWorkspaceEvents(options: UseWorkspaceEventsOptions) {
-  const { conversation_id, eventPrefix, refreshWorkspace, clearSelection, setFiles, setSelected, setExpandedKeys, setTreeKey, selectedNodeRef, selectedKeysRef, closeContextMenu, setContextMenu, closeRenameModal, closeDeleteModal } = options;
+  const {
+    conversation_id,
+    eventPrefix,
+    refreshWorkspace,
+    clearSelection,
+    setFiles,
+    setSelected,
+    setExpandedKeys,
+    setTreeKey,
+    selectedNodeRef,
+    selectedKeysRef,
+    closeContextMenu,
+    setContextMenu,
+    closeRenameModal,
+    closeDeleteModal,
+  } = options;
 
   /**
    * 监听对话切换事件 - 重置所有状态
@@ -54,7 +69,20 @@ export function useWorkspaceEvents(options: UseWorkspaceEventsOptions) {
     closeDeleteModal();
     refreshWorkspace();
     emitter.emit(`${eventPrefix}.selected.file`, []);
-  }, [conversation_id, eventPrefix, refreshWorkspace, setFiles, setSelected, setExpandedKeys, setTreeKey, selectedNodeRef, selectedKeysRef, setContextMenu, closeRenameModal, closeDeleteModal]);
+  }, [
+    conversation_id,
+    eventPrefix,
+    refreshWorkspace,
+    setFiles,
+    setSelected,
+    setExpandedKeys,
+    setTreeKey,
+    selectedNodeRef,
+    selectedKeysRef,
+    setContextMenu,
+    closeRenameModal,
+    closeDeleteModal,
+  ]);
 
   /**
    * 监听 Agent 响应流 - 自动刷新工作空间
@@ -62,17 +90,17 @@ export function useWorkspaceEvents(options: UseWorkspaceEventsOptions) {
    */
   useEffect(() => {
     const handleGeminiResponse = (data: { type: string }) => {
-      if (data.type === 'tool_group' || data.type === 'tool_call') {
+      if (data.type === "tool_group" || data.type === "tool_call") {
         refreshWorkspace();
       }
     };
     const handleAcpResponse = (data: { type: string }) => {
-      if (data.type === 'acp_tool_call') {
+      if (data.type === "acp_tool_call") {
         refreshWorkspace();
       }
     };
     const handleCodexResponse = (data: { type: string }) => {
-      if (data.type === 'codex_tool_call') {
+      if (data.type === "codex_tool_call") {
         refreshWorkspace();
       }
     };
@@ -91,13 +119,17 @@ export function useWorkspaceEvents(options: UseWorkspaceEventsOptions) {
    * 监听手动刷新工作空间事件
    * Listen to manual refresh workspace event
    */
-  useAddEventListener(`${eventPrefix}.workspace.refresh`, () => refreshWorkspace(), [refreshWorkspace]);
+  useAddEventListener(`${eventPrefix}.workspace.refresh`, () => refreshWorkspace(), [
+    refreshWorkspace,
+  ]);
 
   /**
    * 监听清空选中文件事件（发送消息后）
    * Listen to clear selected files event (after sending message)
    */
-  useAddEventListener(`${eventPrefix}.selected.file.clear`, () => clearSelection(), [clearSelection]);
+  useAddEventListener(`${eventPrefix}.selected.file.clear`, () => clearSelection(), [
+    clearSelection,
+  ]);
 
   /**
    * 监听选中文件变化事件（sendbox 中关闭标签时同步状态）(#1083)
@@ -108,7 +140,9 @@ export function useWorkspaceEvents(options: UseWorkspaceEventsOptions) {
     (items: Array<{ path: string; name: string; isFile: boolean; relativePath?: string }>) => {
       // Extract relative paths from items, filter out files (only keep folders in tree selection)
       // 从 items 中提取相对路径，过滤掉文件（树选中状态只保留文件夹）
-      const newKeys = items.filter((item) => !item.isFile && item.relativePath).map((item) => item.relativePath!);
+      const newKeys = items
+        .filter((item) => !item.isFile && item.relativePath)
+        .map((item) => item.relativePath!);
       setSelected(newKeys);
       selectedKeysRef.current = newKeys;
 
@@ -127,7 +161,7 @@ export function useWorkspaceEvents(options: UseWorkspaceEventsOptions) {
         selectedNodeRef.current = null;
       }
     },
-    [setSelected, selectedKeysRef, selectedNodeRef]
+    [setSelected, selectedKeysRef, selectedNodeRef],
   );
 
   /**
@@ -150,17 +184,17 @@ export function useWorkspaceEvents(options: UseWorkspaceEventsOptions) {
       closeContextMenu();
     };
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
+      if (event.key === "Escape") {
         closeContextMenu();
       }
     };
-    window.addEventListener('click', handleClose);
-    window.addEventListener('scroll', handleClose, true);
-    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener("click", handleClose);
+    window.addEventListener("scroll", handleClose, true);
+    window.addEventListener("keydown", handleKeyDown);
     return () => {
-      window.removeEventListener('click', handleClose);
-      window.removeEventListener('scroll', handleClose, true);
-      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener("click", handleClose);
+      window.removeEventListener("scroll", handleClose, true);
+      window.removeEventListener("keydown", handleKeyDown);
     };
   }, [closeContextMenu]);
 }

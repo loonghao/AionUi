@@ -4,9 +4,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { ipcBridge } from '../../common';
-import { mcpService } from '@process/services/mcpServices/McpService';
-import { mcpOAuthService } from '@process/services/mcpServices/McpOAuthService';
+import { ipcBridge } from "../../common";
+import { mcpService } from "@process/services/mcpServices/McpService";
+import { mcpOAuthService } from "@process/services/mcpServices/McpOAuthService";
 
 export function initMcpBridge(): void {
   // MCP 服务相关 IPC 处理程序
@@ -17,7 +17,7 @@ export function initMcpBridge(): void {
     } catch (error) {
       return {
         success: false,
-        msg: error instanceof Error ? error.message : 'Unknown error getting MCP configs',
+        msg: error instanceof Error ? error.message : "Unknown error getting MCP configs",
       };
     }
   });
@@ -29,7 +29,7 @@ export function initMcpBridge(): void {
     } catch (error) {
       return {
         success: false,
-        msg: error instanceof Error ? error.message : 'Unknown error testing MCP connection',
+        msg: error instanceof Error ? error.message : "Unknown error testing MCP connection",
       };
     }
   });
@@ -41,7 +41,7 @@ export function initMcpBridge(): void {
     } catch (error) {
       return {
         success: false,
-        msg: error instanceof Error ? error.message : 'Unknown error syncing MCP to agents',
+        msg: error instanceof Error ? error.message : "Unknown error syncing MCP to agents",
       };
     }
   });
@@ -53,7 +53,7 @@ export function initMcpBridge(): void {
     } catch (error) {
       return {
         success: false,
-        msg: error instanceof Error ? error.message : 'Unknown error removing MCP from agents',
+        msg: error instanceof Error ? error.message : "Unknown error removing MCP from agents",
       };
     }
   });
@@ -66,7 +66,7 @@ export function initMcpBridge(): void {
     } catch (error) {
       return {
         success: false,
-        msg: error instanceof Error ? error.message : 'Unknown error checking OAuth status',
+        msg: error instanceof Error ? error.message : "Unknown error checking OAuth status",
       };
     }
   });
@@ -78,7 +78,7 @@ export function initMcpBridge(): void {
     } catch (error) {
       return {
         success: false,
-        msg: error instanceof Error ? error.message : 'Unknown error during OAuth login',
+        msg: error instanceof Error ? error.message : "Unknown error during OAuth login",
       };
     }
   });
@@ -90,7 +90,7 @@ export function initMcpBridge(): void {
     } catch (error) {
       return {
         success: false,
-        msg: error instanceof Error ? error.message : 'Unknown error during OAuth logout',
+        msg: error instanceof Error ? error.message : "Unknown error during OAuth logout",
       };
     }
   });
@@ -102,7 +102,7 @@ export function initMcpBridge(): void {
     } catch (error) {
       return {
         success: false,
-        msg: error instanceof Error ? error.message : 'Unknown error getting authenticated servers',
+        msg: error instanceof Error ? error.message : "Unknown error getting authenticated servers",
       };
     }
   });

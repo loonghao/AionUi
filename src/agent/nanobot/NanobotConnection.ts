@@ -4,9 +4,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { getEnhancedEnv } from '@process/utils/shellEnv';
-import type { ChildProcess } from 'child_process';
-import { spawn } from 'child_process';
+import { getEnhancedEnv } from "@process/utils/shellEnv";
+import type { ChildProcess } from "child_process";
+import { spawn } from "child_process";
 
 /**
  * Spawns the nanobot CLI per-message and collects stdout.
@@ -35,32 +35,32 @@ export class NanobotConnection {
       // With shell: false (the default), Node.js handles argument quoting correctly:
       // - Windows: CreateProcessW properly quotes args containing spaces
       // - Unix: execvp passes args directly to the process
-      const args = ['agent', '-m', `"${message}"`, '--session', sessionId, '--no-markdown'];
+      const args = ["agent", "-m", `"${message}"`, "--session", sessionId, "--no-markdown"];
 
-      this.child = spawn('nanobot', args, {
+      this.child = spawn("nanobot", args, {
         cwd: this.workingDir,
-        stdio: ['pipe', 'pipe', 'pipe'],
+        stdio: ["pipe", "pipe", "pipe"],
         env,
         windowsHide: true,
       });
 
-      let stdout = '';
-      let stderr = '';
+      let stdout = "";
+      let stderr = "";
 
-      this.child.stdout?.on('data', (data) => {
+      this.child.stdout?.on("data", (data) => {
         stdout += data.toString();
       });
 
-      this.child.stderr?.on('data', (data) => {
+      this.child.stderr?.on("data", (data) => {
         stderr += data.toString();
       });
 
-      this.child.on('error', (error) => {
+      this.child.on("error", (error) => {
         this.child = null;
         reject(new Error(`Failed to spawn nanobot: ${error.message}.`));
       });
 
-      this.child.on('close', (code) => {
+      this.child.on("close", (code) => {
         this.child = null;
         if (code !== 0) {
           reject(new Error(`nanobot exited with code ${code}: ${stderr.trim()}`));
@@ -77,7 +77,7 @@ export class NanobotConnection {
    * Nanobot wraps responses in Unicode box characters (┌, └, │, ─, etc.)
    */
   parseOutput(raw: string): string {
-    const lines = raw.split('\n');
+    const lines = raw.split("\n");
     const contentLines: string[] = [];
 
     for (const line of lines) {
@@ -108,7 +108,7 @@ export class NanobotConnection {
       }
     }
 
-    return contentLines.join('\n').trim();
+    return contentLines.join("\n").trim();
   }
 
   /**

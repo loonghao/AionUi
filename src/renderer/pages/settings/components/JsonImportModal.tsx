@@ -1,18 +1,18 @@
-import type { IMcpServer, IMcpServerTransport, IMcpTool } from '@/common/storage';
-import { Alert, Button } from '@arco-design/web-react';
-import React, { useState, useCallback } from 'react';
-import { useTranslation } from 'react-i18next';
-import CodeMirror from '@uiw/react-codemirror';
-import { json } from '@codemirror/lang-json';
-import { useThemeContext } from '@/renderer/context/ThemeContext';
-import AionModal from '@/renderer/components/base/AionModal';
+import type { IMcpServer, IMcpServerTransport, IMcpTool } from "@/common/storage";
+import { Alert, Button } from "@arco-design/web-react";
+import React, { useState, useCallback } from "react";
+import { useTranslation } from "react-i18next";
+import CodeMirror from "@uiw/react-codemirror";
+import { json } from "@codemirror/lang-json";
+import { useThemeContext } from "@/renderer/context/ThemeContext";
+import AionModal from "@/renderer/components/base/AionModal";
 
 interface JsonImportModalProps {
   visible: boolean;
   server?: IMcpServer;
   onCancel: () => void;
-  onSubmit: (server: Omit<IMcpServer, 'id' | 'createdAt' | 'updatedAt'>) => void;
-  onBatchImport?: (servers: Omit<IMcpServer, 'id' | 'createdAt' | 'updatedAt'>[]) => void;
+  onSubmit: (server: Omit<IMcpServer, "id" | "createdAt" | "updatedAt">) => void;
+  onBatchImport?: (servers: Omit<IMcpServer, "id" | "createdAt" | "updatedAt">[]) => void;
 }
 
 interface ValidationResult {
@@ -20,11 +20,17 @@ interface ValidationResult {
   errorMessage?: string;
 }
 
-const JsonImportModal: React.FC<JsonImportModalProps> = ({ visible, server, onCancel, onSubmit, onBatchImport }) => {
+const JsonImportModal: React.FC<JsonImportModalProps> = ({
+  visible,
+  server,
+  onCancel,
+  onSubmit,
+  onBatchImport,
+}) => {
   const { t } = useTranslation();
   const { theme } = useThemeContext();
-  const [jsonInput, setJsonInput] = useState('');
-  const [copyStatus, setCopyStatus] = useState<'idle' | 'success' | 'error'>('idle');
+  const [jsonInput, setJsonInput] = useState("");
+  const [copyStatus, setCopyStatus] = useState<"idle" | "success" | "error">("idle");
   const [validation, setValidation] = useState<ValidationResult>({ isValid: true });
 
   /**
@@ -41,7 +47,7 @@ const JsonImportModal: React.FC<JsonImportModalProps> = ({ visible, server, onCa
     } catch (error) {
       return {
         isValid: false,
-        errorMessage: error instanceof SyntaxError ? error.message : 'Invalid JSON format',
+        errorMessage: error instanceof SyntaxError ? error.message : "Invalid JSON format",
       };
     }
   }, []);
@@ -63,7 +69,7 @@ const JsonImportModal: React.FC<JsonImportModalProps> = ({ visible, server, onCa
           mcpServers: {
             [server.name]: {
               description: server.description,
-              ...(server.transport.type === 'stdio'
+              ...(server.transport.type === "stdio"
                 ? {
                     command: server.transport.command,
                     args: server.transport.args || [],
@@ -81,7 +87,7 @@ const JsonImportModal: React.FC<JsonImportModalProps> = ({ visible, server, onCa
       }
     } else if (visible && !server) {
       // 新建模式下清空JSON输入
-      setJsonInput('');
+      setJsonInput("");
     }
   }, [visible, server]);
 
@@ -92,7 +98,7 @@ const JsonImportModal: React.FC<JsonImportModalProps> = ({ visible, server, onCa
   const parseTransport = (serverConfig: Record<string, any>): IMcpServerTransport => {
     if (serverConfig.command) {
       return {
-        type: 'stdio',
+        type: "stdio",
         command: serverConfig.command,
         args: serverConfig.args || [],
         env: serverConfig.env || {},
@@ -103,13 +109,13 @@ const JsonImportModal: React.FC<JsonImportModalProps> = ({ visible, server, onCa
     // Gemini CLI uses "transport" field, standard format uses "type" field
     const transportType = serverConfig.type || serverConfig.transport;
 
-    if (transportType === 'sse' || serverConfig.url?.includes('/sse')) {
-      return { type: 'sse', url: serverConfig.url, headers: serverConfig.headers };
+    if (transportType === "sse" || serverConfig.url?.includes("/sse")) {
+      return { type: "sse", url: serverConfig.url, headers: serverConfig.headers };
     }
-    if (transportType === 'streamable_http') {
-      return { type: 'streamable_http', url: serverConfig.url, headers: serverConfig.headers };
+    if (transportType === "streamable_http") {
+      return { type: "streamable_http", url: serverConfig.url, headers: serverConfig.headers };
     }
-    return { type: 'http', url: serverConfig.url, headers: serverConfig.headers };
+    return { type: "http", url: serverConfig.url, headers: serverConfig.headers };
   };
 
   const handleSubmit = () => {
@@ -119,13 +125,13 @@ const JsonImportModal: React.FC<JsonImportModalProps> = ({ visible, server, onCa
 
     if (Array.isArray(mcpServers)) {
       // TODO: 支持数组格式的导入
-      console.warn('Array format not supported yet');
+      console.warn("Array format not supported yet");
       return;
     }
 
     const serverKeys = Object.keys(mcpServers);
     if (serverKeys.length === 0) {
-      console.warn('No MCP server found in configuration');
+      console.warn("No MCP server found in configuration");
       return;
     }
 
@@ -138,7 +144,7 @@ const JsonImportModal: React.FC<JsonImportModalProps> = ({ visible, server, onCa
           description: serverConfig.description || `Imported from JSON`,
           enabled: true,
           transport: parseTransport(serverConfig),
-          status: 'disconnected' as const,
+          status: "disconnected" as const,
           tools: [] as IMcpTool[], // JSON导入时初始化为空数组，后续可通过连接测试获取
           originalJson: JSON.stringify({ mcpServers: { [serverKey]: serverConfig } }, null, 2),
         };
@@ -155,10 +161,10 @@ const JsonImportModal: React.FC<JsonImportModalProps> = ({ visible, server, onCa
 
     onSubmit({
       name: firstServerKey,
-      description: serverConfig.description || 'Imported from JSON',
+      description: serverConfig.description || "Imported from JSON",
       enabled: true,
       transport: parseTransport(serverConfig),
-      status: 'disconnected',
+      status: "disconnected",
       tools: [] as IMcpTool[], // JSON导入时初始化为空数组，后续可通过连接测试获取
       originalJson: jsonInput,
     });
@@ -173,17 +179,26 @@ const JsonImportModal: React.FC<JsonImportModalProps> = ({ visible, server, onCa
       onCancel={onCancel}
       onOk={handleSubmit}
       okButtonProps={{ disabled: !validation.isValid }}
-      header={{ title: server ? t('settings.mcpEditServer') : t('settings.mcpImportFromJSON'), showClose: true }}
+      header={{
+        title: server ? t("settings.mcpEditServer") : t("settings.mcpImportFromJSON"),
+        showClose: true,
+      }}
       style={{ width: 600, height: 450 }}
-      contentStyle={{ borderRadius: 16, padding: '24px', background: 'var(--bg-1)', overflow: 'auto', height: 420 - 80 }} // 与“添加模型”弹窗保持统一尺寸 / Keep same size as Add Model modal
+      contentStyle={{
+        borderRadius: 16,
+        padding: "24px",
+        background: "var(--bg-1)",
+        overflow: "auto",
+        height: 420 - 80,
+      }} // 与“添加模型”弹窗保持统一尺寸 / Keep same size as Add Model modal
     >
-      <div className='space-y-12px'>
+      <div className="space-y-12px">
         <div>
-          <div className='mb-2 text-sm text-t-secondary'>{t('settings.mcpImportPlaceholder')}</div>
-          <div className='relative'>
+          <div className="mb-2 text-sm text-t-secondary">{t("settings.mcpImportPlaceholder")}</div>
+          <div className="relative">
             <CodeMirror
               value={jsonInput}
-              height='300px'
+              height="300px"
               theme={theme}
               extensions={[json()]}
               onChange={(value: string) => setJsonInput(value)}
@@ -203,19 +218,22 @@ const JsonImportModal: React.FC<JsonImportModalProps> = ({ visible, server, onCa
                 allowMultipleSelections: false,
               }}
               style={{
-                fontSize: '13px',
-                border: validation.isValid || !jsonInput.trim() ? '1px solid var(--bg-3)' : '1px solid var(--danger)',
-                borderRadius: '6px',
-                marginBottom: '20px',
-                overflow: 'hidden',
+                fontSize: "13px",
+                border:
+                  validation.isValid || !jsonInput.trim()
+                    ? "1px solid var(--bg-3)"
+                    : "1px solid var(--danger)",
+                borderRadius: "6px",
+                marginBottom: "20px",
+                overflow: "hidden",
               }}
-              className='[&_.cm-editor]:rounded-[6px]'
+              className="[&_.cm-editor]:rounded-[6px]"
             />
             {jsonInput && (
               <Button
-                size='mini'
-                type='outline'
-                className='absolute top-2 right-2 z-10'
+                size="mini"
+                type="outline"
+                className="absolute top-2 right-2 z-10"
                 onClick={() => {
                   const copyToClipboard = async () => {
                     try {
@@ -223,51 +241,59 @@ const JsonImportModal: React.FC<JsonImportModalProps> = ({ visible, server, onCa
                         await navigator.clipboard.writeText(jsonInput);
                       } else {
                         // Fallback to legacy method 降级到传统方法
-                        const textArea = document.createElement('textarea');
+                        const textArea = document.createElement("textarea");
                         textArea.value = jsonInput;
-                        textArea.style.position = 'fixed';
-                        textArea.style.left = '-9999px';
-                        textArea.style.top = '-9999px';
+                        textArea.style.position = "fixed";
+                        textArea.style.left = "-9999px";
+                        textArea.style.top = "-9999px";
                         document.body.appendChild(textArea);
                         textArea.focus();
                         textArea.select();
-                        document.execCommand('copy');
+                        document.execCommand("copy");
                         document.body.removeChild(textArea);
                       }
-                      setCopyStatus('success');
-                      setTimeout(() => setCopyStatus('idle'), 2000);
+                      setCopyStatus("success");
+                      setTimeout(() => setCopyStatus("idle"), 2000);
                     } catch (err) {
-                      console.error('Copy failed 复制失败:', err);
-                      setCopyStatus('error');
-                      setTimeout(() => setCopyStatus('idle'), 2000);
+                      console.error("Copy failed 复制失败:", err);
+                      setCopyStatus("error");
+                      setTimeout(() => setCopyStatus("idle"), 2000);
                     }
                   };
 
                   void copyToClipboard();
                 }}
                 style={{
-                  backdropFilter: 'blur(4px)',
+                  backdropFilter: "blur(4px)",
                 }}
               >
-                {copyStatus === 'success' ? t('common.copySuccess') : copyStatus === 'error' ? t('common.copyFailed') : t('common.copy')}
+                {copyStatus === "success"
+                  ? t("common.copySuccess")
+                  : copyStatus === "error"
+                    ? t("common.copyFailed")
+                    : t("common.copy")}
               </Button>
             )}
           </div>
 
           {/* JSON 格式错误提示 */}
-          {!validation.isValid && jsonInput.trim() && <div className='mt-2 text-sm text-red-600'>{t('settings.mcpJsonFormatError') || 'JSON format error'}</div>}
+          {!validation.isValid && jsonInput.trim() && (
+            <div className="mt-2 text-sm text-red-600">
+              {t("settings.mcpJsonFormatError") || "JSON format error"}
+            </div>
+          )}
         </div>
 
         <Alert
-          type='info'
+          type="info"
           showIcon
           content={
             <div>
-              <div>{t('settings.mcpImportTips')}</div>
-              <ul className='list-disc pl-5 mt-2 space-y-1 text-sm'>
-                <li>{t('settings.mcpImportTip1')}</li>
-                <li>{t('settings.mcpImportTip2')}</li>
-                <li>{t('settings.mcpImportTip3')}</li>
+              <div>{t("settings.mcpImportTips")}</div>
+              <ul className="list-disc pl-5 mt-2 space-y-1 text-sm">
+                <li>{t("settings.mcpImportTip1")}</li>
+                <li>{t("settings.mcpImportTip2")}</li>
+                <li>{t("settings.mcpImportTip3")}</li>
               </ul>
             </div>
           }

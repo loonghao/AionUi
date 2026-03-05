@@ -9,8 +9,14 @@
  * Use this file to import database functionality throughout the app
  */
 
-export { AionUIDatabase, getDatabase, closeDatabase } from './index';
-export { runMigrations, rollbackMigrations, getMigrationHistory, isMigrationApplied, type IMigration } from './migrations';
+export { AionUIDatabase, getDatabase, closeDatabase } from "./index";
+export {
+  runMigrations,
+  rollbackMigrations,
+  getMigrationHistory,
+  isMigrationApplied,
+  type IMigration,
+} from "./migrations";
 
 export type {
   // Database-specific types
@@ -25,7 +31,7 @@ export type {
   IConversationRow,
   IMessageRow,
   IConfigRow,
-} from './types';
+} from "./types";
 
 // Re-export conversion functions
-export { conversationToRow, rowToConversation, messageToRow, rowToMessage } from './types';
+export { conversationToRow, rowToConversation, messageToRow, rowToMessage } from "./types";

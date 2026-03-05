@@ -4,9 +4,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { NextFunction, Request, Response } from 'express';
-import rateLimit from 'express-rate-limit';
-import { CSRF_COOKIE_NAME, CSRF_HEADER_NAME, SECURITY_CONFIG } from '@/webserver/config/constants';
+import type { NextFunction, Request, Response } from "express";
+import rateLimit from "express-rate-limit";
+import { CSRF_COOKIE_NAME, CSRF_HEADER_NAME, SECURITY_CONFIG } from "@/webserver/config/constants";
 
 /**
  * 登录/注册等敏感操作的限流
@@ -18,7 +18,7 @@ export const authRateLimiter = rateLimit({
   max: 5,
   message: {
     success: false,
-    error: 'Too many authentication attempts. Please try again later.',
+    error: "Too many authentication attempts. Please try again later.",
   },
   skipSuccessfulRequests: true,
 });
@@ -32,7 +32,7 @@ export const apiRateLimiter = rateLimit({
   windowMs: 60 * 1000,
   max: 60,
   message: {
-    error: 'Too many API requests, please slow down.',
+    error: "Too many API requests, please slow down.",
   },
 });
 
@@ -45,7 +45,7 @@ export const fileOperationLimiter = rateLimit({
   windowMs: 60 * 1000,
   max: 30,
   message: {
-    error: 'Too many file operations, please slow down.',
+    error: "Too many file operations, please slow down.",
   },
 });
 
@@ -59,13 +59,13 @@ export const authenticatedActionLimiter = rateLimit({
   max: 20,
   message: {
     success: false,
-    error: 'Too many sensitive actions, please try again later.',
+    error: "Too many sensitive actions, please try again later.",
   },
   keyGenerator: (req: Request) => {
     if (req.user?.id) {
       return `user:${req.user.id}`;
     }
-    return `ip:${req.ip || req.socket.remoteAddress || 'unknown'}`;
+    return `ip:${req.ip || req.socket.remoteAddress || "unknown"}`;
   },
 });
 
@@ -78,7 +78,7 @@ export const authenticatedActionLimiter = rateLimit({
  */
 export function attachCsrfToken(req: Request, res: Response, next: NextFunction): void {
   // tiny-csrf provides req.csrfToken() method
-  if (typeof req.csrfToken === 'function') {
+  if (typeof req.csrfToken === "function") {
     const token = req.csrfToken();
     res.setHeader(CSRF_HEADER_NAME, token);
     res.locals.csrfToken = token;

@@ -3,41 +3,41 @@
  *
  * Validates extension-contributed MCP servers on the tools settings page.
  */
-import { test, expect } from '../fixtures';
+import { test, expect } from "../fixtures";
 import {
   goToSettings,
   expectBodyContainsAny,
   takeScreenshot,
   waitForSettle,
   ARCO_SWITCH,
-} from '../helpers';
+} from "../helpers";
 
-test.describe('Extension: MCP Servers', () => {
-  test('MCP tools page loads', async ({ page }) => {
-    await goToSettings(page, 'tools');
+test.describe("Extension: MCP Servers", () => {
+  test("MCP tools page loads", async ({ page }) => {
+    await goToSettings(page, "tools");
     await expectBodyContainsAny(page, [
-      'MCP',
-      'mcp',
-      'Server',
-      'server',
-      '工具',
-      '配置',
-      '添加',
-      'Add',
+      "MCP",
+      "mcp",
+      "Server",
+      "server",
+      "工具",
+      "配置",
+      "添加",
+      "Add",
     ]);
   });
 
-  test('extension MCP servers registered (page functional)', async ({ page }) => {
-    await goToSettings(page, 'tools');
+  test("extension MCP servers registered (page functional)", async ({ page }) => {
+    await goToSettings(page, "tools");
     await waitForSettle(page);
 
-    const body = await page.locator('body').textContent();
+    const body = await page.locator("body").textContent();
     // MCP servers may appear in the list or be internal-only
     expect(body!.length).toBeGreaterThan(50);
   });
 
-  test('MCP server toggles are visible', async ({ page }) => {
-    await goToSettings(page, 'tools');
+  test("MCP server toggles are visible", async ({ page }) => {
+    await goToSettings(page, "tools");
     await waitForSettle(page);
 
     const switches = page.locator(ARCO_SWITCH);
@@ -46,10 +46,10 @@ test.describe('Extension: MCP Servers', () => {
     expect(count).toBeGreaterThanOrEqual(0);
   });
 
-  test('screenshot: MCP tools with extensions', async ({ page }) => {
-    test.skip(!process.env.E2E_SCREENSHOTS, 'screenshots disabled');
-    await goToSettings(page, 'tools');
+  test("screenshot: MCP tools with extensions", async ({ page }) => {
+    test.skip(!process.env.E2E_SCREENSHOTS, "screenshots disabled");
+    await goToSettings(page, "tools");
     await waitForSettle(page);
-    await takeScreenshot(page, 'ext-mcp-servers');
+    await takeScreenshot(page, "ext-mcp-servers");
   });
 });

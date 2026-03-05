@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { getSkillsDir, loadSkillsContent } from '@process/initStorage';
-import { AcpSkillManager, buildSkillsIndexText } from './AcpSkillManager';
+import { getSkillsDir, loadSkillsContent } from "@process/initStorage";
+import { AcpSkillManager, buildSkillsIndexText } from "./AcpSkillManager";
 
 /**
  * 首次消息处理配置
@@ -25,7 +25,9 @@ export interface FirstMessageConfig {
  * @param config - 首次消息配置 / First message configuration
  * @returns 系统指令字符串或 undefined / System instructions string or undefined
  */
-export async function buildSystemInstructions(config: FirstMessageConfig): Promise<string | undefined> {
+export async function buildSystemInstructions(
+  config: FirstMessageConfig,
+): Promise<string | undefined> {
   const instructions: string[] = [];
 
   // 添加预设上下文 / Add preset context
@@ -45,7 +47,7 @@ export async function buildSystemInstructions(config: FirstMessageConfig): Promi
     return undefined;
   }
 
-  return instructions.join('\n\n');
+  return instructions.join("\n\n");
 }
 
 /**
@@ -59,7 +61,10 @@ export async function buildSystemInstructions(config: FirstMessageConfig): Promi
  * @param config - 首次消息配置 / First message configuration
  * @returns 注入系统指令后的消息内容 / Message content with system instructions injected
  */
-export async function prepareFirstMessage(content: string, config: FirstMessageConfig): Promise<string> {
+export async function prepareFirstMessage(
+  content: string,
+  config: FirstMessageConfig,
+): Promise<string> {
   const systemInstructions = await buildSystemInstructions(config);
 
   if (!systemInstructions) {
@@ -85,7 +90,10 @@ export async function prepareFirstMessage(content: string, config: FirstMessageC
  * @param config - 首次消息配置 / First message configuration
  * @returns 注入系统指令后的消息内容 / Message content with system instructions injected
  */
-export async function prepareFirstMessageWithSkillsIndex(content: string, config: FirstMessageConfig): Promise<string> {
+export async function prepareFirstMessageWithSkillsIndex(
+  content: string,
+  config: FirstMessageConfig,
+): Promise<string> {
   const instructions: string[] = [];
 
   // 1. 添加预设规则 / Add preset rules
@@ -107,7 +115,7 @@ export async function prepareFirstMessageWithSkillsIndex(content: string, config
       // getSkillsDir() already returns CLI-safe path (symlink on macOS)
       // getSkillsDir() 已返回 CLI 安全路径（macOS 上使用符号链接）
       const skillsDir = getSkillsDir();
-      const builtinSkillsDir = skillsDir + '/_builtin';
+      const builtinSkillsDir = skillsDir + "/_builtin";
       const indexText = buildSkillsIndexText(skillsIndex);
 
       // 告诉 Agent skills 文件的位置，让它按需读取
@@ -134,7 +142,7 @@ For example:
     return content;
   }
 
-  const systemInstructions = instructions.join('\n\n');
+  const systemInstructions = instructions.join("\n\n");
   return `[Assistant Rules - You MUST follow these instructions]\n${systemInstructions}\n\n[User Request]\n${content}`;
 }
 
@@ -153,7 +161,9 @@ For example:
  * @param config - 首次消息配置 / First message configuration
  * @returns 系统指令字符串或 undefined / System instructions string or undefined
  */
-export async function buildSystemInstructionsWithSkillsIndex(config: FirstMessageConfig): Promise<string | undefined> {
+export async function buildSystemInstructionsWithSkillsIndex(
+  config: FirstMessageConfig,
+): Promise<string | undefined> {
   const instructions: string[] = [];
 
   // 添加预设上下文 / Add preset context
@@ -178,5 +188,5 @@ export async function buildSystemInstructionsWithSkillsIndex(config: FirstMessag
     return undefined;
   }
 
-  return instructions.join('\n\n');
+  return instructions.join("\n\n");
 }

@@ -22,8 +22,8 @@ const TEMP_WORKSPACE_REGEX = /-temp-\d+$/i;
  */
 export const isTemporaryWorkspace = (workspacePath: string): boolean => {
   // Extract the last path segment (directory name)
-  const parts = workspacePath.split('/').filter(Boolean);
-  const lastSegment = parts[parts.length - 1] || '';
+  const parts = workspacePath.split("/").filter(Boolean);
+  const lastSegment = parts[parts.length - 1] || "";
 
   // Check if it matches the temporary workspace pattern
   return TEMP_WORKSPACE_REGEX.test(lastSegment);
@@ -37,26 +37,29 @@ export const isTemporaryWorkspace = (workspacePath: string): boolean => {
  * @param t - Optional i18n translation function
  * @returns The display name for the workspace
  */
-export const getWorkspaceDisplayName = (workspacePath: string, t?: (key: string) => string): string => {
+export const getWorkspaceDisplayName = (
+  workspacePath: string,
+  t?: (key: string) => string,
+): string => {
   // Check for temporary workspace
   if (isTemporaryWorkspace(workspacePath)) {
     // Try to extract timestamp from temp workspace path using the generic pattern
-    const parts = workspacePath.split('/').filter(Boolean);
-    const lastSegment = parts[parts.length - 1] || '';
+    const parts = workspacePath.split("/").filter(Boolean);
+    const lastSegment = parts[parts.length - 1] || "";
     const match = lastSegment.match(/-temp-(\d+)$/i);
 
     if (match) {
       const timestamp = parseInt(match[1], 10);
       const date = new Date(timestamp);
       const dateStr = date.toLocaleDateString();
-      const label = t ? t('conversation.workspace.temporarySpace') : 'Temporary Session';
+      const label = t ? t("conversation.workspace.temporarySpace") : "Temporary Session";
       return `${label} (${dateStr})`;
     }
-    return t ? t('conversation.workspace.temporarySpace') : 'Temporary Session';
+    return t ? t("conversation.workspace.temporarySpace") : "Temporary Session";
   }
 
   // For regular workspace, show the last directory name
-  const parts = workspacePath.split('/').filter(Boolean);
+  const parts = workspacePath.split("/").filter(Boolean);
   return parts[parts.length - 1] || workspacePath;
 };
 
@@ -65,6 +68,6 @@ export const getWorkspaceDisplayName = (workspacePath: string, t?: (key: string)
  * 从路径中获取最后一级目录名
  */
 export const getLastDirectoryName = (path: string): string => {
-  const parts = path.split('/').filter(Boolean);
+  const parts = path.split("/").filter(Boolean);
   return parts[parts.length - 1] || path;
 };

@@ -1,8 +1,8 @@
-import React from 'react';
+import React from "react";
 
-export type SettingsViewMode = 'modal' | 'page';
+export type SettingsViewMode = "modal" | "page";
 
-const SettingsViewModeContext = React.createContext<SettingsViewMode>('modal');
+const SettingsViewModeContext = React.createContext<SettingsViewMode>("modal");
 
 export const SettingsViewModeProvider = SettingsViewModeContext.Provider;
 

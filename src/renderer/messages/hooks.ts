@@ -4,15 +4,15 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { ipcBridge } from '@/common';
-import type { TMessage } from '@/common/chatLib';
-import { composeMessage } from '@/common/chatLib';
-import { useCallback, useEffect, useRef } from 'react';
-import { createContext } from '../utils/createContext';
+import { ipcBridge } from "@/common";
+import type { TMessage } from "@/common/chatLib";
+import { composeMessage } from "@/common/chatLib";
+import { useCallback, useEffect, useRef } from "react";
+import { createContext } from "../utils/createContext";
 
 const [useMessageList, MessageListProvider, useUpdateMessageList] = createContext([] as TMessage[]);
 
-const [useChatKey, ChatKeyProvider] = createContext('');
+const [useChatKey, ChatKeyProvider] = createContext("");
 
 const beforeUpdateMessageListStack: Array<(list: TMessage[]) => TMessage[]> = [];
 
@@ -38,13 +38,13 @@ function buildMessageIndex(list: TMessage[]): MessageIndex {
   for (let i = 0; i < list.length; i++) {
     const msg = list[i];
     if (msg.msg_id) msgIdIndex.set(msg.msg_id, i);
-    if (msg.type === 'tool_call' && msg.content?.callId) {
+    if (msg.type === "tool_call" && msg.content?.callId) {
       callIdIndex.set(msg.content.callId, i);
     }
-    if (msg.type === 'codex_tool_call' && msg.content?.toolCallId) {
+    if (msg.type === "codex_tool_call" && msg.content?.toolCallId) {
       toolCallIdIndex.set(msg.content.toolCallId, i);
     }
-    if (msg.type === 'acp_tool_call' && msg.content?.update?.toolCallId) {
+    if (msg.type === "acp_tool_call" && msg.content?.update?.toolCallId) {
       toolCallIdIndex.set(msg.content.update.toolCallId, i);
     }
   }
@@ -65,7 +65,11 @@ function getOrBuildIndex(list: TMessage[]): MessageIndex {
 
 // 使用索引优化的消息合并函数
 // Index-optimized message compose function
-function composeMessageWithIndex(message: TMessage, list: TMessage[], index: MessageIndex): TMessage[] {
+function composeMessageWithIndex(
+  message: TMessage,
+  list: TMessage[],
+  index: MessageIndex,
+): TMessage[] {
   if (!message) return list || [];
   if (!list?.length) {
     // Update index when adding first message
@@ -79,7 +83,7 @@ function composeMessageWithIndex(message: TMessage, list: TMessage[], index: Mes
   // For tool_group type, use original composeMessage (involves inner array matching)
   // After composeMessage, the returned list may have different length/ordering,
   // so we must invalidate the index to prevent stale lookups in subsequent calls.
-  if (message.type === 'tool_group') {
+  if (message.type === "tool_group") {
     const result = composeMessage(message, list);
     if (result !== list) {
       // Rebuild index maps from the new list to keep them in sync
@@ -93,11 +97,11 @@ function composeMessageWithIndex(message: TMessage, list: TMessage[], index: Mes
 
   // tool_call: 使用 callIdIndex 快速查找
   // tool_call: use callIdIndex for fast lookup
-  if (message.type === 'tool_call' && message.content?.callId) {
+  if (message.type === "tool_call" && message.content?.callId) {
     const existingIdx = index.callIdIndex.get(message.content.callId);
     if (existingIdx !== undefined && existingIdx < list.length) {
       const existingMsg = list[existingIdx];
-      if (existingMsg.type === 'tool_call') {
+      if (existingMsg.type === "tool_call") {
         const newList = list.slice();
         const merged = { ...existingMsg.content, ...message.content };
         newList[existingIdx] = { ...existingMsg, content: merged };
@@ -113,11 +117,11 @@ function composeMessageWithIndex(message: TMessage, list: TMessage[], index: Mes
 
   // codex_tool_call: 使用 toolCallIdIndex 快速查找
   // codex_tool_call: use toolCallIdIndex for fast lookup
-  if (message.type === 'codex_tool_call' && message.content?.toolCallId) {
+  if (message.type === "codex_tool_call" && message.content?.toolCallId) {
     const existingIdx = index.toolCallIdIndex.get(message.content.toolCallId);
     if (existingIdx !== undefined && existingIdx < list.length) {
       const existingMsg = list[existingIdx];
-      if (existingMsg.type === 'codex_tool_call') {
+      if (existingMsg.type === "codex_tool_call") {
         const newList = list.slice();
         const merged = { ...existingMsg.content, ...message.content };
         newList[existingIdx] = { ...existingMsg, content: merged };
@@ -133,11 +137,11 @@ function composeMessageWithIndex(message: TMessage, list: TMessage[], index: Mes
 
   // acp_tool_call: 使用 toolCallIdIndex 快速查找
   // acp_tool_call: use toolCallIdIndex for fast lookup
-  if (message.type === 'acp_tool_call' && message.content?.update?.toolCallId) {
+  if (message.type === "acp_tool_call" && message.content?.update?.toolCallId) {
     const existingIdx = index.toolCallIdIndex.get(message.content.update.toolCallId);
     if (existingIdx !== undefined && existingIdx < list.length) {
       const existingMsg = list[existingIdx];
-      if (existingMsg.type === 'acp_tool_call') {
+      if (existingMsg.type === "acp_tool_call") {
         const newList = list.slice();
         const merged = { ...existingMsg.content, ...message.content };
         newList[existingIdx] = { ...existingMsg, content: merged };
@@ -153,11 +157,11 @@ function composeMessageWithIndex(message: TMessage, list: TMessage[], index: Mes
 
   // text message: use msgIdIndex for fast lookup (handles interleaved messages)
   // text 消息: 使用 msgIdIndex 快速查找（处理消息交错的情况）
-  if (message.type === 'text' && message.msg_id) {
+  if (message.type === "text" && message.msg_id) {
     const existingIdx = index.msgIdIndex.get(message.msg_id);
     if (existingIdx !== undefined && existingIdx < list.length) {
       const existingMsg = list[existingIdx];
-      if (existingMsg.type === 'text') {
+      if (existingMsg.type === "text") {
         const newList = list.slice();
         newList[existingIdx] = {
           ...existingMsg,
@@ -216,13 +220,13 @@ export const useAddOrUpdateMessage = () => {
           const msg = item.message;
           const newIdx = newList.length;
           if (msg.msg_id) index.msgIdIndex.set(msg.msg_id, newIdx);
-          if (msg.type === 'tool_call' && msg.content?.callId) {
+          if (msg.type === "tool_call" && msg.content?.callId) {
             index.callIdIndex.set(msg.content.callId, newIdx);
           }
-          if (msg.type === 'codex_tool_call' && msg.content?.toolCallId) {
+          if (msg.type === "codex_tool_call" && msg.content?.toolCallId) {
             index.toolCallIdIndex.set(msg.content.toolCallId, newIdx);
           }
-          if (msg.type === 'acp_tool_call' && msg.content?.update?.toolCallId) {
+          if (msg.type === "acp_tool_call" && msg.content?.update?.toolCallId) {
             index.toolCallIdIndex.set(msg.content.update.toolCallId, newIdx);
           }
           newList = newList.concat(msg);
@@ -257,7 +261,7 @@ export const useAddOrUpdateMessage = () => {
         rafRef.current = setTimeout(flush);
       }
     },
-    [flush]
+    [flush],
   );
 };
 
@@ -288,14 +292,16 @@ export const useMessageLstCache = (key: string) => {
             if (!sameConversation.length) return messages;
             const dbIds = new Set(messages.map((m) => m.id));
             const dbMsgIds = new Set(messages.map((m) => m.msg_id).filter(Boolean));
-            const streamingOnly = sameConversation.filter((m) => !dbIds.has(m.id) && !(m.msg_id && dbMsgIds.has(m.msg_id)));
+            const streamingOnly = sameConversation.filter(
+              (m) => !dbIds.has(m.id) && !(m.msg_id && dbMsgIds.has(m.msg_id)),
+            );
             if (!streamingOnly.length) return messages;
             return [...messages, ...streamingOnly];
           });
         }
       })
       .catch((error) => {
-        console.error('[useMessageLstCache] Failed to load messages from database:', error);
+        console.error("[useMessageLstCache] Failed to load messages from database:", error);
       });
   }, [key]);
 };

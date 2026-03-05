@@ -4,16 +4,16 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { ICssTheme } from '@/common/storage';
-import type { LoadedExtension, ExtensionState } from './types';
-import { ExtensionLoader } from './ExtensionLoader';
-import { resolveAcpAdapters } from './resolvers/AcpAdapterResolver';
-import { resolveMcpServers } from './resolvers/McpServerResolver';
-import { resolveAssistants } from './resolvers/AssistantResolver';
-import { resolveSkills } from './resolvers/SkillResolver';
-import { resolveThemes } from './resolvers/ThemeResolver';
-import { resolveChannelPlugins } from './resolvers/ChannelPluginResolver';
-import { resolveWebuiContributions, type WebuiContribution } from './resolvers/WebuiResolver';
+import type { ICssTheme } from "@/common/storage";
+import type { LoadedExtension, ExtensionState } from "./types";
+import { ExtensionLoader } from "./ExtensionLoader";
+import { resolveAcpAdapters } from "./resolvers/AcpAdapterResolver";
+import { resolveMcpServers } from "./resolvers/McpServerResolver";
+import { resolveAssistants } from "./resolvers/AssistantResolver";
+import { resolveSkills } from "./resolvers/SkillResolver";
+import { resolveThemes } from "./resolvers/ThemeResolver";
+import { resolveChannelPlugins } from "./resolvers/ChannelPluginResolver";
+import { resolveWebuiContributions, type WebuiContribution } from "./resolvers/WebuiResolver";
 
 export class ExtensionRegistry {
   private static instance: ExtensionRegistry | undefined;
@@ -46,7 +46,7 @@ export class ExtensionRegistry {
    */
   async initialize(): Promise<void> {
     if (this.initialized) return;
-    console.log('[Extensions] Initializing extension registry...');
+    console.log("[Extensions] Initializing extension registry...");
     const startTime = Date.now();
     try {
       const loader = new ExtensionLoader();
@@ -66,10 +66,10 @@ export class ExtensionRegistry {
           `${this._skills.length} skill(s), ` +
           `${this._themes.length} theme(s), ` +
           `${this._channelPlugins.size} channel plugin(s), ` +
-          `${this._webuiContributions.length} webui contribution(s)`
+          `${this._webuiContributions.length} webui contribution(s)`,
       );
     } catch (error) {
-      console.error('[Extensions] Failed to initialize registry:', error);
+      console.error("[Extensions] Failed to initialize registry:", error);
       this.initialized = true;
     }
   }
@@ -91,7 +91,7 @@ export class ExtensionRegistry {
     state.enabled = false;
     state.disabledAt = new Date();
     state.disabledReason = reason;
-    console.log(`[Extensions] Disabled extension "${name}"${reason ? `: ${reason}` : ''}`);
+    console.log(`[Extensions] Disabled extension "${name}"${reason ? `: ${reason}` : ""}`);
     void this.resolveContributions();
     return true;
   }
@@ -143,7 +143,7 @@ export class ExtensionRegistry {
   /** Internal: Resolve all contributions from enabled extensions. */
   private async resolveContributions(): Promise<void> {
     const enabledExtensions = this.extensions.filter((ext) =>
-      this.isExtensionEnabled(ext.manifest.name)
+      this.isExtensionEnabled(ext.manifest.name),
     );
     this._acpAdapters = resolveAcpAdapters(enabledExtensions);
     this._mcpServers = resolveMcpServers(enabledExtensions);

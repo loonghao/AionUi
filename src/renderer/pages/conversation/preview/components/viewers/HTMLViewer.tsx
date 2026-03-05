@@ -4,10 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Message } from '@arco-design/web-react';
-import MonacoEditor from '@monaco-editor/react';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { useTranslation } from 'react-i18next';
+import { Message } from "@arco-design/web-react";
+import MonacoEditor from "@monaco-editor/react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 interface HTMLPreviewProps {
   content: string;
@@ -35,23 +35,28 @@ const HTMLPreview: React.FC<HTMLPreviewProps> = ({ content, filePath, hideToolba
   const [htmlCode, setHtmlCode] = useState(content);
   const [inspectorMode, setInspectorMode] = useState(false);
   const [selectedElement, setSelectedElement] = useState<SelectedElement | null>(null);
-  const [contextMenu, setContextMenu] = useState<{ x: number; y: number; element: SelectedElement } | null>(null);
+  const [contextMenu, setContextMenu] = useState<{
+    x: number;
+    y: number;
+    element: SelectedElement;
+  } | null>(null);
   const [messageApi, messageContextHolder] = Message.useMessage();
-  const [currentTheme, setCurrentTheme] = useState<'light' | 'dark'>(() => {
-    return (document.documentElement.getAttribute('data-theme') as 'light' | 'dark') || 'light';
+  const [currentTheme, setCurrentTheme] = useState<"light" | "dark">(() => {
+    return (document.documentElement.getAttribute("data-theme") as "light" | "dark") || "light";
   });
 
   // 监听主题变化
   useEffect(() => {
     const updateTheme = () => {
-      const theme = (document.documentElement.getAttribute('data-theme') as 'light' | 'dark') || 'light';
+      const theme =
+        (document.documentElement.getAttribute("data-theme") as "light" | "dark") || "light";
       setCurrentTheme(theme);
     };
 
     const observer = new MutationObserver(updateTheme);
     observer.observe(document.documentElement, {
       attributes: true,
-      attributeFilter: ['data-theme'],
+      attributeFilter: ["data-theme"],
     });
 
     return () => observer.disconnect();
@@ -73,7 +78,7 @@ const HTMLPreview: React.FC<HTMLPreviewProps> = ({ content, filePath, hideToolba
     let finalHtml = htmlCode;
     if (filePath) {
       // 获取文件所在目录 / Get directory of the file
-      const fileDir = filePath.substring(0, filePath.lastIndexOf('/') + 1);
+      const fileDir = filePath.substring(0, filePath.lastIndexOf("/") + 1);
       // 构造 file:// 协议的 base URL / Construct file:// protocol base URL
       const baseUrl = `file://${fileDir}`;
 
@@ -102,7 +107,7 @@ const HTMLPreview: React.FC<HTMLPreviewProps> = ({ content, filePath, hideToolba
    * 注入元素选择器脚本到 iframe
    */
   const injectInspectorScript = (iframeDoc: Document) => {
-    const script = iframeDoc.createElement('script');
+    const script = iframeDoc.createElement("script");
     script.textContent = `
       (function() {
         let hoveredElement = null;
@@ -231,11 +236,11 @@ const HTMLPreview: React.FC<HTMLPreviewProps> = ({ content, filePath, hideToolba
    */
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
-      if (event.data.type === 'element-selected') {
+      if (event.data.type === "element-selected") {
         const elementInfo: SelectedElement = event.data.data;
         setSelectedElement(elementInfo);
-        messageApi.info(t('preview.html.elementSelected', { path: elementInfo.path }));
-      } else if (event.data.type === 'element-contextmenu') {
+        messageApi.info(t("preview.html.elementSelected", { path: elementInfo.path }));
+      } else if (event.data.type === "element-contextmenu") {
         const { element, x, y } = event.data.data;
 
         // 计算上下文菜单位置（相对于父窗口）
@@ -251,8 +256,8 @@ const HTMLPreview: React.FC<HTMLPreviewProps> = ({ content, filePath, hideToolba
       }
     };
 
-    window.addEventListener('message', handleMessage);
-    return () => window.removeEventListener('message', handleMessage);
+    window.addEventListener("message", handleMessage);
+    return () => window.removeEventListener("message", handleMessage);
   }, [messageApi]);
 
   /**
@@ -261,8 +266,8 @@ const HTMLPreview: React.FC<HTMLPreviewProps> = ({ content, filePath, hideToolba
   useEffect(() => {
     const handleClick = () => setContextMenu(null);
     if (contextMenu) {
-      window.addEventListener('click', handleClick);
-      return () => window.removeEventListener('click', handleClick);
+      window.addEventListener("click", handleClick);
+      return () => window.removeEventListener("click", handleClick);
     }
   }, [contextMenu]);
 
@@ -272,21 +277,21 @@ const HTMLPreview: React.FC<HTMLPreviewProps> = ({ content, filePath, hideToolba
   const handleCopyHTML = useCallback(
     (html: string) => {
       void navigator.clipboard.writeText(html);
-      messageApi.success(t('preview.html.copySuccess'));
+      messageApi.success(t("preview.html.copySuccess"));
       setContextMenu(null);
     },
-    [messageApi, t]
+    [messageApi, t],
   );
 
   /**
    * 下载 HTML
    */
   const handleDownload = () => {
-    const blob = new Blob([htmlCode], { type: 'text/html;charset=utf-8' });
+    const blob = new Blob([htmlCode], { type: "text/html;charset=utf-8" });
     const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
+    const link = document.createElement("a");
     link.href = url;
-    link.download = `${filePath?.split('/').pop() || 'document'}.html`;
+    link.download = `${filePath?.split("/").pop() || "document"}.html`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -310,66 +315,86 @@ const HTMLPreview: React.FC<HTMLPreviewProps> = ({ content, filePath, hideToolba
   const handleToggleInspector = () => {
     setInspectorMode(!inspectorMode);
     if (!inspectorMode) {
-      messageApi.info(t('preview.html.inspectorEnabled'));
+      messageApi.info(t("preview.html.inspectorEnabled"));
     }
   };
 
   return (
-    <div className='h-full w-full flex flex-col bg-bg-1'>
+    <div className="h-full w-full flex flex-col bg-bg-1">
       {messageContextHolder}
 
       {/* 工具栏 */}
       {!hideToolbar && (
-        <div className='flex items-center justify-between h-40px px-12px bg-bg-2 border-b border-border-base flex-shrink-0'>
-          <div className='flex items-center gap-8px'>
+        <div className="flex items-center justify-between h-40px px-12px bg-bg-2 border-b border-border-base flex-shrink-0">
+          <div className="flex items-center gap-8px">
             {/* 编辑按钮 */}
-            <button onClick={handleToggleEdit} className={`px-12px py-4px rd-4px text-12px transition-colors ${editMode ? 'bg-primary text-white' : 'bg-bg-3 text-t-primary hover:bg-bg-4'}`}>
-              {editMode ? `💾 ${t('common.save')}` : `✏️ ${t('common.edit')}`}
+            <button
+              onClick={handleToggleEdit}
+              className={`px-12px py-4px rd-4px text-12px transition-colors ${editMode ? "bg-primary text-white" : "bg-bg-3 text-t-primary hover:bg-bg-4"}`}
+            >
+              {editMode ? `💾 ${t("common.save")}` : `✏️ ${t("common.edit")}`}
             </button>
 
             {/* 元素选择器按钮 */}
-            <button onClick={handleToggleInspector} className={`px-12px py-4px rd-4px text-12px transition-colors ${inspectorMode ? 'bg-primary text-white' : 'bg-bg-3 text-t-primary hover:bg-bg-4'}`} title={t('preview.html.inspectorTooltip')}>
-              🔍 {inspectorMode ? t('preview.html.inspecting') : t('preview.html.inspectorButton')}
+            <button
+              onClick={handleToggleInspector}
+              className={`px-12px py-4px rd-4px text-12px transition-colors ${inspectorMode ? "bg-primary text-white" : "bg-bg-3 text-t-primary hover:bg-bg-4"}`}
+              title={t("preview.html.inspectorTooltip")}
+            >
+              🔍 {inspectorMode ? t("preview.html.inspecting") : t("preview.html.inspectorButton")}
             </button>
 
             {/* 选中的元素路径 */}
             {selectedElement && (
-              <div className='text-12px text-t-secondary ml-8px'>
-                {t('preview.html.selectedLabel')} <code className='bg-bg-3 px-4px rd-2px'>{selectedElement.path}</code>
+              <div className="text-12px text-t-secondary ml-8px">
+                {t("preview.html.selectedLabel")}{" "}
+                <code className="bg-bg-3 px-4px rd-2px">{selectedElement.path}</code>
               </div>
             )}
           </div>
 
-          <div className='flex items-center gap-8px'>
+          <div className="flex items-center gap-8px">
             {/* 下载按钮 */}
-            <button onClick={handleDownload} className='flex items-center gap-4px px-8px py-4px rd-4px cursor-pointer hover:bg-bg-3 transition-colors' title={t('preview.html.downloadHtml')}>
-              <svg width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' className='text-t-secondary'>
-                <path d='M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4' />
-                <polyline points='7 10 12 15 17 10' />
-                <line x1='12' y1='15' x2='12' y2='3' />
+            <button
+              onClick={handleDownload}
+              className="flex items-center gap-4px px-8px py-4px rd-4px cursor-pointer hover:bg-bg-3 transition-colors"
+              title={t("preview.html.downloadHtml")}
+            >
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                className="text-t-secondary"
+              >
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="7 10 12 15 17 10" />
+                <line x1="12" y1="15" x2="12" y2="3" />
               </svg>
-              <span className='text-12px text-t-secondary'>{t('common.download')}</span>
+              <span className="text-12px text-t-secondary">{t("common.download")}</span>
             </button>
           </div>
         </div>
       )}
 
       {/* 内容区域 */}
-      <div className='flex-1 flex overflow-hidden'>
+      <div className="flex-1 flex overflow-hidden">
         {/* 左侧：代码编辑器（编辑模式时显示） */}
         {editMode && (
-          <div className='flex-1 overflow-hidden border-r border-border-base'>
+          <div className="flex-1 overflow-hidden border-r border-border-base">
             <MonacoEditor
-              height='100%'
-              language='html'
-              theme={currentTheme === 'dark' ? 'vs-dark' : 'vs'}
+              height="100%"
+              language="html"
+              theme={currentTheme === "dark" ? "vs-dark" : "vs"}
               value={htmlCode}
-              onChange={(value) => setHtmlCode(value || '')}
+              onChange={(value) => setHtmlCode(value || "")}
               options={{
                 minimap: { enabled: false },
                 fontSize: 13,
-                lineNumbers: 'on',
-                wordWrap: 'on',
+                lineNumbers: "on",
+                wordWrap: "on",
                 automaticLayout: true,
                 scrollBeyondLastLine: false,
                 formatOnPaste: true,
@@ -380,33 +405,41 @@ const HTMLPreview: React.FC<HTMLPreviewProps> = ({ content, filePath, hideToolba
         )}
 
         {/* 右侧：HTML 预览 */}
-        <div className={`${editMode ? 'flex-1' : 'w-full'} overflow-auto bg-white`}>
-          <iframe ref={iframeRef} className='w-full h-full border-0' sandbox='allow-scripts allow-same-origin' title='HTML Preview' />
+        <div className={`${editMode ? "flex-1" : "w-full"} overflow-auto bg-white`}>
+          <iframe
+            ref={iframeRef}
+            className="w-full h-full border-0"
+            sandbox="allow-scripts allow-same-origin"
+            title="HTML Preview"
+          />
         </div>
       </div>
 
       {/* 右键菜单 */}
       {contextMenu && (
         <div
-          className='fixed bg-bg-1 border border-border-base rd-6px shadow-lg py-4px z-9999'
+          className="fixed bg-bg-1 border border-border-base rd-6px shadow-lg py-4px z-9999"
           style={{
             left: contextMenu.x,
             top: contextMenu.y,
           }}
           onClick={(e) => e.stopPropagation()}
         >
-          <div className='px-12px py-6px text-13px text-t-primary hover:bg-bg-2 cursor-pointer transition-colors' onClick={() => handleCopyHTML(contextMenu.element.html)}>
-            📋 {t('preview.html.copyElementHtml')}
+          <div
+            className="px-12px py-6px text-13px text-t-primary hover:bg-bg-2 cursor-pointer transition-colors"
+            onClick={() => handleCopyHTML(contextMenu.element.html)}
+          >
+            📋 {t("preview.html.copyElementHtml")}
           </div>
           <div
-            className='px-12px py-6px text-13px text-t-primary hover:bg-bg-2 cursor-pointer transition-colors'
+            className="px-12px py-6px text-13px text-t-primary hover:bg-bg-2 cursor-pointer transition-colors"
             onClick={() => {
-              console.log('[HTMLPreview] Element info:', contextMenu.element);
-              messageApi.info(t('preview.html.printedToConsole'));
+              console.log("[HTMLPreview] Element info:", contextMenu.element);
+              messageApi.info(t("preview.html.printedToConsole"));
               setContextMenu(null);
             }}
           >
-            🔍 {t('preview.html.viewElementInfo')}
+            🔍 {t("preview.html.viewElementInfo")}
           </div>
         </div>
       )}

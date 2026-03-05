@@ -15,15 +15,15 @@
  * renderer process conversion needs to the main process conversion service via IPC
  */
 
-import { ipcBridge } from '@/common';
-import type { DocumentConversionTarget } from '@/common/types/conversion';
-import path from 'path';
-import { conversionService } from '../services/conversionService';
+import { ipcBridge } from "@/common";
+import type { DocumentConversionTarget } from "@/common/types/conversion";
+import path from "path";
+import { conversionService } from "../services/conversionService";
 
 // 支持的文件扩展名集合 / Supported file extension sets
-const WORD_EXTENSIONS = new Set(['.doc', '.docx']); // Word 文档扩展名 / Word document extensions
-const EXCEL_EXTENSIONS = new Set(['.xls', '.xlsx']); // Excel 工作簿扩展名 / Excel workbook extensions
-const PPT_EXTENSIONS = new Set(['.ppt', '.pptx']); // PowerPoint 演示文稿扩展名 / PowerPoint presentation extensions
+const WORD_EXTENSIONS = new Set([".doc", ".docx"]); // Word 文档扩展名 / Word document extensions
+const EXCEL_EXTENSIONS = new Set([".xls", ".xlsx"]); // Excel 工作簿扩展名 / Excel workbook extensions
+const PPT_EXTENSIONS = new Set([".ppt", ".pptx"]); // PowerPoint 演示文稿扩展名 / PowerPoint presentation extensions
 
 /**
  * 生成不支持的转换结果
@@ -73,26 +73,26 @@ const ensureExtension = (filePath: string, allowed: Set<string>) => {
 export function initDocumentBridge(): void {
   ipcBridge.document.convert.provider(async ({ filePath, to }) => {
     switch (to) {
-      case 'markdown': {
+      case "markdown": {
         // Word 文档转 Markdown / Word document to Markdown
         if (!ensureExtension(filePath, WORD_EXTENSIONS)) {
-          return unsupportedResult(to, 'Only Word documents can be converted to markdown');
+          return unsupportedResult(to, "Only Word documents can be converted to markdown");
         }
         const result = await conversionService.wordToMarkdown(filePath);
         return { to, result };
       }
-      case 'excel-json': {
+      case "excel-json": {
         // Excel 工作簿转 JSON / Excel workbook to JSON
         if (!ensureExtension(filePath, EXCEL_EXTENSIONS)) {
-          return unsupportedResult(to, 'Only Excel workbooks can be converted to JSON');
+          return unsupportedResult(to, "Only Excel workbooks can be converted to JSON");
         }
         const result = await conversionService.excelToJson(filePath);
         return { to, result };
       }
-      case 'ppt-json': {
+      case "ppt-json": {
         // PowerPoint 演示文稿转 JSON / PowerPoint presentation to JSON
         if (!ensureExtension(filePath, PPT_EXTENSIONS)) {
-          return unsupportedResult(to, 'Only PowerPoint files can be converted to JSON');
+          return unsupportedResult(to, "Only PowerPoint files can be converted to JSON");
         }
         const result = await conversionService.pptToJson(filePath);
         return { to, result };

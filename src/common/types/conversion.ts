@@ -60,7 +60,7 @@ export interface ConversionServiceApi {
 }
 
 // 文档转换目标格式 / Supported document conversion targets
-export type DocumentConversionTarget = 'markdown' | 'excel-json' | 'ppt-json';
+export type DocumentConversionTarget = "markdown" | "excel-json" | "ppt-json";
 
 // 统一的文档转换请求参数 / Unified document conversion request payload
 export interface DocumentConversionRequest {
@@ -69,4 +69,7 @@ export interface DocumentConversionRequest {
 }
 
 // 根据目标格式返回不同的数据类型 / Result payload differs per target format
-export type DocumentConversionResponse = { to: 'markdown'; result: ConversionResult<string> } | { to: 'excel-json'; result: ConversionResult<ExcelWorkbookData> } | { to: 'ppt-json'; result: ConversionResult<PPTJsonData> };
+export type DocumentConversionResponse =
+  | { to: "markdown"; result: ConversionResult<string> }
+  | { to: "excel-json"; result: ConversionResult<ExcelWorkbookData> }
+  | { to: "ppt-json"; result: ConversionResult<PPTJsonData> };

@@ -4,19 +4,19 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type Database from 'better-sqlite3';
+import type Database from "better-sqlite3";
 
 /**
  * Initialize database schema with all tables and indexes
  */
 export function initSchema(db: Database.Database): void {
   // Enable foreign keys
-  db.pragma('foreign_keys = ON');
+  db.pragma("foreign_keys = ON");
   // Enable Write-Ahead Logging for better performance
   try {
-    db.pragma('journal_mode = WAL');
+    db.pragma("journal_mode = WAL");
   } catch (error) {
-    console.warn('[Database] Failed to enable WAL mode, using default journal mode:', error);
+    console.warn("[Database] Failed to enable WAL mode, using default journal mode:", error);
     // Continue with default journal mode if WAL fails
   }
 
@@ -80,7 +80,7 @@ export function initSchema(db: Database.Database): void {
     CREATE INDEX IF NOT EXISTS idx_messages_conversation_created ON messages(conversation_id, created_at);
   `);
 
-  console.log('[Database] Schema initialized successfully');
+  console.log("[Database] Schema initialized successfully");
 }
 
 /**
@@ -89,7 +89,7 @@ export function initSchema(db: Database.Database): void {
  */
 export function getDatabaseVersion(db: Database.Database): number {
   try {
-    const result = db.pragma('user_version', { simple: true }) as number;
+    const result = db.pragma("user_version", { simple: true }) as number;
     return result;
   } catch {
     return 0;

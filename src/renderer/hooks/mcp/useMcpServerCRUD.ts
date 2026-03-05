@@ -1,25 +1,41 @@
-import type React from 'react';
-import { useCallback } from 'react';
-import { useTranslation } from 'react-i18next';
-import { ConfigStorage } from '@/common/storage';
-import type { IMcpServer } from '@/common/storage';
+import type React from "react";
+import { useCallback } from "react";
+import { useTranslation } from "react-i18next";
+import { ConfigStorage } from "@/common/storage";
+import type { IMcpServer } from "@/common/storage";
 
 /**
  * MCP服务器CRUD操作Hook
  * 处理MCP服务器的增加、编辑、删除、启用/禁用等操作
  */
-export const useMcpServerCRUD = (mcpServers: IMcpServer[], saveMcpServers: (serversOrUpdater: IMcpServer[] | ((prev: IMcpServer[]) => IMcpServer[])) => Promise<void>, syncMcpToAgents: (server: IMcpServer, skipRecheck?: boolean) => Promise<void>, removeMcpFromAgents: (serverName: string, successMessage?: string, transportType?: string) => Promise<void>, checkSingleServerInstallStatus: (serverName: string) => Promise<void>, setAgentInstallStatus: React.Dispatch<React.SetStateAction<Record<string, string[]>>>, message: ReturnType<typeof import('@arco-design/web-react').Message.useMessage>[0]) => {
+export const useMcpServerCRUD = (
+  mcpServers: IMcpServer[],
+  saveMcpServers: (
+    serversOrUpdater: IMcpServer[] | ((prev: IMcpServer[]) => IMcpServer[]),
+  ) => Promise<void>,
+  syncMcpToAgents: (server: IMcpServer, skipRecheck?: boolean) => Promise<void>,
+  removeMcpFromAgents: (
+    serverName: string,
+    successMessage?: string,
+    transportType?: string,
+  ) => Promise<void>,
+  checkSingleServerInstallStatus: (serverName: string) => Promise<void>,
+  setAgentInstallStatus: React.Dispatch<React.SetStateAction<Record<string, string[]>>>,
+  message: ReturnType<typeof import("@arco-design/web-react").Message.useMessage>[0],
+) => {
   const { t } = useTranslation();
 
   // 添加MCP服务器
   const handleAddMcpServer = useCallback(
-    async (serverData: Omit<IMcpServer, 'id' | 'createdAt' | 'updatedAt'>) => {
+    async (serverData: Omit<IMcpServer, "id" | "createdAt" | "updatedAt">) => {
       const now = Date.now();
       let serverToSync: IMcpServer | null = null;
 
       // 使用函数式更新，避免闭包问题
       await saveMcpServers((prevServers) => {
-        const existingServerIndex = prevServers.findIndex((server) => server.name === serverData.name);
+        const existingServerIndex = prevServers.findIndex(
+          (server) => server.name === serverData.name,
+        );
 
         if (existingServerIndex !== -1) {
           // 如果存在同名服务器，更新现有服务器
@@ -52,12 +68,12 @@ export const useMcpServerCRUD = (mcpServers: IMcpServer[], saveMcpServers: (serv
       // 返回新添加/更新的服务器，用于后续的连接测试
       return serverToSync;
     },
-    [saveMcpServers, syncMcpToAgents, message, t, checkSingleServerInstallStatus]
+    [saveMcpServers, syncMcpToAgents, message, t, checkSingleServerInstallStatus],
   );
 
   // 批量导入MCP服务器
   const handleBatchImportMcpServers = useCallback(
-    async (serversData: Omit<IMcpServer, 'id' | 'createdAt' | 'updatedAt'>[]) => {
+    async (serversData: Omit<IMcpServer, "id" | "createdAt" | "updatedAt">[]) => {
       const now = Date.now();
       const addedServers: IMcpServer[] = [];
 
@@ -66,7 +82,9 @@ export const useMcpServerCRUD = (mcpServers: IMcpServer[], saveMcpServers: (serv
         const updatedServers = [...prevServers];
 
         serversData.forEach((serverData, index) => {
-          const existingServerIndex = updatedServers.findIndex((server) => server.name === serverData.name);
+          const existingServerIndex = updatedServers.findIndex(
+            (server) => server.name === serverData.name,
+          );
 
           if (existingServerIndex !== -1) {
             // 如果存在同名服务器，更新现有服务器
@@ -101,12 +119,15 @@ export const useMcpServerCRUD = (mcpServers: IMcpServer[], saveMcpServers: (serv
       // 返回新添加的服务器列表，用于后续的连接测试
       return addedServers;
     },
-    [saveMcpServers, syncMcpToAgents, message, t, checkSingleServerInstallStatus]
+    [saveMcpServers, syncMcpToAgents, message, t, checkSingleServerInstallStatus],
   );
 
   // 编辑MCP服务器
   const handleEditMcpServer = useCallback(
-    async (editingMcpServer: IMcpServer | undefined, serverData: Omit<IMcpServer, 'id' | 'createdAt' | 'updatedAt'>): Promise<IMcpServer | undefined> => {
+    async (
+      editingMcpServer: IMcpServer | undefined,
+      serverData: Omit<IMcpServer, "id" | "createdAt" | "updatedAt">,
+    ): Promise<IMcpServer | undefined> => {
       if (!editingMcpServer) return undefined;
 
       let updatedServer: IMcpServer | undefined;
@@ -119,17 +140,19 @@ export const useMcpServerCRUD = (mcpServers: IMcpServer[], saveMcpServers: (serv
           updatedAt: Date.now(),
         };
 
-        return prevServers.map((server) => (server.id === editingMcpServer.id ? updatedServer : server));
+        return prevServers.map((server) =>
+          server.id === editingMcpServer.id ? updatedServer : server,
+        );
       });
 
-      message.success(t('settings.mcpImportSuccess'));
+      message.success(t("settings.mcpImportSuccess"));
       // 编辑后立即检查该服务器的安装状态（仅安装状态）
       setTimeout(() => void checkSingleServerInstallStatus(serverData.name), 100);
 
       // 返回更新后的服务器对象，用于后续的连接测试
       return updatedServer;
     },
-    [saveMcpServers, message, t, checkSingleServerInstallStatus]
+    [saveMcpServers, message, t, checkSingleServerInstallStatus],
   );
 
   // 删除MCP服务器
@@ -152,7 +175,7 @@ export const useMcpServerCRUD = (mcpServers: IMcpServer[], saveMcpServers: (serv
         const updated = { ...prev };
         delete updated[targetServer.name];
         // 同时更新本地存储
-        void ConfigStorage.set('mcp.agentInstallStatus', updated).catch(() => {
+        void ConfigStorage.set("mcp.agentInstallStatus", updated).catch(() => {
           // Handle storage error silently
         });
         return updated;
@@ -161,15 +184,19 @@ export const useMcpServerCRUD = (mcpServers: IMcpServer[], saveMcpServers: (serv
       try {
         // 如果服务器是启用状态，需要从所有agents中删除MCP配置
         if (targetServer.enabled) {
-          await removeMcpFromAgents(targetServer.name, t('settings.mcpDeletedWithCleanup'), targetServer.transport.type);
+          await removeMcpFromAgents(
+            targetServer.name,
+            t("settings.mcpDeletedWithCleanup"),
+            targetServer.transport.type,
+          );
         } else {
-          message.success(t('settings.mcpDeleted'));
+          message.success(t("settings.mcpDeleted"));
         }
       } catch (error) {
-        message.error(t('settings.mcpDeleteError'));
+        message.error(t("settings.mcpDeleteError"));
       }
     },
-    [saveMcpServers, setAgentInstallStatus, removeMcpFromAgents, message, t]
+    [saveMcpServers, setAgentInstallStatus, removeMcpFromAgents, message, t],
   );
 
   // 启用/禁用MCP服务器
@@ -208,17 +235,25 @@ export const useMcpServerCRUD = (mcpServers: IMcpServer[], saveMcpServers: (serv
             const updated = { ...prev };
             delete updated[targetServer.name];
             // 同时更新本地存储
-            void ConfigStorage.set('mcp.agentInstallStatus', updated).catch(() => {
+            void ConfigStorage.set("mcp.agentInstallStatus", updated).catch(() => {
               // Handle storage error silently
             });
             return updated;
           });
         }
       } catch (error) {
-        message.error(enabled ? t('settings.mcpSyncError') : t('settings.mcpRemoveError'));
+        message.error(enabled ? t("settings.mcpSyncError") : t("settings.mcpRemoveError"));
       }
     },
-    [saveMcpServers, syncMcpToAgents, removeMcpFromAgents, checkSingleServerInstallStatus, setAgentInstallStatus, message, t]
+    [
+      saveMcpServers,
+      syncMcpToAgents,
+      removeMcpFromAgents,
+      checkSingleServerInstallStatus,
+      setAgentInstallStatus,
+      message,
+      t,
+    ],
   );
 
   return {

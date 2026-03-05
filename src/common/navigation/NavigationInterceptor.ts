@@ -4,28 +4,36 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { IResponseMessage } from '@/common/ipcBridge';
-import type { PreviewContentType } from '@/common/types/preview';
-import { uuid } from '@/common/utils';
+import type { IResponseMessage } from "@/common/ipcBridge";
+import type { PreviewContentType } from "@/common/types/preview";
+import { uuid } from "@/common/utils";
 
 /**
  * Navigation tools that should be intercepted for preview
  * 需要拦截到预览面板的导航工具
  */
-export const NAVIGATION_TOOLS = ['navigate_page', 'new_page'] as const;
+export const NAVIGATION_TOOLS = ["navigate_page", "new_page"] as const;
 export type NavigationToolName = (typeof NAVIGATION_TOOLS)[number];
 
 /**
  * Chrome DevTools MCP server identifiers
  * Chrome DevTools MCP 服务器标识符
  */
-export const CHROME_DEVTOOLS_IDENTIFIERS = ['chrome-devtools', 'chrome_devtools', 'chromedevtools'] as const;
+export const CHROME_DEVTOOLS_IDENTIFIERS = [
+  "chrome-devtools",
+  "chrome_devtools",
+  "chromedevtools",
+] as const;
 
 /**
  * Common MCP prefixes to strip when normalizing tool names
  * 需要去除的常见 MCP 前缀
  */
-export const MCP_PREFIXES = ['mcp__chrome-devtools__', 'chrome-devtools__', 'chrome-devtools.'] as const;
+export const MCP_PREFIXES = [
+  "mcp__chrome-devtools__",
+  "chrome-devtools__",
+  "chrome-devtools.",
+] as const;
 
 /**
  * Preview open event data structure
@@ -75,7 +83,7 @@ export class NavigationInterceptor {
    * 规范化工具名称，去除 MCP 前缀和后缀
    */
   static normalizeToolName(toolName: string): string {
-    if (!toolName) return '';
+    if (!toolName) return "";
 
     let normalized = toolName;
 
@@ -88,12 +96,12 @@ export class NavigationInterceptor {
     }
 
     // Handle double underscore format (e.g., "mcp__server__tool")
-    if (normalized.includes('__')) {
-      normalized = normalized.split('__').pop() || normalized;
+    if (normalized.includes("__")) {
+      normalized = normalized.split("__").pop() || normalized;
     }
 
     // Remove trailing parentheses like "(chrome-devtools MCP Server)"
-    normalized = normalized.replace(/\s*\([^)]*\)\s*$/, '').trim();
+    normalized = normalized.replace(/\s*\([^)]*\)\s*$/, "").trim();
 
     return normalized.toLowerCase();
   }
@@ -119,7 +127,7 @@ export class NavigationInterceptor {
    * - { server: "chrome-devtools", tool: "navigate_page" }
    */
   static isNavigationTool(data: NavigationToolData | string): boolean {
-    if (typeof data === 'string') {
+    if (typeof data === "string") {
       // Simple string check
       const toolName = data;
       const isChromeDevTools = this.isChromeDevToolsIdentifier(toolName);
@@ -129,8 +137,8 @@ export class NavigationInterceptor {
     }
 
     // Object-based check
-    const { toolName = '', server = '' } = data;
-    const fullName = toolName || '';
+    const { toolName = "", server = "" } = data;
+    const fullName = toolName || "";
 
     // Check server field
     const serverIsChromeDevTools = this.isChromeDevToolsIdentifier(server);
@@ -159,7 +167,7 @@ export class NavigationInterceptor {
    */
   static extractUrl(data: NavigationToolData): string | null {
     // 1. Direct url field
-    if (data.url && typeof data.url === 'string') {
+    if (data.url && typeof data.url === "string") {
       return data.url;
     }
 
@@ -178,7 +186,7 @@ export class NavigationInterceptor {
     // 4. Check content array for URL pattern
     if (data.content && Array.isArray(data.content)) {
       for (const item of data.content) {
-        const text = item.text || item.content?.text || '';
+        const text = item.text || item.content?.text || "";
         if (text) {
           const urlMatch = text.match(/https?:\/\/[^\s<>"]+/i);
           if (urlMatch) {
@@ -204,13 +212,13 @@ export class NavigationInterceptor {
    * 从具有常见 URL 字段名的对象中提取 URL
    */
   private static extractUrlFromObject(obj: Record<string, unknown>): string | null {
-    const urlFields = ['url', 'URL', 'uri', 'URI', 'href', 'target'];
+    const urlFields = ["url", "URL", "uri", "URI", "href", "target"];
 
     for (const field of urlFields) {
       const value = obj[field];
-      if (value && typeof value === 'string') {
+      if (value && typeof value === "string") {
         // Validate it looks like a URL
-        if (value.startsWith('http://') || value.startsWith('https://')) {
+        if (value.startsWith("http://") || value.startsWith("https://")) {
           return value;
         }
       }
@@ -223,14 +231,18 @@ export class NavigationInterceptor {
    * Create a preview_open response message
    * 创建 preview_open 响应消息
    */
-  static createPreviewMessage(url: string, conversationId: string, title?: string): IResponseMessage {
+  static createPreviewMessage(
+    url: string,
+    conversationId: string,
+    title?: string,
+  ): IResponseMessage {
     return {
-      type: 'preview_open',
+      type: "preview_open",
       conversation_id: conversationId,
       msg_id: uuid(),
       data: {
         content: url,
-        contentType: 'url' as PreviewContentType,
+        contentType: "url" as PreviewContentType,
         metadata: {
           title: title || `Browser: ${url}`,
         },

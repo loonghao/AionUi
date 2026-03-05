@@ -67,11 +67,11 @@ openclaw configure --section channels
 ```json5
 {
   gateway: {
-    mode: 'local', // 或 "remote"
+    mode: "local", // 或 "remote"
     port: 18789,
-    bind: '127.0.0.1', // 或 "0.0.0.0"
+    bind: "127.0.0.1", // 或 "0.0.0.0"
     auth: {
-      token: 'your-token-here',
+      token: "your-token-here",
     },
   },
 }
@@ -83,17 +83,17 @@ openclaw configure --section channels
 {
   agents: {
     defaults: {
-      workspace: '~/.openclaw/workspace',
-      model: 'anthropic/claude-opus-4-5',
+      workspace: "~/.openclaw/workspace",
+      model: "anthropic/claude-opus-4-5",
       // 其他默认设置
     },
     list: [
       {
-        id: 'main',
+        id: "main",
         identity: {
-          name: 'OpenClaw',
-          emoji: '🦞',
-          avatar: 'avatars/openclaw.png',
+          name: "OpenClaw",
+          emoji: "🦞",
+          avatar: "avatars/openclaw.png",
         },
       },
     ],
@@ -107,14 +107,14 @@ openclaw configure --section channels
 {
   channels: {
     telegram: {
-      botToken: 'your-token',
-      allowFrom: ['+1234567890'],
+      botToken: "your-token",
+      allowFrom: ["+1234567890"],
       dm: {
-        policy: 'pairing', // 或 "open"
+        policy: "pairing", // 或 "open"
       },
     },
     whatsapp: {
-      allowFrom: ['+1234567890'],
+      allowFrom: ["+1234567890"],
     },
   },
 }

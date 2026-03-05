@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useCallback } from 'react';
-import SettingsModal, { type SettingTab } from './index';
+import React, { useState, useCallback } from "react";
+import SettingsModal, { type SettingTab } from "./index";
 
 /**
  * 设置弹窗 Hook 返回值类型 / Settings modal hook return type
@@ -46,7 +46,7 @@ export const useSettingsModal = (): UseSettingsModalReturn => {
   // 弹窗可见状态 / Modal visibility state
   const [visible, setVisible] = useState(false);
   // 默认选中的标签页 / Default selected tab
-  const [defaultTab, setDefaultTab] = useState<SettingTab>('gemini');
+  const [defaultTab, setDefaultTab] = useState<SettingTab>("gemini");
 
   /**
    * 打开设置弹窗 / Open settings modal
@@ -67,7 +67,9 @@ export const useSettingsModal = (): UseSettingsModalReturn => {
   }, []);
 
   // 渲染设置弹窗组件 / Render settings modal component
-  const settingsModal = <SettingsModal visible={visible} onCancel={closeSettings} defaultTab={defaultTab} />;
+  const settingsModal = (
+    <SettingsModal visible={visible} onCancel={closeSettings} defaultTab={defaultTab} />
+  );
 
   return {
     openSettings,

@@ -16,13 +16,13 @@
  */
 export const addImportantToAll = (css: string): string => {
   if (!css || !css.trim()) {
-    return '';
+    return "";
   }
 
   return css.replace(/([a-zA-Z-]+)\s*:\s*([^;!}]+);/g, (match, property, value) => {
     const trimmedValue = value.trim();
     // 如果已经包含 !important，不再添加
-    if (trimmedValue.endsWith('!important')) {
+    if (trimmedValue.endsWith("!important")) {
       return match;
     }
     // 添加 !important
@@ -37,7 +37,7 @@ export const addImportantToAll = (css: string): string => {
  */
 export const wrapCustomCss = (css: string): string => {
   if (!css || !css.trim()) {
-    return '';
+    return "";
   }
 
   return `
@@ -75,15 +75,15 @@ export const validateCss = (css: string): { valid: boolean; error?: string } => 
     if (openBraces !== closeBraces) {
       return {
         valid: false,
-        error: 'Unmatched braces: { and } count does not match',
+        error: "Unmatched braces: { and } count does not match",
       };
     }
 
     // 检查是否有基本的 CSS 结构
-    if (openBraces > 0 && !css.includes(':')) {
+    if (openBraces > 0 && !css.includes(":")) {
       return {
         valid: false,
-        error: 'Invalid CSS: no property declarations found',
+        error: "Invalid CSS: no property declarations found",
       };
     }
 
@@ -91,7 +91,7 @@ export const validateCss = (css: string): { valid: boolean; error?: string } => 
   } catch (error) {
     return {
       valid: false,
-      error: error instanceof Error ? error.message : 'Unknown error',
+      error: error instanceof Error ? error.message : "Unknown error",
     };
   }
 };

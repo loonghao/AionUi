@@ -9,5 +9,5 @@
 export {};
 
 if (require.main === module) {
-  console.log('OpenClaw Gateway worker started');
+  console.log("OpenClaw Gateway worker started");
 }

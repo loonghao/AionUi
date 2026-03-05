@@ -4,22 +4,31 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { ipcBridge } from '@/common';
-import type { IResponseMessage } from '@/common/ipcBridge';
-import type { IProvider } from '@/common/storage';
-import { uuid } from '@/common/utils';
-import { Button, Divider, Message, Popconfirm, Collapse, Tag, Switch, Tooltip } from '@arco-design/web-react';
-import { DeleteFour, Info, Minus, Plus, Write, Heartbeat } from '@icon-park/react';
-import React, { useEffect, useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import useSWR from 'swr';
-import AddModelModal from '@/renderer/pages/settings/components/AddModelModal';
-import AddPlatformModal from '@/renderer/pages/settings/components/AddPlatformModal';
-import { isNewApiPlatform, NEW_API_PROTOCOL_OPTIONS } from '@/renderer/config/modelPlatforms';
-import EditModeModal from '@/renderer/pages/settings/components/EditModeModal';
-import AionScrollArea from '@/renderer/components/base/AionScrollArea';
-import { useSettingsViewMode } from '../settingsViewContext';
-import { consumePendingDeepLink } from '@/renderer/hooks/useDeepLink';
+import { ipcBridge } from "@/common";
+import type { IResponseMessage } from "@/common/ipcBridge";
+import type { IProvider } from "@/common/storage";
+import { uuid } from "@/common/utils";
+import {
+  Button,
+  Divider,
+  Message,
+  Popconfirm,
+  Collapse,
+  Tag,
+  Switch,
+  Tooltip,
+} from "@arco-design/web-react";
+import { DeleteFour, Info, Minus, Plus, Write, Heartbeat } from "@icon-park/react";
+import React, { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
+import useSWR from "swr";
+import AddModelModal from "@/renderer/pages/settings/components/AddModelModal";
+import AddPlatformModal from "@/renderer/pages/settings/components/AddPlatformModal";
+import { isNewApiPlatform, NEW_API_PROTOCOL_OPTIONS } from "@/renderer/config/modelPlatforms";
+import EditModeModal from "@/renderer/pages/settings/components/EditModeModal";
+import AionScrollArea from "@/renderer/components/base/AionScrollArea";
+import { useSettingsViewMode } from "../settingsViewContext";
+import { consumePendingDeepLink } from "@/renderer/hooks/useDeepLink";
 
 /**
  * 获取协议显示标签颜色
@@ -27,13 +36,13 @@ import { consumePendingDeepLink } from '@/renderer/hooks/useDeepLink';
  */
 const getProtocolColor = (protocol: string): string => {
   switch (protocol) {
-    case 'gemini':
-      return 'blue';
-    case 'anthropic':
-      return 'orange';
-    case 'openai':
+    case "gemini":
+      return "blue";
+    case "anthropic":
+      return "orange";
+    case "openai":
     default:
-      return 'green';
+      return "green";
   }
 };
 
@@ -42,7 +51,7 @@ const getProtocolColor = (protocol: string): string => {
  * Get protocol display name
  */
 const getProtocolLabel = (protocol: string): string => {
-  return NEW_API_PROTOCOL_OPTIONS.find((p) => p.value === protocol)?.label || 'OpenAI';
+  return NEW_API_PROTOCOL_OPTIONS.find((p) => p.value === protocol)?.label || "OpenAI";
 };
 
 /**
@@ -71,7 +80,9 @@ const getProviderState = (platform: IProvider): { checked: boolean; indeterminat
     return { checked: true, indeterminate: false };
   }
 
-  const enabledCount = platform.model.filter((model) => platform.modelEnabled?.[model] !== false).length;
+  const enabledCount = platform.model.filter(
+    (model) => platform.modelEnabled?.[model] !== false,
+  ).length;
   const totalCount = platform.model.length;
 
   if (enabledCount === 0) {
@@ -97,10 +108,10 @@ const HEALTH_CHECK_FIRST_RESPONSE_TIMEOUT_MS = 30000;
 const ModelModalContent: React.FC = () => {
   const { t } = useTranslation();
   const viewMode = useSettingsViewMode();
-  const isPageMode = viewMode === 'page';
+  const isPageMode = viewMode === "page";
   const [collapseKey, setCollapseKey] = useState<Record<string, boolean>>({});
   const [healthCheckLoading, setHealthCheckLoading] = useState<Record<string, boolean>>({});
-  const { data, mutate } = useSWR('model.config', () => {
+  const { data, mutate } = useSWR("model.config", () => {
     return ipcBridge.mode.getModelConfig.invoke().then((data) => {
       if (!data) return [];
       return data;
@@ -128,13 +139,15 @@ const ModelModalContent: React.FC = () => {
       .catch((error) => {
         // 保存失败，回滚到服务器数据
         void mutate();
-        console.error('Failed to save model config:', error);
-        message.error(t('settings.saveModelConfigFailed'));
+        console.error("Failed to save model config:", error);
+        message.error(t("settings.saveModelConfigFailed"));
       });
   };
 
   const updatePlatform = (platform: IProvider, success: () => void) => {
-    const newData = (data || []).map((item) => (item.id === platform.id ? { ...item, ...platform } : item));
+    const newData = (data || []).map((item) =>
+      item.id === platform.id ? { ...item, ...platform } : item,
+    );
     // 如果是新平台，添加到列表
     if (!newData.find((item) => item.id === platform.id)) {
       newData.push(platform);
@@ -194,14 +207,14 @@ const ModelModalContent: React.FC = () => {
 
       // 1. 创建临时对话
       const conversation = await ipcBridge.conversation.create.invoke({
-        type: 'gemini',
+        type: "gemini",
         name: `[Health Check] ${platform.name} - ${modelName}`,
         model: {
           ...platform,
           useModel: modelName,
         },
         extra: {
-          workspace: '',
+          workspace: "",
           isHealthCheck: true,
         },
       });
@@ -209,76 +222,109 @@ const ModelModalContent: React.FC = () => {
       tempConversationId = conversation.id;
 
       // 2. 设置响应监听器
-      const responsePromise = new Promise<{ success: boolean; error?: string; latency: number }>((resolve, reject) => {
-        let hasResolved = false;
-        let requestTraceData: { backend?: string; modelId?: string; provider?: string } | null = null;
+      const responsePromise = new Promise<{ success: boolean; error?: string; latency: number }>(
+        (resolve, reject) => {
+          let hasResolved = false;
+          let requestTraceData: { backend?: string; modelId?: string; provider?: string } | null =
+            null;
 
-        const resolveOnce = (result: { success: boolean; error?: string; latency: number }) => {
-          if (hasResolved) return;
-          hasResolved = true;
-          resolve(result);
-        };
-
-        const responseListener = (msg: IResponseMessage) => {
-          if (msg.conversation_id !== tempConversationId) return;
-
-          // 输出 request_trace 到 console（使用与对话相同的格式）
-          if (msg.type === 'request_trace') {
-            const trace = msg.data as Record<string, unknown>;
-            requestTraceData = {
-              backend: String(trace.backend || ''),
-              modelId: String(trace.modelId || ''),
-              provider: String(trace.platform || trace.provider || ''),
-            };
-            const displayName = requestTraceData.backend || requestTraceData.provider || 'unknown';
-            console.log(`%c[Health Check]%c ➡️ START | ${displayName} → ${trace.modelId} | ${new Date().toISOString()}`, 'color: #1890ff; font-weight: bold', 'color: inherit', trace);
-          }
-
-          // 监听完成事件
-          if (msg.type === 'error') {
-            const duration = Date.now() - startTime;
-            // 输出错误链路到 console
-            if (requestTraceData) {
-              const displayName = requestTraceData.backend || requestTraceData.provider || 'unknown';
-              console.log(`%c[Health Check]%c ❌ ERROR | ${displayName} → ${requestTraceData.modelId} | ${duration}ms | ${new Date().toISOString()}`, 'color: #ff4d4f; font-weight: bold', 'color: inherit', msg.data);
-            }
-            resolveOnce({ success: false, error: (msg.data as { error?: string } | undefined)?.error || 'Unknown error', latency: duration });
-            return;
-          }
-
-          if (msg.type === 'start') {
-            return;
-          }
-
-          // 以“首个响应包到达时间”作为健康判定，避免流式完成时间过长影响检测
-          const duration = Date.now() - startTime;
-          if (requestTraceData) {
-            const displayName = requestTraceData.backend || requestTraceData.provider || 'unknown';
-            console.log(`%c[Health Check]%c ✅ FIRST_RESPONSE | ${displayName} → ${requestTraceData.modelId} | ${duration}ms | ${new Date().toISOString()}`, 'color: #52c41a; font-weight: bold', 'color: inherit');
-          }
-          resolveOnce({ success: true, latency: duration });
-        };
-
-        unsubscribe = responseStream.on(responseListener);
-
-        // 首个响应超时（默认 30s）
-        timeoutId = setTimeout(() => {
-          if (!hasResolved) {
+          const resolveOnce = (result: { success: boolean; error?: string; latency: number }) => {
+            if (hasResolved) return;
             hasResolved = true;
-            if (requestTraceData) {
-              const duration = Date.now() - startTime;
-              const displayName = requestTraceData.backend || requestTraceData.provider || 'unknown';
-              console.log(`%c[Health Check]%c ⏱️ FIRST_RESPONSE_TIMEOUT | ${displayName} → ${requestTraceData.modelId} | ${duration}ms | ${new Date().toISOString()}`, 'color: #faad14; font-weight: bold', 'color: inherit');
+            resolve(result);
+          };
+
+          const responseListener = (msg: IResponseMessage) => {
+            if (msg.conversation_id !== tempConversationId) return;
+
+            // 输出 request_trace 到 console（使用与对话相同的格式）
+            if (msg.type === "request_trace") {
+              const trace = msg.data as Record<string, unknown>;
+              requestTraceData = {
+                backend: String(trace.backend || ""),
+                modelId: String(trace.modelId || ""),
+                provider: String(trace.platform || trace.provider || ""),
+              };
+              const displayName =
+                requestTraceData.backend || requestTraceData.provider || "unknown";
+              console.log(
+                `%c[Health Check]%c ➡️ START | ${displayName} → ${trace.modelId} | ${new Date().toISOString()}`,
+                "color: #1890ff; font-weight: bold",
+                "color: inherit",
+                trace,
+              );
             }
-            reject(new Error(`Health check timeout (${HEALTH_CHECK_FIRST_RESPONSE_TIMEOUT_MS / 1000}s to first response)`));
-          }
-        }, HEALTH_CHECK_FIRST_RESPONSE_TIMEOUT_MS);
-      });
+
+            // 监听完成事件
+            if (msg.type === "error") {
+              const duration = Date.now() - startTime;
+              // 输出错误链路到 console
+              if (requestTraceData) {
+                const displayName =
+                  requestTraceData.backend || requestTraceData.provider || "unknown";
+                console.log(
+                  `%c[Health Check]%c ❌ ERROR | ${displayName} → ${requestTraceData.modelId} | ${duration}ms | ${new Date().toISOString()}`,
+                  "color: #ff4d4f; font-weight: bold",
+                  "color: inherit",
+                  msg.data,
+                );
+              }
+              resolveOnce({
+                success: false,
+                error: (msg.data as { error?: string } | undefined)?.error || "Unknown error",
+                latency: duration,
+              });
+              return;
+            }
+
+            if (msg.type === "start") {
+              return;
+            }
+
+            // 以“首个响应包到达时间”作为健康判定，避免流式完成时间过长影响检测
+            const duration = Date.now() - startTime;
+            if (requestTraceData) {
+              const displayName =
+                requestTraceData.backend || requestTraceData.provider || "unknown";
+              console.log(
+                `%c[Health Check]%c ✅ FIRST_RESPONSE | ${displayName} → ${requestTraceData.modelId} | ${duration}ms | ${new Date().toISOString()}`,
+                "color: #52c41a; font-weight: bold",
+                "color: inherit",
+              );
+            }
+            resolveOnce({ success: true, latency: duration });
+          };
+
+          unsubscribe = responseStream.on(responseListener);
+
+          // 首个响应超时（默认 30s）
+          timeoutId = setTimeout(() => {
+            if (!hasResolved) {
+              hasResolved = true;
+              if (requestTraceData) {
+                const duration = Date.now() - startTime;
+                const displayName =
+                  requestTraceData.backend || requestTraceData.provider || "unknown";
+                console.log(
+                  `%c[Health Check]%c ⏱️ FIRST_RESPONSE_TIMEOUT | ${displayName} → ${requestTraceData.modelId} | ${duration}ms | ${new Date().toISOString()}`,
+                  "color: #faad14; font-weight: bold",
+                  "color: inherit",
+                );
+              }
+              reject(
+                new Error(
+                  `Health check timeout (${HEALTH_CHECK_FIRST_RESPONSE_TIMEOUT_MS / 1000}s to first response)`,
+                ),
+              );
+            }
+          }, HEALTH_CHECK_FIRST_RESPONSE_TIMEOUT_MS);
+        },
+      );
 
       // 3. 发送测试消息
       await ipcBridge.conversation.sendMessage.invoke({
         conversation_id: tempConversationId,
-        input: 'ping',
+        input: "ping",
         msg_id: uuid(),
       });
 
@@ -296,7 +342,7 @@ const ModelModalContent: React.FC = () => {
           if (item.id === platform.id) {
             const modelHealth = { ...(item.modelHealth || {}) };
             modelHealth[modelName] = {
-              status: result.success ? 'healthy' : 'unhealthy',
+              status: result.success ? "healthy" : "unhealthy",
               lastCheck: Date.now(),
               latency,
               error: result.error,
@@ -312,25 +358,25 @@ const ModelModalContent: React.FC = () => {
           await mutate();
           if (result.success) {
             Message.success({
-              content: `${platform.name} - ${modelName}: ${t('common.success')} (${latency}ms)`,
+              content: `${platform.name} - ${modelName}: ${t("common.success")} (${latency}ms)`,
               duration: 3000,
             });
           } else {
             Message.error({
-              content: `${platform.name} - ${modelName}: ${t('common.failed')} - ${result.error}`,
+              content: `${platform.name} - ${modelName}: ${t("common.failed")} - ${result.error}`,
               duration: 5000,
             });
           }
         } else {
           Message.error({
-            content: saveResult.msg || t('settings.saveModelConfigFailed'),
+            content: saveResult.msg || t("settings.saveModelConfigFailed"),
             duration: 3000,
           });
         }
       } catch (saveError) {
-        console.error('Failed to save health check result:', saveError);
+        console.error("Failed to save health check result:", saveError);
         Message.error({
-          content: t('settings.saveModelConfigFailed'),
+          content: t("settings.saveModelConfigFailed"),
           duration: 3000,
         });
       }
@@ -338,7 +384,7 @@ const ModelModalContent: React.FC = () => {
       const latency = Date.now() - startTime;
       const errorMessage = error instanceof Error ? error.message : String(error);
       Message.error({
-        content: `${platform.name} - ${modelName}: ${t('common.failed')} - ${errorMessage}`,
+        content: `${platform.name} - ${modelName}: ${t("common.failed")} - ${errorMessage}`,
         duration: 5000,
       });
 
@@ -350,7 +396,7 @@ const ModelModalContent: React.FC = () => {
           if (item.id === platform.id) {
             const modelHealth = { ...(item.modelHealth || {}) };
             modelHealth[modelName] = {
-              status: 'unhealthy',
+              status: "unhealthy",
               lastCheck: Date.now(),
               latency,
               error: errorMessage,
@@ -365,7 +411,7 @@ const ModelModalContent: React.FC = () => {
           await mutate();
         }
       } catch (saveError) {
-        console.error('Failed to save health check result:', saveError);
+        console.error("Failed to save health check result:", saveError);
       }
     } finally {
       // 清理
@@ -385,11 +431,11 @@ const ModelModalContent: React.FC = () => {
     if (!data) return;
     const newData: IProvider[] = data.map((platform: IProvider) => ({
       ...platform,
-      modelHealth: undefined as IProvider['modelHealth'],
+      modelHealth: undefined as IProvider["modelHealth"],
     }));
     saveModelConfig(newData, () => {
       Message.success({
-        content: t('settings.healthStatusCleared'),
+        content: t("settings.healthStatusCleared"),
         duration: 2000,
       });
     });
@@ -424,62 +470,81 @@ const ModelModalContent: React.FC = () => {
   });
 
   return (
-    <div className='flex flex-col bg-2 rd-16px px-[12px] md:px-32px py-20px'>
+    <div className="flex flex-col bg-2 rd-16px px-[12px] md:px-32px py-20px">
       {messageContext}
       {addPlatformModalContext}
       {editModalContext}
       {addModelModalContext}
 
       {/* Header with Add Button */}
-      <div className='flex-shrink-0 border-b flex items-center justify-between mb-20px'>
-        <div className='text-14px text-t-primary'>{t('settings.model')}</div>
-        <div className='flex items-center gap-8px'>
-          <Button type='outline' shape='round' size='small' onClick={clearAllHealthData} className='rd-100px border-1 border-t-secondary'>
-            {t('settings.clearStatus')}
+      <div className="flex-shrink-0 border-b flex items-center justify-between mb-20px">
+        <div className="text-14px text-t-primary">{t("settings.model")}</div>
+        <div className="flex items-center gap-8px">
+          <Button
+            type="outline"
+            shape="round"
+            size="small"
+            onClick={clearAllHealthData}
+            className="rd-100px border-1 border-t-secondary"
+          >
+            {t("settings.clearStatus")}
           </Button>
-          <Button type='outline' shape='round' icon={<Plus size='16' />} onClick={() => addPlatformModalCtrl.open()} className='rd-100px border-1 border-t-secondary'>
-            {t('settings.addModel')}
+          <Button
+            type="outline"
+            shape="round"
+            icon={<Plus size="16" />}
+            onClick={() => addPlatformModalCtrl.open()}
+            className="rd-100px border-1 border-t-secondary"
+          >
+            {t("settings.addModel")}
           </Button>
         </div>
       </div>
 
       {/* Content Area */}
-      <AionScrollArea className='flex-1 min-h-0' disableOverflow={isPageMode}>
+      <AionScrollArea className="flex-1 min-h-0" disableOverflow={isPageMode}>
         {!data || data.length === 0 ? (
-          <div className='flex flex-col items-center justify-center py-40px'>
-            <Info theme='outline' size='48' className='text-t-secondary mb-16px' />
-            <h3 className='text-16px font-500 text-t-primary mb-8px'>{t('settings.noConfiguredModels')}</h3>
-            <p className='text-14px text-t-secondary text-center max-w-400px'>
-              {t('settings.needHelpConfigGuide')}
-              <a href='https://github.com/iOfficeAI/AionUi/wiki/LLM-Configuration' target='_blank' rel='noopener noreferrer' className='text-[rgb(var(--primary-6))] hover:text-[rgb(var(--primary-5))] underline ml-4px'>
-                {t('settings.configGuide')}
+          <div className="flex flex-col items-center justify-center py-40px">
+            <Info theme="outline" size="48" className="text-t-secondary mb-16px" />
+            <h3 className="text-16px font-500 text-t-primary mb-8px">
+              {t("settings.noConfiguredModels")}
+            </h3>
+            <p className="text-14px text-t-secondary text-center max-w-400px">
+              {t("settings.needHelpConfigGuide")}
+              <a
+                href="https://github.com/iOfficeAI/AionUi/wiki/LLM-Configuration"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[rgb(var(--primary-6))] hover:text-[rgb(var(--primary-5))] underline ml-4px"
+              >
+                {t("settings.configGuide")}
               </a>
-              {t('settings.configGuideSuffix')}
+              {t("settings.configGuideSuffix")}
             </p>
           </div>
         ) : (
-          <div className='space-y-12px'>
+          <div className="space-y-12px">
             {(data || []).map((platform: IProvider) => {
               const key = platform.id;
               const isExpanded = collapseKey[platform.id] ?? false;
               return (
                 <Collapse
-                  activeKey={isExpanded ? ['image-generation'] : []}
+                  activeKey={isExpanded ? ["image-generation"] : []}
                   onChange={(_, activeKeys) => {
-                    const expanded = activeKeys.includes('image-generation');
+                    const expanded = activeKeys.includes("image-generation");
                     setCollapseKey((prev) => ({ ...prev, [platform.id]: expanded }));
                   }}
                   key={key}
                   bordered
                 >
                   <Collapse.Item
-                    name='image-generation'
-                    className='[&_.arco-collapse-item-header-title]:flex-1'
+                    name="image-generation"
+                    className="[&_.arco-collapse-item-header-title]:flex-1"
                     header={
-                      <div className='flex items-center justify-between w-full'>
-                        <span className='text-14px text-t-primary'>{platform.name}</span>
+                      <div className="flex items-center justify-between w-full">
+                        <span className="text-14px text-t-primary">{platform.name}</span>
                         <div
-                          className='flex items-center gap-8px'
+                          className="flex items-center gap-8px"
                           onClick={(e) => {
                             e.stopPropagation();
                           }}
@@ -487,81 +552,111 @@ const ModelModalContent: React.FC = () => {
                             e.stopPropagation();
                           }}
                         >
-                          <span className='text-12px text-t-secondary'>
+                          <span className="text-12px text-t-secondary">
                             <span
-                              className='cursor-pointer hover:text-t-primary'
+                              className="cursor-pointer hover:text-t-primary"
                               onClick={() => {
                                 setCollapseKey((prev) => ({ ...prev, [platform.id]: !isExpanded }));
                               }}
                             >
-                              {t('settings.modelCount')}（{platform.model.length}）
+                              {t("settings.modelCount")}（{platform.model.length}）
                             </span>
-                            |{' '}
-                            <span className='cursor-pointer hover:text-t-primary' onClick={() => editModalCtrl.open({ data: platform })}>
-                              {t('settings.apiKeyCount')}（{getApiKeyCount(platform.apiKey)}）
+                            |{" "}
+                            <span
+                              className="cursor-pointer hover:text-t-primary"
+                              onClick={() => editModalCtrl.open({ data: platform })}
+                            >
+                              {t("settings.apiKeyCount")}（{getApiKeyCount(platform.apiKey)}）
                             </span>
                           </span>
                           {/* 供应商启用开关 / Provider enable switch */}
-                          <Switch size='small' checked={getProviderState(platform).checked} onChange={() => toggleProviderEnabled(platform)} />
-                          <Button size='mini' icon={<Plus size='14' />} onClick={() => addModelModalCtrl.open({ data: platform })} />
-                          <Popconfirm title={t('settings.deleteAllModelConfirm')} onOk={() => removePlatform(platform.id)}>
-                            <Button size='mini' icon={<Minus size='14' />} />
+                          <Switch
+                            size="small"
+                            checked={getProviderState(platform).checked}
+                            onChange={() => toggleProviderEnabled(platform)}
+                          />
+                          <Button
+                            size="mini"
+                            icon={<Plus size="14" />}
+                            onClick={() => addModelModalCtrl.open({ data: platform })}
+                          />
+                          <Popconfirm
+                            title={t("settings.deleteAllModelConfirm")}
+                            onOk={() => removePlatform(platform.id)}
+                          >
+                            <Button size="mini" icon={<Minus size="14" />} />
                           </Popconfirm>
-                          <Button size='mini' icon={<Write size='14' />} onClick={() => editModalCtrl.open({ data: platform })} />
+                          <Button
+                            size="mini"
+                            icon={<Write size="14" />}
+                            onClick={() => editModalCtrl.open({ data: platform })}
+                          />
                         </div>
                       </div>
                     }
                   >
                     {platform.model.map((model: string, index: number, arr: string[]) => {
                       const isNewApiProvider = isNewApiPlatform(platform.platform);
-                      const modelProtocol = platform.modelProtocols?.[model] || 'openai';
+                      const modelProtocol = platform.modelProtocols?.[model] || "openai";
                       const modelHealth = platform.modelHealth?.[model];
-                      const healthStatus = modelHealth?.status || 'unknown';
+                      const healthStatus = modelHealth?.status || "unknown";
 
                       return (
                         <div key={model}>
-                          <div className='flex items-center justify-between py-4px'>
-                            <div className='flex items-center gap-8px'>
+                          <div className="flex items-center justify-between py-4px">
+                            <div className="flex items-center gap-8px">
                               {/* 健康状态指示器 / Health status indicator */}
-                              {healthStatus !== 'unknown' && (
+                              {healthStatus !== "unknown" && (
                                 <Tooltip
                                   content={
                                     <div>
-                                      <div className='flex items-center gap-4px'>
-                                        <span>{healthStatus === 'healthy' ? '✅' : '❌'}</span>
-                                        <span>{healthStatus === 'healthy' ? t('common.success') : t('common.failed')}</span>
+                                      <div className="flex items-center gap-4px">
+                                        <span>{healthStatus === "healthy" ? "✅" : "❌"}</span>
+                                        <span>
+                                          {healthStatus === "healthy"
+                                            ? t("common.success")
+                                            : t("common.failed")}
+                                        </span>
                                       </div>
                                       {modelHealth?.latency && (
-                                        <div className='text-12px mt-4px'>
-                                          {t('settings.latency')}: {modelHealth.latency}ms
+                                        <div className="text-12px mt-4px">
+                                          {t("settings.latency")}: {modelHealth.latency}ms
                                         </div>
                                       )}
-                                      {modelHealth?.error && <div className='text-12px mt-4px'>{modelHealth.error}</div>}
+                                      {modelHealth?.error && (
+                                        <div className="text-12px mt-4px">{modelHealth.error}</div>
+                                      )}
                                       {modelHealth?.lastCheck && (
-                                        <div className='text-12px mt-4px'>
-                                          {t('mcp.lastCheck')}: {new Date(modelHealth.lastCheck).toLocaleString()}
+                                        <div className="text-12px mt-4px">
+                                          {t("mcp.lastCheck")}:{" "}
+                                          {new Date(modelHealth.lastCheck).toLocaleString()}
                                         </div>
                                       )}
                                     </div>
                                   }
                                 >
-                                  <div className={`w-8px h-8px rounded-full ${healthStatus === 'healthy' ? 'bg-green-500' : 'bg-red-500'}`} />
+                                  <div
+                                    className={`w-8px h-8px rounded-full ${healthStatus === "healthy" ? "bg-green-500" : "bg-red-500"}`}
+                                  />
                                 </Tooltip>
                               )}
 
-                              <span className='text-14px text-t-primary'>{model}</span>
+                              <span className="text-14px text-t-primary">{model}</span>
 
                               {/* New API 协议标签（点击循环切换）/ New API protocol badge (click to cycle) */}
                               {isNewApiProvider && (
                                 <Tag
-                                  size='small'
+                                  size="small"
                                   color={getProtocolColor(modelProtocol)}
-                                  className='cursor-pointer select-none'
+                                  className="cursor-pointer select-none"
                                   onClick={() => {
                                     const nextProtocol = getNextProtocol(modelProtocol);
                                     const newProtocols = { ...(platform.modelProtocols || {}) };
                                     newProtocols[model] = nextProtocol;
-                                    updatePlatform({ ...platform, modelProtocols: newProtocols }, () => {});
+                                    updatePlatform(
+                                      { ...platform, modelProtocols: newProtocols },
+                                      () => {},
+                                    );
                                   }}
                                 >
                                   {getProtocolLabel(modelProtocol)}
@@ -569,19 +664,30 @@ const ModelModalContent: React.FC = () => {
                               )}
 
                               {/* 模型启用开关 / Model enable switch */}
-                              <Switch size='small' checked={isModelEnabled(platform, model)} onChange={(checked) => toggleModelEnabled(platform, model, checked)} />
+                              <Switch
+                                size="small"
+                                checked={isModelEnabled(platform, model)}
+                                onChange={(checked) => toggleModelEnabled(platform, model, checked)}
+                              />
                             </div>
 
-                            <div className='flex items-center gap-4px'>
+                            <div className="flex items-center gap-4px">
                               {/* 心跳检测按钮 / Health check button */}
-                              <Tooltip content={t('settings.healthCheck')}>
-                                <Button size='mini' icon={<Heartbeat theme='outline' size='16' />} loading={healthCheckLoading[`${platform.id}-${model}`]} onClick={() => performHealthCheck(platform, model)} />
+                              <Tooltip content={t("settings.healthCheck")}>
+                                <Button
+                                  size="mini"
+                                  icon={<Heartbeat theme="outline" size="16" />}
+                                  loading={healthCheckLoading[`${platform.id}-${model}`]}
+                                  onClick={() => performHealthCheck(platform, model)}
+                                />
                               </Tooltip>
 
                               <Popconfirm
-                                title={t('settings.deleteModelConfirm')}
+                                title={t("settings.deleteModelConfirm")}
                                 onOk={() => {
-                                  const newModels = platform.model.filter((item: string) => item !== model);
+                                  const newModels = platform.model.filter(
+                                    (item: string) => item !== model,
+                                  );
                                   // 同时清理模型相关状态，避免删除后重加模型时复用脏状态
                                   // Clean all per-model state to avoid stale state on re-add.
                                   const newProtocols = { ...(platform.modelProtocols || {}) };
@@ -595,19 +701,31 @@ const ModelModalContent: React.FC = () => {
                                     {
                                       ...platform,
                                       model: newModels,
-                                      modelProtocols: Object.keys(newProtocols).length > 0 ? newProtocols : undefined,
-                                      modelEnabled: Object.keys(newModelEnabled).length > 0 ? newModelEnabled : undefined,
-                                      modelHealth: Object.keys(newModelHealth).length > 0 ? newModelHealth : undefined,
+                                      modelProtocols:
+                                        Object.keys(newProtocols).length > 0
+                                          ? newProtocols
+                                          : undefined,
+                                      modelEnabled:
+                                        Object.keys(newModelEnabled).length > 0
+                                          ? newModelEnabled
+                                          : undefined,
+                                      modelHealth:
+                                        Object.keys(newModelHealth).length > 0
+                                          ? newModelHealth
+                                          : undefined,
                                     },
-                                    () => {}
+                                    () => {},
                                   );
                                 }}
                               >
-                                <Button size='mini' icon={<DeleteFour theme='outline' size='18' strokeWidth={2} />} />
+                                <Button
+                                  size="mini"
+                                  icon={<DeleteFour theme="outline" size="18" strokeWidth={2} />}
+                                />
                               </Popconfirm>
                             </div>
                           </div>
-                          {index < arr.length - 1 && <Divider className='!my-8px' />}
+                          {index < arr.length - 1 && <Divider className="!my-8px" />}
                         </div>
                       );
                     })}

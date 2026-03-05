@@ -4,7 +4,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { IMessageAction, IUnifiedIncomingMessage, IUnifiedMessageContent, IUnifiedOutgoingMessage, IUnifiedUser } from '../../types';
+import type {
+  IMessageAction,
+  IUnifiedIncomingMessage,
+  IUnifiedMessageContent,
+  IUnifiedOutgoingMessage,
+  IUnifiedUser,
+} from "../../types";
 
 /**
  * LarkAdapter - Converts between Lark and Unified message formats
@@ -73,27 +79,30 @@ interface LarkCardActionEvent {
 /**
  * Convert Lark event to unified incoming message
  */
-export function toUnifiedIncomingMessage(event: LarkMessageEvent | LarkCardActionEvent, actionInfo?: IMessageAction): IUnifiedIncomingMessage | null {
+export function toUnifiedIncomingMessage(
+  event: LarkMessageEvent | LarkCardActionEvent,
+  actionInfo?: IMessageAction,
+): IUnifiedIncomingMessage | null {
   // Handle card action
-  if (actionInfo && 'operator' in (event.event || {})) {
+  if (actionInfo && "operator" in (event.event || {})) {
     const cardEvent = event as LarkCardActionEvent;
     const operator = cardEvent.event?.operator;
 
     if (!operator) return null;
 
-    const userId = operator.user_id || operator.open_id || '';
+    const userId = operator.user_id || operator.open_id || "";
     const chatId = cardEvent.event?.open_chat_id || userId;
 
     return {
       id: cardEvent.event?.token || Date.now().toString(),
-      platform: 'lark',
+      platform: "lark",
       chatId,
       user: {
         id: userId,
         displayName: `User ${userId.slice(-6)}`,
       },
       content: {
-        type: 'action',
+        type: "action",
         text: actionInfo.name,
       },
       action: actionInfo,
@@ -109,7 +118,7 @@ export function toUnifiedIncomingMessage(event: LarkMessageEvent | LarkCardActio
 
   if (!message || !sender) return null;
 
-  const userId = sender.sender_id?.user_id || sender.sender_id?.open_id || '';
+  const userId = sender.sender_id?.user_id || sender.sender_id?.open_id || "";
   if (!userId) return null;
 
   const user = toUnifiedUser(sender);
@@ -119,7 +128,7 @@ export function toUnifiedIncomingMessage(event: LarkMessageEvent | LarkCardActio
 
   return {
     id: message.message_id || Date.now().toString(),
-    platform: 'lark',
+    platform: "lark",
     chatId: message.chat_id || userId,
     user,
     content,
@@ -131,10 +140,10 @@ export function toUnifiedIncomingMessage(event: LarkMessageEvent | LarkCardActio
 /**
  * Convert Lark sender to unified user format
  */
-export function toUnifiedUser(sender: LarkMessageEvent['event']['sender']): IUnifiedUser | null {
+export function toUnifiedUser(sender: LarkMessageEvent["event"]["sender"]): IUnifiedUser | null {
   if (!sender?.sender_id) return null;
 
-  const userId = sender.sender_id.user_id || sender.sender_id.open_id || '';
+  const userId = sender.sender_id.user_id || sender.sender_id.open_id || "";
   if (!userId) return null;
 
   return {
@@ -146,9 +155,11 @@ export function toUnifiedUser(sender: LarkMessageEvent['event']['sender']): IUni
 /**
  * Extract message content from Lark message
  */
-function extractMessageContent(message: LarkMessageEvent['event']['message']): IUnifiedMessageContent {
+function extractMessageContent(
+  message: LarkMessageEvent["event"]["message"],
+): IUnifiedMessageContent {
   if (!message) {
-    return { type: 'text', text: '' };
+    return { type: "text", text: "" };
   }
 
   const messageType = message.message_type;
@@ -157,58 +168,58 @@ function extractMessageContent(message: LarkMessageEvent['event']['message']): I
   try {
     content = message.content ? JSON.parse(message.content) : {};
   } catch {
-    content = message.content || '';
+    content = message.content || "";
   }
 
   switch (messageType) {
-    case 'text':
+    case "text":
       return {
-        type: 'text',
-        text: typeof content === 'object' ? (content as any).text || '' : String(content),
+        type: "text",
+        text: typeof content === "object" ? (content as any).text || "" : String(content),
       };
 
-    case 'image':
+    case "image":
       return {
-        type: 'photo',
-        text: '',
+        type: "photo",
+        text: "",
         attachments: [
           {
-            type: 'photo',
-            fileId: typeof content === 'object' ? (content as any).image_key || '' : '',
+            type: "photo",
+            fileId: typeof content === "object" ? (content as any).image_key || "" : "",
           },
         ],
       };
 
-    case 'file':
+    case "file":
       return {
-        type: 'document',
-        text: '',
+        type: "document",
+        text: "",
         attachments: [
           {
-            type: 'document',
-            fileId: typeof content === 'object' ? (content as any).file_key || '' : '',
-            fileName: typeof content === 'object' ? (content as any).file_name || '' : '',
+            type: "document",
+            fileId: typeof content === "object" ? (content as any).file_key || "" : "",
+            fileName: typeof content === "object" ? (content as any).file_name || "" : "",
           },
         ],
       };
 
-    case 'audio':
+    case "audio":
       return {
-        type: 'audio',
-        text: '',
+        type: "audio",
+        text: "",
         attachments: [
           {
-            type: 'audio',
-            fileId: typeof content === 'object' ? (content as any).file_key || '' : '',
-            duration: typeof content === 'object' ? (content as any).duration || 0 : 0,
+            type: "audio",
+            fileId: typeof content === "object" ? (content as any).file_key || "" : "",
+            duration: typeof content === "object" ? (content as any).duration || 0 : 0,
           },
         ],
       };
 
     default:
       return {
-        type: 'text',
-        text: typeof content === 'object' ? JSON.stringify(content) : String(content),
+        type: "text",
+        text: typeof content === "object" ? JSON.stringify(content) : String(content),
       };
   }
 }
@@ -220,25 +231,27 @@ function extractMessageContent(message: LarkMessageEvent['event']['message']): I
  * Actions are named like 'category.action' (e.g., 'agent.select', 'session.new')
  * But valid categories are only: 'platform', 'system', 'chat'
  */
-function mapToActionCategory(prefix: string): 'platform' | 'system' | 'chat' {
+function mapToActionCategory(prefix: string): "platform" | "system" | "chat" {
   // Platform-specific actions
-  if (prefix === 'pairing') return 'platform';
+  if (prefix === "pairing") return "platform";
   // Chat-related actions
-  if (prefix === 'chat') return 'chat';
+  if (prefix === "chat") return "chat";
   // Everything else is system actions (session, help, settings, agent, error, confirm, etc.)
-  return 'system';
+  return "system";
 }
 
 /**
  * Extract action info from Lark card action
  */
-export function extractCardAction(action: LarkCardActionEvent['event']['action']): IMessageAction | null {
+export function extractCardAction(
+  action: LarkCardActionEvent["event"]["action"],
+): IMessageAction | null {
   if (!action?.value) {
     return null;
   }
 
   const value = action.value as Record<string, string>;
-  const actionName = value.action || '';
+  const actionName = value.action || "";
 
   if (!actionName) {
     return null;
@@ -246,13 +259,13 @@ export function extractCardAction(action: LarkCardActionEvent['event']['action']
 
   // Parse action name and params
   // Format: "category.action" or "category.action:param1=value1"
-  const [fullAction, paramsStr] = actionName.split(':');
-  const [prefix, name] = fullAction.includes('.') ? fullAction.split('.') : ['system', fullAction];
+  const [fullAction, paramsStr] = actionName.split(":");
+  const [prefix, name] = fullAction.includes(".") ? fullAction.split(".") : ["system", fullAction];
 
   const params: Record<string, string> = {};
   if (paramsStr) {
-    paramsStr.split(',').forEach((param) => {
-      const [key, val] = param.split('=');
+    paramsStr.split(",").forEach((param) => {
+      const [key, val] = param.split("=");
       if (key && val) {
         params[key] = val;
       }
@@ -261,7 +274,7 @@ export function extractCardAction(action: LarkCardActionEvent['event']['action']
 
   // Merge with other action values
   Object.entries(value).forEach(([key, val]) => {
-    if (key !== 'action' && typeof val === 'string') {
+    if (key !== "action" && typeof val === "string") {
       params[key] = val;
     }
   });
@@ -279,7 +292,7 @@ export function extractCardAction(action: LarkCardActionEvent['event']['action']
 /**
  * Lark message content types
  */
-export type LarkContentType = 'text' | 'interactive' | 'image' | 'file';
+export type LarkContentType = "text" | "interactive" | "image" | "file";
 
 /**
  * Convert unified outgoing message to Lark send parameters
@@ -294,24 +307,24 @@ export function toLarkSendParams(message: IUnifiedOutgoingMessage): {
   // If message has replyMarkup (card), send as interactive
   if (message.replyMarkup) {
     return {
-      contentType: 'interactive',
+      contentType: "interactive",
       content: message.replyMarkup as Record<string, unknown>,
     };
   }
 
   // If message has buttons, convert to interactive card
   if (message.buttons && message.buttons.length > 0) {
-    const card = buildInteractiveCard(message.text || '', message.buttons);
+    const card = buildInteractiveCard(message.text || "", message.buttons);
     return {
-      contentType: 'interactive',
+      contentType: "interactive",
       content: card,
     };
   }
 
   // Default to text message - return raw text, caller will format
-  const text = message.text || '';
+  const text = message.text || "";
   return {
-    contentType: 'text',
+    contentType: "text",
     content: { text }, // Return object, not JSON string
     rawText: text,
   };
@@ -320,13 +333,16 @@ export function toLarkSendParams(message: IUnifiedOutgoingMessage): {
 /**
  * Build an interactive card with buttons
  */
-function buildInteractiveCard(text: string, buttons: IUnifiedOutgoingMessage['buttons']): Record<string, unknown> {
+function buildInteractiveCard(
+  text: string,
+  buttons: IUnifiedOutgoingMessage["buttons"],
+): Record<string, unknown> {
   const elements: Array<Record<string, unknown>> = [];
 
   // Add text content
   if (text) {
     elements.push({
-      tag: 'markdown',
+      tag: "markdown",
       content: convertHtmlToLarkMarkdown(text),
     });
   }
@@ -338,12 +354,12 @@ function buildInteractiveCard(text: string, buttons: IUnifiedOutgoingMessage['bu
     buttons.forEach((row) => {
       row.forEach((button) => {
         actions.push({
-          tag: 'button',
+          tag: "button",
           text: {
-            tag: 'plain_text',
+            tag: "plain_text",
             content: button.label,
           },
-          type: 'primary',
+          type: "primary",
           value: {
             action: button.action,
             ...button.params,
@@ -353,7 +369,7 @@ function buildInteractiveCard(text: string, buttons: IUnifiedOutgoingMessage['bu
     });
 
     elements.push({
-      tag: 'action',
+      tag: "action",
       actions,
     });
   }
@@ -392,12 +408,12 @@ export function convertHtmlToLarkMarkdown(html: string): string {
     .replace(/&#(\d+);/g, (_, dec) => String.fromCharCode(parseInt(dec, 10)));
 
   // 2. Convert allowed HTML tags to markdown (case-insensitive)
-  result = result.replace(/<b>(.+?)<\/b>/gi, '**$1**');
-  result = result.replace(/<strong>(.+?)<\/strong>/gi, '**$1**');
-  result = result.replace(/<i>(.+?)<\/i>/gi, '*$1*');
-  result = result.replace(/<em>(.+?)<\/em>/gi, '*$1*');
-  result = result.replace(/<code>(.+?)<\/code>/gi, '`$1`');
-  result = result.replace(/<pre><code>([\s\S]+?)<\/code><\/pre>/gi, '```\n$1\n```');
+  result = result.replace(/<b>(.+?)<\/b>/gi, "**$1**");
+  result = result.replace(/<strong>(.+?)<\/strong>/gi, "**$1**");
+  result = result.replace(/<i>(.+?)<\/i>/gi, "*$1*");
+  result = result.replace(/<em>(.+?)<\/em>/gi, "*$1*");
+  result = result.replace(/<code>(.+?)<\/code>/gi, "`$1`");
+  result = result.replace(/<pre><code>([\s\S]+?)<\/code><\/pre>/gi, "```\n$1\n```");
 
   // 3. Convert links - use protocol whitelist (not blacklist) for security
   result = result.replace(/<a href="([^"]+)">(.+?)<\/a>/gi, (_, url: string, text: string) => {
@@ -411,10 +427,10 @@ export function convertHtmlToLarkMarkdown(html: string): string {
   });
 
   // 4. Remove ALL remaining HTML tags (loop until stable to handle nested patterns like <scr<script>ipt>)
-  let prevResult = '';
+  let prevResult = "";
   while (prevResult !== result) {
     prevResult = result;
-    result = result.replace(/<[^>]+>/g, '');
+    result = result.replace(/<[^>]+>/g, "");
   }
 
   return result;
@@ -424,7 +440,7 @@ export function convertHtmlToLarkMarkdown(html: string): string {
  * Escape special characters for Lark markdown
  */
 export function escapeLarkMarkdown(text: string): string {
-  return text.replace(/[\\*_`[\]()~]/g, '\\$&');
+  return text.replace(/[\\*_`[\]()~]/g, "\\$&");
 }
 
 // ==================== Message Length Utilities ====================
@@ -451,12 +467,12 @@ export function splitMessage(text: string, maxLength: number = LARK_MESSAGE_LIMI
 
     // Look for newline within the last 20% of the chunk
     const newlineSearchStart = Math.floor(maxLength * 0.8);
-    const lastNewline = remaining.lastIndexOf('\n', maxLength);
+    const lastNewline = remaining.lastIndexOf("\n", maxLength);
     if (lastNewline > newlineSearchStart) {
       splitIndex = lastNewline + 1;
     } else {
       // Look for space
-      const lastSpace = remaining.lastIndexOf(' ', maxLength);
+      const lastSpace = remaining.lastIndexOf(" ", maxLength);
       if (lastSpace > newlineSearchStart) {
         splitIndex = lastSpace + 1;
       }
@@ -474,7 +490,10 @@ export function splitMessage(text: string, maxLength: number = LARK_MESSAGE_LIMI
 /**
  * Build card action value object
  */
-export function buildCardActionValue(action: string, params?: Record<string, string>): Record<string, string> {
+export function buildCardActionValue(
+  action: string,
+  params?: Record<string, string>,
+): Record<string, string> {
   return {
     action,
     ...params,

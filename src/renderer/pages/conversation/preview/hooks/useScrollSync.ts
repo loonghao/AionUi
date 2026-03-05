@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useCallback, useRef } from 'react';
-import { SCROLL_SYNC_DEBOUNCE } from '../constants';
+import { useCallback, useRef } from "react";
+import { SCROLL_SYNC_DEBOUNCE } from "../constants";
 
 /**
  * 滚动同步 Hook 配置
@@ -65,7 +65,11 @@ interface UseScrollSyncReturn {
  * @param options - 滚动同步配置 / Scroll sync configuration
  * @returns 滚动事件处理函数 / Scroll event handlers
  */
-export const useScrollSync = ({ enabled, editorContainerRef, previewContainerRef }: UseScrollSyncOptions): UseScrollSyncReturn => {
+export const useScrollSync = ({
+  enabled,
+  editorContainerRef,
+  previewContainerRef,
+}: UseScrollSyncOptions): UseScrollSyncReturn => {
   const isSyncingRef = useRef(false);
 
   const handleEditorScroll = useCallback(
@@ -81,7 +85,8 @@ export const useScrollSync = ({ enabled, editorContainerRef, previewContainerRef
         previewContainer.dataset.targetScrollPercent = String(scrollPercentage);
         // 同时尝试直接设置 scrollTop（对于支持的组件）
         // Also try to set scrollTop directly (for components that support it)
-        const targetScroll = scrollPercentage * (previewContainer.scrollHeight - previewContainer.clientHeight);
+        const targetScroll =
+          scrollPercentage * (previewContainer.scrollHeight - previewContainer.clientHeight);
         previewContainer.scrollTop = targetScroll;
       }
 
@@ -89,7 +94,7 @@ export const useScrollSync = ({ enabled, editorContainerRef, previewContainerRef
         isSyncingRef.current = false;
       }, SCROLL_SYNC_DEBOUNCE);
     },
-    [enabled, previewContainerRef]
+    [enabled, previewContainerRef],
   );
 
   const handlePreviewScroll = useCallback(
@@ -105,7 +110,8 @@ export const useScrollSync = ({ enabled, editorContainerRef, previewContainerRef
         editorContainer.dataset.targetScrollPercent = String(scrollPercentage);
         // 同时尝试直接设置 scrollTop（对于支持的组件）
         // Also try to set scrollTop directly (for components that support it)
-        const targetScroll = scrollPercentage * (editorContainer.scrollHeight - editorContainer.clientHeight);
+        const targetScroll =
+          scrollPercentage * (editorContainer.scrollHeight - editorContainer.clientHeight);
         editorContainer.scrollTop = targetScroll;
       }
 
@@ -113,7 +119,7 @@ export const useScrollSync = ({ enabled, editorContainerRef, previewContainerRef
         isSyncingRef.current = false;
       }, SCROLL_SYNC_DEBOUNCE);
     },
-    [enabled, editorContainerRef]
+    [enabled, editorContainerRef],
   );
 
   return {

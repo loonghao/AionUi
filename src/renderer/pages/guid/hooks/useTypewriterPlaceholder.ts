@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState } from "react";
 
 /**
  * Typewriter animation hook for placeholder text.
@@ -12,7 +12,7 @@ import { useEffect, useState } from 'react';
  * @returns The animated placeholder string
  */
 export const useTypewriterPlaceholder = (text: string): string => {
-  const [placeholder, setPlaceholder] = useState('');
+  const [placeholder, setPlaceholder] = useState("");
 
   useEffect(() => {
     let currentIndex = 0;
@@ -21,7 +21,7 @@ export const useTypewriterPlaceholder = (text: string): string => {
 
     const typeNextChar = () => {
       if (currentIndex <= text.length) {
-        setPlaceholder(text.slice(0, currentIndex) + (currentIndex < text.length ? '|' : ''));
+        setPlaceholder(text.slice(0, currentIndex) + (currentIndex < text.length ? "|" : ""));
         currentIndex++;
       }
     };

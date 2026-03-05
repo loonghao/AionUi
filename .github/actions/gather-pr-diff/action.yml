@@ -1,42 +1,42 @@
-name: 'Gather PR Diff'
-description: 'Fetch PR diff, changed file list, and statistics via GitHub API'
+name: "Gather PR Diff"
+description: "Fetch PR diff, changed file list, and statistics via GitHub API"
 
 inputs:
   pr_number:
-    description: 'PR number (required for workflow_dispatch triggers)'
+    description: "PR number (required for workflow_dispatch triggers)"
     required: false
-    default: ''
+    default: ""
 
 outputs:
   skip:
-    description: 'Whether to skip processing (empty diff)'
-    value: '${{ steps.gather.outputs.skip }}'
+    description: "Whether to skip processing (empty diff)"
+    value: "${{ steps.gather.outputs.skip }}"
   pr_number:
-    description: 'Resolved PR number'
-    value: '${{ steps.gather.outputs.pr_number }}'
+    description: "Resolved PR number"
+    value: "${{ steps.gather.outputs.pr_number }}"
   additions:
-    description: 'Total lines added'
-    value: '${{ steps.gather.outputs.additions }}'
+    description: "Total lines added"
+    value: "${{ steps.gather.outputs.additions }}"
   deletions:
-    description: 'Total lines deleted'
-    value: '${{ steps.gather.outputs.deletions }}'
+    description: "Total lines deleted"
+    value: "${{ steps.gather.outputs.deletions }}"
   total_lines:
-    description: 'Total lines changed (additions + deletions)'
-    value: '${{ steps.gather.outputs.total_lines }}'
+    description: "Total lines changed (additions + deletions)"
+    value: "${{ steps.gather.outputs.total_lines }}"
   file_count:
-    description: 'Number of changed files'
-    value: '${{ steps.gather.outputs.file_count }}'
+    description: "Number of changed files"
+    value: "${{ steps.gather.outputs.file_count }}"
   diff_truncated:
-    description: 'Whether the diff was truncated'
-    value: '${{ steps.gather.outputs.diff_truncated }}'
+    description: "Whether the diff was truncated"
+    value: "${{ steps.gather.outputs.diff_truncated }}"
 
 runs:
-  using: 'composite'
+  using: "composite"
   steps:
-    - id: 'gather'
-      uses: 'actions/github-script@v7'
+    - id: "gather"
+      uses: "actions/github-script@v7"
       env:
-        INPUT_PR_NUMBER: '${{ inputs.pr_number }}'
+        INPUT_PR_NUMBER: "${{ inputs.pr_number }}"
       with:
         script: |
           const fs = require('fs');

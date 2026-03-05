@@ -4,16 +4,16 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { Express } from 'express';
-import express from 'express';
-import cors from 'cors';
-import cookieParser from 'cookie-parser';
-import csrf from 'tiny-csrf';
-import crypto from 'crypto';
-import { networkInterfaces } from 'os';
-import { AuthMiddleware } from '@/webserver/auth/middleware/AuthMiddleware';
-import { errorHandler } from './middleware/errorHandler';
-import { attachCsrfToken } from './middleware/security';
+import type { Express } from "express";
+import express from "express";
+import cors from "cors";
+import cookieParser from "cookie-parser";
+import csrf from "tiny-csrf";
+import crypto from "crypto";
+import { networkInterfaces } from "os";
+import { AuthMiddleware } from "@/webserver/auth/middleware/AuthMiddleware";
+import { errorHandler } from "./middleware/errorHandler";
+import { attachCsrfToken } from "./middleware/security";
 
 /**
  * 获取所有非内部 IPv4 地址（LAN、VPN、Tailscale 等）
@@ -28,7 +28,7 @@ function getAllNonInternalIPs(): string[] {
 
     for (const net of netInfo) {
       // Node.js 18.4+ returns number (4/6), older versions return string ('IPv4'/'IPv6')
-      const isIPv4 = net.family === 'IPv4' || (net.family as unknown) === 4;
+      const isIPv4 = net.family === "IPv4" || (net.family as unknown) === 4;
       const isNotInternal = !net.internal;
       if (isIPv4 && isNotInternal) {
         ips.push(net.address);
@@ -56,8 +56,8 @@ function getCsrfSecret(): string {
 
   // 生成随机 32 字符密钥（16 字节的 hex 编码）
   // Generate random 32-character secret (16 bytes hex encoded)
-  const randomSecret = crypto.randomBytes(16).toString('hex');
-  console.log('[security] Generated random CSRF secret for this session');
+  const randomSecret = crypto.randomBytes(16).toString("hex");
+  console.log("[security] Generated random CSRF secret for this session");
   return randomSecret;
 }
 
@@ -72,14 +72,14 @@ const CSRF_SECRET = getCsrfSecret();
 export function setupBasicMiddleware(app: Express): void {
   // 请求体解析器
   // Body parsers
-  app.use(express.json({ limit: '10mb' }));
-  app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+  app.use(express.json({ limit: "10mb" }));
+  app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
   // CSRF Protection using tiny-csrf (CodeQL compliant)
   // Must be applied after cookieParser and before routes
   // CSRF 保护使用 tiny-csrf（符合 CodeQL 要求）
   // 必须在 cookieParser 之后、路由之前应用
-  app.use(cookieParser('cookie-parser-secret'));
+  app.use(cookieParser("cookie-parser-secret"));
   // P1 安全修复：登录接口启用 CSRF 保护（前端已添加 withCsrfToken）
   // P1 Security fix: Enable CSRF for login (frontend already uses withCsrfToken)
   // 仅排除 QR 登录（有独立的一次性 token 保护机制）
@@ -87,10 +87,10 @@ export function setupBasicMiddleware(app: Express): void {
   app.use(
     csrf(
       CSRF_SECRET,
-      ['POST', 'PUT', 'DELETE', 'PATCH'], // Protected methods
-      ['/login', '/api/auth/qr-login'], // Excluded: login form and QR login
-      [] // No service worker URLs
-    )
+      ["POST", "PUT", "DELETE", "PATCH"], // Protected methods
+      ["/login", "/api/auth/qr-login"], // Excluded: login form and QR login
+      [], // No service worker URLs
+    ),
   );
   app.use(attachCsrfToken); // Attach token to response headers
 
@@ -107,10 +107,10 @@ export function setupBasicMiddleware(app: Express): void {
 function normalizeOrigin(origin: string): string | null {
   try {
     const url = new URL(origin);
-    if (url.protocol !== 'http:' && url.protocol !== 'https:') {
+    if (url.protocol !== "http:" && url.protocol !== "https:") {
       return null;
     }
-    const portSuffix = url.port ? `:${url.port}` : '';
+    const portSuffix = url.port ? `:${url.port}` : "";
     return `${url.protocol}//${url.hostname}${portSuffix}`;
   } catch (error) {
     return null;
@@ -137,8 +137,8 @@ function getConfiguredOrigins(port: number, allowRemote: boolean): Set<string> {
     }
   }
 
-  const extraOrigins = (process.env.AIONUI_ALLOWED_ORIGINS || '')
-    .split(',')
+  const extraOrigins = (process.env.AIONUI_ALLOWED_ORIGINS || "")
+    .split(",")
     .map((origin) => origin.trim())
     .filter(Boolean)
     .map((origin) => normalizeOrigin(origin))
@@ -162,7 +162,7 @@ export function setupCors(app: Express, port: number, allowRemote: boolean): voi
           return;
         }
 
-        if (origin === 'null') {
+        if (origin === "null") {
           callback(null, true);
           return;
         }
@@ -175,7 +175,7 @@ export function setupCors(app: Express, port: number, allowRemote: boolean): voi
 
         callback(null, false);
       },
-    })
+    }),
   );
 }
 

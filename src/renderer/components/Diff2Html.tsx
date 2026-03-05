@@ -4,22 +4,32 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useThemeContext } from '@/renderer/context/ThemeContext';
-import { iconColors } from '@/renderer/theme/colors';
-import { extractContentFromDiff, parseFilePathFromDiff } from '@/renderer/utils/diffUtils';
-import { getFileTypeInfo } from '@/renderer/utils/fileType';
-import { Button, Checkbox, Tooltip } from '@arco-design/web-react';
-import { ExpandDownOne, FoldUpOne, PreviewOpen } from '@icon-park/react';
-import classNames from 'classnames';
-import { html } from 'diff2html';
-import 'diff2html/bundles/css/diff2html.min.css';
-import React, { useCallback, useMemo, useRef, useState } from 'react';
-import ReactDOM from 'react-dom';
-import { useTranslation } from 'react-i18next';
-import { usePreviewLauncher } from '../hooks/usePreviewLauncher';
-import CollapsibleContent from './CollapsibleContent';
+import { useThemeContext } from "@/renderer/context/ThemeContext";
+import { iconColors } from "@/renderer/theme/colors";
+import { extractContentFromDiff, parseFilePathFromDiff } from "@/renderer/utils/diffUtils";
+import { getFileTypeInfo } from "@/renderer/utils/fileType";
+import { Button, Checkbox, Tooltip } from "@arco-design/web-react";
+import { ExpandDownOne, FoldUpOne, PreviewOpen } from "@icon-park/react";
+import classNames from "classnames";
+import { html } from "diff2html";
+import "diff2html/bundles/css/diff2html.min.css";
+import React, { useCallback, useMemo, useRef, useState } from "react";
+import ReactDOM from "react-dom";
+import { useTranslation } from "react-i18next";
+import { usePreviewLauncher } from "../hooks/usePreviewLauncher";
+import CollapsibleContent from "./CollapsibleContent";
 
-const Diff2Html = ({ diff, className, title, filePath }: { diff: string; className?: string; title?: string; filePath?: string }) => {
+const Diff2Html = ({
+  diff,
+  className,
+  title,
+  filePath,
+}: {
+  diff: string;
+  className?: string;
+  title?: string;
+  filePath?: string;
+}) => {
   const { theme } = useThemeContext();
   const { t } = useTranslation();
   const { launchPreview, loading: previewLoading } = usePreviewLauncher();
@@ -28,13 +38,13 @@ const Diff2Html = ({ diff, className, title, filePath }: { diff: string; classNa
 
   const diffHtmlContent = useMemo(() => {
     return html(diff, {
-      outputFormat: sideBySide ? 'side-by-side' : 'line-by-line',
+      outputFormat: sideBySide ? "side-by-side" : "line-by-line",
       drawFileList: false,
-      matching: 'lines',
+      matching: "lines",
       matchWordsThreshold: 0,
       maxLineLengthHighlight: 20,
       matchingMaxComparisons: 3,
-      diffStyle: 'word',
+      diffStyle: "word",
       renderNothingWhenEmpty: false,
     });
   }, [diff, sideBySide]);
@@ -42,19 +52,19 @@ const Diff2Html = ({ diff, className, title, filePath }: { diff: string; classNa
   // Lazy init operatorRef to avoid creating div on every render
   const operatorRef = useRef<HTMLDivElement | null>(null);
   if (!operatorRef.current) {
-    operatorRef.current = document.createElement('div');
+    operatorRef.current = document.createElement("div");
   }
 
   const normalizedTitle = useMemo(() => {
-    if (!title) return '';
-    return title.replace(/^File:\s*/i, '').trim();
+    if (!title) return "";
+    return title.replace(/^File:\s*/i, "").trim();
   }, [title]);
 
   const pathFromDiff = useMemo(() => parseFilePathFromDiff(diff), [diff]);
 
   const resolvedFilePath = useMemo(() => {
     const trimmed = filePath?.trim();
-    if (!trimmed) return pathFromDiff || '';
+    if (!trimmed) return pathFromDiff || "";
     // If we only get a basename, prefer diff-derived path for subdirectories
     if (!/[\\/]/.test(trimmed)) {
       return pathFromDiff || trimmed;
@@ -66,7 +76,7 @@ const Diff2Html = ({ diff, className, title, filePath }: { diff: string; classNa
     if (resolvedFilePath) {
       return resolvedFilePath;
     }
-    return normalizedTitle || '';
+    return normalizedTitle || "";
   }, [normalizedTitle, resolvedFilePath]);
 
   const fileName = useMemo(() => {
@@ -78,7 +88,7 @@ const Diff2Html = ({ diff, className, title, filePath }: { diff: string; classNa
       const parts = normalizedTitle.split(/[\\/]/);
       return parts[parts.length - 1] || normalizedTitle;
     }
-    return 'preview.txt';
+    return "preview.txt";
   }, [relativePath, normalizedTitle]);
 
   const previewTitle = normalizedTitle || relativePath || title || fileName;
@@ -101,7 +111,7 @@ const Diff2Html = ({ diff, className, title, filePath }: { diff: string; classNa
         diffContent: diff,
       });
     },
-    [diff, fileName, filePath, fileTypeInfo, launchPreview, previewTitle, relativePath]
+    [diff, fileName, filePath, fileTypeInfo, launchPreview, previewTitle, relativePath],
   );
 
   const containerRef = useRef<HTMLDivElement>(null);
@@ -114,36 +124,45 @@ const Diff2Html = ({ diff, className, title, filePath }: { diff: string; classNa
     if (!el) return;
 
     // diff2html renders file headers with class 'd2h-file-header'
-    const header = el.querySelectorAll('.d2h-file-header')[0] as HTMLDivElement;
+    const header = el.querySelectorAll(".d2h-file-header")[0] as HTMLDivElement;
     if (header && operatorRef.current) {
       // Always enforce styles
-      header.style.alignItems = 'center';
-      header.style.height = '23px';
+      header.style.alignItems = "center";
+      header.style.height = "23px";
 
-      operatorRef.current.className = 'flex items-center justify-center gap-10px';
+      operatorRef.current.className = "flex items-center justify-center gap-10px";
 
       // Ensure operatorRef.current is appended
       if (!header.contains(operatorRef.current)) {
         header.appendChild(operatorRef.current);
       }
 
-      const name = header.querySelector('.d2h-file-name') as HTMLDivElement;
+      const name = header.querySelector(".d2h-file-name") as HTMLDivElement;
       if (name && title) {
         name.innerHTML = title;
       }
     } else {
-      console.warn('[Diff2Html] Header or operatorRef missing', { hasHeader: !!header, hasRef: !!operatorRef.current });
+      console.warn("[Diff2Html] Header or operatorRef missing", {
+        hasHeader: !!header,
+        hasRef: !!operatorRef.current,
+      });
     }
   });
 
   return (
     <CollapsibleContent maxHeight={160} defaultCollapsed={true} className={className}>
-      <div className='relative w-full max-w-full overflow-x-auto' style={{ WebkitOverflowScrolling: 'touch' }}>
+      <div
+        className="relative w-full max-w-full overflow-x-auto"
+        style={{ WebkitOverflowScrolling: "touch" }}
+      >
         <div
-          className={classNames('![&_.line-num1]:hidden ![&_.line-num2]:w-30px [&_td:first-child]:w-40px ![&_td:nth-child(2)>div]:pl-45px min-w-0 max-w-full [&_div.d2f-file-wrapper]:rd-[0.3rem_0.3rem_0px_0px]  [&_div.d2h-file-header]:items-center [&_div.d2h-file-header]:bg-bg-3', {
-            '[&_.d2h-file-diff]:hidden [&_.d2h-files-diff]:hidden': collapse,
-            'd2h-dark-color-scheme': theme === 'dark',
-          })}
+          className={classNames(
+            "![&_.line-num1]:hidden ![&_.line-num2]:w-30px [&_td:first-child]:w-40px ![&_td:nth-child(2)>div]:pl-45px min-w-0 max-w-full [&_div.d2f-file-wrapper]:rd-[0.3rem_0.3rem_0px_0px]  [&_div.d2h-file-header]:items-center [&_div.d2h-file-header]:bg-bg-3",
+            {
+              "[&_.d2h-file-diff]:hidden [&_.d2h-files-diff]:hidden": collapse,
+              "d2h-dark-color-scheme": theme === "dark",
+            },
+          )}
           ref={containerRef}
           dangerouslySetInnerHTML={{
             __html: diffHtmlContent,
@@ -153,20 +172,46 @@ const Diff2Html = ({ diff, className, title, filePath }: { diff: string; classNa
           ReactDOM.createPortal(
             <>
               {/* side-by-side 选项 / Side-by-side option */}
-              <Checkbox className='whitespace-nowrap' checked={sideBySide} onChange={(value) => setSideBySide(value)}>
-                <span className='whitespace-nowrap'>side-by-side</span>
+              <Checkbox
+                className="whitespace-nowrap"
+                checked={sideBySide}
+                onChange={(value) => setSideBySide(value)}
+              >
+                <span className="whitespace-nowrap">side-by-side</span>
               </Checkbox>
 
-              <Tooltip content={t('preview.openInPanelTooltip')}>
-                <Button type='text' size='mini' onClick={handlePreviewClick as any} disabled={previewLoading} icon={<PreviewOpen theme='outline' size='14' fill={iconColors.secondary} />}>
-                  {t('preview.preview')}
+              <Tooltip content={t("preview.openInPanelTooltip")}>
+                <Button
+                  type="text"
+                  size="mini"
+                  onClick={handlePreviewClick as any}
+                  disabled={previewLoading}
+                  icon={<PreviewOpen theme="outline" size="14" fill={iconColors.secondary} />}
+                >
+                  {t("preview.preview")}
                 </Button>
               </Tooltip>
 
               {/* 折叠按钮 / Collapse button */}
-              {collapse ? <ExpandDownOne theme='outline' size='14' fill={iconColors.secondary} className='flex items-center' onClick={() => setCollapse(false)} /> : <FoldUpOne theme='outline' size='14' fill={iconColors.secondary} className='flex items-center' onClick={() => setCollapse(true)} />}
+              {collapse ? (
+                <ExpandDownOne
+                  theme="outline"
+                  size="14"
+                  fill={iconColors.secondary}
+                  className="flex items-center"
+                  onClick={() => setCollapse(false)}
+                />
+              ) : (
+                <FoldUpOne
+                  theme="outline"
+                  size="14"
+                  fill={iconColors.secondary}
+                  className="flex items-center"
+                  onClick={() => setCollapse(true)}
+                />
+              )}
             </>,
-            operatorRef.current
+            operatorRef.current,
           )}
       </div>
     </CollapsibleContent>

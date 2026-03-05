@@ -4,13 +4,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useMemo } from 'react';
-import { useTranslation } from 'react-i18next';
-import { ASSISTANT_PRESETS } from '@/common/presets/assistantPresets';
-import type { TChatConversation } from '@/common/storage';
-import { ConfigStorage } from '@/common/storage';
-import CoworkLogo from '@/renderer/assets/cowork.svg';
-import useSWR from 'swr';
+import { useMemo } from "react";
+import { useTranslation } from "react-i18next";
+import { ASSISTANT_PRESETS } from "@/common/presets/assistantPresets";
+import type { TChatConversation } from "@/common/storage";
+import { ConfigStorage } from "@/common/storage";
+import CoworkLogo from "@/renderer/assets/cowork.svg";
+import useSWR from "swr";
 
 export interface PresetAssistantInfo {
   name: string;
@@ -33,21 +33,22 @@ function resolvePresetId(conversation: TChatConversation): string | null {
     customAgentId?: unknown;
     enabledSkills?: unknown;
   };
-  const presetAssistantId = typeof extra?.presetAssistantId === 'string' ? extra.presetAssistantId.trim() : '';
-  const customAgentId = typeof extra?.customAgentId === 'string' ? extra.customAgentId.trim() : '';
+  const presetAssistantId =
+    typeof extra?.presetAssistantId === "string" ? extra.presetAssistantId.trim() : "";
+  const customAgentId = typeof extra?.customAgentId === "string" ? extra.customAgentId.trim() : "";
   const enabledSkills = Array.isArray(extra?.enabledSkills) ? extra.enabledSkills : [];
 
   // 1. 优先使用 presetAssistantId（新会话）
   // Priority: use presetAssistantId (new conversations)
   if (presetAssistantId) {
-    const resolved = presetAssistantId.replace('builtin-', '');
+    const resolved = presetAssistantId.replace("builtin-", "");
     return resolved;
   }
 
   // 2. 向后兼容：customAgentId（ACP/Codex 旧会话）
   // Backward compatible: customAgentId (ACP/Codex old conversations)
   if (customAgentId) {
-    const resolved = customAgentId.replace('builtin-', '');
+    const resolved = customAgentId.replace("builtin-", "");
     return resolved;
   }
 
@@ -55,8 +56,13 @@ function resolvePresetId(conversation: TChatConversation): string | null {
   // Backward compatible: enabledSkills means Cowork conversation (Gemini old conversations)
   // 只有在既没有 presetAssistantId 也没有 customAgentId 时才使用此逻辑
   // Only use this logic when both presetAssistantId and customAgentId are absent (including empty strings)
-  if (conversation.type === 'gemini' && !presetAssistantId && !customAgentId && enabledSkills.length > 0) {
-    return 'cowork';
+  if (
+    conversation.type === "gemini" &&
+    !presetAssistantId &&
+    !customAgentId &&
+    enabledSkills.length > 0
+  ) {
+    return "cowork";
   }
 
   return null;
@@ -70,21 +76,21 @@ function buildPresetInfo(presetId: string, locale: string): PresetAssistantInfo 
   const preset = ASSISTANT_PRESETS.find((p) => p.id === presetId);
   if (!preset) return null;
 
-  const name = preset.nameI18n[locale] || preset.nameI18n['en-US'] || preset.id;
+  const name = preset.nameI18n[locale] || preset.nameI18n["en-US"] || preset.id;
 
   // avatar 可能是 emoji 或 svg 文件名 / avatar can be emoji or svg filename
-  const avatar = typeof preset.avatar === 'string' ? preset.avatar : '';
-  const isEmoji = avatar ? !avatar.endsWith('.svg') : true;
+  const avatar = typeof preset.avatar === "string" ? preset.avatar : "";
+  const isEmoji = avatar ? !avatar.endsWith(".svg") : true;
   let logo: string;
 
   if (isEmoji) {
-    logo = avatar || '🤖';
-  } else if (preset.id === 'cowork') {
+    logo = avatar || "🤖";
+  } else if (preset.id === "cowork") {
     logo = CoworkLogo;
   } else {
     // 其他 svg 需要动态导入，暂时使用 emoji fallback
     // Other svg need dynamic import, use emoji fallback for now
-    logo = '🤖';
+    logo = "🤖";
   }
 
   return { name, logo, isEmoji };
@@ -104,7 +110,9 @@ export function usePresetAssistantInfo(conversation: TChatConversation | undefin
   const { i18n } = useTranslation();
 
   // Fetch custom agents to support custom preset assistants
-  const { data: customAgents, isLoading: isLoadingCustomAgents } = useSWR('acp.customAgents', () => ConfigStorage.get('acp.customAgents'));
+  const { data: customAgents, isLoading: isLoadingCustomAgents } = useSWR("acp.customAgents", () =>
+    ConfigStorage.get("acp.customAgents"),
+  );
 
   return useMemo(() => {
     if (!conversation) return { info: null, isLoading: false };
@@ -113,7 +121,7 @@ export function usePresetAssistantInfo(conversation: TChatConversation | undefin
     if (!presetId) return { info: null, isLoading: false };
 
     // First try to find in built-in presets (synchronous, no loading needed)
-    const builtinInfo = buildPresetInfo(presetId, i18n.language || 'en-US');
+    const builtinInfo = buildPresetInfo(presetId, i18n.language || "en-US");
     if (builtinInfo) {
       return { info: builtinInfo, isLoading: false };
     }
@@ -123,29 +131,31 @@ export function usePresetAssistantInfo(conversation: TChatConversation | undefin
 
     // If not found in built-in presets, try to find in custom agents
     if (customAgents && Array.isArray(customAgents)) {
-      const customAgent = customAgents.find((agent) => agent.id === presetId || agent.id === `builtin-${presetId}`);
+      const customAgent = customAgents.find(
+        (agent) => agent.id === presetId || agent.id === `builtin-${presetId}`,
+      );
       if (customAgent) {
-        const locale = i18n.language || 'en-US';
+        const locale = i18n.language || "en-US";
         const resolveLocaleKey = (lang: string) => {
-          if (lang.startsWith('zh')) return 'zh-CN';
-          return 'en-US';
+          if (lang.startsWith("zh")) return "zh-CN";
+          return "en-US";
         };
         const localeKey = resolveLocaleKey(locale);
 
         // Handle avatar: could be emoji or svg filename
-        const avatar = typeof customAgent.avatar === 'string' ? customAgent.avatar : '';
-        let logo = avatar || '🤖';
+        const avatar = typeof customAgent.avatar === "string" ? customAgent.avatar : "";
+        let logo = avatar || "🤖";
         let isEmoji = true;
 
         if (avatar) {
-          if (avatar.endsWith('.svg')) {
+          if (avatar.endsWith(".svg")) {
             isEmoji = false;
             // For cowork.svg, use the imported logo; for others, use emoji fallback
-            if (avatar === 'cowork.svg') {
+            if (avatar === "cowork.svg") {
               logo = CoworkLogo;
             } else {
               // Other svgs not yet supported, fallback to emoji
-              logo = '🤖';
+              logo = "🤖";
               isEmoji = true;
             }
           } else {

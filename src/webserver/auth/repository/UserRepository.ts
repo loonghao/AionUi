@@ -4,14 +4,17 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { getDatabase } from '@process/database/export';
-import type { IUser, IQueryResult } from '@process/database/types';
+import { getDatabase } from "@process/database/export";
+import type { IUser, IQueryResult } from "@process/database/types";
 
 /**
  * 认证用户类型，仅包含必要的认证字段
  * Authentication user type containing only essential auth fields
  */
-export type AuthUser = Pick<IUser, 'id' | 'username' | 'password_hash' | 'jwt_secret' | 'created_at' | 'updated_at' | 'last_login'>;
+export type AuthUser = Pick<
+  IUser,
+  "id" | "username" | "password_hash" | "jwt_secret" | "created_at" | "updated_at" | "last_login"
+>;
 
 /**
  * 解包数据库查询结果，失败时抛出异常
@@ -21,7 +24,7 @@ export type AuthUser = Pick<IUser, 'id' | 'username' | 'password_hash' | 'jwt_se
  * @returns 解包后的数据 / Unwrapped data
  */
 function unwrap<T>(result: IQueryResult<T>, errorMessage: string): T {
-  if (!result.success || typeof result.data === 'undefined' || result.data === null) {
+  if (!result.success || typeof result.data === "undefined" || result.data === null) {
     throw new Error(result.error || errorMessage);
   }
   return result.data;
@@ -59,7 +62,7 @@ export const UserRepository = {
     const db = getDatabase();
     const result = db.hasUsers();
     if (!result.success) {
-      throw new Error(result.error || 'Failed to check users');
+      throw new Error(result.error || "Failed to check users");
     }
     // 数据层已经过滤掉未设置密码的占位用户
     // Database layer already ignores placeholder rows without passwords
@@ -90,7 +93,7 @@ export const UserRepository = {
   createUser(username: string, passwordHash: string): AuthUser {
     const db = getDatabase();
     const result = db.createUser(username, undefined, passwordHash);
-    const user = unwrap(result, 'Failed to create user');
+    const user = unwrap(result, "Failed to create user");
     return mapUser(user);
   },
 
@@ -147,7 +150,7 @@ export const UserRepository = {
     const db = getDatabase();
     const result = db.getUserCount();
     if (!result.success) {
-      throw new Error(result.error || 'Failed to count users');
+      throw new Error(result.error || "Failed to count users");
     }
     return result.data ?? 0;
   },
@@ -162,7 +165,7 @@ export const UserRepository = {
     const db = getDatabase();
     const result = db.updateUserPassword(userId, passwordHash);
     if (!result.success) {
-      throw new Error(result.error || 'Failed to update user password');
+      throw new Error(result.error || "Failed to update user password");
     }
   },
 
@@ -175,7 +178,7 @@ export const UserRepository = {
     const db = getDatabase();
     const result = db.updateUserLastLogin(userId);
     if (!result.success) {
-      throw new Error(result.error || 'Failed to update last login');
+      throw new Error(result.error || "Failed to update last login");
     }
   },
 
@@ -189,7 +192,7 @@ export const UserRepository = {
     const db = getDatabase();
     const result = db.updateUserJwtSecret(userId, jwtSecret);
     if (!result.success) {
-      throw new Error(result.error || 'Failed to update JWT secret');
+      throw new Error(result.error || "Failed to update JWT secret");
     }
   },
 };

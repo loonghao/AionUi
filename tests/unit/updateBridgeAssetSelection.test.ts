@@ -4,9 +4,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from "vitest";
 
-vi.mock('@office-ai/platform', () => ({
+vi.mock("@office-ai/platform", () => ({
   bridge: {
     buildProvider: vi.fn(() => ({
       provider: vi.fn(),
@@ -19,15 +19,15 @@ vi.mock('@office-ai/platform', () => ({
   },
 }));
 
-vi.mock('electron', () => ({
+vi.mock("electron", () => ({
   app: {
-    getVersion: vi.fn(() => '1.0.0'),
-    getPath: vi.fn(() => '/test/path'),
+    getVersion: vi.fn(() => "1.0.0"),
+    getPath: vi.fn(() => "/test/path"),
     isPackaged: true,
   },
 }));
 
-vi.mock('electron-updater', () => ({
+vi.mock("electron-updater", () => ({
   autoUpdater: {
     logger: null,
     autoDownload: false,
@@ -43,16 +43,16 @@ vi.mock('electron-updater', () => ({
   },
 }));
 
-vi.mock('electron-log', () => ({
+vi.mock("electron-log", () => ({
   default: {
-    transports: { file: { level: 'info' } },
+    transports: { file: { level: "info" } },
     info: vi.fn(),
     error: vi.fn(),
     warn: vi.fn(),
   },
 }));
 
-import { pickRecommendedAsset } from '@/process/bridge/updateBridge';
+import { pickRecommendedAsset } from "@/process/bridge/updateBridge";
 
 const asset = (name: string) => ({
   name,
@@ -60,28 +60,28 @@ const asset = (name: string) => ({
   size: 1,
 });
 
-describe('pickRecommendedAsset', () => {
-  it('should prefer ia32 package on win32 ia32 runtime', () => {
-    const assets = [asset('AionUi-1.0.0-win-x64.exe'), asset('AionUi-1.0.0-win-ia32.exe')];
+describe("pickRecommendedAsset", () => {
+  it("should prefer ia32 package on win32 ia32 runtime", () => {
+    const assets = [asset("AionUi-1.0.0-win-x64.exe"), asset("AionUi-1.0.0-win-ia32.exe")];
 
-    const result = pickRecommendedAsset(assets, { platform: 'win32', arch: 'ia32' });
+    const result = pickRecommendedAsset(assets, { platform: "win32", arch: "ia32" });
 
-    expect(result?.name).toBe('AionUi-1.0.0-win-ia32.exe');
+    expect(result?.name).toBe("AionUi-1.0.0-win-ia32.exe");
   });
 
-  it('should return undefined when no compatible arch package exists', () => {
-    const assets = [asset('AionUi-1.0.0-win-x64.exe'), asset('AionUi-1.0.0-win-x64.zip')];
+  it("should return undefined when no compatible arch package exists", () => {
+    const assets = [asset("AionUi-1.0.0-win-x64.exe"), asset("AionUi-1.0.0-win-x64.zip")];
 
-    const result = pickRecommendedAsset(assets, { platform: 'win32', arch: 'ia32' });
+    const result = pickRecommendedAsset(assets, { platform: "win32", arch: "ia32" });
 
     expect(result).toBeUndefined();
   });
 
-  it('should allow generic package without explicit arch token', () => {
-    const assets = [asset('AionUi-1.0.0-win.exe')];
+  it("should allow generic package without explicit arch token", () => {
+    const assets = [asset("AionUi-1.0.0-win.exe")];
 
-    const result = pickRecommendedAsset(assets, { platform: 'win32', arch: 'ia32' });
+    const result = pickRecommendedAsset(assets, { platform: "win32", arch: "ia32" });
 
-    expect(result?.name).toBe('AionUi-1.0.0-win.exe');
+    expect(result?.name).toBe("AionUi-1.0.0-win.exe");
   });
 });

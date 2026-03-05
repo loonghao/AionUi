@@ -4,9 +4,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import semver from 'semver';
+import semver from "semver";
 
-export type VersionUpdateType = 'major' | 'minor' | 'patch' | 'none';
+export type VersionUpdateType = "major" | "minor" | "patch" | "none";
 
 export interface VersionInfoJSON {
   current: string;
@@ -29,12 +29,12 @@ export class VersionInfo {
   }
 
   static create(input: VersionInfoJSON): VersionInfo {
-    const current = VersionInfo.assertValidVersion(input.current, 'current');
-    const latest = VersionInfo.assertValidVersion(input.latest, 'latest');
+    const current = VersionInfo.assertValidVersion(input.current, "current");
+    const latest = VersionInfo.assertValidVersion(input.latest, "latest");
 
     let minimumRequired: string | undefined;
     if (input.minimumRequired !== undefined) {
-      minimumRequired = VersionInfo.assertValidVersion(input.minimumRequired, 'minimum required');
+      minimumRequired = VersionInfo.assertValidVersion(input.minimumRequired, "minimum required");
     }
 
     return new VersionInfo({
@@ -59,7 +59,12 @@ export class VersionInfo {
   }
 
   equals(other: VersionInfo): boolean {
-    return this.current === other.current && this.latest === other.latest && this.minimumRequired === other.minimumRequired && this.releaseNotes === other.releaseNotes;
+    return (
+      this.current === other.current &&
+      this.latest === other.latest &&
+      this.minimumRequired === other.minimumRequired &&
+      this.releaseNotes === other.releaseNotes
+    );
   }
 
   get isUpdateAvailable(): boolean {
@@ -81,36 +86,36 @@ export class VersionInfo {
   }
 
   getUpdateType(): VersionUpdateType {
-    if (!this.isUpdateAvailable) return 'none';
+    if (!this.isUpdateAvailable) return "none";
 
     const diff = semver.diff(this.current, this.latest);
     switch (diff) {
-      case 'major':
-      case 'premajor':
-        return 'major';
-      case 'minor':
-      case 'preminor':
-        return 'minor';
-      case 'patch':
-      case 'prepatch':
-      case 'prerelease':
-        return 'patch';
+      case "major":
+      case "premajor":
+        return "major";
+      case "minor":
+      case "preminor":
+        return "minor";
+      case "patch":
+      case "prepatch":
+      case "prerelease":
+        return "patch";
       default:
-        return 'none';
+        return "none";
     }
   }
 
   isBreakingUpdate(): boolean {
-    return this.isForced || this.getUpdateType() === 'major';
+    return this.isForced || this.getUpdateType() === "major";
   }
 
   getVersionGap(): string {
-    if (!this.isUpdateAvailable) return 'Up to date';
+    if (!this.isUpdateAvailable) return "Up to date";
     return `${this.current} -> ${this.latest}`;
   }
 
   withLatestVersion(latest: string, releaseNotes?: string): VersionInfo {
-    const nextLatest = VersionInfo.assertValidVersion(latest, 'latest');
+    const nextLatest = VersionInfo.assertValidVersion(latest, "latest");
     return VersionInfo.create({
       current: this.current,
       latest: nextLatest,
@@ -120,7 +125,7 @@ export class VersionInfo {
   }
 
   afterUpgrade(current: string): VersionInfo {
-    const nextCurrent = VersionInfo.assertValidVersion(current, 'current');
+    const nextCurrent = VersionInfo.assertValidVersion(current, "current");
     return VersionInfo.create({
       current: nextCurrent,
       latest: this.latest,
@@ -137,16 +142,19 @@ export class VersionInfo {
     return semver.compare(a, b);
   }
 
-  private static assertValidVersion(version: string, field: 'current' | 'latest' | 'minimum required'): string {
+  private static assertValidVersion(
+    version: string,
+    field: "current" | "latest" | "minimum required",
+  ): string {
     const valid = semver.valid(version);
     if (!valid) {
       switch (field) {
-        case 'current':
-          throw new Error('Invalid current version format');
-        case 'latest':
-          throw new Error('Invalid latest version format');
-        case 'minimum required':
-          throw new Error('Invalid minimum required version format');
+        case "current":
+          throw new Error("Invalid current version format");
+        case "latest":
+          throw new Error("Invalid latest version format");
+        case "minimum required":
+          throw new Error("Invalid minimum required version format");
       }
     }
     return valid;

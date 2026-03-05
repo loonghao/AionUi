@@ -4,9 +4,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import * as fs from 'fs';
-import * as os from 'os';
-import * as path from 'path';
+import * as fs from "fs";
+import * as os from "os";
+import * as path from "path";
 
 export interface ClaudeSettings {
   env?: {
@@ -21,7 +21,7 @@ export interface ClaudeSettings {
  * - Windows: %USERPROFILE%\.claude\settings.json
  */
 export function getClaudeSettingsPath(): string {
-  return path.join(os.homedir(), '.claude', 'settings.json');
+  return path.join(os.homedir(), ".claude", "settings.json");
 }
 
 /**
@@ -33,7 +33,7 @@ export function readClaudeSettings(): ClaudeSettings | null {
     if (!fs.existsSync(settingsPath)) {
       return null;
     }
-    const content = fs.readFileSync(settingsPath, 'utf-8');
+    const content = fs.readFileSync(settingsPath, "utf-8");
     return JSON.parse(content);
   } catch {
     return null;

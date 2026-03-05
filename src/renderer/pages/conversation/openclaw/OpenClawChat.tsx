@@ -4,15 +4,15 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { ConversationProvider } from '@/renderer/context/ConversationContext';
-import FlexFullContainer from '@renderer/components/FlexFullContainer';
-import MessageList from '@renderer/messages/MessageList';
-import { MessageListProvider, useMessageLstCache } from '@renderer/messages/hooks';
-import HOC from '@renderer/utils/HOC';
-import React, { useEffect } from 'react';
-import LocalImageView from '../../../components/LocalImageView';
-import ConversationChatConfirm from '../components/ConversationChatConfirm';
-import OpenClawSendBox from './OpenClawSendBox';
+import { ConversationProvider } from "@/renderer/context/ConversationContext";
+import FlexFullContainer from "@renderer/components/FlexFullContainer";
+import MessageList from "@renderer/messages/MessageList";
+import { MessageListProvider, useMessageLstCache } from "@renderer/messages/hooks";
+import HOC from "@renderer/utils/HOC";
+import React, { useEffect } from "react";
+import LocalImageView from "../../../components/LocalImageView";
+import ConversationChatConfirm from "../components/ConversationChatConfirm";
+import OpenClawSendBox from "./OpenClawSendBox";
 
 const OpenClawChat: React.FC<{
   conversation_id: string;
@@ -24,10 +24,12 @@ const OpenClawChat: React.FC<{
     updateLocalImage({ root: workspace });
   }, [workspace]);
   return (
-    <ConversationProvider value={{ conversationId: conversation_id, workspace, type: 'openclaw-gateway' }}>
-      <div className='flex-1 flex flex-col px-20px min-h-0'>
+    <ConversationProvider
+      value={{ conversationId: conversation_id, workspace, type: "openclaw-gateway" }}
+    >
+      <div className="flex-1 flex flex-col px-20px min-h-0">
         <FlexFullContainer>
-          <MessageList className='flex-1'></MessageList>
+          <MessageList className="flex-1"></MessageList>
         </FlexFullContainer>
         <ConversationChatConfirm conversation_id={conversation_id}>
           <OpenClawSendBox conversation_id={conversation_id} />

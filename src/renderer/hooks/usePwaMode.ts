@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState } from "react";
 
 /**
  * Detect whether the app is running as a PWA (standalone display mode).
@@ -16,8 +16,12 @@ export function usePwaMode(): boolean {
 
   useEffect(() => {
     try {
-      const byMedia = typeof window !== 'undefined' && typeof window.matchMedia === 'function' ? window.matchMedia('(display-mode: standalone)').matches : false;
-      const byIOSStandalone = typeof navigator !== 'undefined' && (navigator as any).standalone === true;
+      const byMedia =
+        typeof window !== "undefined" && typeof window.matchMedia === "function"
+          ? window.matchMedia("(display-mode: standalone)").matches
+          : false;
+      const byIOSStandalone =
+        typeof navigator !== "undefined" && (navigator as any).standalone === true;
       setIsPwa(Boolean(byMedia || byIOSStandalone));
     } catch {
       setIsPwa(false);

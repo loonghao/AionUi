@@ -3,12 +3,12 @@
  * Copyright 2025 AionUi (aionui.com)
  * SPDX-License-Identifier: Apache-2.0
  */
-import type { CodexAgentEventType } from './eventTypes';
+import type { CodexAgentEventType } from "./eventTypes";
 
 // JSON-RPC 消息的泛型结构 - 使用 CodexEventMsg 自动推断类型
-export type CodexJsonRpcEvent<T extends CodexEventMsg['type'] = CodexEventMsg['type']> = {
-  jsonrpc: '2.0';
-  method: 'codex/event';
+export type CodexJsonRpcEvent<T extends CodexEventMsg["type"] = CodexEventMsg["type"]> = {
+  jsonrpc: "2.0";
+  method: "codex/event";
   params: {
     _meta: {
       requestId: number;
@@ -22,42 +22,42 @@ export type CodexJsonRpcEvent<T extends CodexEventMsg['type'] = CodexEventMsg['t
 
 // 精准的事件消息类型，直接对应 params.msg
 export type CodexEventMsg =
-  | ({ type: 'session_configured' } & SessionConfiguredData) //忽略
-  | ({ type: 'task_started' } & TaskStartedData) //已处理
-  | ({ type: 'task_complete' } & TaskCompleteData) //已处理
-  | ({ type: 'agent_message_delta' } & MessageDeltaData) //已处理
-  | ({ type: 'agent_message' } & MessageData) //忽略
-  | ({ type: 'user_message' } & UserMessageData)
-  | ({ type: 'agent_reasoning_delta' } & AgentReasoningDeltaData) //已处理
-  | ({ type: 'agent_reasoning' } & AgentReasoningData) //忽略
-  | ({ type: 'agent_reasoning_raw_content' } & AgentReasoningRawContentData)
-  | ({ type: 'agent_reasoning_raw_content_delta' } & AgentReasoningRawContentDeltaData)
-  | ({ type: 'exec_command_begin' } & ExecCommandBeginData) //已处理
-  | ({ type: 'exec_command_output_delta' } & ExecCommandOutputDeltaData) //已处理
-  | ({ type: 'exec_command_end' } & ExecCommandEndData) //已处理
-  | ({ type: 'exec_approval_request' } & ExecApprovalRequestData) //已处理
-  | ({ type: 'apply_patch_approval_request' } & PatchApprovalData) //已处理
-  | ({ type: 'patch_apply_begin' } & PatchApplyBeginData) //已处理
-  | ({ type: 'patch_apply_end' } & PatchApplyEndData) //已处理
-  | ({ type: 'mcp_tool_call_begin' } & McpToolCallBeginData) //已处理
-  | ({ type: 'mcp_tool_call_end' } & McpToolCallEndData) //已处理
-  | ({ type: 'web_search_begin' } & WebSearchBeginData) //已处理
-  | ({ type: 'web_search_end' } & WebSearchEndData) //已处理
-  | ({ type: 'token_count' } & TokenCountData) //忽略
-  | { type: 'agent_reasoning_section_break' } //已处理
-  | ({ type: 'turn_diff' } & TurnDiffData) // 已处理
-  | ({ type: 'get_history_entry_response' } & GetHistoryEntryResponseData)
-  | ({ type: 'mcp_list_tools_response' } & McpListToolsResponseData)
-  | ({ type: 'list_custom_prompts_response' } & ListCustomPromptsResponseData)
-  | ({ type: 'conversation_path' } & ConversationPathResponseData)
-  | { type: 'background_event'; message: string }
-  | ({ type: 'turn_aborted' } & TurnAbortedData);
+  | ({ type: "session_configured" } & SessionConfiguredData) //忽略
+  | ({ type: "task_started" } & TaskStartedData) //已处理
+  | ({ type: "task_complete" } & TaskCompleteData) //已处理
+  | ({ type: "agent_message_delta" } & MessageDeltaData) //已处理
+  | ({ type: "agent_message" } & MessageData) //忽略
+  | ({ type: "user_message" } & UserMessageData)
+  | ({ type: "agent_reasoning_delta" } & AgentReasoningDeltaData) //已处理
+  | ({ type: "agent_reasoning" } & AgentReasoningData) //忽略
+  | ({ type: "agent_reasoning_raw_content" } & AgentReasoningRawContentData)
+  | ({ type: "agent_reasoning_raw_content_delta" } & AgentReasoningRawContentDeltaData)
+  | ({ type: "exec_command_begin" } & ExecCommandBeginData) //已处理
+  | ({ type: "exec_command_output_delta" } & ExecCommandOutputDeltaData) //已处理
+  | ({ type: "exec_command_end" } & ExecCommandEndData) //已处理
+  | ({ type: "exec_approval_request" } & ExecApprovalRequestData) //已处理
+  | ({ type: "apply_patch_approval_request" } & PatchApprovalData) //已处理
+  | ({ type: "patch_apply_begin" } & PatchApplyBeginData) //已处理
+  | ({ type: "patch_apply_end" } & PatchApplyEndData) //已处理
+  | ({ type: "mcp_tool_call_begin" } & McpToolCallBeginData) //已处理
+  | ({ type: "mcp_tool_call_end" } & McpToolCallEndData) //已处理
+  | ({ type: "web_search_begin" } & WebSearchBeginData) //已处理
+  | ({ type: "web_search_end" } & WebSearchEndData) //已处理
+  | ({ type: "token_count" } & TokenCountData) //忽略
+  | { type: "agent_reasoning_section_break" } //已处理
+  | ({ type: "turn_diff" } & TurnDiffData) // 已处理
+  | ({ type: "get_history_entry_response" } & GetHistoryEntryResponseData)
+  | ({ type: "mcp_list_tools_response" } & McpListToolsResponseData)
+  | ({ type: "list_custom_prompts_response" } & ListCustomPromptsResponseData)
+  | ({ type: "conversation_path" } & ConversationPathResponseData)
+  | { type: "background_event"; message: string }
+  | ({ type: "turn_aborted" } & TurnAbortedData);
 
 // Session / lifecycle events
 export interface SessionConfiguredData {
   session_id: string;
   model?: string;
-  reasoning_effort?: 'minimal' | 'low' | 'medium' | 'high' | null;
+  reasoning_effort?: "minimal" | "low" | "medium" | "high" | null;
   history_log_id?: number;
   history_entry_count?: number;
   initial_messages?: unknown[] | null;
@@ -105,7 +105,7 @@ export interface AgentReasoningDeltaData {
   delta: string;
 }
 
-export type InputMessageKind = 'plain' | 'user_instructions' | 'environment_context';
+export type InputMessageKind = "plain" | "user_instructions" | "environment_context";
 
 export interface UserMessageData {
   message: string;
@@ -130,7 +130,7 @@ export interface ExecCommandBeginData {
 
 export interface ExecCommandOutputDeltaData {
   call_id: string;
-  stream: 'stdout' | 'stderr';
+  stream: "stdout" | "stderr";
   chunk: string;
 }
 
@@ -227,12 +227,12 @@ export type FileChange =
   | { delete: { content: string } }
   | { update: { unified_diff: string; move_path?: string | null } }
   // Legacy format with explicit type field
-  | { type: 'add'; content: string }
-  | { type: 'delete'; content: string }
-  | { type: 'update'; unified_diff: string; move_path?: string | null }
+  | { type: "add"; content: string }
+  | { type: "delete"; content: string }
+  | { type: "update"; unified_diff: string; move_path?: string | null }
   | {
       // Legacy/back‑compat
-      action?: 'create' | 'modify' | 'delete' | 'rename';
+      action?: "create" | "modify" | "delete" | "rename";
       content?: string;
       oldPath?: string;
       newPath?: string;
@@ -261,14 +261,14 @@ export interface SearchResult {
 }
 
 export type ParsedCommand =
-  | { type: 'read'; cmd: string; name: string }
+  | { type: "read"; cmd: string; name: string }
   | {
-      type: 'list_files';
+      type: "list_files";
       cmd: string;
       path?: string | null;
     }
-  | { type: 'search'; cmd: string; query?: string | null; path?: string | null }
-  | { type: 'unknown'; cmd: string };
+  | { type: "search"; cmd: string; query?: string | null; path?: string | null }
+  | { type: "unknown"; cmd: string };
 
 export interface AgentReasoningRawContentData {
   text: string;
@@ -309,7 +309,7 @@ export interface ListCustomPromptsResponseData {
 }
 
 export interface TurnAbortedData {
-  reason: 'interrupted' | 'replaced';
+  reason: "interrupted" | "replaced";
 }
 
 // Type aliases for better naming consistency
@@ -320,7 +320,7 @@ export interface CodexAgentManagerData {
   conversation_id: string;
   workspace?: string;
   cliPath?: string;
-  sandboxMode?: 'read-only' | 'workspace-write' | 'danger-full-access';
+  sandboxMode?: "read-only" | "workspace-write" | "danger-full-access";
   webSearchEnabled?: boolean;
   presetContext?: string; // 智能助手的预设规则/提示词 / Preset context from smart assistant
   /** 启用的 skills 列表，用于过滤 SkillManager 加载的 skills / Enabled skills list for filtering SkillManager skills */
@@ -344,14 +344,23 @@ export interface ElicitationCreateData {
 
 // Event data type map for type-safe event handling
 export type EventDataMap = {
-  [CodexAgentEventType.EXEC_COMMAND_BEGIN]: Extract<CodexEventMsg, { type: 'exec_command_begin' }>;
-  [CodexAgentEventType.EXEC_COMMAND_OUTPUT_DELTA]: Extract<CodexEventMsg, { type: 'exec_command_output_delta' }>;
-  [CodexAgentEventType.EXEC_COMMAND_END]: Extract<CodexEventMsg, { type: 'exec_command_end' }>;
-  [CodexAgentEventType.APPLY_PATCH_APPROVAL_REQUEST]: Extract<CodexEventMsg, { type: 'apply_patch_approval_request' }>;
-  [CodexAgentEventType.PATCH_APPLY_BEGIN]: Extract<CodexEventMsg, { type: 'patch_apply_begin' }>;
-  [CodexAgentEventType.PATCH_APPLY_END]: Extract<CodexEventMsg, { type: 'patch_apply_end' }>;
-  [CodexAgentEventType.MCP_TOOL_CALL_BEGIN]: Extract<CodexEventMsg, { type: 'mcp_tool_call_begin' }>;
-  [CodexAgentEventType.MCP_TOOL_CALL_END]: Extract<CodexEventMsg, { type: 'mcp_tool_call_end' }>;
-  [CodexAgentEventType.WEB_SEARCH_BEGIN]: Extract<CodexEventMsg, { type: 'web_search_begin' }>;
-  [CodexAgentEventType.WEB_SEARCH_END]: Extract<CodexEventMsg, { type: 'web_search_end' }>;
+  [CodexAgentEventType.EXEC_COMMAND_BEGIN]: Extract<CodexEventMsg, { type: "exec_command_begin" }>;
+  [CodexAgentEventType.EXEC_COMMAND_OUTPUT_DELTA]: Extract<
+    CodexEventMsg,
+    { type: "exec_command_output_delta" }
+  >;
+  [CodexAgentEventType.EXEC_COMMAND_END]: Extract<CodexEventMsg, { type: "exec_command_end" }>;
+  [CodexAgentEventType.APPLY_PATCH_APPROVAL_REQUEST]: Extract<
+    CodexEventMsg,
+    { type: "apply_patch_approval_request" }
+  >;
+  [CodexAgentEventType.PATCH_APPLY_BEGIN]: Extract<CodexEventMsg, { type: "patch_apply_begin" }>;
+  [CodexAgentEventType.PATCH_APPLY_END]: Extract<CodexEventMsg, { type: "patch_apply_end" }>;
+  [CodexAgentEventType.MCP_TOOL_CALL_BEGIN]: Extract<
+    CodexEventMsg,
+    { type: "mcp_tool_call_begin" }
+  >;
+  [CodexAgentEventType.MCP_TOOL_CALL_END]: Extract<CodexEventMsg, { type: "mcp_tool_call_end" }>;
+  [CodexAgentEventType.WEB_SEARCH_BEGIN]: Extract<CodexEventMsg, { type: "web_search_begin" }>;
+  [CodexAgentEventType.WEB_SEARCH_END]: Extract<CodexEventMsg, { type: "web_search_end" }>;
 };

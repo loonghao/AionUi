@@ -1,8 +1,12 @@
-import { GoogleGenAI } from '@google/genai';
-import { AuthType } from '@office-ai/aioncli-core';
-import type { RotatingApiClientOptions } from '../RotatingApiClient';
-import { RotatingApiClient } from '../RotatingApiClient';
-import { OpenAI2GeminiConverter, type OpenAIChatCompletionParams, type OpenAIChatCompletionResponse } from './OpenAI2GeminiConverter';
+import { GoogleGenAI } from "@google/genai";
+import { AuthType } from "@office-ai/aioncli-core";
+import type { RotatingApiClientOptions } from "../RotatingApiClient";
+import { RotatingApiClient } from "../RotatingApiClient";
+import {
+  OpenAI2GeminiConverter,
+  type OpenAIChatCompletionParams,
+  type OpenAIChatCompletionResponse,
+} from "./OpenAI2GeminiConverter";
 
 export interface GeminiClientConfig {
   model?: string;
@@ -14,15 +18,20 @@ export class GeminiRotatingClient extends RotatingApiClient<GoogleGenAI> {
   private readonly config: GeminiClientConfig;
   private readonly converter: OpenAI2GeminiConverter;
 
-  constructor(apiKeys: string, config: GeminiClientConfig = {}, options: RotatingApiClientOptions = {}, authType: AuthType = AuthType.USE_GEMINI) {
+  constructor(
+    apiKeys: string,
+    config: GeminiClientConfig = {},
+    options: RotatingApiClientOptions = {},
+    authType: AuthType = AuthType.USE_GEMINI,
+  ) {
     const createClient = (apiKey: string) => {
-      const cleanedApiKey = apiKey.replace(/[\s\r\n\t]/g, '').trim();
+      const cleanedApiKey = apiKey.replace(/[\s\r\n\t]/g, "").trim();
       const clientConfig: {
         apiKey?: string;
         vertexai: boolean;
         baseURL?: string;
       } = {
-        apiKey: cleanedApiKey === '' ? undefined : cleanedApiKey,
+        apiKey: cleanedApiKey === "" ? undefined : cleanedApiKey,
         vertexai: authType === AuthType.USE_VERTEX_AI,
       };
       if (config.baseURL) {
@@ -34,7 +43,7 @@ export class GeminiRotatingClient extends RotatingApiClient<GoogleGenAI> {
     super(apiKeys, authType, createClient, options);
     this.config = config;
     this.converter = new OpenAI2GeminiConverter({
-      defaultModel: config.model || 'gemini-1.5-flash',
+      defaultModel: config.model || "gemini-1.5-flash",
     });
   }
 
@@ -57,8 +66,8 @@ export class GeminiRotatingClient extends RotatingApiClient<GoogleGenAI> {
     return await this.executeWithRetry(async (client) => {
       // client is GoogleGenAI, we need client.models to get the content generator
       const model = await client.models.generateContent({
-        model: this.config.model || 'gemini-1.5-flash',
-        contents: [{ role: 'user', parts: [{ text: prompt }] }],
+        model: this.config.model || "gemini-1.5-flash",
+        contents: [{ role: "user", parts: [{ text: prompt }] }],
         ...config,
       });
       return model;
@@ -66,10 +75,13 @@ export class GeminiRotatingClient extends RotatingApiClient<GoogleGenAI> {
   }
 
   // OpenAI-compatible createChatCompletion method for unified interface
-  async createChatCompletion(params: OpenAIChatCompletionParams, options?: { signal?: AbortSignal; timeout?: number }): Promise<OpenAIChatCompletionResponse> {
+  async createChatCompletion(
+    params: OpenAIChatCompletionParams,
+    options?: { signal?: AbortSignal; timeout?: number },
+  ): Promise<OpenAIChatCompletionResponse> {
     // Handle request cancellation
     if (options?.signal?.aborted) {
-      throw new Error('Request was aborted');
+      throw new Error("Request was aborted");
     }
 
     return await this.executeWithRetry(async (client) => {

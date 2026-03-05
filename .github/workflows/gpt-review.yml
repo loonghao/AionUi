@@ -1,59 +1,59 @@
-name: '🤖 GPT Review'
+name: "🤖 GPT Review"
 
 on:
   workflow_call:
     inputs:
       pr_number:
-        description: 'PR number to review'
+        description: "PR number to review"
         required: false
         type: string
   workflow_dispatch:
     inputs:
       pr_number:
-        description: 'PR number to review'
+        description: "PR number to review"
         required: true
         type: string
 
 concurrency:
-  group: 'gpt-review-${{ github.event.pull_request.number || inputs.pr_number || github.run_id }}'
+  group: "gpt-review-${{ github.event.pull_request.number || inputs.pr_number || github.run_id }}"
   cancel-in-progress: true
 
 defaults:
   run:
-    shell: 'bash'
+    shell: "bash"
 
 jobs:
   review:
-    runs-on: 'ubuntu-latest'
+    runs-on: "ubuntu-latest"
     timeout-minutes: 10
     permissions:
-      contents: 'read'
-      pull-requests: 'write'
+      contents: "read"
+      pull-requests: "write"
     steps:
-      - name: 'Checkout repository'
-        uses: 'actions/checkout@v4'
+      - name: "Checkout repository"
+        uses: "actions/checkout@v4"
 
-      - name: 'Gather PR diff and changed files'
-        id: 'gather'
-        uses: './.github/actions/gather-pr-diff'
+      - name: "Gather PR diff and changed files"
+        id: "gather"
+        uses: "./.github/actions/gather-pr-diff"
         with:
-          pr_number: '${{ inputs.pr_number }}'
+          pr_number: "${{ inputs.pr_number }}"
 
-      - name: 'Read changed file contents'
-        id: 'read_contents'
+      - name: "Read changed file contents"
+        id: "read_contents"
         if: steps.gather.outputs.skip != 'true'
-        uses: './.github/actions/read-file-contents'
+        uses: "./.github/actions/read-file-contents"
 
-      - name: 'Construct GPT prompts'
-        id: 'prompts'
+      - name: "Construct GPT prompts"
+        id: "prompts"
         if: steps.gather.outputs.skip != 'true'
-        uses: 'actions/github-script@v7'
+        uses: "actions/github-script@v7"
         env:
-          INPUT_PR_NUMBER: '${{ inputs.pr_number }}'
-          FILE_COUNT: '${{ steps.gather.outputs.file_count }}'
-          ADDITIONS: '${{ steps.gather.outputs.additions }}'
-          DELETIONS: '${{ steps.gather.outputs.deletions }}'
-          TOTAL_LINES: '${{ steps.gather.outputs.total_lines }}'
+          INPUT_PR_NUMBER: "${{ inputs.pr_number }}"
+          FILE_COUNT: "${{ steps.gather.outputs.file_count }}"
+          ADDITIONS: "${{ steps.gather.outputs.additions }}"
+          DELETIONS: "${{ steps.gather.outputs.deletions }}"
+          TOTAL_LINES: "${{ steps.gather.outputs.total_lines }}"
         with:
           script: |
             const fs = require('fs');
@@ -244,20 +244,20 @@ jobs:
             fs.writeFileSync(`${tmpDir}/system_prompt.txt`, systemPrompt);
             fs.writeFileSync(`${tmpDir}/user_prompt.txt`, userPrompt);
 
-      - name: 'Call OpenAI GPT for code review'
+      - name: "Call OpenAI GPT for code review"
         if: steps.gather.outputs.skip != 'true'
-        uses: './.github/actions/call-openai'
+        uses: "./.github/actions/call-openai"
         with:
-          openai_api_key: '${{ secrets.OPENAI_API_KEY }}'
-          output_file: 'review_body.txt'
-          diff_truncated: '${{ steps.gather.outputs.diff_truncated }}'
-          contents_truncated: '${{ steps.read_contents.outputs.contents_truncated }}'
+          openai_api_key: "${{ secrets.OPENAI_API_KEY }}"
+          output_file: "review_body.txt"
+          diff_truncated: "${{ steps.gather.outputs.diff_truncated }}"
+          contents_truncated: "${{ steps.read_contents.outputs.contents_truncated }}"
 
-      - name: 'Submit review to PR'
+      - name: "Submit review to PR"
         if: steps.gather.outputs.skip != 'true' && success()
-        uses: 'actions/github-script@v7'
+        uses: "actions/github-script@v7"
         env:
-          INPUT_PR_NUMBER: '${{ inputs.pr_number }}'
+          INPUT_PR_NUMBER: "${{ inputs.pr_number }}"
         with:
           script: |
             const fs = require('fs');

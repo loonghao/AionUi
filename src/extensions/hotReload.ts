@@ -4,15 +4,15 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import * as fs from 'fs';
-import * as path from 'path';
+import * as fs from "fs";
+import * as path from "path";
 import {
   getUserExtensionsDir,
   getAppDataExtensionsDir,
   getEnvExtensionsDirs,
   EXTENSION_MANIFEST_FILE,
-} from './constants';
-import { ExtensionRegistry } from './ExtensionRegistry';
+} from "./constants";
+import { ExtensionRegistry } from "./ExtensionRegistry";
 
 const DEBOUNCE_MS = 1000;
 
@@ -37,7 +37,7 @@ export class ExtensionWatcher {
       } catch (error) {
         console.warn(
           `[Extensions] Failed to watch directory ${dir}:`,
-          error instanceof Error ? error.message : error
+          error instanceof Error ? error.message : error,
         );
       }
     }
@@ -59,13 +59,13 @@ export class ExtensionWatcher {
       clearTimeout(this.debounceTimer);
     }
     this.debounceTimer = setTimeout(async () => {
-      console.log('[Extensions] Detected changes, reinitializing registry...');
+      console.log("[Extensions] Detected changes, reinitializing registry...");
       try {
         ExtensionRegistry.resetInstance();
         await ExtensionRegistry.getInstance().initialize();
-        console.log('[Extensions] Hot-reload complete.');
+        console.log("[Extensions] Hot-reload complete.");
       } catch (error) {
-        console.error('[Extensions] Hot-reload failed:', error);
+        console.error("[Extensions] Hot-reload failed:", error);
       }
     }, DEBOUNCE_MS);
   }

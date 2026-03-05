@@ -4,11 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import crypto from 'crypto';
-import fs from 'fs/promises';
-import path from 'path';
-import type { PreviewHistoryTarget, PreviewSnapshotInfo } from '@/common/types/preview';
-import { getSystemDir } from '../initStorage';
+import crypto from "crypto";
+import fs from "fs/promises";
+import path from "path";
+import type { PreviewHistoryTarget, PreviewSnapshotInfo } from "@/common/types/preview";
+import { getSystemDir } from "../initStorage";
 
 interface StoredSnapshot extends PreviewSnapshotInfo {
   storagePath: string; // 相对 baseDir 的路径 / Path relative to base dir
@@ -20,8 +20,8 @@ interface PreviewHistoryIndex {
   versions: StoredSnapshot[];
 }
 
-const HISTORY_FOLDER_NAME = 'preview-history';
-const INDEX_FILE_NAME = 'index.json';
+const HISTORY_FOLDER_NAME = "preview-history";
+const INDEX_FILE_NAME = "index.json";
 const MAX_VERSIONS_PER_TARGET = 50;
 
 // 管理预览面板快照：负责存储、索引和读取 / Manage preview panel snapshots: persistence, indexing and retrieval
@@ -37,20 +37,32 @@ class PreviewHistoryService {
 
   // 根据目标生成稳定的标识和摘要，作为索引/存储路径 / Build stable identity & digest for indexing
   private buildIdentity(target: PreviewHistoryTarget): { identity: string; digest: string } {
-    const keyParts = [target.filePath ? `path:${target.filePath}` : '', target.workspace ? `workspace:${target.workspace}` : '', target.fileName ? `file:${target.fileName}` : '', target.title ? `title:${target.title}` : '', target.language ? `lang:${target.language}` : '', target.conversationId ? `conversation:${target.conversationId}` : '', `type:${target.contentType}`].filter(Boolean);
+    const keyParts = [
+      target.filePath ? `path:${target.filePath}` : "",
+      target.workspace ? `workspace:${target.workspace}` : "",
+      target.fileName ? `file:${target.fileName}` : "",
+      target.title ? `title:${target.title}` : "",
+      target.language ? `lang:${target.language}` : "",
+      target.conversationId ? `conversation:${target.conversationId}` : "",
+      `type:${target.contentType}`,
+    ].filter(Boolean);
 
-    const identity = keyParts.join('|') || `anonymous|${target.contentType}`;
-    const digest = crypto.createHash('sha1').update(identity).digest('hex');
+    const identity = keyParts.join("|") || `anonymous|${target.contentType}`;
+    const digest = crypto.createHash("sha1").update(identity).digest("hex");
     return { identity, digest };
   }
 
   // 读取目标索引文件，若不存在则返回默认结构 / Read snapshot index or fallback to empty structure
-  private async readIndex(targetDir: string, identity: string, target: PreviewHistoryTarget): Promise<PreviewHistoryIndex> {
+  private async readIndex(
+    targetDir: string,
+    identity: string,
+    target: PreviewHistoryTarget,
+  ): Promise<PreviewHistoryIndex> {
     await this.ensureDir(targetDir);
     const indexPath = path.join(targetDir, INDEX_FILE_NAME);
 
     try {
-      const content = await fs.readFile(indexPath, 'utf-8');
+      const content = await fs.readFile(indexPath, "utf-8");
       const parsed = JSON.parse(content) as PreviewHistoryIndex;
       // 兼容旧数据 / Backward compatibility for future schema changes
       if (!Array.isArray(parsed.versions)) {
@@ -69,7 +81,7 @@ class PreviewHistoryService {
   // 将内存索引写回磁盘 / Persist in-memory index to disk
   private async writeIndex(targetDir: string, index: PreviewHistoryIndex): Promise<void> {
     const indexPath = path.join(targetDir, INDEX_FILE_NAME);
-    await fs.writeFile(indexPath, JSON.stringify(index, null, 2), 'utf-8');
+    await fs.writeFile(indexPath, JSON.stringify(index, null, 2), "utf-8");
   }
 
   private getSnapshotFileName(snapshotId: string): string {
@@ -77,13 +89,19 @@ class PreviewHistoryService {
   }
 
   // 组装快照元数据，记录储存路径 / Build snapshot metadata with storage path info
-  private createSnapshotInfo(params: { snapshotId: string; content: string; createdAt: number; target: PreviewHistoryTarget; relativePath: string }): StoredSnapshot {
+  private createSnapshotInfo(params: {
+    snapshotId: string;
+    content: string;
+    createdAt: number;
+    target: PreviewHistoryTarget;
+    relativePath: string;
+  }): StoredSnapshot {
     const { snapshotId, content, createdAt, target, relativePath } = params;
     return {
       id: snapshotId,
       label: new Date(createdAt).toISOString(),
       createdAt,
-      size: Buffer.byteLength(content, 'utf-8'),
+      size: Buffer.byteLength(content, "utf-8"),
       contentType: target.contentType,
       fileName: target.fileName,
       filePath: target.filePath,
@@ -118,7 +136,7 @@ class PreviewHistoryService {
     const fileName = this.getSnapshotFileName(snapshotId);
     const snapshotPath = path.join(targetDir, fileName);
 
-    await fs.writeFile(snapshotPath, content, 'utf-8');
+    await fs.writeFile(snapshotPath, content, "utf-8");
 
     const storedSnapshot = this.createSnapshotInfo({
       snapshotId,
@@ -144,7 +162,10 @@ class PreviewHistoryService {
   }
 
   // 获取指定快照的原始内容 / Retrieve raw content for a snapshot
-  public async getContent(target: PreviewHistoryTarget, snapshotId: string): Promise<{ snapshot: PreviewSnapshotInfo; content: string } | null> {
+  public async getContent(
+    target: PreviewHistoryTarget,
+    snapshotId: string,
+  ): Promise<{ snapshot: PreviewSnapshotInfo; content: string } | null> {
     const { identity, digest } = this.buildIdentity(target);
     const targetDir = path.join(this.getBaseDir(), digest);
     const index = await this.readIndex(targetDir, identity, target);
@@ -155,7 +176,7 @@ class PreviewHistoryService {
     }
 
     const absolutePath = path.join(this.getBaseDir(), storedSnapshot.storagePath);
-    const content = await fs.readFile(absolutePath, 'utf-8');
+    const content = await fs.readFile(absolutePath, "utf-8");
     return {
       snapshot: this.normalizeSnapshot(storedSnapshot),
       content,

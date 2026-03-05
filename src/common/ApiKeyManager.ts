@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { AuthType } from '@office-ai/aioncli-core';
+import { AuthType } from "@office-ai/aioncli-core";
 
 /**
  * Multi-API Key Manager with Time-based Blacklisting
@@ -29,11 +29,11 @@ export class ApiKeyManager {
   private getEnvironmentKey(authType: AuthType): string {
     switch (authType) {
       case AuthType.USE_OPENAI:
-        return 'OPENAI_API_KEY';
+        return "OPENAI_API_KEY";
       case AuthType.USE_GEMINI:
-        return 'GEMINI_API_KEY';
+        return "GEMINI_API_KEY";
       case AuthType.USE_ANTHROPIC:
-        return 'ANTHROPIC_API_KEY';
+        return "ANTHROPIC_API_KEY";
       default:
         throw new Error(`Multi-key not supported for auth type: ${authType}`);
     }
@@ -82,7 +82,9 @@ export class ApiKeyManager {
       const previousIndex = this.currentIndex;
       this.currentIndex = availableIndex;
       this.updateEnvironment();
-      console.log(`[MultiKey] Rotated ${this.authType}: #${previousIndex + 1} → #${this.currentIndex + 1}/${this.keys.length}`);
+      console.log(
+        `[MultiKey] Rotated ${this.authType}: #${previousIndex + 1} → #${this.currentIndex + 1}/${this.keys.length}`,
+      );
       return true;
     }
 
@@ -98,7 +100,9 @@ export class ApiKeyManager {
     this.blacklistedUntil.set(this.currentIndex, recoveryTime);
 
     const recoveryDate = new Date(recoveryTime);
-    console.log(`[MultiKey] Blacklisted ${this.authType} key #${this.currentIndex + 1} until ${recoveryDate.toLocaleTimeString()}`);
+    console.log(
+      `[MultiKey] Blacklisted ${this.authType} key #${this.currentIndex + 1} until ${recoveryDate.toLocaleTimeString()}`,
+    );
   }
 
   /**
@@ -163,7 +167,7 @@ export class ApiKeyManager {
   }
 
   getCurrentKey(): string {
-    if (this.keys.length === 0) return '';
-    return this.keys[this.currentIndex] || '';
+    if (this.keys.length === 0) return "";
+    return this.keys[this.currentIndex] || "";
   }
 }

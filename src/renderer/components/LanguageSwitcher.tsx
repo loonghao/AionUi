@@ -1,8 +1,8 @@
-import AionSelect from '@/renderer/components/base/AionSelect';
-import type { SelectHandle } from '@arco-design/web-react/es/Select/interface';
-import React, { useCallback, useRef } from 'react';
-import { useTranslation } from 'react-i18next';
-import { changeLanguage } from '@/renderer/i18n';
+import AionSelect from "@/renderer/components/base/AionSelect";
+import type { SelectHandle } from "@arco-design/web-react/es/Select/interface";
+import React, { useCallback, useRef } from "react";
+import { useTranslation } from "react-i18next";
+import { changeLanguage } from "@/renderer/i18n";
 
 const LanguageSwitcher: React.FC = () => {
   const { i18n } = useTranslation();
@@ -15,11 +15,11 @@ const LanguageSwitcher: React.FC = () => {
 
     const applyLanguage = () => {
       changeLanguage(value).catch((error: Error) => {
-        console.error('Failed to change language:', error);
+        console.error("Failed to change language:", error);
       });
     };
 
-    if (typeof window !== 'undefined' && 'requestAnimationFrame' in window) {
+    if (typeof window !== "undefined" && "requestAnimationFrame" in window) {
       // 延迟到下一帧执行，确保 DOM 动画已完成 / defer to next frame so DOM animations finish
       window.requestAnimationFrame(() => window.requestAnimationFrame(applyLanguage));
     } else {
@@ -28,14 +28,19 @@ const LanguageSwitcher: React.FC = () => {
   }, []);
 
   return (
-    <div className='flex items-center gap-8px'>
-      <AionSelect ref={selectRef} className='w-160px' value={i18n.language} onChange={handleLanguageChange}>
-        <AionSelect.Option value='zh-CN'>简体中文</AionSelect.Option>
-        <AionSelect.Option value='zh-TW'>繁體中文</AionSelect.Option>
-        <AionSelect.Option value='ja-JP'>日本語</AionSelect.Option>
-        <AionSelect.Option value='ko-KR'>한국어</AionSelect.Option>
-        <AionSelect.Option value='tr-TR'>Türkçe</AionSelect.Option>
-        <AionSelect.Option value='en-US'>English</AionSelect.Option>
+    <div className="flex items-center gap-8px">
+      <AionSelect
+        ref={selectRef}
+        className="w-160px"
+        value={i18n.language}
+        onChange={handleLanguageChange}
+      >
+        <AionSelect.Option value="zh-CN">简体中文</AionSelect.Option>
+        <AionSelect.Option value="zh-TW">繁體中文</AionSelect.Option>
+        <AionSelect.Option value="ja-JP">日本語</AionSelect.Option>
+        <AionSelect.Option value="ko-KR">한국어</AionSelect.Option>
+        <AionSelect.Option value="tr-TR">Türkçe</AionSelect.Option>
+        <AionSelect.Option value="en-US">English</AionSelect.Option>
       </AionSelect>
     </div>
   );

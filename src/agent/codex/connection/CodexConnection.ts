@@ -4,15 +4,15 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { ChildProcess } from 'child_process';
-import { spawn, execSync } from 'child_process';
-import { accessSync, readFileSync } from 'fs';
-import { homedir } from 'os';
-import { join } from 'path';
-import type { CodexEventParams } from '@/common/codex/types';
-import { loadFullShellEnvironment, mergePaths } from '@process/utils/shellEnv';
-import { globalErrorService, fromNetworkError } from '../core/ErrorService';
-import { JSONRPC_VERSION } from '@/types/acpTypes';
+import type { ChildProcess } from "child_process";
+import { spawn, execSync } from "child_process";
+import { accessSync, readFileSync } from "fs";
+import { homedir } from "os";
+import { join } from "path";
+import type { CodexEventParams } from "@/common/codex/types";
+import { loadFullShellEnvironment, mergePaths } from "@process/utils/shellEnv";
+import { globalErrorService, fromNetworkError } from "../core/ErrorService";
+import { JSONRPC_VERSION } from "@/types/acpTypes";
 
 /**
  * Get Codex config file path based on platform
@@ -20,15 +20,15 @@ import { JSONRPC_VERSION } from '@/types/acpTypes';
  * - macOS/Linux: ~/.codex/config.toml
  */
 function getCodexConfigPath(): string {
-  if (process.platform === 'win32') {
+  if (process.platform === "win32") {
     // Windows: try APPDATA first, then fallback to home directory
     const appData = process.env.APPDATA;
     if (appData) {
-      return join(appData, 'codex', 'config.toml');
+      return join(appData, "codex", "config.toml");
     }
   }
   // macOS/Linux or Windows fallback
-  return join(homedir(), '.codex', 'config.toml');
+  return join(homedir(), ".codex", "config.toml");
 }
 
 /**
@@ -38,7 +38,7 @@ function getCodexConfigPath(): string {
 function readUserApprovalPolicyConfig(): string | null {
   try {
     const configPath = getCodexConfigPath();
-    const content = readFileSync(configPath, 'utf-8');
+    const content = readFileSync(configPath, "utf-8");
     // Simple TOML parsing for top-level approval_policy
     // Supports: double-quoted, single-quoted, or unquoted values with optional inline comments
     const match = content.match(/^\s*approval_policy\s*=\s*['"]?([^'"#\s]+)['"]?/m);
@@ -74,7 +74,7 @@ export interface CodexEventEnvelope {
 
 // Legacy NetworkError interface for backward compatibility
 export interface NetworkError {
-  type: 'cloudflare_blocked' | 'network_timeout' | 'connection_refused' | 'unknown';
+  type: "cloudflare_blocked" | "network_timeout" | "connection_refused" | "unknown";
   originalError: string;
   retryCount: number;
   suggestedAction: string;
@@ -98,12 +98,25 @@ export class CodexConnection {
 
   // Callbacks
   public onEvent: (evt: CodexEventEnvelope) => void = () => {};
-  public onError: (error: { message: string; type?: 'network' | 'stream' | 'timeout' | 'process'; details?: unknown }) => void = () => {};
+  public onError: (error: {
+    message: string;
+    type?: "network" | "stream" | "timeout" | "process";
+    details?: unknown;
+  }) => void = () => {};
 
   // Permission request handling - similar to ACP's mechanism
   private isPaused = false;
-  private pausedRequests: Array<{ method: string; params: unknown; resolve: (v: unknown) => void; reject: (e: unknown) => void; timeout: NodeJS.Timeout }> = [];
-  private permissionResolvers = new Map<string, { resolve: (approved: boolean) => void; reject: (error: Error) => void }>();
+  private pausedRequests: Array<{
+    method: string;
+    params: unknown;
+    resolve: (v: unknown) => void;
+    reject: (e: unknown) => void;
+    timeout: NodeJS.Timeout;
+  }> = [];
+  private permissionResolvers = new Map<
+    string,
+    { resolve: (approved: boolean) => void; reject: (error: Error) => void }
+  >();
 
   // Network error handling
   private retryCount = 0;
@@ -126,9 +139,9 @@ export class CodexConnection {
     try {
       // 尝试获取 Codex 版本 / Try to get Codex version
       const versionOutput = execSync(`${cliPath} --version`, {
-        encoding: 'utf8',
+        encoding: "utf8",
         timeout: 5000,
-        stdio: ['pipe', 'pipe', 'ignore'],
+        stdio: ["pipe", "pipe", "ignore"],
         env,
       }).trim();
 
@@ -145,27 +158,41 @@ export class CodexConnection {
         // 版本 0.39.x 及以下使用 "mcp serve"
         // Version 0.40.0 and above use "mcp-server"
         // Version 0.39.x and below use "mcp serve"
-        const cmd = majorVer > 0 || (majorVer === 0 && minorVer >= 40) ? ['mcp-server'] : ['mcp', 'serve'];
-        console.log(`[Codex-Startup] Version detected: ${this.detectedVersion}, MCP command: ${cmd.join(' ')}`);
+        const cmd =
+          majorVer > 0 || (majorVer === 0 && minorVer >= 40) ? ["mcp-server"] : ["mcp", "serve"];
+        console.log(
+          `[Codex-Startup] Version detected: ${this.detectedVersion}, MCP command: ${cmd.join(" ")}`,
+        );
         return cmd;
       }
 
       // 如果版本检测失败，默认使用 mcp-server（适用于新版本）
       // If version detection fails, try mcp-server first (for newer versions)
-      console.warn(`[Codex-Startup] Version parse failed from output: "${versionOutput}", defaulting to mcp-server`);
-      return ['mcp-server'];
+      console.warn(
+        `[Codex-Startup] Version parse failed from output: "${versionOutput}", defaulting to mcp-server`,
+      );
+      return ["mcp-server"];
     } catch (error) {
       // 如果版本命令执行失败，默认使用 mcp-server（新版本）
       // If version command fails, default to mcp-server (newer versions)
-      console.warn(`[Codex-Startup] Version detection failed for "${cliPath}": ${error instanceof Error ? error.message : String(error)}`);
-      return ['mcp-server'];
+      console.warn(
+        `[Codex-Startup] Version detection failed for "${cliPath}": ${error instanceof Error ? error.message : String(error)}`,
+      );
+      return ["mcp-server"];
     }
   }
 
-  start(cliPath: string, cwd: string, args: string[] = [], options?: { yoloMode?: boolean }): Promise<void> {
+  start(
+    cliPath: string,
+    cwd: string,
+    args: string[] = [],
+    options?: { yoloMode?: boolean },
+  ): Promise<void> {
     console.log(`[Codex-Startup] ===== Codex startup diagnostics =====`);
     console.log(`[Codex-Startup] cliPath=${cliPath}, cwd=${cwd}, platform=${process.platform}`);
-    console.log(`[Codex-Startup] process.env.PATH (first 200): ${(process.env.PATH || '(empty)').substring(0, 200)}`);
+    console.log(
+      `[Codex-Startup] process.env.PATH (first 200): ${(process.env.PATH || "(empty)").substring(0, 200)}`,
+    );
 
     // Build full shell environment for Codex (needs complete env, not just whitelisted vars)
     const fullShellEnv = loadFullShellEnvironment();
@@ -185,8 +212,8 @@ export class CodexConnection {
     delete cleanEnv.NODE_DEBUG;
 
     // Check if cliPath is discoverable on the merged PATH
-    const pathDirs = mergedPath.split(process.platform === 'win32' ? ';' : ':');
-    const cliBasename = cliPath.includes('/') ? null : cliPath; // only check bare commands
+    const pathDirs = mergedPath.split(process.platform === "win32" ? ";" : ":");
+    const cliBasename = cliPath.includes("/") ? null : cliPath; // only check bare commands
     if (cliBasename) {
       const found = pathDirs.find((dir) => {
         try {
@@ -196,10 +223,12 @@ export class CodexConnection {
           return false;
         }
       });
-      console.log(`[Codex-Startup] CLI "${cliBasename}" on PATH: ${found ? `YES (${found})` : 'NO — not found on any PATH directory'}`);
+      console.log(
+        `[Codex-Startup] CLI "${cliBasename}" on PATH: ${found ? `YES (${found})` : "NO — not found on any PATH directory"}`,
+      );
     }
 
-    const isWindows = process.platform === 'win32';
+    const isWindows = process.platform === "win32";
     let finalArgs = args.length ? args : this.detectMcpCommand(cliPath, cleanEnv);
 
     // Add approval_policy config for mcp-server
@@ -207,7 +236,7 @@ export class CodexConnection {
     // Values: untrusted (requires approval for non-trusted commands), on-failure, on-request (model decides), never (auto-approve all)
     if (options?.yoloMode) {
       // yoloMode: auto-approve all operations without user confirmation
-      finalArgs = [...finalArgs, '-c', 'approval_policy=never'];
+      finalArgs = [...finalArgs, "-c", "approval_policy=never"];
     } else {
       // Read user's config.toml setting and pass it explicitly to mcp-server.
       // IMPORTANT: Skip 'never' — AionUi manages approval decisions at the Manager
@@ -215,15 +244,15 @@ export class CodexConnection {
       // a dual-approval conflict where both CLI and Manager try to approve,
       // leading to the CLI hanging on exec_approval_request events.
       const userApprovalPolicy = readUserApprovalPolicyConfig();
-      if (userApprovalPolicy && userApprovalPolicy !== 'never') {
-        finalArgs = [...finalArgs, '-c', `approval_policy=${userApprovalPolicy}`];
+      if (userApprovalPolicy && userApprovalPolicy !== "never") {
+        finalArgs = [...finalArgs, "-c", `approval_policy=${userApprovalPolicy}`];
       }
       // If no user config or user had 'never', don't add any flag -
       // let Codex use its default (ensures approval events are sent to us)
     }
 
     const envVarCount = Object.keys(cleanEnv).length;
-    console.log(`[Codex-Startup] Spawn: ${cliPath} ${finalArgs.join(' ')}`);
+    console.log(`[Codex-Startup] Spawn: ${cliPath} ${finalArgs.join(" ")}`);
     console.log(`[Codex-Startup] Env vars passed to child: ${envVarCount}`);
     console.log(`[Codex-Startup] ===== End diagnostics =====`);
 
@@ -231,55 +260,67 @@ export class CodexConnection {
       try {
         this.child = spawn(cliPath, finalArgs, {
           cwd,
-          stdio: ['pipe', 'pipe', 'pipe'],
+          stdio: ["pipe", "pipe", "pipe"],
           env: {
             ...cleanEnv,
-            CODEX_NO_INTERACTIVE: '1',
-            CODEX_AUTO_CONTINUE: '1',
+            CODEX_NO_INTERACTIVE: "1",
+            CODEX_AUTO_CONTINUE: "1",
           },
           shell: isWindows,
         });
 
-        this.child.on('error', (error) => {
+        this.child.on("error", (error) => {
           reject(new Error(`Failed to start codex process: ${error.message}`));
         });
 
-        this.child.on('exit', (code, signal) => {
+        this.child.on("exit", (code, signal) => {
           if (code !== 0 && code !== null) {
             this.handleProcessExit(code, signal);
           }
         });
 
-        this.child.stderr?.on('data', (d) => {
+        this.child.stderr?.on("data", (d) => {
           const errorMsg = d.toString();
 
-          if (errorMsg.includes('command not found') || errorMsg.includes('not recognized')) {
-            reject(new Error(`Codex CLI not found. Please ensure 'codex' is installed and in PATH. Error: ${errorMsg}`));
-          } else if (errorMsg.includes('permission denied')) {
+          if (errorMsg.includes("command not found") || errorMsg.includes("not recognized")) {
+            reject(
+              new Error(
+                `Codex CLI not found. Please ensure 'codex' is installed and in PATH. Error: ${errorMsg}`,
+              ),
+            );
+          } else if (errorMsg.includes("permission denied")) {
             reject(new Error(`Permission denied when starting codex. Error: ${errorMsg}`));
-          } else if (errorMsg.includes('authentication') || errorMsg.includes('login')) {
-            reject(new Error(`Codex authentication required. Please run 'codex auth' first. Error: ${errorMsg}`));
-          } else if (errorMsg.includes('unknown flag') || errorMsg.includes('invalid option') || errorMsg.includes('unrecognized')) {
+          } else if (errorMsg.includes("authentication") || errorMsg.includes("login")) {
+            reject(
+              new Error(
+                `Codex authentication required. Please run 'codex auth' first. Error: ${errorMsg}`,
+              ),
+            );
+          } else if (
+            errorMsg.includes("unknown flag") ||
+            errorMsg.includes("invalid option") ||
+            errorMsg.includes("unrecognized")
+          ) {
             reject(new Error(`Invalid Codex CLI arguments. Error: ${errorMsg}`));
           }
         });
 
-        let buffer = '';
+        let buffer = "";
         let hasOutput = false;
         let receivedJsonMessage = false;
 
-        this.child.stdout?.on('data', (d) => {
+        this.child.stdout?.on("data", (d) => {
           hasOutput = true;
           buffer += d.toString();
-          const lines = buffer.split('\n');
-          buffer = lines.pop() || '';
+          const lines = buffer.split("\n");
+          buffer = lines.pop() || "";
           for (const line of lines) {
             if (!line.trim()) continue;
 
             // console.log('codex line ===>', line);
 
             // Check if this looks like a JSON-RPC message
-            if (line.trim().startsWith('{') && line.trim().endsWith('}')) {
+            if (line.trim().startsWith("{") && line.trim().endsWith("}")) {
               try {
                 const msg = JSON.parse(line) as JsonRpcRequest | JsonRpcResponse;
                 receivedJsonMessage = true;
@@ -291,21 +332,21 @@ export class CodexConnection {
               // Handle non-JSON output (startup messages, announcements, etc.)
 
               // Handle interactive prompts by automatically sending Enter
-              if (line.includes('Press Enter to continue')) {
-                this.child?.stdin?.write('\n');
+              if (line.includes("Press Enter to continue")) {
+                this.child?.stdin?.write("\n");
               }
 
               // Force enter MCP mode if we see CLI launch - but stop sending once we see API key passing
-              if (line.includes('Launching Codex CLI') && !receivedJsonMessage) {
+              if (line.includes("Launching Codex CLI") && !receivedJsonMessage) {
                 setTimeout(() => {
                   if (!receivedJsonMessage) {
-                    this.child?.stdin?.write('\n');
+                    this.child?.stdin?.write("\n");
                   }
                 }, 1000);
               }
 
               // Detect when MCP server should be ready
-              if (line.includes('Passing CODEX_API_KEY')) {
+              if (line.includes("Passing CODEX_API_KEY")) {
                 // Set a flag to indicate the server is starting and wait longer
                 setTimeout(() => {
                   receivedJsonMessage = true; // Mark as ready for JSON communication
@@ -319,7 +360,7 @@ export class CodexConnection {
           if (this.child && !this.child.killed) {
             resolve();
           } else {
-            reject(new Error('Codex process failed to start or was killed during startup'));
+            reject(new Error("Codex process failed to start or was killed during startup"));
           }
         }, 5000);
 
@@ -342,7 +383,7 @@ export class CodexConnection {
     }
     // Reject all pending
     for (const [id, p] of this.pending) {
-      p.reject(new Error('Codex MCP connection closed'));
+      p.reject(new Error("Codex MCP connection closed"));
       if (p.timeout) clearTimeout(p.timeout);
       this.pending.delete(id);
     }
@@ -364,7 +405,7 @@ export class CodexConnection {
         // Emit error to frontend before rejecting promise
         this.onError({
           message: `Request timed out: ${method} (${timeoutMs}ms)`,
-          type: 'timeout',
+          type: "timeout",
           details: { method, timeoutMs },
         });
 
@@ -379,16 +420,16 @@ export class CodexConnection {
 
       // Normal request processing
       this.pending.set(id, { resolve, reject, timeout });
-      const line = JSON.stringify(req) + '\n';
+      const line = JSON.stringify(req) + "\n";
 
       if (this.child?.stdin) {
         this.child.stdin.write(line);
         // Force flush buffer
-        if ('flushSync' in this.child.stdin && typeof this.child.stdin.flushSync === 'function') {
+        if ("flushSync" in this.child.stdin && typeof this.child.stdin.flushSync === "function") {
           this.child.stdin.flushSync();
         }
       } else {
-        reject(new Error('Child process stdin not available'));
+        reject(new Error("Child process stdin not available"));
         return;
       }
     });
@@ -396,15 +437,18 @@ export class CodexConnection {
 
   notify(method: string, params?: unknown): void {
     const msg: JsonRpcRequest = { jsonrpc: JSONRPC_VERSION, method, params };
-    const line = JSON.stringify(msg) + '\n';
+    const line = JSON.stringify(msg) + "\n";
     this.child?.stdin?.write(line);
   }
 
   private handleIncoming(msg: JsonRpcRequest | JsonRpcResponse): void {
-    if (typeof msg !== 'object' || msg === null) return;
+    if (typeof msg !== "object" || msg === null) return;
 
     // Response
-    if ('id' in msg && ('result' in (msg as JsonRpcResponse) || 'error' in (msg as JsonRpcResponse))) {
+    if (
+      "id" in msg &&
+      ("result" in (msg as JsonRpcResponse) || "error" in (msg as JsonRpcResponse))
+    ) {
       const res = msg as JsonRpcResponse;
       const p = this.pending.get(res.id);
       if (!p) return;
@@ -412,7 +456,7 @@ export class CodexConnection {
       if (p.timeout) clearTimeout(p.timeout);
 
       if (res.error) {
-        const errorMsg = res.error.message || '';
+        const errorMsg = res.error.message || "";
 
         // Check for network-related errors
         if (this.isNetworkRelatedError(errorMsg)) {
@@ -421,12 +465,16 @@ export class CodexConnection {
           // Emit error to frontend before rejecting promise
           this.onError({
             message: errorMsg,
-            type: 'stream',
-            details: { source: 'jsonrpc_error' },
+            type: "stream",
+            details: { source: "jsonrpc_error" },
           });
           p.reject(new Error(errorMsg));
         }
-      } else if (res.result && typeof res.result === 'object' && 'error' in (res.result as Record<string, unknown>)) {
+      } else if (
+        res.result &&
+        typeof res.result === "object" &&
+        "error" in (res.result as Record<string, unknown>)
+      ) {
         const resultErrorMsg = String((res.result as Record<string, unknown>).error);
 
         if (this.isNetworkRelatedError(resultErrorMsg)) {
@@ -435,8 +483,8 @@ export class CodexConnection {
           // Emit error to frontend before rejecting promise
           this.onError({
             message: resultErrorMsg,
-            type: 'stream',
-            details: { source: 'result_error' },
+            type: "stream",
+            details: { source: "result_error" },
           });
           p.reject(new Error(resultErrorMsg));
         }
@@ -447,18 +495,26 @@ export class CodexConnection {
     }
 
     // Event/Notification
-    if ('method' in msg) {
+    if ("method" in msg) {
       const env: CodexEventEnvelope = { method: msg.method, params: msg.params };
 
       // Handle all permission request events - pause and record mapping
-      if (env.method === 'codex/event' && typeof env.params === 'object' && env.params !== null && 'msg' in (env.params as CodexEventParams)) {
+      if (
+        env.method === "codex/event" &&
+        typeof env.params === "object" &&
+        env.params !== null &&
+        "msg" in (env.params as CodexEventParams)
+      ) {
         const msgType = (env.params as CodexEventParams).msg?.type;
-        const _callId = (env.params as CodexEventParams).msg?.call_id || (env.params as CodexEventParams).call_id;
+        const _callId =
+          (env.params as CodexEventParams).msg?.call_id || (env.params as CodexEventParams).call_id;
 
-        if (msgType === 'apply_patch_approval_request' || msgType === 'exec_approval_request') {
-          if ('id' in msg) {
+        if (msgType === "apply_patch_approval_request" || msgType === "exec_approval_request") {
+          if ("id" in msg) {
             const reqId = msg.id as JsonRpcId;
-            const codexCallId = (env.params as CodexEventParams).msg?.call_id || (env.params as CodexEventParams).call_id;
+            const codexCallId =
+              (env.params as CodexEventParams).msg?.call_id ||
+              (env.params as CodexEventParams).call_id;
             if (codexCallId) {
               const callIdStr = String(codexCallId);
 
@@ -472,9 +528,11 @@ export class CodexConnection {
       }
 
       // Handle elicitation requests - pause and record mapping from codex_call_id -> request id
-      if (env.method === 'elicitation/create' && 'id' in msg) {
+      if (env.method === "elicitation/create" && "id" in msg) {
         const reqId = msg.id as JsonRpcId;
-        const codexCallId = (env.params as CodexEventParams)?.codex_call_id || (env.params as CodexEventParams)?.call_id;
+        const codexCallId =
+          (env.params as CodexEventParams)?.codex_call_id ||
+          (env.params as CodexEventParams)?.call_id;
         if (codexCallId) {
           const callIdStr = String(codexCallId);
 
@@ -485,7 +543,7 @@ export class CodexConnection {
             this.pendingAutoApprovals.delete(callIdStr);
             const result = { decision: pendingDecision };
             const response: JsonRpcResponse = { jsonrpc: JSONRPC_VERSION, id: reqId, result };
-            const line = JSON.stringify(response) + '\n';
+            const line = JSON.stringify(response) + "\n";
             this.child?.stdin?.write(line);
             // Don't pause or add to map — already responded
           } else {
@@ -517,11 +575,11 @@ export class CodexConnection {
           // Emit error to frontend before rejecting promise
           this.onError({
             message: `Permission request timed out: ${callId}`,
-            type: 'timeout',
+            type: "timeout",
             details: { callId },
           });
 
-          reject(new Error('Permission request timed out'));
+          reject(new Error("Permission request timed out"));
         }
       }, 30000);
     });
@@ -542,9 +600,12 @@ export class CodexConnection {
     this.resumeRequests();
   }
 
-  public respondElicitation(callId: string, decision: 'approved' | 'approved_for_session' | 'denied' | 'abort'): void {
+  public respondElicitation(
+    callId: string,
+    decision: "approved" | "approved_for_session" | "denied" | "abort",
+  ): void {
     // Accept uniqueId formats like 'patch_<id>' / 'elicitation_<id>' as well
-    const normalized = callId.replace(/^patch_/, '').replace(/^elicitation_/, '');
+    const normalized = callId.replace(/^patch_/, "").replace(/^elicitation_/, "");
     const reqId = this.elicitationMap.get(normalized) || this.elicitationMap.get(callId);
     if (reqId === undefined) {
       // codex/event notification arrives before elicitation/create request.
@@ -554,7 +615,7 @@ export class CodexConnection {
     }
     const result = { decision };
     const response: JsonRpcResponse = { jsonrpc: JSONRPC_VERSION, id: reqId, result };
-    const line = JSON.stringify(response) + '\n';
+    const line = JSON.stringify(response) + "\n";
 
     this.child?.stdin?.write(line);
 
@@ -573,17 +634,33 @@ export class CodexConnection {
 
     for (const req of requests) {
       const id = this.nextId++;
-      const jsonReq: JsonRpcRequest = { jsonrpc: JSONRPC_VERSION, id, method: req.method, params: req.params };
+      const jsonReq: JsonRpcRequest = {
+        jsonrpc: JSONRPC_VERSION,
+        id,
+        method: req.method,
+        params: req.params,
+      };
 
       this.pending.set(id, { resolve: req.resolve, reject: req.reject, timeout: req.timeout });
-      const line = JSON.stringify(jsonReq) + '\n';
+      const line = JSON.stringify(jsonReq) + "\n";
       this.child?.stdin?.write(line);
     }
   }
 
   // Network error detection and handling methods
   private isNetworkRelatedError(errorMsg: string): boolean {
-    const networkErrorPatterns = ['unexpected status 403', 'Cloudflare', 'you have been blocked', 'chatgpt.com', 'network error', 'connection refused', 'timeout', 'ECONNREFUSED', 'ETIMEDOUT', 'DNS_PROBE_FINISHED_NXDOMAIN'];
+    const networkErrorPatterns = [
+      "unexpected status 403",
+      "Cloudflare",
+      "you have been blocked",
+      "chatgpt.com",
+      "network error",
+      "connection refused",
+      "timeout",
+      "ECONNREFUSED",
+      "ETIMEDOUT",
+      "DNS_PROBE_FINISHED_NXDOMAIN",
+    ];
 
     const lowerErrorMsg = errorMsg.toLowerCase();
 
@@ -599,7 +676,7 @@ export class CodexConnection {
   private handleNetworkError(errorMsg: string, pendingRequest: PendingReq): void {
     // Create standardized error using error service
     const codexError = fromNetworkError(errorMsg, {
-      source: 'CodexConnection',
+      source: "CodexConnection",
       retryCount: this.retryCount,
     });
 
@@ -625,7 +702,7 @@ export class CodexConnection {
       // Emit error to frontend before rejecting promise
       this.onError({
         message: processedError.userMessage || processedError.message,
-        type: 'network',
+        type: "network",
         details: {
           errorCode: processedError.code,
           retryCount: this.retryCount,
@@ -638,16 +715,16 @@ export class CodexConnection {
     }
   }
 
-  private getNetworkErrorType(errorCode: string): NetworkError['type'] {
+  private getNetworkErrorType(errorCode: string): NetworkError["type"] {
     switch (errorCode) {
-      case 'CLOUDFLARE_BLOCKED':
-        return 'cloudflare_blocked';
-      case 'NETWORK_TIMEOUT':
-        return 'network_timeout';
-      case 'CONNECTION_REFUSED':
-        return 'connection_refused';
+      case "CLOUDFLARE_BLOCKED":
+        return "cloudflare_blocked";
+      case "NETWORK_TIMEOUT":
+        return "network_timeout";
+      case "CONNECTION_REFUSED":
+        return "connection_refused";
       default:
-        return 'unknown';
+        return "unknown";
     }
   }
 
@@ -661,7 +738,7 @@ export class CodexConnection {
       // Emit error to frontend before rejecting promise
       this.onError({
         message: `Network error after ${this.retryCount} retries: ${networkError.type}`,
-        type: 'network',
+        type: "network",
         details: {
           retryCount: this.retryCount,
           networkErrorType: networkError.type,
@@ -670,7 +747,9 @@ export class CodexConnection {
         },
       });
 
-      pendingRequest.reject(new Error(`Network error after ${this.retryCount} retries: ${networkError.type}`));
+      pendingRequest.reject(
+        new Error(`Network error after ${this.retryCount} retries: ${networkError.type}`),
+      );
     }, this.retryDelay);
   }
 
@@ -708,7 +787,7 @@ export class CodexConnection {
 
   // Simple ping test to check if connection is responsive
   public ping(timeout: number = 5000): Promise<boolean> {
-    return this.request('ping', {}, timeout)
+    return this.request("ping", {}, timeout)
       .then(() => true)
       .catch(() => false);
   }
@@ -732,11 +811,11 @@ export class CodexConnection {
               // Emit error to frontend before rejecting promise
               this.onError({
                 message: `Timeout waiting for MCP server to be ready (${timeout}ms)`,
-                type: 'timeout',
+                type: "timeout",
                 details: { timeout },
               });
 
-              reject(new Error('Timeout waiting for MCP server to be ready'));
+              reject(new Error("Timeout waiting for MCP server to be ready"));
               return;
             }
 
@@ -748,11 +827,11 @@ export class CodexConnection {
             if (Date.now() - startTime > timeout) {
               this.onError({
                 message: `Timeout waiting for MCP server to be ready (${timeout}ms)`,
-                type: 'timeout',
+                type: "timeout",
                 details: { timeout },
               });
 
-              reject(new Error('Timeout waiting for MCP server to be ready'));
+              reject(new Error("Timeout waiting for MCP server to be ready"));
               return;
             }
 
@@ -770,7 +849,7 @@ export class CodexConnection {
     // Emit error to frontend about process exit
     this.onError({
       message: `Codex process exited unexpectedly (code: ${code}, signal: ${signal})`,
-      type: 'process',
+      type: "process",
       details: { exitCode: code, signal },
     });
 

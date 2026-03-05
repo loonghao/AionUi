@@ -4,11 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { IResponseMessage } from '@/common/ipcBridge';
-import { uuid } from '@/common/utils';
-import { NanobotConnection } from './NanobotConnection';
-import type { AcpResult } from '@/types/acpTypes';
-import { createAcpError, AcpErrorType } from '@/types/acpTypes';
+import type { IResponseMessage } from "@/common/ipcBridge";
+import { uuid } from "@/common/utils";
+import { NanobotConnection } from "./NanobotConnection";
+import type { AcpResult } from "@/types/acpTypes";
+import { createAcpError, AcpErrorType } from "@/types/acpTypes";
 
 export interface NanobotAgentConfig {
   /** Conversation ID */
@@ -55,7 +55,7 @@ export class NanobotAgent {
 
       // Emit response content
       this.config.onStreamEvent({
-        type: 'content',
+        type: "content",
         conversation_id: this.id,
         msg_id: responseMsgId,
         data: responseText,
@@ -63,7 +63,7 @@ export class NanobotAgent {
 
       // Emit finish signal
       this.config.onSignalEvent({
-        type: 'finish',
+        type: "finish",
         conversation_id: this.id,
         msg_id: uuid(),
         data: null,
@@ -74,7 +74,7 @@ export class NanobotAgent {
 
       // Emit error
       this.config.onStreamEvent({
-        type: 'error',
+        type: "error",
         conversation_id: this.id,
         msg_id: uuid(),
         data: errorMsg,
@@ -82,7 +82,7 @@ export class NanobotAgent {
 
       // Emit finish after error
       this.config.onSignalEvent({
-        type: 'finish',
+        type: "finish",
         conversation_id: this.id,
         msg_id: uuid(),
         data: null,

@@ -4,10 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { getAgentLogo } from '@/renderer/utils/agentLogo';
-import { CUSTOM_AVATAR_IMAGE_MAP } from '../constants';
-import type { AvailableAgent, MentionOption } from '../types';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { getAgentLogo } from "@/renderer/utils/agentLogo";
+import { CUSTOM_AVATAR_IMAGE_MAP } from "../constants";
+import type { AvailableAgent, MentionOption } from "../types";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 export type GuidMentionResult = {
   mentionQuery: string | null;
@@ -41,7 +41,14 @@ type UseGuidMentionOptions = {
 /**
  * Hook that manages the @ mention system for agent selection.
  */
-export const useGuidMention = ({ availableAgents, customAgentAvatarMap, selectedAgentKey, setSelectedAgentKey, setInput, selectedAgentInfo }: UseGuidMentionOptions): GuidMentionResult => {
+export const useGuidMention = ({
+  availableAgents,
+  customAgentAvatarMap,
+  selectedAgentKey,
+  setSelectedAgentKey,
+  setInput,
+  selectedAgentInfo,
+}: UseGuidMentionOptions): GuidMentionResult => {
   const [mentionQuery, setMentionQuery] = useState<string | null>(null);
   const [mentionOpen, setMentionOpen] = useState(false);
   const [mentionSelectorVisible, setMentionSelectorVisible] = useState(false);
@@ -53,21 +60,29 @@ export const useGuidMention = ({ availableAgents, customAgentAvatarMap, selected
   const mentionOptions = useMemo(() => {
     const agents = availableAgents || [];
     return agents.map((agent) => {
-      const key = agent.backend === 'custom' && agent.customAgentId ? `custom:${agent.customAgentId}` : agent.backend;
+      const key =
+        agent.backend === "custom" && agent.customAgentId
+          ? `custom:${agent.customAgentId}`
+          : agent.backend;
       const label = agent.name || agent.backend;
-      const avatarValue = agent.backend === 'custom' ? agent.avatar || customAgentAvatarMap.get(agent.customAgentId || '') : undefined;
+      const avatarValue =
+        agent.backend === "custom"
+          ? agent.avatar || customAgentAvatarMap.get(agent.customAgentId || "")
+          : undefined;
       const avatar = avatarValue ? avatarValue.trim() : undefined;
       const tokens = new Set<string>();
       const normalizedLabel = label.toLowerCase();
       tokens.add(normalizedLabel);
-      tokens.add(normalizedLabel.replace(/\s+/g, '-'));
-      tokens.add(normalizedLabel.replace(/\s+/g, ''));
+      tokens.add(normalizedLabel.replace(/\s+/g, "-"));
+      tokens.add(normalizedLabel.replace(/\s+/g, ""));
       tokens.add(agent.backend.toLowerCase());
       if (agent.customAgentId) {
         tokens.add(agent.customAgentId.toLowerCase());
       }
       const mappedAvatarImage = avatar ? CUSTOM_AVATAR_IMAGE_MAP[avatar] : undefined;
-      const avatarImage = mappedAvatarImage || (avatar && /^(https?:|file:|data:|aion-asset:|\/)/.test(avatar) ? avatar : undefined);
+      const avatarImage =
+        mappedAvatarImage ||
+        (avatar && /^(https?:|file:|data:|aion-asset:|\/)/.test(avatar) ? avatar : undefined);
       return {
         key,
         label,
@@ -83,15 +98,17 @@ export const useGuidMention = ({ availableAgents, customAgentAvatarMap, selected
   const filteredMentionOptions = useMemo(() => {
     if (!mentionQuery) return mentionOptions;
     const query = mentionQuery.toLowerCase();
-    return mentionOptions.filter((option) => Array.from(option.tokens).some((token) => token.startsWith(query)));
+    return mentionOptions.filter((option) =>
+      Array.from(option.tokens).some((token) => token.startsWith(query)),
+    );
   }, [mentionOptions, mentionQuery]);
 
   const stripMentionToken = useCallback(
     (value: string) => {
       if (!mentionMatchRegex.test(value)) return value;
-      return value.replace(mentionMatchRegex, (_match, _query) => '').trimEnd();
+      return value.replace(mentionMatchRegex, (_match, _query) => "").trimEnd();
     },
-    [mentionMatchRegex]
+    [mentionMatchRegex],
   );
 
   const selectMentionAgent = useCallback(
@@ -104,12 +121,16 @@ export const useGuidMention = ({ availableAgents, customAgentAvatarMap, selected
       setMentionQuery(null);
       setMentionActiveIndex(0);
     },
-    [stripMentionToken, setSelectedAgentKey, setInput]
+    [stripMentionToken, setSelectedAgentKey, setInput],
   );
 
   const selectedAgentLabel = selectedAgentInfo?.name || selectedAgentKey;
-  const mentionMenuActiveOption = filteredMentionOptions[mentionActiveIndex] || filteredMentionOptions[0];
-  const mentionMenuSelectedKey = mentionOpen || mentionSelectorOpen ? mentionMenuActiveOption?.key || selectedAgentKey : selectedAgentKey;
+  const mentionMenuActiveOption =
+    filteredMentionOptions[mentionActiveIndex] || filteredMentionOptions[0];
+  const mentionMenuSelectedKey =
+    mentionOpen || mentionSelectorOpen
+      ? mentionMenuActiveOption?.key || selectedAgentKey
+      : selectedAgentKey;
 
   // Reset active index on open/query change
   useEffect(() => {
@@ -118,7 +139,9 @@ export const useGuidMention = ({ availableAgents, customAgentAvatarMap, selected
       return;
     }
     if (mentionSelectorOpen) {
-      const selectedIndex = filteredMentionOptions.findIndex((option) => option.key === selectedAgentKey);
+      const selectedIndex = filteredMentionOptions.findIndex(
+        (option) => option.key === selectedAgentKey,
+      );
       setMentionActiveIndex(selectedIndex >= 0 ? selectedIndex : 0);
     }
   }, [filteredMentionOptions, mentionOpen, mentionQuery, mentionSelectorOpen, selectedAgentKey]);
@@ -128,9 +151,11 @@ export const useGuidMention = ({ availableAgents, customAgentAvatarMap, selected
     if (!mentionOpen && !mentionSelectorOpen) return;
     const container = mentionMenuRef.current;
     if (!container) return;
-    const target = container.querySelector<HTMLElement>(`[data-mention-index="${mentionActiveIndex}"]`);
+    const target = container.querySelector<HTMLElement>(
+      `[data-mention-index="${mentionActiveIndex}"]`,
+    );
     if (!target) return;
-    target.scrollIntoView({ block: 'nearest' });
+    target.scrollIntoView({ block: "nearest" });
   }, [mentionActiveIndex, mentionOpen, mentionSelectorOpen]);
 
   return {

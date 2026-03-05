@@ -4,15 +4,15 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { NanobotAgent, type NanobotAgentConfig } from '@/agent/nanobot';
-import { ipcBridge } from '@/common';
-import type { TMessage } from '@/common/chatLib';
-import { transformMessage } from '@/common/chatLib';
-import type { IResponseMessage } from '@/common/ipcBridge';
-import { uuid } from '@/common/utils';
-import { addMessage, addOrUpdateMessage } from '@process/message';
-import { cronBusyGuard } from '@process/services/cron/CronBusyGuard';
-import BaseAgentManager from '@process/task/BaseAgentManager';
+import { NanobotAgent, type NanobotAgentConfig } from "@/agent/nanobot";
+import { ipcBridge } from "@/common";
+import type { TMessage } from "@/common/chatLib";
+import { transformMessage } from "@/common/chatLib";
+import type { IResponseMessage } from "@/common/ipcBridge";
+import { uuid } from "@/common/utils";
+import { addMessage, addOrUpdateMessage } from "@process/message";
+import { cronBusyGuard } from "@process/services/cron/CronBusyGuard";
+import BaseAgentManager from "@process/task/BaseAgentManager";
 
 export interface NanoBotAgentManagerData {
   conversation_id: string;
@@ -29,7 +29,7 @@ class NanoBotAgentManager extends BaseAgentManager<NanoBotAgentManagerData> {
   bootstrap: Promise<NanobotAgent>;
 
   constructor(data: NanoBotAgentManagerData) {
-    super('nanobot', data);
+    super("nanobot", data);
     this.conversation_id = data.conversation_id;
     this.workspace = data.workspace;
 
@@ -62,7 +62,7 @@ class NanoBotAgentManager extends BaseAgentManager<NanoBotAgentManagerData> {
     // Persist messages to database
     const tMessage = transformMessage(msg);
     if (tMessage) {
-      if (msg.type === 'content' && msg.msg_id) {
+      if (msg.type === "content" && msg.msg_id) {
         addOrUpdateMessage(this.conversation_id, tMessage);
       } else {
         addMessage(this.conversation_id, tMessage);
@@ -77,7 +77,7 @@ class NanoBotAgentManager extends BaseAgentManager<NanoBotAgentManagerData> {
     const msg = { ...message, conversation_id: this.conversation_id };
 
     // Handle finish event
-    if (msg.type === 'finish') {
+    if (msg.type === "finish") {
       cronBusyGuard.setProcessing(this.conversation_id, false);
     }
 
@@ -95,8 +95,8 @@ class NanoBotAgentManager extends BaseAgentManager<NanoBotAgentManagerData> {
         const userMessage: TMessage = {
           id: data.msg_id,
           msg_id: data.msg_id,
-          type: 'text',
-          position: 'right',
+          type: "text",
+          position: "right",
           conversation_id: this.conversation_id,
           content: { content: data.content },
           createdAt: Date.now(),
@@ -126,7 +126,7 @@ class NanoBotAgentManager extends BaseAgentManager<NanoBotAgentManagerData> {
 
   private emitErrorMessage(error: string): void {
     const message: IResponseMessage = {
-      type: 'error',
+      type: "error",
       conversation_id: this.conversation_id,
       msg_id: uuid(),
       data: error,

@@ -17,13 +17,13 @@
  * - Scoped to a single conversation/session
  */
 
-export type ReviewDecision = 'approved' | 'approved_for_session' | 'denied' | 'abort';
+export type ReviewDecision = "approved" | "approved_for_session" | "denied" | "abort";
 
 /**
  * Key for command execution approval
  */
 export interface ExecApprovalKey {
-  type: 'exec';
+  type: "exec";
   command: string | string[];
   cwd?: string;
 }
@@ -32,7 +32,7 @@ export interface ExecApprovalKey {
  * Key for file change (patch) approval
  */
 export interface PatchApprovalKey {
-  type: 'patch';
+  type: "patch";
   files: string[];
 }
 
@@ -42,14 +42,14 @@ export type ApprovalKey = ExecApprovalKey | PatchApprovalKey;
  * Serialize an approval key to a string for use as a cache key
  */
 function serializeKey(key: ApprovalKey): string {
-  if (key.type === 'exec') {
+  if (key.type === "exec") {
     // Preserve command array structure for unambiguous hashing
     const commandArray = Array.isArray(key.command) ? key.command : [key.command];
-    return JSON.stringify({ type: 'exec', command: commandArray, cwd: key.cwd || '' });
+    return JSON.stringify({ type: "exec", command: commandArray, cwd: key.cwd || "" });
   } else {
     // Sort files for consistent hashing
     const sortedFiles = [...key.files].sort();
-    return JSON.stringify({ type: 'patch', files: sortedFiles });
+    return JSON.stringify({ type: "patch", files: sortedFiles });
   }
 }
 
@@ -72,7 +72,7 @@ export class ApprovalStore {
    * Caches approved_for_session (allow_always) and abort (reject_always) decisions
    */
   put(key: ApprovalKey, decision: ReviewDecision): void {
-    if (decision === 'approved_for_session' || decision === 'abort') {
+    if (decision === "approved_for_session" || decision === "abort") {
       const serialized = serializeKey(key);
       this.map.set(serialized, decision);
     }
@@ -82,7 +82,7 @@ export class ApprovalStore {
    * Check if key has abort (reject_always) status
    */
   isRejectedForSession(key: ApprovalKey): boolean {
-    return this.get(key) === 'abort';
+    return this.get(key) === "abort";
   }
 
   /**
@@ -90,7 +90,7 @@ export class ApprovalStore {
    */
   allApprovedForSession(keys: ApprovalKey[]): boolean {
     if (keys.length === 0) return false;
-    return keys.every((key) => this.get(key) === 'approved_for_session');
+    return keys.every((key) => this.get(key) === "approved_for_session");
   }
 
   /**
@@ -98,7 +98,7 @@ export class ApprovalStore {
    * This is useful when a single approval/rejection covers multiple files/commands
    */
   putAll(keys: ApprovalKey[], decision: ReviewDecision): void {
-    if (decision === 'approved_for_session' || decision === 'abort') {
+    if (decision === "approved_for_session" || decision === "abort") {
       for (const key of keys) {
         this.put(key, decision);
       }
@@ -135,7 +135,7 @@ export class ApprovalStore {
  */
 export function createExecApprovalKey(command: string | string[], cwd?: string): ExecApprovalKey {
   return {
-    type: 'exec',
+    type: "exec",
     command,
     cwd,
   };
@@ -146,7 +146,7 @@ export function createExecApprovalKey(command: string | string[], cwd?: string):
  */
 export function createPatchApprovalKey(files: string[]): PatchApprovalKey {
   return {
-    type: 'patch',
+    type: "patch",
     files,
   };
 }

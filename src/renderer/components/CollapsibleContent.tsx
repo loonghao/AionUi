@@ -4,21 +4,24 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useThemeContext } from '@/renderer/context/ThemeContext';
-import { Down, Up } from '@icon-park/react';
-import classNames from 'classnames';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { useTranslation } from 'react-i18next';
+import { useThemeContext } from "@/renderer/context/ThemeContext";
+import { Down, Up } from "@icon-park/react";
+import classNames from "classnames";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 // 渐变遮罩常量 Gradient mask constants
 // mask-image 模式：让内容本身淡出，适用于有背景色的场景（如 Alert）
 // mask-image mode: fade out content itself, suitable for scenarios with background color (like Alert)
-const MASK_GRADIENT = 'linear-gradient(to bottom, rgba(0, 0, 0, 1) 0%, rgba(0, 0, 0, 1) 60%, rgba(0, 0, 0, 0.4) 90%, rgba(0, 0, 0, 0) 100%)';
+const MASK_GRADIENT =
+  "linear-gradient(to bottom, rgba(0, 0, 0, 1) 0%, rgba(0, 0, 0, 1) 60%, rgba(0, 0, 0, 0.4) 90%, rgba(0, 0, 0, 0) 100%)";
 
 // 背景渐变模式：使用固定颜色遮罩，适用于普通场景
 // Background gradient mode: use fixed color mask, suitable for normal scenarios
-const BG_GRADIENT_DARK = 'linear-gradient(to bottom, rgba(30, 30, 30, 0) 0%, rgba(30, 30, 30, 0.6) 40%, rgba(30, 30, 30, 0.95) 80%, rgba(30, 30, 30, 1) 100%)';
-const BG_GRADIENT_LIGHT = 'linear-gradient(to bottom, rgba(247, 248, 250, 0) 0%, rgba(247, 248, 250, 0.6) 40%, rgba(247, 248, 250, 0.95) 80%, rgba(247, 248, 250, 1) 100%)';
+const BG_GRADIENT_DARK =
+  "linear-gradient(to bottom, rgba(30, 30, 30, 0) 0%, rgba(30, 30, 30, 0.6) 40%, rgba(30, 30, 30, 0.95) 80%, rgba(30, 30, 30, 1) 100%)";
+const BG_GRADIENT_LIGHT =
+  "linear-gradient(to bottom, rgba(247, 248, 250, 0) 0%, rgba(247, 248, 250, 0.6) 40%, rgba(247, 248, 250, 0.95) 80%, rgba(247, 248, 250, 1) 100%)";
 
 interface CollapsibleContentProps {
   children: React.ReactNode;
@@ -73,7 +76,15 @@ interface CollapsibleContentProps {
  * </CollapsibleContent>
  * ```
  */
-export const CollapsibleContent: React.FC<CollapsibleContentProps> = ({ children, maxHeight = 240, defaultCollapsed = true, className, contentClassName, useMask = false, allowHorizontalScroll = false }) => {
+export const CollapsibleContent: React.FC<CollapsibleContentProps> = ({
+  children,
+  maxHeight = 240,
+  defaultCollapsed = true,
+  className,
+  contentClassName,
+  useMask = false,
+  allowHorizontalScroll = false,
+}) => {
   const { t } = useTranslation(); // 国际化 i18n
   const { theme } = useThemeContext(); // 主题上下文（亮色/暗色）Theme context (light/dark)
   const [isCollapsed, setIsCollapsed] = useState(defaultCollapsed); // 折叠状态 Collapse state
@@ -93,7 +104,7 @@ export const CollapsibleContent: React.FC<CollapsibleContentProps> = ({ children
         setNeedsCollapse(contentHeight > maxHeight);
       };
 
-      if (typeof window !== 'undefined' && 'requestAnimationFrame' in window) {
+      if (typeof window !== "undefined" && "requestAnimationFrame" in window) {
         if (rafId !== null) {
           cancelAnimationFrame(rafId);
         }
@@ -107,7 +118,7 @@ export const CollapsibleContent: React.FC<CollapsibleContentProps> = ({ children
     // Use ResizeObserver instead of setTimeout for more accurate content change detection
     // Electron 环境完全支持 ResizeObserver，但添加检查以增强兼容性
     // ResizeObserver is fully supported in Electron, but add check for enhanced compatibility
-    if (typeof ResizeObserver !== 'undefined') {
+    if (typeof ResizeObserver !== "undefined") {
       const resizeObserver = new ResizeObserver(() => {
         scheduleHeightCheck();
       });
@@ -145,12 +156,12 @@ export const CollapsibleContent: React.FC<CollapsibleContentProps> = ({ children
   const contentStyle = useMemo(() => {
     const style: React.CSSProperties = {
       maxHeight: isCollapsed ? `${maxHeight}px` : undefined,
-      overflowX: allowHorizontalScroll ? 'auto' : 'hidden',
-      overflowY: isCollapsed ? 'hidden' : 'visible',
+      overflowX: allowHorizontalScroll ? "auto" : "hidden",
+      overflowY: isCollapsed ? "hidden" : "visible",
     };
 
     if (!allowHorizontalScroll && !isCollapsed) {
-      style.overflowX = 'visible';
+      style.overflowX = "visible";
     }
 
     // mask-image 模式：让内容本身淡出 mask-image mode: fade out content itself
@@ -164,13 +175,17 @@ export const CollapsibleContent: React.FC<CollapsibleContentProps> = ({ children
 
   // 计算背景渐变颜色 Calculate background gradient color
   const bgGradient = useMemo(() => {
-    return theme === 'dark' ? BG_GRADIENT_DARK : BG_GRADIENT_LIGHT;
+    return theme === "dark" ? BG_GRADIENT_DARK : BG_GRADIENT_LIGHT;
   }, [theme]);
 
   return (
-    <div className={classNames('relative', className)}>
+    <div className={classNames("relative", className)}>
       {/* 内容区域 Content area */}
-      <div ref={contentRef} className={classNames('transition-all duration-300', contentClassName)} style={contentStyle}>
+      <div
+        ref={contentRef}
+        className={classNames("transition-all duration-300", contentClassName)}
+        style={contentStyle}
+      >
         {children}
       </div>
 
@@ -184,9 +199,9 @@ export const CollapsibleContent: React.FC<CollapsibleContentProps> = ({ children
           - 100%: 完全不透明，融入背景色 Fully opaque, blends with background */}
       {!useMask && needsCollapse && isCollapsed && (
         <div
-          className='absolute bottom-0 left-0 right-0 pointer-events-none'
+          className="absolute bottom-0 left-0 right-0 pointer-events-none"
           style={{
-            height: '80px',
+            height: "80px",
             background: bgGradient,
           }}
         />
@@ -194,19 +209,23 @@ export const CollapsibleContent: React.FC<CollapsibleContentProps> = ({ children
 
       {/* 展开/折叠按钮 Expand/Collapse button */}
       {needsCollapse && (
-        <div className='flex justify-center relative z-10'>
-          <button onClick={toggleCollapse} className='flex items-center gap-1 px-3 py-1.5 text-sm text-t-primary hover:text-primary transition-colors cursor-pointer border-none bg-transparent font-medium [&_svg]:transition-colors [&_svg]:inline-block [&_svg]:align-middle' type='button'>
+        <div className="flex justify-center relative z-10">
+          <button
+            onClick={toggleCollapse}
+            className="flex items-center gap-1 px-3 py-1.5 text-sm text-t-primary hover:text-primary transition-colors cursor-pointer border-none bg-transparent font-medium [&_svg]:transition-colors [&_svg]:inline-block [&_svg]:align-middle"
+            type="button"
+          >
             {isCollapsed ? (
               <>
                 {/* 展开更多 Expand more */}
-                <span className='leading-none'>{t('common.expandMore')}</span>
-                <Down theme='outline' size='14' fill='currentColor' className='inline-block' />
+                <span className="leading-none">{t("common.expandMore")}</span>
+                <Down theme="outline" size="14" fill="currentColor" className="inline-block" />
               </>
             ) : (
               <>
                 {/* 收起 Collapse */}
-                <span className='leading-none'>{t('common.collapse')}</span>
-                <Up theme='outline' size='14' fill='currentColor' className='inline-block' />
+                <span className="leading-none">{t("common.collapse")}</span>
+                <Up theme="outline" size="14" fill="currentColor" className="inline-block" />
               </>
             )}
           </button>

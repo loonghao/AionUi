@@ -4,11 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { ipcBridge } from '@/common';
-import { useTypingAnimation } from '@/renderer/hooks/useTypingAnimation';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useScrollSyncTarget } from '../../hooks/useScrollSyncHelpers';
-import { generateInspectScript } from './htmlInspectScript';
+import { ipcBridge } from "@/common";
+import { useTypingAnimation } from "@/renderer/hooks/useTypingAnimation";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useScrollSyncTarget } from "../../hooks/useScrollSyncHelpers";
+import { generateInspectScript } from "./htmlInspectScript";
 
 /** 选中元素的数据结构 / Selected element data structure */
 export interface InspectedElement {
@@ -43,31 +43,33 @@ interface ElectronWebView extends HTMLElement {
  */
 function resolveRelativePath(basePath: string, relativePath: string): string {
   // 去除协议前缀 / Remove protocol prefix
-  const cleanBasePath = basePath.replace(/^file:\/\//, '');
-  const baseDir = cleanBasePath.substring(0, cleanBasePath.lastIndexOf('/') + 1) || cleanBasePath.substring(0, cleanBasePath.lastIndexOf('\\') + 1);
+  const cleanBasePath = basePath.replace(/^file:\/\//, "");
+  const baseDir =
+    cleanBasePath.substring(0, cleanBasePath.lastIndexOf("/") + 1) ||
+    cleanBasePath.substring(0, cleanBasePath.lastIndexOf("\\") + 1);
 
   // 如果相对路径已经是绝对路径，直接返回 / If relative path is already absolute, return directly
-  if (relativePath.startsWith('/') || /^[a-zA-Z]:/.test(relativePath)) {
+  if (relativePath.startsWith("/") || /^[a-zA-Z]:/.test(relativePath)) {
     return relativePath;
   }
 
   // 处理 ./ 和 ../ / Handle ./ and ../
-  const parts = baseDir.replace(/\\/g, '/').split('/').filter(Boolean);
-  const relParts = relativePath.replace(/\\/g, '/').split('/');
+  const parts = baseDir.replace(/\\/g, "/").split("/").filter(Boolean);
+  const relParts = relativePath.replace(/\\/g, "/").split("/");
 
   for (const part of relParts) {
-    if (part === '..') {
+    if (part === "..") {
       parts.pop();
-    } else if (part !== '.') {
+    } else if (part !== ".") {
       parts.push(part);
     }
   }
 
   // 保留 Windows 盘符格式 / Preserve Windows drive letter format
   if (/^[a-zA-Z]:/.test(baseDir)) {
-    return parts.join('/');
+    return parts.join("/");
   }
-  return '/' + parts.join('/');
+  return "/" + parts.join("/");
 }
 
 /**
@@ -100,7 +102,7 @@ async function inlineRelativeResources(html: string, basePath: string): Promise<
         result = result.replace(fullMatch, newTag);
       }
     } catch (e) {
-      console.warn('[HTMLRenderer] Failed to inline image:', src, e);
+      console.warn("[HTMLRenderer] Failed to inline image:", src, e);
     }
   }
 
@@ -111,7 +113,7 @@ async function inlineRelativeResources(html: string, basePath: string): Promise<
   for (const match of linkMatches) {
     const [fullMatch, _before, href, _after] = match;
     // 检查是否为 stylesheet / Check if it's a stylesheet
-    const isStylesheet = /rel=["']stylesheet["']/i.test(fullMatch) || href.endsWith('.css');
+    const isStylesheet = /rel=["']stylesheet["']/i.test(fullMatch) || href.endsWith(".css");
     if (isStylesheet) {
       try {
         const absolutePath = resolveRelativePath(basePath, href);
@@ -134,7 +136,7 @@ async function inlineRelativeResources(html: string, basePath: string): Promise<
                 processedCss = processedCss.replace(urlFullMatch, `url("${dataUrl}")`);
               }
             } catch (e) {
-              console.warn('[HTMLRenderer] Failed to inline CSS resource:', urlPath, e);
+              console.warn("[HTMLRenderer] Failed to inline CSS resource:", urlPath, e);
             }
           }
 
@@ -142,13 +144,14 @@ async function inlineRelativeResources(html: string, basePath: string): Promise<
           result = result.replace(fullMatch, styleTag);
         }
       } catch (e) {
-        console.warn('[HTMLRenderer] Failed to inline CSS:', href, e);
+        console.warn("[HTMLRenderer] Failed to inline CSS:", href, e);
       }
     }
   }
 
   // 3. 处理 <script src="relative"> -> inline <script> / Handle script tags -> inline
-  const scriptRegex = /<script([^>]*)\ssrc=["'](?!https?:\/\/|data:|\/\/)([^"']+)["']([^>]*)><\/script>/gi;
+  const scriptRegex =
+    /<script([^>]*)\ssrc=["'](?!https?:\/\/|data:|\/\/)([^"']+)["']([^>]*)><\/script>/gi;
   const scriptMatches = [...result.matchAll(scriptRegex)];
 
   for (const match of scriptMatches) {
@@ -159,12 +162,12 @@ async function inlineRelativeResources(html: string, basePath: string): Promise<
       if (scriptContent) {
         // 保留其他属性（如 type, defer, async 等，但 async/defer 对 inline 无效）
         // Keep other attributes (like type, but defer/async don't work for inline)
-        const attrsToKeep = (before + after).replace(/\s*(defer|async)\s*/gi, '');
+        const attrsToKeep = (before + after).replace(/\s*(defer|async)\s*/gi, "");
         const scriptTag = `<script${attrsToKeep}>${scriptContent}</script>`;
         result = result.replace(fullMatch, scriptTag);
       }
     } catch (e) {
-      console.warn('[HTMLRenderer] Failed to inline script:', src, e);
+      console.warn("[HTMLRenderer] Failed to inline script:", src, e);
     }
   }
 
@@ -178,32 +181,44 @@ async function inlineRelativeResources(html: string, basePath: string): Promise<
  * 在 iframe/webview 中渲染 HTML 内容（自动检测环境）
  * Renders HTML content in iframe/webview (auto-detect environment)
  */
-const HTMLRenderer: React.FC<HTMLRendererProps> = ({ content, filePath, containerRef, onScroll, inspectMode = false, copySuccessMessage, onElementSelected }) => {
+const HTMLRenderer: React.FC<HTMLRendererProps> = ({
+  content,
+  filePath,
+  containerRef,
+  onScroll,
+  inspectMode = false,
+  copySuccessMessage,
+  onElementSelected,
+}) => {
   const divRef = useRef<HTMLDivElement>(null);
   const webviewRef = useRef<ElectronWebView | null>(null);
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
   const webviewLoadedRef = useRef(false); // 跟踪 webview 是否已加载 / Track if webview is loaded
   const isSyncingScrollRef = useRef(false); // 防止滚动同步循环 / Prevent scroll sync loops
   const [webviewContentHeight, setWebviewContentHeight] = useState(0); // webview 内容高度 / webview content height
-  const [inlinedHtmlContent, setInlinedHtmlContent] = useState<string>(''); // 内联化后的 HTML（用于 browser iframe）/ Inlined HTML (for browser iframe)
-  const [currentTheme, setCurrentTheme] = useState<'light' | 'dark'>(() => {
-    return (document.documentElement.getAttribute('data-theme') as 'light' | 'dark') || 'light';
+  const [inlinedHtmlContent, setInlinedHtmlContent] = useState<string>(""); // 内联化后的 HTML（用于 browser iframe）/ Inlined HTML (for browser iframe)
+  const [currentTheme, setCurrentTheme] = useState<"light" | "dark">(() => {
+    return (document.documentElement.getAttribute("data-theme") as "light" | "dark") || "light";
   });
 
   // 检测是否在 Electron 环境 / Detect if in Electron environment
-  const isElectron = useMemo(() => typeof window !== 'undefined' && window.electronAPI !== undefined, []);
+  const isElectron = useMemo(
+    () => typeof window !== "undefined" && window.electronAPI !== undefined,
+    [],
+  );
 
   // 监听主题变化 / Monitor theme changes
   useEffect(() => {
     const updateTheme = () => {
-      const theme = (document.documentElement.getAttribute('data-theme') as 'light' | 'dark') || 'light';
+      const theme =
+        (document.documentElement.getAttribute("data-theme") as "light" | "dark") || "light";
       setCurrentTheme(theme);
     };
 
     const observer = new MutationObserver(updateTheme);
     observer.observe(document.documentElement, {
       attributes: true,
-      attributeFilter: ['data-theme'],
+      attributeFilter: ["data-theme"],
     });
 
     return () => observer.disconnect();
@@ -214,14 +229,21 @@ const HTMLRenderer: React.FC<HTMLRendererProps> = ({ content, filePath, containe
   const shouldLoadFromFile = useMemo(() => {
     if (!isElectron || !filePath) return false;
     // 检查 HTML 是否引用了相对资源 / Check if HTML references relative resources
-    const hasRelativeResources = /<link[^>]+href=["'](?!https?:\/\/|data:|\/\/)[^"']+["']/i.test(content) || /<script[^>]+src=["'](?!https?:\/\/|data:|\/\/)[^"']+["']/i.test(content) || /<img[^>]+src=["'](?!https?:\/\/|data:|\/\/)[^"']+["']/i.test(content);
+    const hasRelativeResources =
+      /<link[^>]+href=["'](?!https?:\/\/|data:|\/\/)[^"']+["']/i.test(content) ||
+      /<script[^>]+src=["'](?!https?:\/\/|data:|\/\/)[^"']+["']/i.test(content) ||
+      /<img[^>]+src=["'](?!https?:\/\/|data:|\/\/)[^"']+["']/i.test(content);
     return hasRelativeResources;
   }, [content, filePath, isElectron]);
 
   // 检查是否有相对资源（用于 browser inline 处理）
   // Check if has relative resources (for browser inline processing)
   const hasRelativeResources = useMemo(() => {
-    return /<link[^>]+href=["'](?!https?:\/\/|data:|\/\/)[^"']+["']/i.test(content) || /<script[^>]+src=["'](?!https?:\/\/|data:|\/\/)[^"']+["']/i.test(content) || /<img[^>]+src=["'](?!https?:\/\/|data:|\/\/)[^"']+["']/i.test(content);
+    return (
+      /<link[^>]+href=["'](?!https?:\/\/|data:|\/\/)[^"']+["']/i.test(content) ||
+      /<script[^>]+src=["'](?!https?:\/\/|data:|\/\/)[^"']+["']/i.test(content) ||
+      /<img[^>]+src=["'](?!https?:\/\/|data:|\/\/)[^"']+["']/i.test(content)
+    );
   }, [content]);
 
   // 流式打字动画：HTML 预览在使用 data URL 渲染时也能获得流式体验
@@ -232,7 +254,10 @@ const HTMLRenderer: React.FC<HTMLRendererProps> = ({ content, filePath, containe
     speed: 40,
   });
 
-  const htmlContent = useMemo(() => (shouldLoadFromFile ? content : displayedContent), [shouldLoadFromFile, content, displayedContent]);
+  const htmlContent = useMemo(
+    () => (shouldLoadFromFile ? content : displayedContent),
+    [shouldLoadFromFile, content, displayedContent],
+  );
 
   // 在 browser 环境下，当有相对资源时进行内联化处理
   // In browser environment, inline relative resources when present
@@ -260,7 +285,7 @@ const HTMLRenderer: React.FC<HTMLRendererProps> = ({ content, filePath, containe
         }
       })
       .catch((e) => {
-        console.warn('[HTMLRenderer] Failed to inline resources:', e);
+        console.warn("[HTMLRenderer] Failed to inline resources:", e);
         if (!cancelled) {
           setInlinedHtmlContent(content); // 回退到原始内容 / Fallback to original content
         }
@@ -295,7 +320,7 @@ const HTMLRenderer: React.FC<HTMLRendererProps> = ({ content, filePath, containe
 
     // 注入 base 标签支持相对路径 / Inject base tag for relative paths
     if (filePath) {
-      const fileDir = filePath.substring(0, filePath.lastIndexOf('/') + 1);
+      const fileDir = filePath.substring(0, filePath.lastIndexOf("/") + 1);
       const baseUrl = `file://${fileDir}`;
 
       // 检查是否已有 base 标签 / Check if base tag exists
@@ -334,19 +359,25 @@ const HTMLRenderer: React.FC<HTMLRendererProps> = ({ content, filePath, containe
       // Handle webview load failure
     };
 
-    webview.addEventListener('did-finish-load', handleDidFinishLoad);
-    webview.addEventListener('did-fail-load', handleDidFailLoad);
+    webview.addEventListener("did-finish-load", handleDidFinishLoad);
+    webview.addEventListener("did-fail-load", handleDidFailLoad);
 
     return () => {
-      webview.removeEventListener('did-finish-load', handleDidFinishLoad);
-      webview.removeEventListener('did-fail-load', handleDidFailLoad);
+      webview.removeEventListener("did-finish-load", handleDidFinishLoad);
+      webview.removeEventListener("did-fail-load", handleDidFailLoad);
     };
   }, [webviewSrc]);
 
   // 生成检查模式注入脚本 / Generate inspect mode injection script
   // 使用 useMemo 缓存，只在 inspectMode 改变时重新生成 / Use useMemo to cache, only regenerate when inspectMode changes
-  const copySuccessText = useMemo(() => copySuccessMessage ?? '✓ Copied HTML snippet', [copySuccessMessage]);
-  const inspectScript = useMemo(() => generateInspectScript(inspectMode, { copySuccess: copySuccessText }), [inspectMode, copySuccessText]);
+  const copySuccessText = useMemo(
+    () => copySuccessMessage ?? "✓ Copied HTML snippet",
+    [copySuccessMessage],
+  );
+  const inspectScript = useMemo(
+    () => generateInspectScript(inspectMode, { copySuccess: copySuccessText }),
+    [inspectMode, copySuccessText],
+  );
 
   // 执行脚本注入的函数 / Function to execute script injection
   // 使用 useCallback 缓存，避免每次渲染都创建新函数 / Use useCallback to cache, avoid creating new function on each render
@@ -380,10 +411,10 @@ const HTMLRenderer: React.FC<HTMLRendererProps> = ({ content, filePath, containe
       executeScript();
     };
 
-    webview.addEventListener('did-finish-load', handleLoad);
+    webview.addEventListener("did-finish-load", handleLoad);
 
     return () => {
-      webview.removeEventListener('did-finish-load', handleLoad);
+      webview.removeEventListener("did-finish-load", handleLoad);
     };
   }, [executeScript]);
 
@@ -397,46 +428,50 @@ const HTMLRenderer: React.FC<HTMLRendererProps> = ({ content, filePath, containe
       const consoleEvent = event as Event & { message?: string };
       const message = consoleEvent.message;
 
-      if (typeof message === 'string') {
+      if (typeof message === "string") {
         // 处理检查元素消息 / Handle inspect element message
-        if (message.startsWith('__INSPECT_ELEMENT__') && onElementSelected) {
+        if (message.startsWith("__INSPECT_ELEMENT__") && onElementSelected) {
           try {
-            const jsonStr = message.slice('__INSPECT_ELEMENT__'.length);
+            const jsonStr = message.slice("__INSPECT_ELEMENT__".length);
             const data = JSON.parse(jsonStr) as InspectedElement;
             onElementSelected(data);
           } catch (e) {
-            console.warn('[HTMLRenderer] Failed to parse inspect element message:', e);
+            console.warn("[HTMLRenderer] Failed to parse inspect element message:", e);
           }
         }
         // 处理滚动消息 / Handle scroll message
-        else if (message.startsWith('__SCROLL_SYNC__') && onScroll) {
+        else if (message.startsWith("__SCROLL_SYNC__") && onScroll) {
           if (isSyncingScrollRef.current) return; // 防止循环 / Prevent loop
           try {
-            const jsonStr = message.slice('__SCROLL_SYNC__'.length);
-            const data = JSON.parse(jsonStr) as { scrollTop: number; scrollHeight: number; clientHeight: number };
+            const jsonStr = message.slice("__SCROLL_SYNC__".length);
+            const data = JSON.parse(jsonStr) as {
+              scrollTop: number;
+              scrollHeight: number;
+              clientHeight: number;
+            };
             onScroll(data.scrollTop, data.scrollHeight, data.clientHeight);
           } catch (e) {
-            console.warn('[HTMLRenderer] Failed to parse scroll message:', e);
+            console.warn("[HTMLRenderer] Failed to parse scroll message:", e);
           }
         }
         // 处理内容高度消息 / Handle content height message
-        else if (message.startsWith('__CONTENT_HEIGHT__')) {
+        else if (message.startsWith("__CONTENT_HEIGHT__")) {
           try {
-            const height = parseInt(message.slice('__CONTENT_HEIGHT__'.length), 10);
+            const height = parseInt(message.slice("__CONTENT_HEIGHT__".length), 10);
             if (!isNaN(height) && height > 0) {
               setWebviewContentHeight(height);
             }
           } catch (e) {
-            console.warn('[HTMLRenderer] Failed to parse content height message:', e);
+            console.warn("[HTMLRenderer] Failed to parse content height message:", e);
           }
         }
       }
     };
 
-    webview.addEventListener('console-message', handleConsoleMessage);
+    webview.addEventListener("console-message", handleConsoleMessage);
 
     return () => {
-      webview.removeEventListener('console-message', handleConsoleMessage);
+      webview.removeEventListener("console-message", handleConsoleMessage);
     };
   }, [onElementSelected, onScroll]);
 
@@ -472,7 +507,7 @@ const HTMLRenderer: React.FC<HTMLRendererProps> = ({ content, filePath, containe
       }, { passive: true });
     })();
   `,
-    []
+    [],
   );
 
   // 注入滚动同步脚本 / Inject scroll sync script
@@ -488,10 +523,10 @@ const HTMLRenderer: React.FC<HTMLRendererProps> = ({ content, filePath, containe
       injectScrollSync();
     }
 
-    webview.addEventListener('did-finish-load', injectScrollSync);
+    webview.addEventListener("did-finish-load", injectScrollSync);
 
     return () => {
-      webview.removeEventListener('did-finish-load', injectScrollSync);
+      webview.removeEventListener("did-finish-load", injectScrollSync);
     };
   }, [scrollSyncScript, onScroll]);
 
@@ -509,7 +544,7 @@ const HTMLRenderer: React.FC<HTMLRendererProps> = ({ content, filePath, containe
             const targetScroll = ${targetPercent} * (scrollHeight - clientHeight);
             window.scrollTo({ top: targetScroll, behavior: 'auto' });
           })();
-        `
+        `,
       )
       .catch(() => {});
   }, []);
@@ -529,7 +564,8 @@ const HTMLRenderer: React.FC<HTMLRendererProps> = ({ content, filePath, containe
       if (!webview || !webviewLoadedRef.current) return;
 
       isSyncingScrollRef.current = true;
-      const scrollPercentage = container.scrollTop / (container.scrollHeight - container.clientHeight || 1);
+      const scrollPercentage =
+        container.scrollTop / (container.scrollHeight - container.clientHeight || 1);
 
       void webview
         .executeJavaScript(
@@ -540,7 +576,7 @@ const HTMLRenderer: React.FC<HTMLRendererProps> = ({ content, filePath, containe
             const targetScroll = ${scrollPercentage} * (scrollHeight - clientHeight);
             window.scrollTo({ top: targetScroll, behavior: 'auto' });
           })();
-        `
+        `,
         )
         .catch(() => {})
         .finally(() => {
@@ -550,49 +586,52 @@ const HTMLRenderer: React.FC<HTMLRendererProps> = ({ content, filePath, containe
         });
     };
 
-    container.addEventListener('scroll', handleContainerScroll);
-    return () => container.removeEventListener('scroll', handleContainerScroll);
+    container.addEventListener("scroll", handleContainerScroll);
+    return () => container.removeEventListener("scroll", handleContainerScroll);
   }, [containerRef]);
 
   // 计算代理滚动层的高度 / Calculate proxy scroll layer height
-  const proxyHeight = webviewContentHeight > 0 ? webviewContentHeight : '100%';
+  const proxyHeight = webviewContentHeight > 0 ? webviewContentHeight : "100%";
 
   return (
-    <div ref={containerRef || divRef} className={`h-full w-full overflow-auto relative ${currentTheme === 'dark' ? 'bg-bg-1' : 'bg-white'}`}>
+    <div
+      ref={containerRef || divRef}
+      className={`h-full w-full overflow-auto relative ${currentTheme === "dark" ? "bg-bg-1" : "bg-white"}`}
+    >
       {isElectron ? (
         <>
           {/* 代理滚动层：使容器可滚动 / Proxy scroll layer: makes container scrollable */}
-          <div style={{ height: proxyHeight, width: '100%', pointerEvents: 'none' }} />
+          <div style={{ height: proxyHeight, width: "100%", pointerEvents: "none" }} />
           {/* webview 固定在容器顶部 / webview fixed at container top */}
           {/* key 确保内容改变时 webview 重新挂载 / key ensures webview remounts when content changes */}
           <webview
             key={webviewSrc}
             ref={webviewRef}
             src={webviewSrc}
-            className='w-full border-0'
+            className="w-full border-0"
             style={{
-              display: 'inline-flex',
-              position: 'absolute',
+              display: "inline-flex",
+              position: "absolute",
               top: 0,
               left: 0,
               right: 0,
               bottom: 0,
-              height: '100%',
+              height: "100%",
             }}
-            webpreferences='allowRunningInsecureContent, javascript=yes'
+            webpreferences="allowRunningInsecureContent, javascript=yes"
           />
         </>
       ) : (
         <iframe
           ref={iframeRef}
           srcDoc={browserHtmlContent}
-          className='w-full h-full border-0'
+          className="w-full h-full border-0"
           style={{
-            display: 'block',
-            width: '100%',
-            height: '100%',
+            display: "block",
+            width: "100%",
+            height: "100%",
           }}
-          sandbox='allow-scripts allow-same-origin allow-forms allow-popups allow-modals'
+          sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals"
         />
       )}
     </div>

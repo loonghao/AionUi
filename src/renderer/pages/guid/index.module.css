@@ -42,11 +42,11 @@
 }
 
 /* 暗色模式：边框用稍亮色，否则与背景融在一起看不见 */
-[data-theme='dark'] .actionTools :global(.sendbox-model-btn) {
+[data-theme="dark"] .actionTools :global(.sendbox-model-btn) {
   border-color: var(--bg-4) !important;
 }
 
-[data-theme='dark'] .actionTools :global(.sendbox-model-btn:hover) {
+[data-theme="dark"] .actionTools :global(.sendbox-model-btn:hover) {
   border-color: var(--bg-5) !important;
 }
 
@@ -86,14 +86,24 @@
 }
 
 .skeleton {
-  background: linear-gradient(90deg, var(--color-fill-2) 25%, var(--color-fill-3) 50%, var(--color-fill-2) 75%);
+  background: linear-gradient(
+    90deg,
+    var(--color-fill-2) 25%,
+    var(--color-fill-3) 50%,
+    var(--color-fill-2) 75%
+  );
   background-size: 200% 100%;
   animation: guid-shimmer 1.5s ease-in-out infinite;
   border-radius: 50%;
 }
 
 .skeletonPill {
-  background: linear-gradient(90deg, var(--color-fill-2) 25%, var(--color-fill-3) 50%, var(--color-fill-2) 75%);
+  background: linear-gradient(
+    90deg,
+    var(--color-fill-2) 25%,
+    var(--color-fill-3) 50%,
+    var(--color-fill-2) 75%
+  );
   background-size: 200% 100%;
   animation: guid-shimmer 1.5s ease-in-out infinite;
   border-radius: 100px;

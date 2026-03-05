@@ -4,19 +4,19 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { getDatabase } from '@/process/database';
-import { ExtensionRegistry } from '@/extensions';
-import { getChannelMessageService } from '../agent/ChannelMessageService';
-import { getChannelDefaultModel } from '../actions/SystemActions';
-import { ActionExecutor } from '../gateway/ActionExecutor';
-import { PluginManager, registerPlugin } from '../gateway/PluginManager';
-import { PairingService } from '../pairing/PairingService';
-import { DingTalkPlugin } from '../plugins/dingtalk/DingTalkPlugin';
-import { LarkPlugin } from '../plugins/lark/LarkPlugin';
-import { TelegramPlugin } from '../plugins/telegram/TelegramPlugin';
-import { resolveChannelConvType } from '../types';
-import type { ChannelPlatform, IChannelPluginConfig, PluginType } from '../types';
-import { SessionManager } from './SessionManager';
+import { getDatabase } from "@/process/database";
+import { ExtensionRegistry } from "@/extensions";
+import { getChannelMessageService } from "../agent/ChannelMessageService";
+import { getChannelDefaultModel } from "../actions/SystemActions";
+import { ActionExecutor } from "../gateway/ActionExecutor";
+import { PluginManager, registerPlugin } from "../gateway/PluginManager";
+import { PairingService } from "../pairing/PairingService";
+import { DingTalkPlugin } from "../plugins/dingtalk/DingTalkPlugin";
+import { LarkPlugin } from "../plugins/lark/LarkPlugin";
+import { TelegramPlugin } from "../plugins/telegram/TelegramPlugin";
+import { resolveChannelConvType } from "../types";
+import type { ChannelPlatform, IChannelPluginConfig, PluginType } from "../types";
+import { SessionManager } from "./SessionManager";
 
 /**
  * ChannelManager - Main orchestrator for the Channel subsystem
@@ -47,9 +47,9 @@ export class ChannelManager {
   private constructor() {
     // Private constructor for singleton pattern
     // Register built-in plugins
-    registerPlugin('telegram', TelegramPlugin);
-    registerPlugin('lark', LarkPlugin);
-    registerPlugin('dingtalk', DingTalkPlugin);
+    registerPlugin("telegram", TelegramPlugin);
+    registerPlugin("lark", LarkPlugin);
+    registerPlugin("dingtalk", DingTalkPlugin);
   }
 
   /**
@@ -71,7 +71,7 @@ export class ChannelManager {
       return;
     }
 
-    console.log('[ChannelManager] Initializing...');
+    console.log("[ChannelManager] Initializing...");
 
     try {
       // Register extension-contributed channel plugins (from ExtensionRegistry)
@@ -83,45 +83,51 @@ export class ChannelManager {
       this.pluginManager = new PluginManager(this.sessionManager);
 
       // Create action executor and wire up message handling
-      this.actionExecutor = new ActionExecutor(this.pluginManager, this.sessionManager, this.pairingService);
+      this.actionExecutor = new ActionExecutor(
+        this.pluginManager,
+        this.sessionManager,
+        this.pairingService,
+      );
       this.pluginManager.setMessageHandler(this.actionExecutor.getMessageHandler());
 
       // Set confirm handler for tool confirmations
       // 设置工具确认处理器
-      this.pluginManager.setConfirmHandler(async (userId: string, platform: string, callId: string, value: string) => {
-        // 查找用户
-        // Find user
-        const db = getDatabase();
-        const userResult = db.getChannelUserByPlatform(userId, platform as PluginType);
-        if (!userResult.data) {
-          console.error(`[ChannelManager] User not found: ${userId}@${platform}`);
-          return;
-        }
+      this.pluginManager.setConfirmHandler(
+        async (userId: string, platform: string, callId: string, value: string) => {
+          // 查找用户
+          // Find user
+          const db = getDatabase();
+          const userResult = db.getChannelUserByPlatform(userId, platform as PluginType);
+          if (!userResult.data) {
+            console.error(`[ChannelManager] User not found: ${userId}@${platform}`);
+            return;
+          }
 
-        // 查找 session 获取 conversationId
-        // Find session to get conversationId
-        const session = this.sessionManager?.getSession(userResult.data.id);
-        if (!session?.conversationId) {
-          console.error(`[ChannelManager] Session not found for user: ${userResult.data.id}`);
-          return;
-        }
+          // 查找 session 获取 conversationId
+          // Find session to get conversationId
+          const session = this.sessionManager?.getSession(userResult.data.id);
+          if (!session?.conversationId) {
+            console.error(`[ChannelManager] Session not found for user: ${userResult.data.id}`);
+            return;
+          }
 
-        // 调用 confirm
-        // Call confirm
-        try {
-          await getChannelMessageService().confirm(session.conversationId, callId, value);
-        } catch (error) {
-          console.error(`[ChannelManager] Tool confirmation failed:`, error);
-        }
-      });
+          // 调用 confirm
+          // Call confirm
+          try {
+            await getChannelMessageService().confirm(session.conversationId, callId, value);
+          } catch (error) {
+            console.error(`[ChannelManager] Tool confirmation failed:`, error);
+          }
+        },
+      );
 
       // Load and start enabled plugins from database
       await this.loadEnabledPlugins();
 
       this.initialized = true;
-      console.log('[ChannelManager] Initialized successfully');
+      console.log("[ChannelManager] Initialized successfully");
     } catch (error) {
-      console.error('[ChannelManager] Initialization failed:', error);
+      console.error("[ChannelManager] Initialization failed:", error);
       throw error;
     }
   }
@@ -135,7 +141,7 @@ export class ChannelManager {
       return;
     }
 
-    console.log('[ChannelManager] Shutting down...');
+    console.log("[ChannelManager] Shutting down...");
 
     try {
       // Stop all plugins
@@ -154,9 +160,9 @@ export class ChannelManager {
       this.actionExecutor = null;
 
       this.initialized = false;
-      console.log('[ChannelManager] Shutdown complete');
+      console.log("[ChannelManager] Shutdown complete");
     } catch (error) {
-      console.error('[ChannelManager] Shutdown error:', error);
+      console.error("[ChannelManager] Shutdown error:", error);
     }
   }
 
@@ -175,7 +181,7 @@ export class ChannelManager {
     const result = db.getChannelPlugins();
 
     if (!result.success || !result.data) {
-      console.warn('[ChannelManager] Failed to load plugins:', result.error);
+      console.warn("[ChannelManager] Failed to load plugins:", result.error);
       return;
     }
 
@@ -187,7 +193,7 @@ export class ChannelManager {
       } catch (error) {
         console.error(`[ChannelManager] Failed to start plugin ${plugin.id}:`, error);
         // Update status to error
-        db.updateChannelPluginStatus(plugin.id, 'error');
+        db.updateChannelPluginStatus(plugin.id, "error");
       }
     }
   }
@@ -197,7 +203,7 @@ export class ChannelManager {
    */
   private async startPlugin(config: IChannelPluginConfig): Promise<void> {
     if (!this.pluginManager) {
-      throw new Error('PluginManager not initialized');
+      throw new Error("PluginManager not initialized");
     }
     await this.pluginManager.startPlugin(config);
   }
@@ -207,11 +213,14 @@ export class ChannelManager {
    * Supports both built-in plugins and extension-contributed plugins.
    * For extension plugins, credentials are extracted generically from the config.
    */
-  async enablePlugin(pluginId: string, config: Record<string, unknown>): Promise<{ success: boolean; error?: string }> {
+  async enablePlugin(
+    pluginId: string,
+    config: Record<string, unknown>,
+  ): Promise<{ success: boolean; error?: string }> {
     // Ensure manager is initialized
     if (!this.initialized || !this.pluginManager) {
-      console.error('[ChannelManager] Cannot enable plugin: manager not initialized');
-      return { success: false, error: 'Assistant manager not initialized' };
+      console.error("[ChannelManager] Cannot enable plugin: manager not initialized");
+      return { success: false, error: "Assistant manager not initialized" };
     }
 
     const db = getDatabase();
@@ -225,12 +234,12 @@ export class ChannelManager {
     let credentials = existing?.credentials;
 
     // Extract credentials based on plugin type
-    if (pluginType === 'telegram') {
+    if (pluginType === "telegram") {
       const token = config.token as string | undefined;
       if (token) {
         credentials = { token };
       }
-    } else if (pluginType === 'lark') {
+    } else if (pluginType === "lark") {
       const appId = config.appId as string | undefined;
       const appSecret = config.appSecret as string | undefined;
       const encryptKey = config.encryptKey as string | undefined;
@@ -238,7 +247,7 @@ export class ChannelManager {
       if (appId && appSecret) {
         credentials = { appId, appSecret, encryptKey, verificationToken };
       }
-    } else if (pluginType === 'dingtalk') {
+    } else if (pluginType === "dingtalk") {
       const clientId = config.clientId as string | undefined;
       const clientSecret = config.clientSecret as string | undefined;
       if (clientId && clientSecret) {
@@ -248,7 +257,7 @@ export class ChannelManager {
       // Extension or unknown plugin type: extract all string config values as credentials
       const extCredentials: Record<string, string | undefined> = {};
       for (const [key, value] of Object.entries(config)) {
-        if (typeof value === 'string') {
+        if (typeof value === "string") {
           extCredentials[key] = value;
         }
       }
@@ -264,7 +273,7 @@ export class ChannelManager {
       enabled: true,
       credentials,
       config: { ...existing?.config },
-      status: 'created',
+      status: "created",
       createdAt: existing?.createdAt || Date.now(),
       updatedAt: Date.now(),
     };
@@ -298,7 +307,7 @@ export class ChannelManager {
         const updated: IChannelPluginConfig = {
           ...existingResult.data,
           enabled: false,
-          status: 'stopped',
+          status: "stopped",
           updatedAt: Date.now(),
         };
         db.upsertChannelPlugin(updated);
@@ -315,10 +324,14 @@ export class ChannelManager {
    * For extension plugins that don't have a static testConnection method,
    * returns a generic "not supported" response.
    */
-  async testPlugin(pluginId: string, token: string, extraConfig?: { appId?: string; appSecret?: string }): Promise<{ success: boolean; botUsername?: string; error?: string }> {
+  async testPlugin(
+    pluginId: string,
+    token: string,
+    extraConfig?: { appId?: string; appSecret?: string },
+  ): Promise<{ success: boolean; botUsername?: string; error?: string }> {
     const pluginType = this.getPluginTypeFromId(pluginId);
 
-    if (pluginType === 'telegram') {
+    if (pluginType === "telegram") {
       const result = await TelegramPlugin.testConnection(token);
       return {
         success: result.success,
@@ -327,11 +340,11 @@ export class ChannelManager {
       };
     }
 
-    if (pluginType === 'lark') {
+    if (pluginType === "lark") {
       const appId = extraConfig?.appId;
       const appSecret = extraConfig?.appSecret;
       if (!appId || !appSecret) {
-        return { success: false, error: 'App ID and App Secret are required for Lark' };
+        return { success: false, error: "App ID and App Secret are required for Lark" };
       }
       const result = await LarkPlugin.testConnection(appId, appSecret);
       return {
@@ -341,11 +354,11 @@ export class ChannelManager {
       };
     }
 
-    if (pluginType === 'dingtalk') {
+    if (pluginType === "dingtalk") {
       const clientId = extraConfig?.appId; // Reuse appId field for clientId
       const clientSecret = extraConfig?.appSecret; // Reuse appSecret field for clientSecret
       if (!clientId || !clientSecret) {
-        return { success: false, error: 'Client ID and Client Secret are required for DingTalk' };
+        return { success: false, error: "Client ID and Client Secret are required for DingTalk" };
       }
       const result = await DingTalkPlugin.testConnection(clientId, clientSecret);
       return {
@@ -364,11 +377,11 @@ export class ChannelManager {
    * For built-in plugins, derives from ID prefix. For others, returns the ID as type.
    */
   private getPluginTypeFromId(pluginId: string): PluginType {
-    if (pluginId.startsWith('telegram')) return 'telegram';
-    if (pluginId.startsWith('slack')) return 'slack';
-    if (pluginId.startsWith('discord')) return 'discord';
-    if (pluginId.startsWith('lark')) return 'lark';
-    if (pluginId.startsWith('dingtalk')) return 'dingtalk';
+    if (pluginId.startsWith("telegram")) return "telegram";
+    if (pluginId.startsWith("slack")) return "slack";
+    if (pluginId.startsWith("discord")) return "discord";
+    if (pluginId.startsWith("lark")) return "lark";
+    if (pluginId.startsWith("dingtalk")) return "dingtalk";
     // Extension plugins: use pluginId as type (e.g., 'ext-feishu')
     return pluginId;
   }
@@ -382,14 +395,14 @@ export class ChannelManager {
     try {
       const registry = ExtensionRegistry.getInstance();
       const meta = registry.getChannelPluginMeta(pluginId);
-      if (meta && typeof meta === 'object' && 'name' in meta) {
+      if (meta && typeof meta === "object" && "name" in meta) {
         return (meta as { name: string }).name;
       }
     } catch {
       // Registry may not be initialized, fall through
     }
     const type = this.getPluginTypeFromId(pluginId);
-    return type.charAt(0).toUpperCase() + type.slice(1) + ' Bot';
+    return type.charAt(0).toUpperCase() + type.slice(1) + " Bot";
   }
 
   // ==================== Extension Channel Plugin Registration ====================
@@ -406,12 +419,14 @@ export class ChannelManager {
       if (extPlugins.size === 0) return;
 
       for (const [type, entry] of extPlugins) {
-        const Constructor = entry.constructor as new () => InstanceType<typeof import('../plugins/BasePlugin').BasePlugin>;
+        const Constructor = entry.constructor as new () => InstanceType<
+          typeof import("../plugins/BasePlugin").BasePlugin
+        >;
         registerPlugin(type as PluginType, Constructor as any);
         console.log(`[ChannelManager] Registered extension channel plugin: ${type}`);
       }
     } catch (error) {
-      console.warn('[ChannelManager] Failed to register extension channel plugins:', error);
+      console.warn("[ChannelManager] Failed to register extension channel plugins:", error);
     }
   }
 
@@ -423,27 +438,35 @@ export class ChannelManager {
    * which conversation to use. For gemini type changes, also updates the
    * model field on existing conversations.
    */
-  async syncChannelSettings(platform: ChannelPlatform, agent: { backend: string; customAgentId?: string; name?: string }, model?: { id: string; useModel: string }): Promise<{ success: boolean; error?: string }> {
+  async syncChannelSettings(
+    platform: ChannelPlatform,
+    agent: { backend: string; customAgentId?: string; name?: string },
+    model?: { id: string; useModel: string },
+  ): Promise<{ success: boolean; error?: string }> {
     if (!this.initialized || !this.sessionManager) {
-      return { success: false, error: 'Channel manager not initialized' };
+      return { success: false, error: "Channel manager not initialized" };
     }
 
     try {
       const { convType: newType } = resolveChannelConvType(agent.backend);
 
       // For gemini + model info: update existing conversations' model field
-      if (newType === 'gemini' && model?.id && model?.useModel) {
+      if (newType === "gemini" && model?.id && model?.useModel) {
         const fullModel = await getChannelDefaultModel(platform);
         const db = getDatabase();
-        const result = db.updateChannelConversationModel(platform, 'gemini', fullModel);
+        const result = db.updateChannelConversationModel(platform, "gemini", fullModel);
         if (result.success) {
-          console.log(`[ChannelManager] Updated ${result.data} gemini conversation(s) for ${platform}`);
+          console.log(
+            `[ChannelManager] Updated ${result.data} gemini conversation(s) for ${platform}`,
+          );
         }
       }
 
       // Clear all sessions to force re-evaluation on next message
       const cleared = this.sessionManager.clearAllSessions();
-      console.log(`[ChannelManager] syncChannelSettings: platform=${platform}, type=${newType}, cleared=${cleared}`);
+      console.log(
+        `[ChannelManager] syncChannelSettings: platform=${platform}, type=${newType}, cleared=${cleared}`,
+      );
 
       return { success: true };
     } catch (error: any) {
@@ -465,7 +488,7 @@ export class ChannelManager {
    */
   async cleanupConversation(conversationId: string): Promise<boolean> {
     if (!this.initialized) {
-      console.warn('[ChannelManager] Not initialized, skipping cleanup');
+      console.warn("[ChannelManager] Not initialized, skipping cleanup");
       return false;
     }
 

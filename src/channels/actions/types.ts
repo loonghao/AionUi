@@ -4,7 +4,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { ActionCategory, IChannelUser, IUnifiedIncomingMessage, IUnifiedOutgoingMessage, PluginType } from '../types';
+import type {
+  ActionCategory,
+  IChannelUser,
+  IUnifiedIncomingMessage,
+  IUnifiedOutgoingMessage,
+  PluginType,
+} from "../types";
 
 /**
  * Action context passed to action handlers
@@ -38,7 +44,10 @@ export interface IActionContext {
 /**
  * Action handler function type
  */
-export type ActionHandler = (context: IActionContext, params?: Record<string, string>) => Promise<IActionResult>;
+export type ActionHandler = (
+  context: IActionContext,
+  params?: Record<string, string>,
+) => Promise<IActionResult>;
 
 /**
  * Result of action execution
@@ -63,36 +72,36 @@ export interface IRegisteredAction {
  * System action names
  */
 export const SystemActionNames = {
-  SESSION_NEW: 'session.new',
-  SESSION_STATUS: 'session.status',
-  HELP_SHOW: 'help.show',
-  HELP_FEATURES: 'help.features',
-  HELP_PAIRING: 'help.pairing',
-  HELP_TIPS: 'help.tips',
-  SETTINGS_SHOW: 'settings.show',
-  AGENT_SHOW: 'agent.show',
-  AGENT_SELECT: 'agent.select',
+  SESSION_NEW: "session.new",
+  SESSION_STATUS: "session.status",
+  HELP_SHOW: "help.show",
+  HELP_FEATURES: "help.features",
+  HELP_PAIRING: "help.pairing",
+  HELP_TIPS: "help.tips",
+  SETTINGS_SHOW: "settings.show",
+  AGENT_SHOW: "agent.show",
+  AGENT_SELECT: "agent.select",
 } as const;
 
 /**
  * Chat action names
  */
 export const ChatActionNames = {
-  SEND: 'chat.send',
-  REGENERATE: 'chat.regenerate',
-  CONTINUE: 'chat.continue',
-  COPY: 'action.copy',
-  TOOL_CONFIRM: 'system.confirm', // Tool confirmation action
+  SEND: "chat.send",
+  REGENERATE: "chat.regenerate",
+  CONTINUE: "chat.continue",
+  COPY: "action.copy",
+  TOOL_CONFIRM: "system.confirm", // Tool confirmation action
 } as const;
 
 /**
  * Platform action names (Telegram-specific)
  */
 export const PlatformActionNames = {
-  PAIRING_SHOW: 'pairing.show',
-  PAIRING_REFRESH: 'pairing.refresh',
-  PAIRING_CHECK: 'pairing.check',
-  PAIRING_HELP: 'pairing.help',
+  PAIRING_SHOW: "pairing.show",
+  PAIRING_REFRESH: "pairing.refresh",
+  PAIRING_CHECK: "pairing.check",
+  PAIRING_HELP: "pairing.help",
 } as const;
 
 /**
@@ -101,14 +110,14 @@ export const PlatformActionNames = {
 export function createTextResponse(
   text: string,
   options?: {
-    parseMode?: 'HTML' | 'MarkdownV2' | 'Markdown';
+    parseMode?: "HTML" | "MarkdownV2" | "Markdown";
     replyMarkup?: unknown;
-  }
+  },
 ): IUnifiedOutgoingMessage {
   return {
-    type: 'text',
+    type: "text",
     text,
-    parseMode: options?.parseMode || 'HTML',
+    parseMode: options?.parseMode || "HTML",
     replyMarkup: options?.replyMarkup,
   };
 }
@@ -121,9 +130,9 @@ export function createErrorResponse(error: string): IActionResult {
     success: false,
     error,
     message: {
-      type: 'text',
+      type: "text",
       text: `❌ ${error}`,
-      parseMode: 'HTML',
+      parseMode: "HTML",
     },
   };
 }

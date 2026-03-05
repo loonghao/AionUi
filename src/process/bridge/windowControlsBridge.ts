@@ -12,8 +12,8 @@
  * Handles window minimize, maximize, close and other control operations
  */
 
-import { BrowserWindow } from 'electron';
-import { ipcBridge } from '@/common';
+import { BrowserWindow } from "electron";
+import { ipcBridge } from "@/common";
 
 /**
  * 为指定窗口注册最大化状态监听器
@@ -23,12 +23,12 @@ import { ipcBridge } from '@/common';
  */
 export function registerWindowMaximizeListeners(window: BrowserWindow): void {
   // 当窗口最大化时通知渲染进程 / Notify renderer when window is maximized
-  window.on('maximize', () => {
+  window.on("maximize", () => {
     ipcBridge.windowControls.maximizedChanged.emit({ isMaximized: true });
   });
 
   // 当窗口取消最大化时通知渲染进程 / Notify renderer when window is unmaximized
-  window.on('unmaximize', () => {
+  window.on("unmaximize", () => {
     ipcBridge.windowControls.maximizedChanged.emit({ isMaximized: false });
   });
 }

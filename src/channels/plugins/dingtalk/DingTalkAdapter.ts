@@ -4,7 +4,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { IMessageAction, IUnifiedIncomingMessage, IUnifiedMessageContent, IUnifiedOutgoingMessage, IUnifiedUser } from '../../types';
+import type {
+  IMessageAction,
+  IUnifiedIncomingMessage,
+  IUnifiedMessageContent,
+  IUnifiedOutgoingMessage,
+  IUnifiedUser,
+} from "../../types";
 
 /**
  * DingTalkAdapter - Converts between DingTalk and Unified message formats
@@ -99,47 +105,50 @@ export interface DingTalkCardActionData {
  * Group chat: group:{conversationId}
  */
 export function encodeChatId(data: DingTalkStreamMessage): string {
-  if (data.conversationType === '1') {
+  if (data.conversationType === "1") {
     // Private chat
-    return `user:${data.senderStaffId || data.chatbotUserId || ''}`;
+    return `user:${data.senderStaffId || data.chatbotUserId || ""}`;
   }
   // Group chat
-  return `group:${data.conversationId || ''}`;
+  return `group:${data.conversationId || ""}`;
 }
 
 /**
  * Parse encoded chatId into type and id
  */
-export function parseChatId(chatId: string): { type: 'user' | 'group'; id: string } {
-  if (chatId.startsWith('user:')) {
-    return { type: 'user', id: chatId.slice(5) };
+export function parseChatId(chatId: string): { type: "user" | "group"; id: string } {
+  if (chatId.startsWith("user:")) {
+    return { type: "user", id: chatId.slice(5) };
   }
-  if (chatId.startsWith('group:')) {
-    return { type: 'group', id: chatId.slice(6) };
+  if (chatId.startsWith("group:")) {
+    return { type: "group", id: chatId.slice(6) };
   }
   // Default to user
-  return { type: 'user', id: chatId };
+  return { type: "user", id: chatId };
 }
 
 /**
  * Convert DingTalk Stream callback data to unified incoming message
  */
-export function toUnifiedIncomingMessage(data: DingTalkStreamMessage, actionInfo?: IMessageAction): IUnifiedIncomingMessage | null {
+export function toUnifiedIncomingMessage(
+  data: DingTalkStreamMessage,
+  actionInfo?: IMessageAction,
+): IUnifiedIncomingMessage | null {
   // Handle card action
   if (actionInfo) {
-    const userId = data.senderStaffId || '';
+    const userId = data.senderStaffId || "";
     const chatId = encodeChatId(data);
 
     return {
       id: data.msgId || Date.now().toString(),
-      platform: 'dingtalk',
+      platform: "dingtalk",
       chatId,
       user: {
         id: userId,
         displayName: data.senderNick || `User ${userId.slice(-6)}`,
       },
       content: {
-        type: 'action',
+        type: "action",
         text: actionInfo.name,
       },
       action: actionInfo,
@@ -159,7 +168,7 @@ export function toUnifiedIncomingMessage(data: DingTalkStreamMessage, actionInfo
 
   return {
     id: data.msgId || Date.now().toString(),
-    platform: 'dingtalk',
+    platform: "dingtalk",
     chatId,
     user,
     content,
@@ -172,7 +181,7 @@ export function toUnifiedIncomingMessage(data: DingTalkStreamMessage, actionInfo
  * Convert DingTalk sender info to unified user format
  */
 export function toUnifiedUser(data: DingTalkStreamMessage): IUnifiedUser | null {
-  const userId = data.senderStaffId || '';
+  const userId = data.senderStaffId || "";
   if (!userId) return null;
 
   return {
@@ -188,70 +197,72 @@ function extractMessageContent(data: DingTalkStreamMessage): IUnifiedMessageCont
   const msgtype = data.msgtype;
 
   switch (msgtype) {
-    case 'text': {
-      let text = data.text?.content || '';
+    case "text": {
+      let text = data.text?.content || "";
       // Remove @bot mentions in group chats
-      if (data.conversationType === '2') {
-        text = text.replace(/@\S+\s*/g, '').trim();
+      if (data.conversationType === "2") {
+        text = text.replace(/@\S+\s*/g, "").trim();
       }
-      return { type: 'text', text };
+      return { type: "text", text };
     }
 
-    case 'richText': {
-      const textParts = (data.richText?.richTextList || []).filter((item) => item.type === 'text').map((item) => item.text || '');
-      let text = textParts.join('');
-      if (data.conversationType === '2') {
-        text = text.replace(/@\S+\s*/g, '').trim();
+    case "richText": {
+      const textParts = (data.richText?.richTextList || [])
+        .filter((item) => item.type === "text")
+        .map((item) => item.text || "");
+      let text = textParts.join("");
+      if (data.conversationType === "2") {
+        text = text.replace(/@\S+\s*/g, "").trim();
       }
-      return { type: 'text', text };
+      return { type: "text", text };
     }
 
-    case 'picture':
+    case "picture":
       return {
-        type: 'photo',
-        text: '',
+        type: "photo",
+        text: "",
         attachments: [
           {
-            type: 'photo',
-            fileId: data.picture?.downloadCode || '',
+            type: "photo",
+            fileId: data.picture?.downloadCode || "",
           },
         ],
       };
 
-    case 'audio':
+    case "audio":
       return {
-        type: 'audio',
-        text: data.audio?.recognition || '',
+        type: "audio",
+        text: data.audio?.recognition || "",
         attachments: [
           {
-            type: 'audio',
-            fileId: data.audio?.downloadCode || '',
+            type: "audio",
+            fileId: data.audio?.downloadCode || "",
             duration: data.audio?.duration ? parseInt(data.audio.duration, 10) : undefined,
           },
         ],
       };
 
-    case 'video':
+    case "video":
       return {
-        type: 'video',
-        text: '',
+        type: "video",
+        text: "",
         attachments: [
           {
-            type: 'video',
-            fileId: data.video?.downloadCode || '',
+            type: "video",
+            fileId: data.video?.downloadCode || "",
             duration: data.video?.duration ? parseInt(data.video.duration, 10) : undefined,
           },
         ],
       };
 
-    case 'file':
+    case "file":
       return {
-        type: 'document',
-        text: '',
+        type: "document",
+        text: "",
         attachments: [
           {
-            type: 'document',
-            fileId: data.file?.downloadCode || '',
+            type: "document",
+            fileId: data.file?.downloadCode || "",
             fileName: data.file?.fileName,
             size: data.file?.fileSize ? parseInt(data.file.fileSize, 10) : undefined,
           },
@@ -259,7 +270,7 @@ function extractMessageContent(data: DingTalkStreamMessage): IUnifiedMessageCont
       };
 
     default:
-      return { type: 'text', text: '' };
+      return { type: "text", text: "" };
   }
 }
 
@@ -268,7 +279,7 @@ function extractMessageContent(data: DingTalkStreamMessage): IUnifiedMessageCont
 /**
  * DingTalk send content types
  */
-export type DingTalkContentType = 'text' | 'markdown' | 'actionCard';
+export type DingTalkContentType = "text" | "markdown" | "actionCard";
 
 /**
  * Convert unified outgoing message to DingTalk send parameters
@@ -281,26 +292,26 @@ export function toDingTalkSendParams(message: IUnifiedOutgoingMessage): {
   // If message has replyMarkup (card), send as actionCard
   if (message.replyMarkup) {
     return {
-      contentType: 'actionCard',
+      contentType: "actionCard",
       content: message.replyMarkup as Record<string, unknown>,
     };
   }
 
   // If message has buttons, convert to actionCard
   if (message.buttons && message.buttons.length > 0) {
-    const card = buildActionCard(message.text || '', message.buttons);
+    const card = buildActionCard(message.text || "", message.buttons);
     return {
-      contentType: 'actionCard',
+      contentType: "actionCard",
       content: card,
     };
   }
 
   // Default to markdown message
-  const text = message.text || '';
+  const text = message.text || "";
   return {
-    contentType: 'markdown',
+    contentType: "markdown",
     content: {
-      title: 'Message',
+      title: "Message",
       text,
     },
     rawText: text,
@@ -310,7 +321,10 @@ export function toDingTalkSendParams(message: IUnifiedOutgoingMessage): {
 /**
  * Build an action card with buttons
  */
-function buildActionCard(text: string, buttons: IUnifiedOutgoingMessage['buttons']): Record<string, unknown> {
+function buildActionCard(
+  text: string,
+  buttons: IUnifiedOutgoingMessage["buttons"],
+): Record<string, unknown> {
   const markdownText = convertHtmlToDingTalkMarkdown(text);
   const btnList: Array<Record<string, unknown>> = [];
 
@@ -326,9 +340,9 @@ function buildActionCard(text: string, buttons: IUnifiedOutgoingMessage['buttons
   }
 
   return {
-    title: 'Message',
+    title: "Message",
     text: markdownText,
-    btnOrientation: '1', // Horizontal layout
+    btnOrientation: "1", // Horizontal layout
     btns: btnList,
   };
 }
@@ -356,12 +370,12 @@ export function convertHtmlToDingTalkMarkdown(html: string): string {
     .replace(/&#(\d+);/g, (_, dec) => String.fromCharCode(parseInt(dec, 10)));
 
   // 2. Convert HTML tags to markdown (case-insensitive)
-  result = result.replace(/<b>(.+?)<\/b>/gi, '**$1**');
-  result = result.replace(/<strong>(.+?)<\/strong>/gi, '**$1**');
-  result = result.replace(/<i>(.+?)<\/i>/gi, '*$1*');
-  result = result.replace(/<em>(.+?)<\/em>/gi, '*$1*');
-  result = result.replace(/<code>(.+?)<\/code>/gi, '`$1`');
-  result = result.replace(/<pre><code>([\s\S]+?)<\/code><\/pre>/gi, '```\n$1\n```');
+  result = result.replace(/<b>(.+?)<\/b>/gi, "**$1**");
+  result = result.replace(/<strong>(.+?)<\/strong>/gi, "**$1**");
+  result = result.replace(/<i>(.+?)<\/i>/gi, "*$1*");
+  result = result.replace(/<em>(.+?)<\/em>/gi, "*$1*");
+  result = result.replace(/<code>(.+?)<\/code>/gi, "`$1`");
+  result = result.replace(/<pre><code>([\s\S]+?)<\/code><\/pre>/gi, "```\n$1\n```");
 
   // 3. Convert links with protocol whitelist
   result = result.replace(/<a href="([^"]+)">(.+?)<\/a>/gi, (_, url: string, text: string) => {
@@ -374,10 +388,10 @@ export function convertHtmlToDingTalkMarkdown(html: string): string {
   });
 
   // 4. Remove all remaining HTML tags (loop until stable)
-  let prevResult = '';
+  let prevResult = "";
   while (prevResult !== result) {
     prevResult = result;
-    result = result.replace(/<[^>]+>/g, '');
+    result = result.replace(/<[^>]+>/g, "");
   }
 
   return result;
@@ -387,7 +401,7 @@ export function convertHtmlToDingTalkMarkdown(html: string): string {
  * Escape special characters for DingTalk markdown
  */
 export function escapeDingTalkMarkdown(text: string): string {
-  return text.replace(/[\\*_`[\]()~]/g, '\\$&');
+  return text.replace(/[\\*_`[\]()~]/g, "\\$&");
 }
 
 // ==================== Message Length Utilities ====================
@@ -413,11 +427,11 @@ export function splitMessage(text: string, maxLength: number = DINGTALK_MESSAGE_
     let splitIndex = maxLength;
 
     const newlineSearchStart = Math.floor(maxLength * 0.8);
-    const lastNewline = remaining.lastIndexOf('\n', maxLength);
+    const lastNewline = remaining.lastIndexOf("\n", maxLength);
     if (lastNewline > newlineSearchStart) {
       splitIndex = lastNewline + 1;
     } else {
-      const lastSpace = remaining.lastIndexOf(' ', maxLength);
+      const lastSpace = remaining.lastIndexOf(" ", maxLength);
       if (lastSpace > newlineSearchStart) {
         splitIndex = lastSpace + 1;
       }
@@ -435,7 +449,10 @@ export function splitMessage(text: string, maxLength: number = DINGTALK_MESSAGE_
 /**
  * Build card action value object
  */
-export function buildCardActionValue(action: string, params?: Record<string, string>): Record<string, string> {
+export function buildCardActionValue(
+  action: string,
+  params?: Record<string, string>,
+): Record<string, string> {
   return {
     action,
     ...params,
@@ -445,28 +462,28 @@ export function buildCardActionValue(action: string, params?: Record<string, str
 /**
  * Map action prefix to valid ActionCategory
  */
-function mapToActionCategory(prefix: string): 'platform' | 'system' | 'chat' {
-  if (prefix === 'pairing') return 'platform';
-  if (prefix === 'chat') return 'chat';
-  return 'system';
+function mapToActionCategory(prefix: string): "platform" | "system" | "chat" {
+  if (prefix === "pairing") return "platform";
+  if (prefix === "chat") return "chat";
+  return "system";
 }
 
 /**
  * Extract action info from DingTalk card callback
  */
 export function extractCardAction(params: Record<string, string>): IMessageAction | null {
-  const actionName = params.action || '';
+  const actionName = params.action || "";
   if (!actionName) return null;
 
   // Parse action name and params
   // Format: "category.action" or "category.action:param1=value1"
-  const [fullAction, paramsStr] = actionName.split(':');
-  const [prefix, name] = fullAction.includes('.') ? fullAction.split('.') : ['system', fullAction];
+  const [fullAction, paramsStr] = actionName.split(":");
+  const [prefix, name] = fullAction.includes(".") ? fullAction.split(".") : ["system", fullAction];
 
   const actionParams: Record<string, string> = {};
   if (paramsStr) {
-    paramsStr.split(',').forEach((param) => {
-      const [key, val] = param.split('=');
+    paramsStr.split(",").forEach((param) => {
+      const [key, val] = param.split("=");
       if (key && val) {
         actionParams[key] = val;
       }
@@ -475,7 +492,7 @@ export function extractCardAction(params: Record<string, string>): IMessageActio
 
   // Merge with other action values
   Object.entries(params).forEach(([key, val]) => {
-    if (key !== 'action' && typeof val === 'string') {
+    if (key !== "action" && typeof val === "string") {
       actionParams[key] = val;
     }
   });

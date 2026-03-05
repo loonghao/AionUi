@@ -15,7 +15,7 @@ export function setAppConfig(config: { name: string; version: string; protocolVe
   appConfig = {
     name: config.name,
     version: config.version,
-    protocolVersion: config.protocolVersion || '1.0.0',
+    protocolVersion: config.protocolVersion || "1.0.0",
   };
 }
 
@@ -23,19 +23,19 @@ export function setAppConfig(config: { name: string; version: string; protocolVe
  * Gets the application client name from the app config if available
  */
 export const getConfiguredAppClientName = (): string => {
-  return appConfig?.name || 'AionUi';
+  return appConfig?.name || "AionUi";
 };
 
 /**
  * Gets the application client version from the app config if available
  */
 export const getConfiguredAppClientVersion = (): string => {
-  return appConfig?.version || 'unknown';
+  return appConfig?.version || "unknown";
 };
 
 /**
  * Gets the Codex MCP protocol version from the app config if available
  */
 export const getConfiguredCodexMcpProtocolVersion = (): string => {
-  return appConfig?.protocolVersion || '1.0.0';
+  return appConfig?.protocolVersion || "1.0.0";
 };
