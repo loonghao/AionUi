@@ -372,6 +372,7 @@ export const windowControls = {
 export const systemSettings = {
   getCloseToTray: bridge.buildProvider<boolean, void>('system-settings:get-close-to-tray'),
   setCloseToTray: bridge.buildProvider<void, { enabled: boolean }>('system-settings:set-close-to-tray'),
+  changeLanguage: bridge.buildProvider<void, { language: string }>('system-settings:change-language'),
 };
 
 // WebUI 服务管理接口 / WebUI service management API
